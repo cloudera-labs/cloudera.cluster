@@ -1,0 +1,23 @@
+---
+
+- name: Install RDBMS
+  hosts: db_server
+  roles:
+    - infrastructure/rdbms
+  tags:
+    - database
+
+- name: Install MIT KDC
+  hosts: krb5_server
+  roles:
+    - infrastructure/krb5_server
+
+- name: Install CA server
+  hosts: ca_server
+  roles:
+    - infrastructure/ca_server
+
+- name: Install HAProxy
+  hosts: haproxy
+  roles:
+    - infrastructure/haproxy

@@ -1,0 +1,21 @@
+---
+
+- name: Add credentials to repository URLs if required
+  set_fact:
+    cloudera_manager_repo_url_with_creds: "{{ cloudera_manager_repo_url | regex_replace('^(?P<proto>http[s]?://)','\\g<proto>' + cloudera_manager_repo_username|string + ':' + cloudera_manager_repo_password|string + '@')}}"
+    cloudera_manager_repo_key_with_creds: "{{ cloudera_manager_repo_key | regex_replace('^(?P<proto>http[s]?://)','\\g<proto>' + cloudera_manager_repo_username|string + ':' + cloudera_manager_repo_password|string + '@')}}"
+  no_log: cloudera_manager_repo_username is defined
+  when: cloudera_manager_repo_username is defined
+
+- name: Add Cloudera Manager apt repository key
+  apt_key:
+    url: "{{ cloudera_manager_repo_key_with_creds | default(cloudera_manager_repo_key) }}"
+    state: present
+  no_log: cloudera_manager_repo_username is defined
+
+- name: Add Cloudera Manager apt repository
+  apt_repository:
+    repo: "deb [arch=amd64] {{ cloudera_manager_repo_url_with_creds | default(cloudera_manager_repo_url) }} {{ cloudera_manager_repo_apt_codename }} {{ cloudera_manager_repo_apt_component }}"
+    filename: cloudera-manager
+  no_log: cloudera_manager_repo_username is defined
+

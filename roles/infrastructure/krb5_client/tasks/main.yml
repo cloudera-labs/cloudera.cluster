@@ -1,0 +1,16 @@
+---
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_os_family }}.yml"
+
+- name: Install KRB5 client libraries
+  package:
+    name: "{{ krb5_packages }}"
+    state: present
+
+- name: Create krb5.conf
+  template:
+    src: krb5.conf.j2
+    dest: /etc/krb5.conf
+    backup: yes

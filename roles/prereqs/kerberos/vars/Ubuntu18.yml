@@ -1,0 +1,4 @@
+---
+krb5_packages: krb5-user
+ldap_packages: ldap-utils
+freeipa_packages: freeipa-client

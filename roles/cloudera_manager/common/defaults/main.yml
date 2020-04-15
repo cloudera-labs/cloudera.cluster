@@ -1,0 +1,4 @@
+---
+cloudera_manager_protocol: http
+cloudera_manager_host: "{{ groups.cloudera_manager | first | default('localhost') }}"
+cloudera_manager_port: 7180

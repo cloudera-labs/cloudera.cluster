@@ -1,0 +1,4 @@
+---
+krb5_packages:
+  - krb5-libs
+  - krb5-workstation

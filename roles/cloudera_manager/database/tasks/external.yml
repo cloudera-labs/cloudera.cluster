@@ -1,0 +1,47 @@
+---
+
+- name: Create Cloudera Manager database user
+  postgresql_user:
+    name: "{{ cloudera_manager_database_name }}"
+    password: "{{ cloudera_manager_database_password }}"
+  delegate_to: "{{ cloudera_manager_database_host }}"
+  become: yes
+  become_user: postgres
+  when: cloudera_manager_database_type == 'postgresql'
+
+- name: Create Cloudera Manager database
+  postgresql_db:
+    name: "{{ cloudera_manager_database_name }}"
+    owner: "{{ cloudera_manager_database_user }}"
+    encoding: UTF-8
+  delegate_to: "{{ cloudera_manager_database_host }}"
+  become: yes
+  become_user: postgres
+  when: cloudera_manager_database_type == 'postgresql'
+
+- name: Create Cloudera Manager database user
+  mysql_user:
+    name: "{{ cloudera_manager_database_name }}"
+    password: "{{ cloudera_manager_database_password }}"
+    update_password: always
+    host: '%'
+    priv: "{{ cloudera_manager_database_name }}.*:ALL"
+  delegate_to: "{{ cloudera_manager_database_host }}"
+  when: cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+
+- name: Create Cloudera Manager database
+  mysql_db:
+    name: "{{ cloudera_manager_database_name }}"
+    encoding: utf8
+    collation: utf8_general_ci
+  delegate_to: "{{ cloudera_manager_database_host }}"
+  when: cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+
+- name: Prepare Cloudera Manager Server external database
+  command: |
+    {{ cloudera_manager_database_prepare_script }}  -f --host {{ cloudera_manager_database_host }}
+    {{ cloudera_manager_database_type }}
+    {{ cloudera_manager_database_name }}
+    {{ cloudera_manager_database_user }}
+    {{ cloudera_manager_database_password }}
+  changed_when: False

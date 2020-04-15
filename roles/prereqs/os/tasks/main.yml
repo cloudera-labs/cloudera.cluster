@@ -1,0 +1,5 @@
+---
+
+- name: Apply OS pre-requisite configurations
+  include_tasks:
+    file: "main-{{ ansible_os_family }}.yml"

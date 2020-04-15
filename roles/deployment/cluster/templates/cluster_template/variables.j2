@@ -1,0 +1,21 @@
+[
+  {%- set config_joiner = joiner(",") -%}
+  {%- for service_type in definition.cluster.services -%}
+    {%- if merged_configs[service_type] is mapping -%}
+      {%- for (role_name, configs) in merged_configs[service_type].items() -%}
+        {%- for (k,v) in configs.items() -%}
+        {{ config_joiner() }}
+        {
+          "name": "{{ service_type }}_{{ role_name }}_{{ k | upper }}",
+          {# the double to_json filter renders a dict into properly escaped JSON string for the CM API call #}
+          {%- if v is mapping -%}
+          "value" : {{ v | to_json | to_json }}
+          {%- else -%}
+          "value" : {{ v | to_json }}
+          {%- endif -%}
+        }
+        {%- endfor -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+]

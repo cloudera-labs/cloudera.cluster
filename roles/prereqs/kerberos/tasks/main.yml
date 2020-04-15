@@ -1,0 +1,17 @@
+---
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_os_family }}.yml"
+
+- name: Install OpenLDAP client libraries
+  package:
+    name: "{{ ldap_packages }}"
+    state: present
+  when: "'cloudera_manager' in group_names"
+
+- name: Install FreeIPA client libraries
+  package:
+    name: "{{ freeipa_packages }}"
+    state: present
+  when: krb5_kdc_type == 'freeipa'

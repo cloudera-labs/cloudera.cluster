@@ -1,0 +1,37 @@
+---
+
+- name: Check whether license file exists
+  stat:
+    path: "{{ cloudera_manager_license_file }}"
+    follow: yes
+  register: license_file
+  when: cloudera_manager_license_type == 'enterprise'
+
+- debug:
+    msg: "License file exists = {{ license_file.stat.exists }}"
+    verbosity: 1
+  when: cloudera_manager_license_type == 'enterprise'
+
+- name: Upload license file to Cloudera Manager
+  shell: >
+    curl
+    -u {{ cloudera_manager_api_user }}:{{ cloudera_manager_api_password }}
+    -X POST -H 'Content-Type:multipart/form-data'
+    -F license=@{{ cloudera_manager_license_file }}
+    {{ cloudera_manager_api }}/cm/license
+  args:
+    warn: False
+  register: response
+  failed_when: "'owner' not in response.stdout"
+  when: cloudera_manager_license_type == 'enterprise' and license_file.stat.exists
+
+- name: Begin Cloudera Manager trial license
+  uri:
+    url: "{{ cloudera_manager_api }}/cm/trial/begin"
+    method: POST
+    status_code: 200, 204
+    force_basic_auth: yes
+    user: "{{ cloudera_manager_api_user }}"
+    password: "{{ cloudera_manager_api_password }}"
+  ignore_errors: True
+  when: cloudera_manager_license_type == 'trial' or not license_file.stat.exists

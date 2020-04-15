@@ -1,0 +1,13 @@
+---
+jdk_version: 8
+jdk_java_security_paths:
+  - /usr/java/default/jre/lib/security
+  - /usr/java/default/jre/conf/security
+  - /usr/lib/jvm/jre/lib/security
+  - /usr/lib/jvm/jre/conf/security
+  - /etc/java-8-openjdk/security
+  - /etc/java-11-openjdk/security
+  - /usr/lib64/jvm/java-1.8.0-openjdk-1.8.0/jre/lib/security
+jdk_java_security_safe_replace: True
+
+

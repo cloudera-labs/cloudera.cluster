@@ -1,0 +1,12 @@
+---
+
+- name: Install MariaDB repository
+  yum_repository:
+    name: MariaDB
+    description: MariaDB {{ database_version }} repository for RHEL/CentOS 7
+    baseurl: https://yum.mariadb.org/{{ database_version }}/rhel7-amd64
+    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+
+- name: Install MariaDB
+  include_role:
+    name: ansible-role-mysql

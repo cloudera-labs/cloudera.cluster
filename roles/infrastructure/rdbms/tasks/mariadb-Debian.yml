@@ -1,0 +1,15 @@
+---
+
+- name: Install MariaDB apt key
+  apt_key:
+    url: https://mariadb.org/mariadb_release_signing_key.asc
+    state: present
+
+- name: Install MariaDB apt repository
+  apt_repository:
+    repo: deb [arch=amd64,arm64,ppc64el] https://downloads.mariadb.com/MariaDB/mariadb-{{ database_version }}/repo/ubuntu/ bionic main
+    state: present
+
+- name: Install MariaDB
+  include_role:
+    name: ansible-role-mysql

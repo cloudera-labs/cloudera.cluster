@@ -1,0 +1,31 @@
+---
+
+- name: Install pre-requisite packages for Kerberos
+  hosts: all
+  roles:
+    - prereqs/kerberos
+  tags:
+    - kerberos
+
+- name: Configure Cloudera Manager server for Kerberos
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - cloudera_manager/config
+  vars:
+    api_configs:
+      KDC_HOST:       "{{ krb5_kdc_host }}"
+      KDC_TYPE:       "{{ krb5_kdc_type }}"
+      KRB_ENC_TYPES:  "{{ krb5_enc_types }}"
+      SECURITY_REALM: "{{ krb5_realm }}"
+  tags:
+    - kerberos
+
+- name: Import KDC admin creds to Cloudera Manager
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - security/import_kdc_admin_creds
+  tags:
+    - kerberos

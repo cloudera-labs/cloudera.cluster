@@ -1,0 +1,9 @@
+---
+__cloudera_manager_major_version: "{{ cloudera_manager_version.split('.')[0] }}"
+__cloudera_manager_repo_url_trial: "{{ cloudera_archive_base_url }}/cm{{ __cloudera_manager_major_version }}/{{ cloudera_manager_version }}/ubuntu1804/apt"
+__cloudera_manager_repo_url_paywall: "{{ cloudera_archive_base_url }}/p/cm{{ __cloudera_manager_major_version }}/{{ cloudera_manager_version }}/ubuntu1804/apt"
+__cloudera_manager_repo_key_filename: archive.key
+__cloudera_manager_repo_key_trial: "{{ __cloudera_manager_repo_url_trial }}/{{ __cloudera_manager_repo_key_filename }}"
+__cloudera_manager_repo_key_paywall: "{{ __cloudera_manager_repo_url_paywall }}/{{ __cloudera_manager_repo_key_filename }}"
+cloudera_manager_repo_apt_codename: "{{ ansible_distribution_release }}-cm{{ __cloudera_manager_major_version }}"
+cloudera_manager_repo_apt_component: contrib

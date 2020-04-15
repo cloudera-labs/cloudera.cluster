@@ -1,0 +1,37 @@
+---
+
+- name: Install Cloudera Manager server
+  hosts: cloudera_manager
+  roles:
+    - cloudera_manager/server
+  tags:
+    - installation
+    - server
+
+- name: Install Cloudera Manager agents
+  hosts: all
+  roles:
+    - cloudera_manager/agent
+  tags:
+    - installation
+    - agents
+
+- name: Apply Cloudera Manager license
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - cloudera_manager/license
+  tags:
+    - license
+
+- name: Configure Cloudera Manager server
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - cloudera_manager/config
+  vars:
+    api_config_keys_uppercase: True
+  tags:
+    - configuration

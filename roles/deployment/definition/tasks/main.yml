@@ -1,0 +1,14 @@
+---
+
+- name: Load cluster definition
+  include_vars:
+    file: "{{ cluster_definition }}/cluster.yml"
+    name: _definition
+
+- set_fact:
+    definition:
+      cluster: "{{ _definition.cluster | default({}) }}"
+      mgmt: "{{ _definition.mgmt | default({}) }}"
+      hosts: "{{ _definition.hosts | default({}) }}"
+      databases: "{{ database_defaults | combine(_definition.databases | default({}), recursive=True) }}"
+  when: definition is not defined

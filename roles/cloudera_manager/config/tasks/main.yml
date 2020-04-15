@@ -1,0 +1,14 @@
+---
+
+- name: Update Cloudera Manager configuration (via Cloudera Manager API)
+  uri:
+    url: "{{ cloudera_manager_api }}/{{ api_config_endpoint }}"
+    method: PUT
+    body_format: json
+    body: "{{ lookup('template', 'config.j2', convert_data=False) }}"
+    status_code: 200
+    force_basic_auth: yes
+    user: "{{ cloudera_manager_api_user }}"
+    password: "{{ cloudera_manager_api_password }}"
+    return_content: yes
+  when: api_configs is defined

@@ -1,0 +1,87 @@
+---
+database_default_password: changeme
+database_defaults:
+  ACTIVITYMONITOR:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: amon
+    user: amon
+    password: "{{ database_default_password }}"
+  DAS:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: das
+    user: das
+    password: "{{ database_default_password }}"
+  HIVE:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: metastore
+    user: hive
+    password: "{{ database_default_password }}"
+  HUE:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: hue
+    user: hue
+    password: "{{ database_default_password }}"
+  NAVIGATOR:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: nav
+    user: nav
+    password: "{{ database_default_password }}"
+  NAVIGATORMETASERVER:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: navms
+    user: navms
+    password: "{{ database_default_password }}"
+  OOZIE:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: oozie
+    user: oozie
+    password: "{{ database_default_password }}"
+  RANGER:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: ranger
+    user: rangeradmin
+    password: "{{ database_default_password }}"
+  REPORTSMANAGER:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: rman
+    user: rman
+    password: "{{ database_default_password }}"
+  SCHEMAREGISTRY:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: schemaregistry
+    user: schemaregistry
+    password: "{{ database_default_password }}"
+  STREAMS_MESSAGING_MANAGER:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: streamsmsgmgr
+    user: streamsmsgmgr
+    password: "{{ database_default_password }}"
+  SENTRY:
+    host: "{{ groups.db_server | first | default(omit) }}"
+    port: "{{ database_type | default_database_port }}"
+    type: "{{ database_type }}"
+    name: sentry
+    user: sentry
+    password: "{{ database_default_password }}"

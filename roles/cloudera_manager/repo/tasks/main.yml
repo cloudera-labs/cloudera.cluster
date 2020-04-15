@@ -1,0 +1,32 @@
+---
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_os_family }}.yml"
+  when: ansible_os_family != "Debian"
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+  when: ansible_os_family == "Debian"
+
+- name: Define Cloudera Manager trial repository details
+  set_fact:
+    cloudera_manager_repo_url: "{{ __cloudera_manager_repo_url_trial }}"
+    cloudera_manager_repo_key: "{{ __cloudera_manager_repo_key_trial }}"
+  when: cloudera_manager_repo_url is not defined and cloudera_manager_repo_username is not defined
+
+- name: Define Cloudera Manager paywall repository details
+  set_fact:
+    cloudera_manager_repo_url: "{{ __cloudera_manager_repo_url_paywall }}"
+    cloudera_manager_repo_key: "{{ __cloudera_manager_repo_key_paywall }}"
+  when: cloudera_manager_repo_url is not defined and cloudera_manager_repo_username is defined
+
+- name: Define Cloudera Manager repository key URL
+  set_fact:
+    cloudera_manager_repo_key: "{{ cloudera_manager_repo_url | regex_replace('/?$','') }}/{{ __cloudera_manager_repo_key_filename }}"
+  when: cloudera_manager_repo_key is not defined
+
+- name: Install Cloudera Manager repository
+  include_tasks:
+    file: "main-{{ ansible_os_family }}.yml"

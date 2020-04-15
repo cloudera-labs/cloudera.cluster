@@ -1,0 +1,5 @@
+---
+
+- name: Create databases and users
+  include_tasks:
+    file: "{{ database_type }}.yml"

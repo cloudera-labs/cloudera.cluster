@@ -1,0 +1,8 @@
+---
+
+- src: geerlingguy.postgresql
+  version: 2.2.0
+
+# geerlingguy.mysql with fix for issue #332
+- src: https://github.com/dbeech/ansible-role-mysql
+  version: master

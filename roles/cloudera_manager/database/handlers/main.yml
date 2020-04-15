@@ -1,0 +1,23 @@
+---
+
+- name: start cloudera-scm-server-db
+  service:
+    name: cloudera-scm-server-db
+    state: started
+  notify:
+    - wait cloudera-scm-server-db
+
+- name: restart cloudera-scm-server-db
+  service:
+    name: cloudera-scm-server-db
+    state: restarted
+  notify:
+    - wait cloudera-scm-server-db
+
+- name: wait cloudera-scm-server-db
+  wait_for:
+    host: "{{ cloudera_manager_host }}"
+    port: 7432
+    delay: 5
+    state: started
+    timeout: 300

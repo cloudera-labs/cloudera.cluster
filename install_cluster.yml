@@ -1,0 +1,27 @@
+---
+
+- name: Create databases and users
+  hosts: db_server
+  gather_facts: no
+  roles:
+    - deployment/databases
+  tags:
+    - database
+
+- name: Deploy Cloudera Management Service
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - deployment/mgmt_service
+  tags:
+    - mgmt
+
+- name: Deploy cluster
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - deployment/cluster
+  tags:
+    - cluster

@@ -1,0 +1,17 @@
+---
+
+- name: Create CSD directory
+  file:
+    path: "{{ cloudera_manager_csd_directory }}"
+    state: directory
+    owner: cloudera-scm
+    group: cloudera-scm
+    mode: 0755
+
+- name: Download CSDs
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ cloudera_manager_csd_directory }}"
+    mode: 0644
+  with_items: "{{ cloudera_manager_csds }}"
+  when: cloudera_manager_csds is defined

@@ -1,0 +1,4 @@
+---
+krb5_packages: krb5-client
+ldap_packages: openldap2-clients
+freeipa_packages: freeipa-client

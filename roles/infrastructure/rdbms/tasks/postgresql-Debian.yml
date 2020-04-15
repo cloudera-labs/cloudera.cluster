@@ -1,0 +1,15 @@
+---
+
+- name: Install PostgreSQL apt key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Install PostgreSQL apt repository
+  apt_repository:
+    repo: deb https://apt.postgresql.org/pub/repos/apt bionic-pgdg main
+    state: present
+
+- name: Install PostgreSQL
+  include_role:
+    name: geerlingguy.postgresql

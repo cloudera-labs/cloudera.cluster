@@ -1,0 +1,4 @@
+---
+api_config_endpoint: cm/config
+api_config_keys_uppercase: True
+api_configs: {}

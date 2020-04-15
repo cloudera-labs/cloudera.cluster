@@ -1,0 +1,7 @@
+---
+__cloudera_manager_major_version: "{{ cloudera_manager_version.split('.')[0] }}"
+__cloudera_manager_repo_url_trial: "{{ cloudera_archive_base_url | regex_replace('/?$','') }}/cm{{ __cloudera_manager_major_version }}/{{ cloudera_manager_version }}/redhat7/yum"
+__cloudera_manager_repo_url_paywall: "{{ cloudera_archive_base_url | regex_replace('/?$','') }}/p/cm{{ __cloudera_manager_major_version }}/{{ cloudera_manager_version }}/redhat7/yum"
+__cloudera_manager_repo_key_filename: "RPM-GPG-KEY-cloudera"
+__cloudera_manager_repo_key_trial: "{{ __cloudera_manager_repo_url_trial }}/{{ __cloudera_manager_repo_key_filename }}"
+__cloudera_manager_repo_key_paywall: "{{ __cloudera_manager_repo_url_paywall }}/{{ __cloudera_manager_repo_key_filename }}"

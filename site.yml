@@ -1,0 +1,6 @@
+---
+- import_playbook: create_infrastructure.yml
+- import_playbook: prepare_nodes.yml
+- import_playbook: install_cloudera_manager.yml
+- import_playbook: prepare_security.yml
+- import_playbook: install_cluster.yml

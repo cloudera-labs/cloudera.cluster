@@ -1,0 +1,19 @@
+{
+  "clusterName" : "{{ definition.cluster.name }}",
+  "hosts" : [
+    {%- set host_joiner = joiner(",") -%}
+    {%- for host in groups['cluster'] -%}
+    {%- if 'host_template' in hostvars[host] -%}
+    {{ host_joiner() }}
+    {
+      "hostName" : "{{ cloudera_manager_api_host_ids[host]['hostname'] }}",
+      "hostTemplateRefName" : "HostTemplate-{{ hostvars[host]['host_template'] }}"
+      {%- if 'role_ref_names' in hostvars[host] -%}
+      ,"roleRefNames" : [ "{{ hostvars[host]['role_ref_names'] }}" ]
+      {%- endif -%}
+    }
+    {%- endif -%}
+    {%- endfor -%}
+  ],
+  "variables" : {%- include 'cluster_template/variables.j2' -%}
+}

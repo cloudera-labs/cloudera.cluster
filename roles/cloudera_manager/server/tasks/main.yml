@@ -1,0 +1,21 @@
+---
+
+- name: Install Cloudera Manager Server
+  package:
+    name: cloudera-manager-server
+    state: present
+
+- name: Install database
+  import_role:
+    name: cloudera_manager/database
+
+- name: Install CSDs
+  import_role:
+    name: cloudera_manager/csds
+
+- name: Start Cloudera Manager Server
+  service:
+    name: cloudera-scm-server
+    state: started
+  notify:
+    - wait cloudera-scm-server

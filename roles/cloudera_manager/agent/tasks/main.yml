@@ -1,0 +1,26 @@
+---
+
+- name: Install Cloudera Manager Agents
+  package:
+    name:
+    - cloudera-manager-daemons
+    - cloudera-manager-agent
+    update_cache: yes
+    state: present
+
+- name: Configure Cloudera Manager Agent 'server_host'
+  lineinfile:
+    dest: /etc/cloudera-scm-agent/config.ini
+    regexp: "^server_host"
+    line: "server_host={{ cloudera_manager_host }}"
+
+- name: Restart Cloudera Manager Agents
+  service:
+    name: cloudera-scm-agent
+    state: restarted
+    enabled: yes
+
+- name: Wait for agents to heartbeat
+  pause:
+    seconds: 30
+  when: cloudera_manager_agent_wait_for_heartbeat

@@ -1,0 +1,9 @@
+---
+cloudera_manager_database_embedded: False
+cloudera_manager_database_host: "{{ groups.db_server | first }}"
+cloudera_manager_database_type: "{{ database_type | regex_replace('mariadb','mysql') }}"
+cloudera_manager_database_name: scm
+cloudera_manager_database_user: scm
+cloudera_manager_database_password: changeme
+cloudera_manager_database_prepare_script: /opt/cloudera/cm/schema/scm_prepare_database.sh
+cloudera_manager_database_ranger_script: /opt/cloudera/cm/bin/gen_embedded_ranger_db.sh

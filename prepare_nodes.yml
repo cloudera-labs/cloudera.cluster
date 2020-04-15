@@ -1,0 +1,40 @@
+---
+
+- name: Apply OS pre-requisite configurations
+  hosts: all
+  roles:
+    - prereqs/os
+  tags:
+    - os
+
+- name: Install RNGD
+  hosts: all
+  roles:
+    - prereqs/rngd
+  tags:
+    - rngd
+
+- name: Install JDK
+  hosts: all
+  roles:
+    - prereqs/jdk
+  tags:
+    - jdk
+
+- name: Download MySQL Connector
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - role: prereqs/mysql_connector/download
+      when: database_type == 'mysql' or database_type == 'mariadb'
+  tags:
+    - mysql_connector
+
+- name: Install MySQL Connector
+  hosts: all
+  roles:
+    - role: prereqs/mysql_connector/install
+      when: database_type == 'mysql' or database_type == 'mariadb'
+  tags:
+    - mysql_connector

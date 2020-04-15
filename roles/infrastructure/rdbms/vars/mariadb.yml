@@ -1,0 +1,2 @@
+---
+mysql_pid_file: /var/run/mariadb/mariadb.pid

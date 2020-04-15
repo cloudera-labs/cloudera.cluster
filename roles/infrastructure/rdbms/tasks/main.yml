@@ -1,0 +1,18 @@
+---
+
+- name: Include database type specific variables
+  include_vars:
+    file: "{{ database_type }}.yml"
+
+- name: Include database type and OS specific variables
+  include_vars:
+    file: "{{ database_type }}-{{ ansible_os_family }}.yml"
+
+- name: Install database
+  include_tasks:
+    file: "{{ item }}"
+  with_first_found:
+    - "{{ database_type }}-{{ ansible_os_family }}.yml"
+    - "{{ database_type }}.yml"
+
+

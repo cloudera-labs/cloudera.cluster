@@ -1,0 +1,391 @@
+FLUME:
+  SERVICEWIDE:
+    # Flume TLS/SSL Server JKS Keystore File Location
+    flume_keystore_file: {{ tls_keystore_path }}
+    # Flume TLS/SSL Server JKS Keystore File Password
+    flume_keystore_password: {{ tls_keystore_password }}
+    # Flume TLS/SSL Client Trust Store File
+    flume_truststore_file: {{ tls_truststore_path }}
+    # Flume TLS/SSL Client Trust Store Password
+    flume_truststore_password: {{ tls_truststore_password }}
+HBASE:
+  SERVICEWIDE:
+    # Web UI TLS/SSL Encryption Enabled
+    hbase_hadoop_ssl_enabled: True
+    # HBase TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # HBase TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # HBase TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  HBASERESTSERVER:
+    # HBase REST Server TLS/SSL Server JKS Keystore File Location
+    hbase_restserver_keystore_file: {{ tls_keystore_path }}
+    # HBase REST Server TLS/SSL Server JKS Keystore Key Password
+    hbase_restserver_keystore_keypassword: {{ tls_keystore_password }}
+    # HBase REST Server TLS/SSL Server JKS Keystore File Password
+    hbase_restserver_keystore_password: {{ tls_keystore_password }}
+    # Enable TLS/SSL for HBase REST Server
+    hbase_restserver_ssl_enable: True
+  HBASETHRIFTSERVER:
+    # HBase Thrift Server over HTTP TLS/SSL Server JKS Keystore File Location
+    hbase_thriftserver_http_keystore_file: {{ tls_keystore_path }}
+    # HBase Thrift Server over HTTP TLS/SSL Server JKS Keystore Key Password
+    hbase_thriftserver_http_keystore_keypassword: {{ tls_keystore_password }}
+    # HBase Thrift Server over HTTP TLS/SSL Server JKS Keystore File Password
+    hbase_thriftserver_http_keystore_password: {{ tls_keystore_password }}
+    # Enable TLS/SSL for HBase Thrift Server over HTTP
+    hbase_thriftserver_http_use_ssl: True
+HDFS:
+  SERVICEWIDE:
+    # Hadoop User Group Mapping LDAP TLS/SSL Truststore
+    hadoop_group_mapping_ldap_keystore: {{ tls_keystore_path }}
+    # Hadoop User Group Mapping LDAP TLS/SSL Truststore Password
+    hadoop_group_mapping_ldap_keystore_passwd: {{ tls_keystore_path }}
+    # Hadoop User Group Mapping LDAP TLS/SSL Enabled
+    hadoop_group_mapping_ldap_use_ssl: True
+    # Hadoop TLS/SSL Enabled
+    hdfs_hadoop_ssl_enabled: True
+    # Cluster-Wide Default TLS/SSL Client Truststore Location
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Cluster-Wide Default TLS/SSL Client Truststore Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Hadoop TLS/SSL Server Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Hadoop TLS/SSL Server Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Hadoop TLS/SSL Server Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+    # SSL/TLS Cipher Suite
+    # tls_ciphers:
+  HTTPFS:
+    # HttpFS TLS/SSL Server JKS Keystore File Location
+    httpfs_https_keystore_file: {{ tls_keystore_path }}
+    # HttpFS TLS/SSL Server JKS Keystore File Password
+    httpfs_https_keystore_password: {{ tls_keystore_password }}
+    # HttpFS TLS/SSL Client Trust Store File
+    httpfs_https_truststore_file: {{ tls_truststore_path }}
+    # HttpFS TLS/SSL Client Trust Store Password
+    httpfs_https_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for HttpFS
+    httpfs_use_ssl: True
+HIVE:
+  SERVICEWIDE:
+    # Enable TLS/SSL for HiveServer2
+    hiveserver2_enable_ssl: True
+    # HiveServer2 TLS/SSL Server JKS Keystore File Password
+    hiveserver2_keystore_password: {{ tls_keystore_password }}
+    # HiveServer2 TLS/SSL Server JKS Keystore File Location
+    hiveserver2_keystore_path: {{ tls_keystore_path }}
+    # HiveServer2 TLS/SSL Client Trust Store File
+    hiveserver2_truststore_file: {{ tls_truststore_path }}
+    # HiveServer2 TLS/SSL Client Trust Store Password
+    hiveserver2_truststore_password: {{ tls_truststore_password }}
+    # Hive Metastore TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Hive Metastore TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL to the Hive Metastore Database
+    ssl_enabled_database: True
+  HIVESERVER2:
+    # Enable TLS/SSL for HiveServer2 WebUI
+    ssl_enabled: True
+    # HiveServer2 WebUI TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # HiveServer2 WebUI TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+HUE:
+  SERVICEWIDE:
+    # Enable LDAP TLS
+    use_start_tls: True
+  HUE_LOAD_BALANCER:
+    # Hue Load Balancer TLS/SSL Server Certificate File (PEM Format)
+    ssl_certificate: {{ tls_cert_path }}
+    # Hue Load Balancer TLS/SSL Server Private Key File (PEM Format)
+    ssl_certificate_key: {{ tls_key_path }}
+    # SSLCipherSuite
+    # ssl_cipher_suite:
+    # SSLProtocol
+    # ssl_protocol:
+  HUE_SERVER:
+    # Hue TLS/SSL Server CA Certificate (PEM Format)
+    ssl_cacerts: {{ tls_chain_path }}
+    # Hue TLS/SSL Server Certificate File (PEM Format)
+    ssl_certificate: {{ tls_cert_path }}
+    # Enable TLS/SSL for Hue
+    ssl_enable: True
+    # Hue TLS/SSL Server Private Key File (PEM Format)
+    ssl_private_key: {{ tls_key_path }}
+    # Hue TLS/SSL Private Key Password
+    ssl_private_key_password: {{ tls_key_password }}
+IMPALA:
+  SERVICEWIDE:
+    # Enable TLS/SSL for Impala
+    client_services_ssl_enabled: True
+    # Enable LDAP TLS
+    enable_ldap_tls: True
+    # Impala TLS/SSL CA Certificate
+    ssl_client_ca_certificate: {{ tls_chain_path }}
+    # Impala TLS/SSL Server Private Key File (PEM Format)
+    ssl_private_key: {{ tls_key_path }}
+    # Impala TLS/SSL Private Key Password
+    ssl_private_key_password: {{ tls_key_password }}
+    # Impala TLS/SSL Server Certificate File (PEM Format)
+    ssl_server_certificate: {{ tls_cert_path }}
+ISILON:
+  SERVICEWIDE:
+    # Cluster-Wide Default TLS/SSL Client Truststore Location
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Cluster-Wide Default TLS/SSL Client Truststore Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+KAFKA:
+  KAFKA_BROKER:
+    # Enable TLS client authentication for JMX port
+    jmx.ssl.client.auth.enabled: True
+    # Enable TLS/SSL for Kafka JMX
+    jmx.ssl.enabled: True
+    # SSL Client Authentication
+    # ssl.client.auth: TODO
+    # Kafka Broker TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Kafka Broker TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for Kafka Broker
+    ssl_enabled: True
+    # TLS/SSL Port
+    # ssl_port:
+    # Kafka Broker TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Kafka Broker TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Kafka Broker TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  KAFKA_MIRROR_MAKER:
+    # Destination Kafka Cluster's Client Auth
+    # destination.ssl.client.auth: TODO
+    # Enable TLS client authentication for JMX port
+    jmx.ssl.client.auth.enabled: True
+    # Enable TLS/SSL for Kafka JMX
+    jmx.ssl.enabled: True
+    # Source Kafka Cluster's Client Auth
+    # source.ssl.client.auth: TODO
+    # Kafka MirrorMaker TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Kafka MirrorMaker TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for Kafka MirrorMaker
+    ssl_enabled: True
+    # Kafka MirrorMaker TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Kafka MirrorMaker TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Kafka MirrorMaker TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KEYTRUSTEE:
+  KMS_KEYTRUSTEE:
+    # Key Management Server Proxy TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Key Management Server Proxy TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for Key Management Server Proxy
+    ssl_enabled: True
+    # Key Management Server Proxy TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Key Management Server Proxy TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Key Management Server Proxy TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KEYTRUSTEE_SERVER:
+  SERVICEWIDE:
+    # Minimum TLS Support
+    # tls.min.protocols:
+  KEYTRUSTEE_ACTIVE_SERVER:
+    # Active Key Trustee Server TLS/SSL Server CA Certificate (PEM Format)
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    # Active Key Trustee Server TLS/SSL Server Certificate File (PEM Format)
+    ssl_server_certificate_location: {{ tls_cert_path }}
+    # Active Key Trustee Server TLS/SSL Server Private Key File (PEM Format)
+    ssl_server_privatekey_location: {{ tls_key_path }}
+    # Active Key Trustee Server TLS/SSL Private Key Password
+    ssl_server_privatekey_password: {{ tls_key_password }}
+  KEYTRUSTEE_PASSIVE_SERVER:
+    # Passive Key Trustee Server TLS/SSL Server CA Certificate (PEM Format)
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    # Passive Key Trustee Server TLS/SSL Server Certificate File (PEM Format)
+    ssl_server_certificate_location: {{ tls_cert_path }}
+    # Passive Key Trustee Server TLS/SSL Server Private Key File (PEM Format)
+    ssl_server_privatekey_location: {{ tls_key_path }}
+    # Passive Key Trustee Server TLS/SSL Private Key Password
+    ssl_server_privatekey_password: {{ tls_key_password }}
+KMS:
+  KMS:
+    # Key Management Server TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Key Management Server TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for Key Management Server
+    ssl_enabled: True
+    # Key Management Server TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Key Management Server TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Key Management Server TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KS_INDEXER:
+  SERVICEWIDE:
+    # HBase Indexer TLS/SSL Client Trust Store File
+    keystore_indexer_truststore_file: {{ tls_truststore_path }}
+    # HBase Indexer TLS/SSL Client Trust Store Password
+    keystore_indexer_truststore_password: {{ tls_truststore_password }}
+KUDU:
+  KUDU_MASTER:
+    # Enable TLS/SSL for Master
+    ssl_enabled: True
+    # Master TLS/SSL Server CA Certificate (PEM Format)
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    # Master TLS/SSL Server Certificate File (PEM Format)
+    ssl_server_certificate_location: {{ tls_cert_path }}
+    # Master TLS/SSL Server Private Key File (PEM Format)
+    ssl_server_privatekey_location: {{ tls_key_path }}
+    # Master TLS/SSL Private Key Password
+    ssl_server_privatekey_password: {{ tls_key_password }}
+  KUDU_TSERVER:
+    # Enable TLS/SSL for Tablet Server
+    ssl_enabled: True
+    # Tablet Server TLS/SSL Server CA Certificate (PEM Format)
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    # Tablet Server TLS/SSL Server Certificate File (PEM Format)
+    ssl_server_certificate_location: {{ tls_cert_path }}
+    # Tablet Server TLS/SSL Server Private Key File (PEM Format)
+    ssl_server_privatekey_location: {{ tls_key_path }}
+    # Tablet Server TLS/SSL Private Key Password
+    ssl_server_privatekey_password: {{ tls_key_password }}
+LUNA_KMS:
+  HSMKP_LUNA:
+    # Keystore Password
+    trustee_keyprovider_hsm_keystore_passwd: {{ tls_keystore_path }}
+    # Navigator Luna KMS Proxy TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Navigator Luna KMS Proxy TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for Navigator Luna KMS Proxy
+    ssl_enabled: True
+    # Navigator Luna KMS Proxy TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Navigator Luna KMS Proxy TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Navigator Luna KMS Proxy TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+OOZIE:
+  SERVICEWIDE:
+    # Enable TLS/SSL for Oozie
+    oozie_use_ssl: True
+  OOZIE_SERVER:
+    # Oozie TLS/SSL Server JKS Keystore File Location
+    oozie_https_keystore_file: {{ tls_keystore_path }}
+    # Oozie TLS/SSL Server JKS Keystore File Password
+    oozie_https_keystore_password: {{ tls_keystore_password }}
+    # Oozie TLS/SSL Client Trust Store File
+    oozie_https_truststore_file: {{ tls_truststore_path }}
+    # Oozie TLS/SSL Client Trust Store Password
+    oozie_https_truststore_password: {{ tls_truststore_password }}
+SOLR:
+  SERVICEWIDE:
+    # Solr TLS/SSL Server JKS Keystore File Location
+    solr_https_keystore_file: {{ tls_keystore_path }}
+    # Solr TLS/SSL Server JKS Keystore File Password
+    solr_https_keystore_password: {{ tls_keystore_password }}
+    # Solr TLS/SSL Client Trust Store File
+    solr_https_truststore_file: {{ tls_truststore_path }}
+    # Solr TLS/SSL Client Trust Store Password
+    solr_https_truststore_password: {{ tls_truststore_password }}
+    # Enable LDAP TLS
+    solr_ldap_enable_starttls: True
+    # Enable TLS/SSL for Solr
+    solr_use_ssl: True
+SPARK_ON_YARN:
+  SPARK_YARN_HISTORY_SERVER:
+    # Enable TLS/SSL for History Server
+    ssl_enabled: True
+    # Enabled SSL/TLS Algorithms
+    # ssl_server_algorithms:
+    # History Server TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # History Server TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+    # TLS/SSL Port Number
+    # ssl_server_port:
+    # TLS/SSL Protocol
+    # ssl_server_protocol:
+THALES_HSM:
+  HSMKP_THALES:
+    # Keystore Password
+    trustee_keyprovider_hsm_keystore_passwd: {{ tls_keystore_path }}
+    # Navigator Thales KMS Proxy TLS/SSL Client Trust Store File
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # Navigator Thales KMS Proxy TLS/SSL Client Trust Store Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Enable TLS/SSL for Navigator Thales KMS Proxy
+    ssl_enabled: True
+    # Navigator Thales KMS Proxy TLS/SSL Server JKS Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Navigator Thales KMS Proxy TLS/SSL Server JKS Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Navigator Thales KMS Proxy TLS/SSL Server JKS Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+YARN:
+  SERVICEWIDE:
+    # TLS/SSL Client Truststore File Location
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    # TLS/SSL Client Truststore File Password
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    # Hadoop TLS/SSL Server Keystore Key Password
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    # Hadoop TLS/SSL Server Keystore File Location
+    ssl_server_keystore_location: {{ tls_keystore_path }}
+    # Hadoop TLS/SSL Server Keystore File Password
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+    # SSL/TLS Cipher Suite
+    # tls_ciphers:
+ZOOKEEPER:
+  SERVER:
+    # Enable TLS client authentication for JMX port
+    jmx_tls_client_auth_enabled: True
+    # Enable TLS/SSL for ZooKeeper JMX
+    jmx_tls_enabled: True
+    # ZooKeeper JMX TLS/SSL Server JKS Keystore File Location
+    jmx_tls_keystore: {{ tls_keystore_path }}
+    # ZooKeeper JMX TLS/SSL Server JKS Keystore File Password
+    jmx_tls_keystore_password: {{ tls_keystore_password }}
+    # ZooKeeper JMX TLS/SSL Server Trust Store File
+    jmx_tls_truststore: {{ tls_truststore_path }}
+    # ZooKeeper JMX TLS/SSL Server Trust Store Password
+    jmx_tls_truststore_password: {{ tls_truststore_password }}
+cloudera_manager:
+  SERVICEWIDE:
+    # Use TLS Encryption for Agents
+    AGENT_TLS: True
+    # JKS Keystore File Password for Automatic TLS configuration
+    # AUTO_TLS_KEYSTORE_PASSWORD: TODO
+    # JKS Truststore File Password for Automatic TLS configuration
+    # AUTO_TLS_TRUSTSTORE_PASSWORD: TODO
+    # Automatic configuration of TLS for services
+    # AUTO_TLS_TYPE: TODO
+    # Cloudera Manager TLS/SSL Server JKS Keystore File Password
+    KEYSTORE_PASSWORD: {{ tls_keystore_password }}
+    # Cloudera Manager TLS/SSL Server JKS Keystore File Location
+    KEYSTORE_PATH: {{ tls_keystore_path }}
+    # SAML Keystore Password
+    SAML_KEYSTORE_PASSWORD: {{ tls_keystore_password }}
+    # Path to SAML Keystore File
+    SAML_KEYSTORE_PATH: {{ tls_keystore_path }}
+    # Server SSL Certificate Host Name.
+    # Supported SSL/TLS versions
+    # supported_tls_versions:
+    # Cloudera Manager TLS/SSL Client Trust Store Password
+    TRUSTSTORE_PASSWORD: {{ tls_truststore_password }}
+    # Cloudera Manager TLS/SSL Client Trust Store File
+    TRUSTSTORE_PATH: {{ tls_truststore_path }}
+    # Use TLS Encryption for Admin Console
+    WEB_TLS: True
+

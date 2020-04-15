@@ -1,0 +1,15 @@
+{%- set cloudera_manager_hosts =  {} -%}
+{%- for k, v in hostvars.items() -%}
+  {%- for host in api_hosts_response['json']['items'] -%}
+    {%- set found_host = False -%}
+    {%- if host.hostname == v.inventory_hostname or host.ipAddress == v.inventory_hostname -%}
+      {%- set found_host = True -%}
+    {%- elif alternative_ip|default('private_ip') in v and host.ipAddress == v[alternative_ip|default('private_ip')] -%}
+      {%- set found_host = True -%}
+    {%- endif -%}
+    {%- if found_host -%}
+      {%- set x = cloudera_manager_hosts.__setitem__(k, { "id": host.hostId, "hostname": host.hostname }) -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{{ cloudera_manager_hosts }}

@@ -1,0 +1,21 @@
+---
+
+- set_fact:
+    cloudera_manager_url: "{{ cloudera_manager_protocol }}://{{ cloudera_manager_host }}:{{ cloudera_manager_port }}"
+  when: cloudera_manager_url is not defined
+
+- name: Get Cloudera Manager API version
+  uri:
+    url: "{{ cloudera_manager_url }}/api/version"
+    method: GET
+    status_code: 200
+    user: "{{ cloudera_manager_api_user }}"
+    password: "{{ cloudera_manager_api_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: api_version
+  when: cloudera_manager_api is not defined
+
+- set_fact:
+    cloudera_manager_api: "{{ cloudera_manager_url | regex_replace('/?$','') }}/api/{{ api_version.content }}"
+  when: cloudera_manager_api is not defined

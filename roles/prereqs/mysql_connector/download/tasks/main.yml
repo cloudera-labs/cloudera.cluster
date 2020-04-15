@@ -1,0 +1,25 @@
+---
+
+- stat:
+    path: "{{ mysql_connector_download_dir }}/mysql-connector-java.zip"
+  register: mysql_connector_zip
+
+- name: Download MySQL Connector/J
+  get_url:
+    url: "{{ mysql_connector_url }}"
+    dest: "{{ mysql_connector_download_dir }}/mysql-connector-java.zip"
+    checksum: "{{ mysql_connector_checksum }}"
+    mode: 0644
+  when: not mysql_connector_zip.stat.exists
+
+- name: Install unzip package
+  package:
+    name: unzip
+    state: present
+
+- name: Extract MySQL Connector/J zip file
+  unarchive:
+    src: "{{ mysql_connector_download_dir }}/mysql-connector-java.zip"
+    dest: "{{ mysql_connector_extract_dir }}"
+    exclude:
+      - src

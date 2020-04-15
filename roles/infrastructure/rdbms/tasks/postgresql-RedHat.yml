@@ -1,0 +1,28 @@
+---
+
+- name: Install PostgreSQL common repository
+  yum_repository:
+    name: pgdg-common
+    description: PostgreSQL common for RHEL/CentOS
+    baseurl: https://download.postgresql.org/pub/repos/yum/common/redhat/rhel-$releasever-$basearch
+    gpgkey: https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG
+
+- name: Install PostgreSQL version repository
+  yum_repository:
+    name: pgdg
+    description: PostgreSQL {{ postgresql_version }} for RHEL/CentOS
+    baseurl: https://download.postgresql.org/pub/repos/yum/{{ postgresql_version }}/redhat/rhel-$releasever-$basearch
+    gpgkey: https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG
+
+- name: Install PostgreSQL
+  include_role:
+    name: geerlingguy.postgresql
+
+- name: Remove repositories and clean metadata
+  yum_repository:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - pgdg-common
+    - pgdg
+  notify: yum clean metadata

@@ -1,0 +1,20 @@
+---
+
+- name: Create databases
+  mysql_db:
+    name: "{{ definition.databases[item].name }}"
+    encoding: utf8
+    collation: utf8_general_ci
+  become: yes
+  with_items: "{{ definition.databases | intersect(definition.cluster.services | union(definition.mgmt.services)) }}"
+
+- name: Create database users
+  mysql_user:
+    name: "{{ definition.databases[item].user }}"
+    password: "{{ definition.databases[item].password }}"
+    update_password: always
+    host: '%'
+    priv: "{{ definition.databases[item].name }}.*:ALL"
+  become: yes
+  with_items: "{{ definition.databases | intersect(definition.cluster.services | union(definition.mgmt.services)) }}"
+

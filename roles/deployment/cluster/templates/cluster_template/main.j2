@@ -1,0 +1,10 @@
+{
+  "cdhVersion" : "{{ products | get_product_version('CDH') }}",
+  "displayName" : "{{ definition.cluster.name }}",
+  "cmVersion" : "{{ cloudera_manager_version }}",
+  "repositories" : {{ parcel_repositories | to_json }},
+  "products" : {% include 'cluster_template/products.j2' %},
+  "services" : {% include 'cluster_template/services.j2' %},
+  "hostTemplates" : {%- include 'cluster_template/hostTemplates.j2' -%},
+  "instantiator" : {%- include 'cluster_template/instantiator.j2' -%}
+}

@@ -1,0 +1,60 @@
+---
+
+- name: Generate custom database configurations
+  set_fact:
+    configs_databases_mgmt: "{{ lookup('template', 'configs/databases.j2') | from_yaml }}"
+
+- name: Generate custom log directory configurations
+  set_fact:
+    configs_log_dirs_mgmt: "{{ lookup('template', 'configs/logdirs.j2') | from_yaml }}"
+  when: definition.cluster.log_base is defined
+
+# - name: Generate custom TLS configurations
+#   set_fact:
+#     configs_tls_mgmt: "{{ lookup('template', 'configs/tls.j2') | from_yaml }}"
+#   when: tls
+
+- name: Merge all custom configurations
+  set_fact:
+    merged_configs_mgmt: >
+      {{ configs_databases_mgmt | combine(
+      configs_log_dirs_mgmt | default({}),
+      configs_tls_mgmt | default({}),
+      definition.mgmt.configs | default({}), recursive=True) }}
+
+- name: Define target host ID for Cloudera Management Service installation
+  set_fact:
+    mgmt_service_api_host_id: "{{ cloudera_manager_api_host_ids[cloudera_manager_host]['id'] }}"
+  when: mgmt_service_api_host_id is not defined
+
+- debug:
+    msg: "{{ lookup('template', 'service.j2', convert_data=False) }}"
+    verbosity: 2
+
+- name: Add Cloudera Management Service
+  uri:
+    url: "{{ cloudera_manager_api }}/cm/service"
+    method: PUT
+    body_format: json
+    body: "{{ lookup('template', 'service.j2', convert_data=False) }}"
+    status_code: 200
+    force_basic_auth: yes
+    user: "{{ cloudera_manager_api_user }}"
+    password: "{{ cloudera_manager_api_password }}"
+    return_content: yes
+  register: api_cm_service_response
+  failed_when:
+    - "'MGMT' not in api_cm_service_response.content"
+    - "'CMS instance already exists' not in api_cm_service_response.content"
+
+- name: Start Cloudera Management Service
+  uri:
+    url: "{{ cloudera_manager_api }}/cm/service/commands/start"
+    method: POST
+    status_code: 200
+    force_basic_auth: yes
+    user: "{{ cloudera_manager_api_user }}"
+    password: "{{ cloudera_manager_api_password }}"
+    return_content: yes
+  register: api_cm_service_start
+  failed_when: "'startTime' not in api_cm_service_start.content"

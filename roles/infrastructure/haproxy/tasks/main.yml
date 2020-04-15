@@ -1,0 +1,14 @@
+---
+
+- name: Install HAProxy
+  package:
+    name: haproxy
+    state: latest
+
+- name: Enable HAProxy
+  service:
+    name: haproxy
+    enabled: yes
+    state: restarted
+
+

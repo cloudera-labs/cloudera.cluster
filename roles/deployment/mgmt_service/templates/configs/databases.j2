@@ -1,0 +1,25 @@
+---
+ACTIVITYMONITOR:
+  firehose_database_host: {{ definition.databases.ACTIVITYMONITOR.host | append_database_port(definition.databases.ACTIVITYMONITOR.port | string) }}
+  firehose_database_type: {{ definition.databases.ACTIVITYMONITOR.type | format_database_type }}
+  firehose_database_name: {{ definition.databases.ACTIVITYMONITOR.name }}
+  firehose_database_user: {{ definition.databases.ACTIVITYMONITOR.user }}
+  firehose_database_password: {{ definition.databases.ACTIVITYMONITOR.password }}
+NAVIGATOR:
+  navigator_database_host: {{ definition.databases.NAVIGATOR.host | append_database_port(definition.databases.NAVIGATOR.port | string) }}
+  navigator_database_type: {{ definition.databases.NAVIGATOR.type | format_database_type }}
+  navigator_database_name: {{ definition.databases.NAVIGATOR.name }}
+  navigator_database_user: {{ definition.databases.NAVIGATOR.user }}
+  navigator_database_password: {{ definition.databases.NAVIGATOR.password }}
+NAVIGATORMETASERVER:
+  nav_metaserver_database_host: {{ definition.databases.NAVIGATORMETASERVER.host | append_database_port(definition.databases.NAVIGATOR.port | string) }}
+  nav_metaserver_database_type: {{ definition.databases.NAVIGATORMETASERVER.type | format_database_type }}
+  nav_metaserver_database_name: {{ definition.databases.NAVIGATORMETASERVER.name }}
+  nav_metaserver_database_user: {{ definition.databases.NAVIGATORMETASERVER.user }}
+  nav_metaserver_database_password: {{ definition.databases.NAVIGATORMETASERVER.password  }}
+REPORTSMANAGER:
+  headlamp_database_host: {{ definition.databases.REPORTSMANAGER.host | append_database_port(definition.databases.REPORTSMANAGER.port | string) }}
+  headlamp_database_type: {{ definition.databases.REPORTSMANAGER.type | format_database_type }}
+  headlamp_database_name: {{ definition.databases.REPORTSMANAGER.name }}
+  headlamp_database_user: {{ definition.databases.REPORTSMANAGER.user }}
+  headlamp_database_password: {{ definition.databases.REPORTSMANAGER.password }}

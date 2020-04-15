@@ -1,0 +1,10 @@
+---
+
+- name: Install Cloudera Manager embedded database
+  package:
+    name:
+    - cloudera-manager-server-db-2
+    state: present
+  changed_when: True
+  notify:
+    - start cloudera-scm-server-db

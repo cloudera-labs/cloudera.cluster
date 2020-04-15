@@ -1,0 +1,2 @@
+---
+cloudera_manager_agent_wait_for_heartbeat: True

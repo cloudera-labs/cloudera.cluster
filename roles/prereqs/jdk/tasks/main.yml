@@ -1,0 +1,93 @@
+---
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_os_family }}.yml"
+  when: ansible_os_family != "Debian"
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+  when: ansible_os_family == "Debian"
+
+- name: Define JDK package
+  set_fact:
+    jdk_package: "{{ lookup('vars', '__jdk_package_name_' + (jdk_version|string)) }}"
+  when: jdk_package is not defined
+
+- name: Install JDK
+  package:
+    name:
+    - "{{ jdk_package }}"
+    state: present
+    update_cache: yes
+
+- name: Add missing symlinks (if installed from Cloudera repo)
+  block:
+    - name: Find Java home directory
+      find:
+        paths: /usr/java
+        patterns: 'jdk*-cloudera'
+        file_type: directory
+        recurse: no
+      register: jdk_home
+    - name: Create alternatives symlink for java
+      alternatives:
+        name: java
+        link: /usr/bin/java
+        path: "{{ jdk_home.files[0].path }}/bin/java"
+      when: jdk_home.matched
+    - name: Create symlinks for Java home directory
+      file:
+        src: "{{ jdk_home.files[0].path }}"
+        dest: /usr/java/default
+        state: link
+      when: jdk_home.matched
+
+- name: Capture installed Java provider
+  raw: /usr/bin/java -version 2>&1 | egrep -o 'Java\(TM\)|OpenJDK' | sed 's/Java(TM)/Oracle/' | tr '[A-Z]' '[a-z]' | head -1
+  register: provider
+
+- name: Capture installed Java version
+  raw: /usr/bin/java -version 2>&1 | grep version | tr -d '"' | tr "_" " " | awk '{print $3"\n"$4}'
+  register: version
+
+- set_fact:
+    installed_jdk_provider: "{{ provider.stdout_lines[0] }}"
+    installed_jdk_version: "{{ version.stdout_lines[0] }}"
+    installed_jdk_update: "{{ version.stdout_lines[1] }}"
+
+- fail:
+    msg: JDK7 is no longer supported
+  when: installed_jdk_version == '1.7.0'
+
+- name: Find java.security file
+  find:
+    paths: "{{ jdk_java_security_paths }}"
+    pattern: "java.security"
+    follow: yes
+  register: java_security
+
+- fail:
+    msg: >
+      Multiple copies of java.security were found -- failing to avoid editing the incorrect one.
+      To override, set variable jdk_java_security_safe_replace: False
+  when: jdk_java_security_safe_replace and java_security.matched > 1
+
+- name: Enable Unlimited Strength Policy
+  lineinfile:
+    path: "{{ item.path }}"
+    regexp: '#?crypto.policy='
+    line: crypto.policy=unlimited
+  with_items: "{{ java_security.files }}"
+  when: installed_jdk_version is not match("11.*")
+
+- name: Apply workaround for Kerberos issues introduced in OpenJDK 1.8u242 and 11.0.6 (JDK-8215032)
+  lineinfile:
+    path: "{{ item.path }}"
+    regexp: '^sun.security.krb5.disableReferrals='
+    line: sun.security.krb5.disableReferrals=true
+  with_items: "{{ java_security.files }}"
+  when: >
+    installed_jdk_provider == 'openjdk' and ((installed_jdk_version == '1.8.0' and installed_jdk_update|int >= 242)
+      or (installed_jdk_version is version('11.0.6', '>=')))

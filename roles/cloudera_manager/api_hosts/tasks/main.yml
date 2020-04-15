@@ -1,0 +1,23 @@
+---
+
+- name: Get the host identifiers and names from Cloudera Manager
+  uri:
+    url: "{{ cloudera_manager_api }}/hosts"
+    method: GET
+    status_code: 200
+    user: "{{ cloudera_manager_api_user }}"
+    password: "{{ cloudera_manager_api_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: api_hosts_response
+  when: cloudera_manager_api_host_ids is not defined
+
+- name: Extract the host identifiers and names into facts
+  set_fact:
+    cloudera_manager_api_host_ids: "{{ lookup('template', 'host_list.j2') }}"
+  when: cloudera_manager_api_host_ids is not defined
+
+- name: Print the extracted host identifiers and names
+  debug:
+    var: cloudera_manager_api_host_ids
+    verbosity: 2

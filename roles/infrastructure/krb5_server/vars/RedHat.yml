@@ -1,0 +1,8 @@
+---
+krb5_kdc_state_directory: /var/kerberos/krb5kdc
+krb5_packages:
+  - krb5-libs
+  - krb5-server
+krb5_services:
+  - krb5kdc
+  - kadmin

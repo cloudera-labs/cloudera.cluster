@@ -1,0 +1,19 @@
+---
+
+- name: Create database roles
+  postgresql_user:
+    name: "{{ definition.databases[item].user }}"
+    password: "{{ definition.databases[item].password }}"
+  become: yes
+  become_user: postgres
+  with_items: "{{ definition.databases | intersect(definition.cluster.services | union(definition.mgmt.services)) }}"
+
+- name: Create databases
+  postgresql_db:
+    name: "{{ definition.databases[item].name }}"
+    owner: "{{ definition.databases[item].user }}"
+    encoding: UTF-8
+  become: yes
+  become_user: postgres
+  with_items: "{{ definition.databases | intersect(definition.cluster.services | union(definition.mgmt.services)) }}"
+

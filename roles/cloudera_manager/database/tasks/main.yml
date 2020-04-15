@@ -1,0 +1,9 @@
+---
+
+- name: Configure Cloudera Manager database (external)
+  include_tasks: external.yml
+  when: not cloudera_manager_database_embedded
+
+- name: Configure Cloudera Manager database (embedded)
+  include_tasks: embedded.yml
+  when: cloudera_manager_database_embedded

@@ -1,0 +1,138 @@
+#---------------------------------------------------------------------
+# Global settings
+#---------------------------------------------------------------------
+global
+    # to have these messages end up in /var/log/haproxy.log you will
+    # need to:
+    #
+    # 1) configure syslog to accept network log events.  This is done
+    #    by adding the '-r' option to the SYSLOGD_OPTIONS in
+    #    /etc/sysconfig/syslog
+    #
+    # 2) configure local2 events to go to the /var/log/haproxy.log
+    #   file. A line like the following can be added to
+    #   /etc/sysconfig/syslog
+    #
+    #    local2.*                       /var/log/haproxy.log
+    #
+    log         127.0.0.1 local2
+
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+    daemon
+    tune.ssl.default-dh-param	2048
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#
+# increased "timeout client" and "timeout server" from 5m to 30m, see: CLCL-1410
+#
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           5m
+    timeout connect         10s
+    timeout client          30m
+    timeout server          30m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+frontend ft_solrsec
+    bind 0.0.0.0:8985 name https ssl crt /etc/haproxy/combinedKeyAndCert.pem no-sslv3 no-tlsv10 no-tlsv11
+    mode http
+    option tcplog
+    log global
+    option forwardfor       except 127.0.0.0/8
+    default_backend bk_solr
+
+backend bk_solr
+    mode http
+    balance roundrobin
+    {% for host in groups['worker_servers'] %}
+    server solr{{ host }} {{ host }}:8985 ssl ca-file {{ tls.cert_chain }}
+    {% endfor %}
+
+# load balance the port shared by HiveServer2 and odbc version 2 and jdbc
+
+frontend ft_impala-thrift-sec
+    bind 0.0.0.0:25004 ssl crt /etc/haproxy/combinedKeyAndCert.pem no-sslv3 no-tlsv10 no-tlsv11
+    mode tcp
+    option tcplog
+    timeout client 1h
+    log global
+    default_backend bk_impalathrift
+
+backend bk_impalathrift
+    mode tcp
+    balance source
+    timeout server 1h
+    {% for host in groups['worker_servers'] %}
+    server impala{{ host }} {{ host }}:21050 ssl ca-file {{ tls.cert_chain }}
+    {% endfor %}
+
+# load balance the port shared by impala-shell and odbc version 1
+
+frontend ft_impala-shell-sec
+    bind 0.0.0.0:25003 ssl crt /etc/haproxy/combinedKeyAndCert.pem no-sslv3
+    mode tcp
+    option tcplog
+    timeout client 1h
+    log global
+    default_backend bk_impalashell
+
+backend bk_impalashell
+    mode tcp
+    balance source
+    timeout server 1h
+    {% for host in groups['worker_servers'] %}
+    server impala2{{ host }} {{ host }}:21000 ssl ca-file {{ tls.cert_chain }}
+    {% endfor %}
+
+frontend ft_hs2-sec
+    bind 0.0.0.0:10000 ssl crt /etc/haproxy/combinedKeyAndCert.pem no-sslv3 no-tlsv10 no-tlsv11
+    mode tcp
+    option tcplog
+    timeout client 12h
+    log global
+    default_backend bk_hs2
+
+backend bk_hs2
+    mode tcp
+    balance source
+    timeout server 12h
+    {% for host in groups['gatewayen_servers'] %}
+    server hive{{ host }} {{ host }}:10000 ssl ca-file {{ tls.cert_chain }}
+    {% endfor %}
+
+# The Cloudera documentation recommends using pass-through TLS. We're not doing that though
+# as we don't think it is neccesary.
+frontend ft_oozie-sec
+    bind 0.0.0.0:11443 name https ssl crt /etc/haproxy/combinedKeyAndCert.pem no-sslv3 no-tlsv10 no-tlsv11
+    mode http
+    option tcplog
+    log global
+    option forwardfor       except 127.0.0.0/8
+    default_backend bk_oozie
+
+backend bk_oozie
+    mode http
+    balance roundrobin
+    {% for host in groups['gatewaylb_servers'] %}
+    server oozie{{ host }} {{ host }}:{{ cdh_services | json_query('[?type==`oozie`].oozie_https_port') | first }} ssl ca-file {{ tls.cert_chain }}
+    {% endfor %}
+

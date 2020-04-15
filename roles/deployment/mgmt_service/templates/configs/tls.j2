@@ -1,0 +1,67 @@
+ACTIVITYMONITOR:
+  # Activity Monitor Web UI HTTPS Port
+  # firehose_debug_tls_port:
+  # Enable TLS/SSL for Firehose Debug Server
+  ssl_enabled: True
+  # Firehose Debug Server TLS/SSL Server JKS Keystore File Location
+  ssl_server_keystore_location: {{ tls_keystore_path }}
+  # Firehose Debug Server TLS/SSL Server JKS Keystore File Password
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+SERVICEWIDE:
+  # TLS/SSL Client Truststore File Location
+  ssl_client_truststore_location: {{ tls_truststore_path }}
+  # Cloudera Manager Server TLS/SSL Client Trust Store Password
+  ssl_client_truststore_password: {{ tls_truststore_password }}
+HOSTMONITOR:
+  # Host Monitor Web UI HTTPS Port
+  # firehose_debug_tls_port:
+  # Enable TLS/SSL for Firehose Debug Server
+  ssl_enabled: True
+  # Firehose Debug Server TLS/SSL Server JKS Keystore File Location
+  ssl_server_keystore_location: {{ tls_keystore_path }}
+  # Firehose Debug Server TLS/SSL Server JKS Keystore File Password
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+NAVIGATOR:
+  # Navigator TLS/SSL Client Trust Store File
+  navigator_truststore_file: {{ tls_truststore_path }}
+  # Navigator TLS/SSL Client Trust Store Password
+  navigator_truststore_password: {{ tls_truststore_password }}
+  # Enable TLS/SSL for NAVIGATOR
+  ssl_enabled: True
+  # TLS/SSL Keystore Key Password
+  ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+  # TLS/SSL Keystore File Location
+  ssl_server_keystore_location: {{ tls_keystore_path }}
+  # TLS/SSL Keystore File Password
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+NAVIGATORMETASERVER:
+  # SAML Keystore Password
+  nav_saml_keystore_password: {{ tls_keystore_password }}
+  # Path to SAML Keystore File
+  nav_saml_keystore_path: {{ tls_keystore_path }}
+  # Enable TLS/SSL for Navigator Metadata Server
+  ssl_enabled: True
+  # TLS/SSL Keystore Key Password
+  ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+  # TLS/SSL Keystore File Location
+  ssl_server_keystore_location: {{ tls_keystore_path }}
+  # TLS/SSL Keystore File Password
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+SERVICEMONITOR:
+  # Service Monitor Web UI HTTPS Port
+  # firehose_debug_tls_port:
+  # Enable TLS/SSL for Firehose Debug Server
+  ssl_enabled: True
+  # Firehose Debug Server TLS/SSL Server JKS Keystore File Location
+  ssl_server_keystore_location: {{ tls_keystore_path }}
+  # Firehose Debug Server TLS/SSL Server JKS Keystore File Password
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+TELEMETRYPUBLISHER:
+  # Enable TLS/SSL for Telemetry Publisher
+  ssl_enabled: True
+  # Telemetry Publisher TLS/SSL Server JKS Keystore Key Password
+  ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+  # Telemetry Publisher TLS/SSL Server JKS Keystore File Location
+  ssl_server_keystore_location: {{ tls_keystore_path }}
+  # Telemetry Publisher TLS/SSL Server JKS Keystore File Password
+  ssl_server_keystore_password: {{ tls_keystore_password }}

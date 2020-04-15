@@ -1,0 +1,177 @@
+---
+
+- name: Install openssl
+  package:
+    name: openssl
+    state: latest
+
+- name: Install PyOpenSSL
+  package:
+    name: pyOpenSSL
+    state: latest
+
+- name: Prepare Root CA directories
+  file:
+    state: directory
+    path: "{{ ca_root_location }}"
+    mode: 0700
+    owner: root
+
+- name: Prepare Root CA subdirs
+  file:
+    state: directory
+    path: "{{ ca_root_location }}/{{ item }}"
+    mode: 0700
+    owner: root
+  with_items:
+    - certs
+    - crl
+    - newcerts
+    - private
+
+- name: Create index file
+  file:
+    state: touch
+    path: "{{ ca_root_location }}/index.txt"
+    mode: 0700
+
+- name: Write serial
+  shell: "echo 1000 > {{ ca_root_location }}/serial"
+  args:
+    creates: "{{ ca_root_location }}/serial"
+
+- name: Install root ca openssl.cnf
+  template:
+    src: root.openssl.cnf.j2
+    dest: "{{ ca_root_location }}/openssl.cnf"
+    owner: root
+    mode: '0644'
+
+- name: Genereate root private key
+  openssl_privatekey:
+    path: "{{ ca_root_location }}/private/ca.key.pem"
+    size: 4096
+    cipher: aes256
+    passphrase: "{{ ca_root_key_password }}"
+    mode: 0400
+
+- name: "set CA_SUBJECT var"
+  set_fact:
+    ca_subject: '/C={{ ca_countryname_default }}/O={{ ca_org_name }}/OU={{ ca_ou }}/CN={{ ca_root_cn }}'
+
+- name: Generate root certificate
+  shell: >
+    {{ openssl_path }} req -config {{ ca_root_location }}/openssl.cnf -new
+    -key {{ ca_root_location }}/private/ca.key.pem
+    -x509
+    -days 7300
+    -sha256
+    -extensions v3_ca
+    -out {{ ca_root_location }}/certs/{{ root_ca_cert_name }}
+    -passin pass:{{ ca_root_key_password }}
+    -subj "{{ ca_subject }}"
+  args:
+    creates: "{{ ca_root_location }}/certs/{{ root_ca_cert_name }}"
+
+- name: Intermediate CA directories
+  file:
+    state: directory
+    path: "{{ ca_intermediate_location }}"
+    mode: 0700
+    owner: root
+
+- name: Prepare Intermediate CA subdirs
+  file:
+    state: directory
+    path: "{{ ca_intermediate_location }}/{{ item }}"
+    mode: 0700
+    owner: root
+  with_items:
+    - certs
+    - crl
+    - csr
+    - newcerts
+    - private
+
+- name: Create index file
+  file:
+    state: touch
+    path: "{{ ca_intermediate_location }}/index.txt"
+    mode: 0700
+
+- name: Write serial
+  shell: "echo 1000 > {{ ca_intermediate_location }}/serial"
+  args:
+    creates: "{{ ca_intermediate_location }}/serial"
+
+- name: Install intermediate ca openssl.cnf
+  template:
+    src: intermediate.openssl.cnf.j2
+    dest: "{{ ca_intermediate_location }}/openssl.cnf"
+    owner: root
+    mode: '0644'
+
+- name: Genereate intermediate private key
+  openssl_privatekey:
+    path: "{{ ca_intermediate_location }}/private/intermediate.key.pem"
+    size: 4096
+    cipher: aes256
+    passphrase: "{{ ca_intermediate_key_password }}"
+    mode: 0400
+
+- name: "set INT_CA_SUBJECT var"
+  set_fact:
+    intermediate_ca_subject: '/C={{ ca_countryname_default }}/O={{ ca_org_name }}/OU={{ ca_ou }}/CN={{ ca_intermediate_cn }}'
+
+- name: Generate intermediate CSR
+  shell: "{{ openssl_path }} req -config  {{ ca_intermediate_location }}/openssl.cnf -new -sha256 -key {{ ca_intermediate_location }}/private/intermediate.key.pem -out {{ ca_intermediate_location }}/csr/intermediate.csr.pem -passin pass:{{ ca_intermediate_key_password }} -subj \"{{ intermediate_ca_subject }}\""
+  args:
+    creates: "{{ ca_intermediate_location }}/csr/intermediate.csr.pem"
+
+- name: Sign intermediate certificate
+  shell: "{{ openssl_path }} ca -batch -config  {{ ca_root_location }}/openssl.cnf -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in {{ ca_intermediate_location }}/csr/intermediate.csr.pem -out {{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }} -passin pass:{{ ca_root_key_password }}"
+  args:
+    creates: "{{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }}"
+
+- name: Generate certificate chain file
+  shell: "cat {{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }} {{ ca_root_location }}/certs/{{ root_ca_cert_name }} > {{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
+  args:
+    creates: "{{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
+
+- name: Chmod chain file
+  file:
+    state: file
+    mode: 444
+    path: "{{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
+
+- name: Prepare directory for signed certs
+  local_action:
+    module: file
+    state: directory
+    mode: 0777
+    owner: "{{ ansible_user_id }}"
+    path: "{{ signed_certificates_local_location }}"
+
+- name: Fetch ca files
+  fetch:
+    flat: yes
+    src: "{{ item }}"
+    dest: "{{ signed_certificates_local_location }}/"
+  with_items:
+    - "{{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
+    - "{{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }}"
+    - "{{ ca_root_location }}/certs/{{ root_ca_cert_name }}"
+
+- name: Identify signed certificates from CA
+  find:
+    paths: "{{ ca_intermediate_location }}/certs/"
+    patterns: ".pem$"
+    use_regex: True
+  register: file_2_fetch
+
+- name: Fetch signed signed_certificates
+  fetch:
+    flat: yes
+    src: "{{ item.path }}"
+    dest: "{{ signed_certificates_local_location }}/"
+  with_items: "{{ file_2_fetch.files }}"
