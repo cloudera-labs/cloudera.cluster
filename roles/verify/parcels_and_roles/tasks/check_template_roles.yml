@@ -19,6 +19,7 @@
         invalid_roles: >-
           {{
           template.roles
+          | map('regex_replace','/.+','')
           | difference(role_mappings[template.service] | list)
           }}
     - name: Ensure the host template service roles are valid

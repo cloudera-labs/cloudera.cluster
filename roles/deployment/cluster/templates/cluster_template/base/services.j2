@@ -31,6 +31,18 @@
       }
       {%- endfor -%}
     {%- endif -%}
+    {%- endfor -%}
+    {%- for custom_role in cluster.host_templates | extract_custom_roles(service) -%}
+      {%- set (role_type, config_group) = custom_role | extract_role_and_group -%}
+      {{ role_group_sep() }}
+      {
+        "refName": "{{ service_ref }}-{{ role_type }}-{{ config_group }}",
+        "roleType": "{{ role_type }}",
+        {% set config_sep = joiner(",") -%}
+        "configs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service, custom_role) }},
+        "base": false
+      }
+    {%- endfor -%}
     ]
   }
   {%- endfor -%}

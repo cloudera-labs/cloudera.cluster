@@ -23,7 +23,10 @@ class FilterModule(object):
     def filters(self):
         return {
             'flatten_dict_list': self.flatten_dict_list,
+            'extract_custom_roles': self.extract_custom_roles,
+            'extract_custom_role_groups': self.extract_custom_role_groups,
             'extract_products_from_manifests': self.extract_products_from_manifests,
+            'extract_role_and_group': self.extract_role_and_group,
             'format_database_type': self.format_database_type,
             'get_product_version': self.get_product_version,
             'get_major_version': self.get_major_version,  # Unused
@@ -187,3 +190,29 @@ class FilterModule(object):
             cluster
             for cluster in clusters
             if cluster.get('name') == name]
+
+    def extract_role_and_group(self, role_spec):
+        role = None
+        template_group = "BASE"
+        if '/' in role_spec:
+            role = role_spec[:role_spec.index('/')]
+            template_group = role_spec[role_spec.index('/')+1:]
+        else:
+            role = role_spec
+        return (role, template_group)
+
+    def extract_custom_roles(self, host_templates, service):
+        custom_roles = []
+        for role_mapping in host_templates.values():
+            if service in role_mapping:
+                for custom_role in filter(lambda x: '/' in x, role_mapping[service]):
+                    custom_roles.append(custom_role)
+        return custom_roles
+
+    def extract_custom_role_groups(self, host_templates):
+        custom_role_groups = []
+        for role_mapping in host_templates.values():
+            for (service, roles) in role_mapping.items():
+                for custom_role in filter(lambda x: '/' in x, roles):
+                    custom_role_groups.append("-".join([service, "1"] + custom_role.split("/")))
+        return custom_role_groups
