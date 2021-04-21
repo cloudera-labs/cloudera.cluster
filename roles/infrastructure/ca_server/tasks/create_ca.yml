@@ -1,0 +1,145 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Prepare root CA directories
+  file:
+    state: directory
+    path: "{{ dir }}"
+    mode: 0700
+    owner: root
+  loop:
+    - "{{ ca_server_root_path }}"
+    - "{{ ca_server_root_path_certs }}"
+    - "{{ ca_server_root_path_crl }}"
+    - "{{ ca_server_root_path_newcerts }}"
+    - "{{ ca_server_root_path_private }}"
+  loop_control:
+    loop_var: dir
+
+- name: Create index file
+  file:
+    state: touch
+    path: "{{ ca_server_root_path }}/index.txt"
+    mode: 0700
+  changed_when: False
+
+- name: Write serial
+  shell:
+    cmd: echo 1000 > {{ ca_server_root_path }}/serial
+    creates: "{{ ca_server_root_path }}/serial"
+
+- name: Install root CA openssl.cnf
+  template:
+    src: root.openssl.cnf.j2
+    dest: "{{ ca_server_root_path }}/openssl.cnf"
+    owner: root
+    mode: 0644
+
+- name: Generate root private key
+  openssl_privatekey:
+    path: "{{ ca_server_root_path_private }}/{{ ca_server_root_key_name }}"
+    size: "{{ ca_server_root_key_size }}"
+    cipher: "{{ ca_server_root_key_cipher }}"
+    passphrase: "{{ ca_server_root_key_password }}"
+    mode: 0400
+
+- set_fact:
+    subject_root: "/{{ lookup('template', 'root_dn.j2') | from_yaml | map('regex_replace', '/', '\\/') | join('/') }}"
+    subject_intermediate: "/{{ lookup('template', 'intermediate_dn.j2') | from_yaml | map('regex_replace', '/', '\\/') | join('/') }}"
+
+- name: Generate root certificate
+  shell:
+    cmd: >
+      {{ openssl_path }} req
+      -config {{ ca_server_root_path }}/openssl.cnf
+      -new
+      -key {{ ca_server_root_path_private }}/{{ ca_server_root_key_name }}
+      -x509
+      -days 7300
+      -sha256
+      -extensions v3_ca
+      -out {{ ca_server_root_path_certs }}/{{ ca_server_root_cert_name }}
+      -passin pass:{{ ca_server_root_key_password }}
+      -subj "{{ subject_root }}"
+    creates: "{{ ca_server_root_path_certs }}/{{ ca_server_root_cert_name }}"
+
+- name: Create intermediate CA directories
+  file:
+    state: directory
+    path: "{{ dir }}"
+    mode: 0700
+    owner: root
+  loop:
+    - "{{ ca_server_intermediate_path }}"
+    - "{{ ca_server_intermediate_path_certs }}"
+    - "{{ ca_server_intermediate_path_crl }}"
+    - "{{ ca_server_intermediate_path_csr }}"
+    - "{{ ca_server_intermediate_path_newcerts }}"
+    - "{{ ca_server_intermediate_path_private }}"
+  loop_control:
+    loop_var: dir
+
+- name: Create index file
+  file:
+    state: touch
+    path: "{{ ca_server_intermediate_path }}/index.txt"
+    mode: 0700
+  changed_when: False
+
+- name: Write serial
+  shell:
+    cmd: echo 1000 > {{ ca_server_intermediate_path }}/serial
+    creates: "{{ ca_server_intermediate_path }}/serial"
+
+- name: Install intermediate CA openssl.cnf
+  template:
+    src: intermediate.openssl.cnf.j2
+    dest: "{{ ca_server_intermediate_path }}/openssl.cnf"
+    owner: root
+    mode: 0644
+
+- name: Generate intermediate private key
+  openssl_privatekey:
+    path: "{{ ca_server_intermediate_path_private }}/intermediate.key.pem"
+    size: 4096
+    cipher: "{{ ca_server_root_key_cipher }}"
+    passphrase: "{{ ca_server_intermediate_key_password }}"
+    mode: 0400
+
+- name: Generate intermediate CSR
+  shell:
+    cmd: >
+      {{ openssl_path }} req
+      -config {{ ca_server_intermediate_path }}/openssl.cnf
+      -new -sha256
+      -key {{ ca_server_intermediate_path_private }}/intermediate.key.pem
+      -out {{ ca_server_intermediate_path_csr }}/intermediate.csr.pem
+      -passin pass:{{ ca_server_intermediate_key_password }}
+      -subj "{{ subject_intermediate }}"
+    creates: "{{ ca_server_intermediate_path_csr }}/intermediate.csr.pem"
+
+- name: Sign intermediate certificate
+  shell:
+    cmd: >
+      {{ openssl_path }} ca
+      -batch
+      -config {{ ca_server_root_path }}/openssl.cnf
+      -extensions v3_intermediate_ca
+      -days 3650
+      -notext
+      -md sha256
+      -in {{ ca_server_intermediate_path_csr }}/intermediate.csr.pem
+      -out {{ ca_server_intermediate_path_certs }}/{{ ca_server_intermediate_cert_name }}
+      -passin pass:{{ ca_server_root_key_password }}
+    creates: "{{ ca_server_intermediate_path_certs }}/{{ ca_server_intermediate_cert_name }}"

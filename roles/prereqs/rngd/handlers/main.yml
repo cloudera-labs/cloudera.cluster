@@ -1,6 +1,0 @@
----
-
-- name: restart rngd
-  service:
-    name: "{{ __rngd_service_name }}"
-    state: restarted

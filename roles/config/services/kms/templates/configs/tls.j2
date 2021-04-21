@@ -1,0 +1,13 @@
+KMS_KEYTRUSTEE:
+  ssl_enabled: 'true'
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+  ssl_client_truststore_location: {{ tls_truststore_path }}
+  ssl_client_truststore_password: {{ tls_truststore_password }}
+
+RANGER_KMS_SERVER_KTS:
+  ssl_enabled: 'true'
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+  ssl_client_truststore_location: {{ tls_truststore_path }}
+  ssl_client_truststore_password: {{ tls_truststore_password }}

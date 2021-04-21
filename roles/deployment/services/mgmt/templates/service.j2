@@ -1,0 +1,38 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{
+  "name": "mgmt",
+  "displayName": "{{ definition.mgmt.name | default("Cloudera Management Service") }}",
+  "type": "MGMT",
+  "roles": [
+  {%- set role_sep = joiner(",") -%}
+  {%- for role in definition.mgmt.services -%}
+  {{ role_sep() }}
+    {
+      "name": "mgmt-{{ role }}",
+      "type": "{{ role }}",
+      "roleConfigGroupRef": {
+        "roleConfigGroupName": "mgmt-{{ role }}-BASE"
+      },
+      "hostRef": {
+        "hostId": "{{ mgmt_service_api_host_id }}"
+      }
+    }
+  {%- endfor -%}
+  ],
+  "roleConfigGroups": [
+  {%- set role_group_sep = joiner(",") -%}
+  {%- for role in (merged_configs | list | difference(['SERVICEWIDE'])) -%}
+  {{ role_group_sep() }}
+    {
+      "name": "mgmt-{{ role }}-BASE",
+      "roleType": "{{ role }}",
+      "base": true,
+      "serviceRef": {
+        "serviceName": "mgmt"
+      },
+      "config": {{ cm_api.ApiConfigList(merged_configs[role]) }}
+    }
+  {%- endfor -%}
+  ], 
+  "config": {{ cm_api.ApiConfigList(merged_configs['SERVICEWIDE']) }}
+}

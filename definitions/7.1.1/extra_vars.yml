@@ -1,5 +1,0 @@
----
-cluster_definition: definitions/7.1.1
-#build 2020-04-08 05:55
-cloudera_archive_base_url: http://cloudera-build-us-west-1.vpc.cloudera.com/s3/build/2535749
-cloudera_manager_version: 7.1.1

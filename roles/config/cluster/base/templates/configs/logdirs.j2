@@ -1,0 +1,132 @@
+{%- set log_base = cluster.log_base | default('/var/log') | regex_replace('/$','') -%}
+---
+ACCUMULO16:
+  ACCUMULO16_MASTER:
+    log_dir: "{{ log_base }}/accumulo"
+  ACCUMULO16_TSERVER:
+    log_dir: "{{ log_base }}/accumulo"
+  GARBAGE_COLLECTOR:
+    log_dir: "{{ log_base }}/accumulo"
+  MONITOR:
+    log_dir: "{{ log_base }}/accumulo"
+  TRACER:
+    log_dir: "{{ log_base }}/accumulo"
+FLUME:
+  AGENT:
+    flume_agent_log_dir: "{{ log_base }}/flume-ng"
+HBASE:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hbase/audit"
+  HBASERESTSERVER:
+    hbase_restserver_log_dir: "{{ log_base }}/hbase"
+  HBASETHRIFTSERVER:
+    hbase_thriftserver_log_dir: "{{ log_base }}/hbase"
+  MASTER:
+    hbase_master_log_dir: "{{ log_base }}/hbase"
+  REGIONSERVER:
+    hbase_regionserver_log_dir: "{{ log_base }}/hbase"
+HDFS:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hadoop-hdfs/audit"
+  DATANODE:
+    datanode_log_dir: "{{ log_base }}/hadoop-hdfs"
+  FAILOVERCONTROLLER:
+    failover_controller_log_dir: "{{ log_base }}/hadoop-hdfs"
+  HTTPFS:
+    httpfs_log_dir: "{{ log_base }}/hadoop-httpfs"
+  JOURNALNODE:
+    journalnode_log_dir: "{{ log_base }}/hadoop-hdfs"
+  NAMENODE:
+    namenode_log_dir: "{{ log_base }}/hadoop-hdfs"
+  NFSGATEWAY:
+    nfsgateway_log_dir: "{{ log_base }}/hadoop-hdfs"
+  SECONDARYNAMENODE:
+    secondarynamenode_log_dir: "{{ log_base }}/hadoop-hdfs"
+HIVE:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hive/audit"
+    lineage_event_log_dir: "{{ log_base }}/hive/lineage"
+  HIVEMETASTORE:
+    hive_log_dir: "{{ log_base }}/hive"
+  HIVESERVER2:
+    hive_log_dir: "{{ log_base }}/hive"
+    hive_server2_logging_operation_log_location: "{{ log_base }}/hive/operation_logs"
+  WEBHCAT:
+    hcatalog_log_dir: "{{ log_base }}/hcatalog"
+HUE:
+  HUE_LOAD_BALANCER:
+    hue_load_balancer_log_dir: "{{ log_base }}/hue-httpd"
+  HUE_SERVER:
+    hue_server_log_dir: "{{ log_base }}/hue"
+  KT_RENEWER:
+    kt_renewer_log_dir: "{{ log_base }}/hue"
+IMPALA:
+  CATALOGSERVER:
+    core_dump_dir: "{{ log_base }}/catalogd"
+    minidump_path: "{{ log_base }}/impala-minidumps"
+    log_dir: "{{ log_base }}/catalogd"
+  IMPALAD:
+    core_dump_dir: "{{ log_base }}/impalad"
+    minidump_path: "{{ log_base }}/impala-minidumps"
+    audit_event_log_dir: "{{ log_base }}/impalad/audit"
+    lineage_event_log_dir: "{{ log_base }}/impalad/lineage"
+    log_dir: "{{ log_base }}/impalad"
+  STATESTORE:
+    core_dump_dir: "{{ log_base }}/statestore"
+    minidump_path: "{{ log_base }}/impala-minidumps"
+    log_dir: "{{ log_base }}/statestore"
+KAFKA:
+  KAFKA_BROKER:
+    log_dir: "{{ log_base }}/kafka"
+  KAFKA_MIRROR_MAKER:
+    log_dir: "{{ log_base }}/kafka"
+KEYTRUSTEE:
+  KMS_KEYTRUSTEE:
+    log_dir: "{{ log_base }}/kms-keytrustee"
+KMS:
+  KMS:
+    log_dir: "{{ log_base }}/hadoop-kms"
+KS_INDEXER:
+  HBASE_INDEXER:
+    hbase_indexer_log_dir: "{{ log_base }}/hbase-solr"
+KUDU:
+  KUDU_MASTER:
+    log_dir: "{{ log_base }}/kudu"
+    master_core_dump_directory: "{{ log_base }}/kudu"
+  KUDU_TSERVER:
+    log_dir: "{{ log_base }}/kudu"
+    tserver_core_dump_directory: "{{ log_base }}/kudu"
+LUNA_KMS:
+  HSMKP_LUNA:
+    log_dir: "{{ log_base }}/hsmkp"
+OOZIE:
+  OOZIE_SERVER:
+    oozie_log_dir: "{{ log_base }}/oozie"
+SENTRY:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/sentry/audit"
+  SENTRY_SERVER:
+    sentry_server_log_dir: "{{ log_base }}/sentry"
+SOLR:
+  SOLR_SERVER:
+    solr_log_dir: "{{ log_base }}/solr"
+SPARK_ON_YARN:
+  SPARK_YARN_HISTORY_SERVER:
+    log_dir: "{{ log_base }}/spark"
+THALES_HSM:
+  HSMKP_THALES:
+    log_dir: "{{ log_base }}/hsmkp"
+YARN:
+  GATEWAY:
+    hadoop_job_history_dir: "{{ log_base }}/hadoop-mapreduce/history"
+  JOBHISTORY:
+    mr2_jobhistory_log_dir: "{{ log_base }}/hadoop-mapreduce"
+  NODEMANAGER:
+    node_manager_log_dir: "{{ log_base }}/hadoop-yarn"
+    yarn_nodemanager_log_dirs: "{{ log_base }}/hadoop-yarn/container"
+  RESOURCEMANAGER:
+    resource_manager_log_dir: "{{ log_base }}/hadoop-yarn"
+ZOOKEEPER:
+  SERVER:
+    zk_server_log_dir: "{{ log_base }}/zookeeper"
+

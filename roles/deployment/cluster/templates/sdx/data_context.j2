@@ -1,0 +1,15 @@
+{
+  "name": "{{ data_context.name }}",
+  "displayName": "{{ data_context.name }}",
+  "services": [
+{%- set service_joiner = joiner(",") -%}
+{%- for service in data_context.services | default(cluster.services) | intersect(sdx_services) -%}
+{{ service_joiner() }}
+    {
+      "serviceName": "{{ service | lower }}",
+      "serviceType": "{{ service }}",
+      "clusterName": "{{ cluster.name }}"
+    }
+{%- endfor -%}
+  ]
+}

@@ -1,0 +1,17 @@
+{% if cluster.security.kerberos | default(False) %}
+{% if cluster.security.tls | default(False) %}
+{% set protocol='SASL_SSL' %}
+{% else %}
+{% set protocol='SASL_PLAINTEXT' %}
+{% endif %}
+{% else %}
+{% if cluster.security.tls | default(False) %}
+{% set protocol='SSL' %}
+{% else %}
+{% set protocol='PLAINTEXT' %}
+{% endif %}
+{% endif %}
+---
+CRUISE_CONTROL:
+  CRUISE_CONTROL_SERVER:
+    security.protocol: {{ protocol }}

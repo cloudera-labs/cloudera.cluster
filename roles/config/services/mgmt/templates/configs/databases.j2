@@ -1,0 +1,25 @@
+---
+ACTIVITYMONITOR:
+  firehose_database_host: {{ databases.ACTIVITYMONITOR.host | append_database_port(databases.ACTIVITYMONITOR.port | string) }}
+  firehose_database_type: {{ databases.ACTIVITYMONITOR.type | format_database_type }}
+  firehose_database_name: {{ databases.ACTIVITYMONITOR.name }}
+  firehose_database_user: {{ databases.ACTIVITYMONITOR.user }}
+  firehose_database_password: {{ databases.ACTIVITYMONITOR.password }}
+NAVIGATOR:
+  navigator_database_host: {{ databases.NAVIGATOR.host | append_database_port(databases.NAVIGATOR.port | string) }}
+  navigator_database_type: {{ databases.NAVIGATOR.type | format_database_type }}
+  navigator_database_name: {{ databases.NAVIGATOR.name }}
+  navigator_database_user: {{ databases.NAVIGATOR.user }}
+  navigator_database_password: {{ databases.NAVIGATOR.password }}
+NAVIGATORMETASERVER:
+  nav_metaserver_database_host: {{ databases.NAVIGATORMETASERVER.host | append_database_port(databases.NAVIGATOR.port | string) }}
+  nav_metaserver_database_type: {{ databases.NAVIGATORMETASERVER.type | format_database_type }}
+  nav_metaserver_database_name: {{ databases.NAVIGATORMETASERVER.name }}
+  nav_metaserver_database_user: {{ databases.NAVIGATORMETASERVER.user }}
+  nav_metaserver_database_password: {{ databases.NAVIGATORMETASERVER.password  }}
+REPORTSMANAGER:
+  headlamp_database_host: {{ databases.REPORTSMANAGER.host | append_database_port(databases.REPORTSMANAGER.port | string) }}
+  headlamp_database_type: {{ databases.REPORTSMANAGER.type | format_database_type }}
+  headlamp_database_name: {{ databases.REPORTSMANAGER.name }}
+  headlamp_database_user: {{ databases.REPORTSMANAGER.user }}
+  headlamp_database_password: {{ databases.REPORTSMANAGER.password }}

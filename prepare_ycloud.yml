@@ -1,0 +1,71 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Prepare YCloud hosts for Cloudera playbook execution
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install required packages
+      package:
+        name: "{{ package_name }}"
+      loop: "{{ required_packages[ansible_os_family] | flatten(1) }}"
+      loop_control:
+        loop_var: package_name
+
+    - name: Create wheel group
+      group:
+        name: wheel
+        state: present
+
+    - name: Create non-root user with sudo rights for playbook execution
+      user:
+        name: playbook
+        group: wheel
+        state: present
+
+    - name: Set authorized key
+      authorized_key:
+        user: playbook
+        state: present
+        key: https://github.infra.cloudera.com/raw/QE/deploy/master/cdep/data/id_rsa.pub
+
+    # ycloud comes with this pre-installed, but we want to test creating it ourselves
+    - name: Delete hadoop group
+      group:
+        name: hadoop
+        state: absent
+
+    # Workaround for
+    # https://jira.cloudera.com/browse/COMOPS-931
+    # Please remove this command and the gdb package once resolved
+    - name: Change the group of systemd
+      shell:
+        cmd: "yes | gdb -p 1 --ex 'call setgid(0)' --ex quit"
+
+  vars:
+    required_packages:
+      RedHat:
+        - bind-utils
+        - policycoreutils
+        - policycoreutils-python
+        - selinux-policy
+        - selinux-policy-targeted
+        - wget
+        - gdb
+      Debian:
+        - dnsutils
+        - gdb

@@ -1,0 +1,32 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{
+  "items": [{
+    "name": "{{ kms_service_name }}",
+    "displayName": "{{ kms_display_name }}",
+    "type": "{{ kms_service_type }}",
+    "config": {{ cm_api.ApiConfigList(merged_configs['SERVICEWIDE']) }},
+    "roles": [
+    {%- set role_joiner = joiner(",") -%}
+    {%- for kms_server in groups.kms_servers -%}
+    {{ role_joiner() }}
+      {
+        "type" : "{{ kms_role_type }}",
+        "hostRef" : {
+          "hostId" : "{{ cloudera_manager_api_hosts[kms_server]['id'] }}"
+        },
+        "roleConfigGroupRef" : {
+          "roleConfigGroupName" : "{{ kms_service_name }}-{{ kms_role_type }}-BASE"
+        }
+      }
+    {%- endfor -%}
+    ],
+    "roleConfigGroups": [
+      {
+        "name": "{{ kms_service_name }}-{{ kms_role_type }}-BASE",
+        "roleType": "{{ kms_role_type }}",
+        "base": true,
+        "config": {{ cm_api.ApiConfigList(merged_configs[kms_role_type]) }}
+      }
+    ]
+  }
+]}

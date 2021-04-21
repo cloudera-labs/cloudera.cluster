@@ -1,0 +1,42 @@
+{
+  "name" : "{{ item.key }}",
+  "displayName" : "{{ item.key }}",
+  "typeName" : "{{ item.value.type }}",
+  "accountConfigs" : {
+   {% if item.value.type == 'AWS_ACCESS_KEY_AUTH' %}
+    "items" : [ {
+      "name" : "aws_access_key",
+      "value" : "{{ item.value.aws_access_key }}",
+      "sensitive" : true
+    }, {
+      "name" : "aws_secret_key",
+      "value" : "{{ item.value.aws_secret_key }}",
+      "sensitive" : true
+    } ]
+   {% elif item.value.type == 'ADLS_AD_SVC_PRINC_AUTH' %}
+    "items" : [ {
+      "name" : "adls_client_id",
+      "value" : "{{ item.value.adls_client_id }}",
+      "sensitive" : false
+    }, {
+      "name" : "adls_client_key",
+      "value" : "{{ item.value.adls_client_key }}",
+      "sensitive" : true
+    }, {
+      "name" : "adls_tenant_id",
+      "value" : "{{ item.value.adls_client_tenant_id }}",
+      "sensitive" : true
+    } ]
+   {% elif item.value.type == 'ALTUS_ACCESS_KEY_AUTH' %}
+    "items" : [ {
+      "name" : "access_key_id",
+      "value" : "{{ item.value.access_key_id }}",
+      "sensitive" : true
+    }, {
+      "name" : "private_key",
+      "value" : "{{ item.value.private_key }}",
+      "sensitive" : true
+    } ]
+   {% endif %}
+  }
+}

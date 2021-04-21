@@ -1,0 +1,110 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Check a cluster has been specified
+  fail:
+    msg: This task list expects a cluster var.
+  when: cluster is not defined
+
+- name: Check the cluster has a Ranger service
+  fail:
+    msg: This task list expects a the cluster to have a Ranger service.
+  when: "'RANGER' not in cluster.services | default([])"
+
+- name: Identify the host template with the Ranger admin
+  set_fact:
+    _ranger_admin_templates: "{{ host_templates | json_query(query) }}"
+  vars:
+    host_templates: >
+      {{
+        cluster.host_templates
+         | dict2items(key_name='name', value_name='services')
+      }}
+    query: "[?services.RANGER[?contains(@, `RANGER_ADMIN`)]].name"
+
+- name: Check the cluster has a Ranger admin in a template.
+  fail:
+    msg: The cluster does not have a Ranger admin role.
+  when: _ranger_admin_templates == None
+
+- name: Identify Ranger admin hostname
+  set_fact:
+    _ranger_hosts: >
+      {{
+        hostvars
+         | dict2items
+         | json_query(query)
+      }}
+  vars:
+    query: "[?value.host_template==`{{ _ranger_admin_templates | first }}`].value.inventory_hostname"
+
+- name: Check the cluster has a Ranger admin instance.
+  fail:
+    msg: The cluster does not have a Ranger admin role instance.
+  when: _ranger_hosts == None
+
+- name: Identify Ranger service defaults
+  set_fact:
+    _ranger_host: "{{ _ranger_hosts | first }}"
+    _ranger_http_port: "{{ cluster.configs.RANGER.SERVICEWIDE.ranger_service_http_port | default(6080) }}"
+    _ranger_https_port: "{{ cluster.configs.RANGER.SERVICEWIDE.ranger_service_https_port | default(6182) }}"
+
+- name: Identify Ranger credentials
+  set_fact:
+    ranger_keyadmin_username: "keyadmin"
+    ranger_keyadmin_password: "{{ cluster.configs.RANGER.SERVICEWIDE.keyadmin_user_password | default('password123') }}"
+
+- name: Check if HTTPS is used
+  uri:
+    url: "https://{{ _ranger_host }}:{{ _ranger_https_port }}"
+    status_code:
+      - 401
+      - -1
+  register: _ranger_https_resp
+  changed_when: false
+
+- set_fact:
+    _ranger_https_used: "{{ _ranger_https_resp.status == 401 }}"
+
+- name: Check if HTTP is used
+  uri:
+    url: "http://{{ _ranger_host }}:{{ _ranger_http_port }}"
+    status_code:
+      - 401
+      - -1
+  register: _ranger_http_resp
+  changed_when: false
+  when: not _ranger_https_used
+
+- set_fact:
+    _ranger_http_used: "{{ not _ranger_https_used and _ranger_http_used.status | default(omit) == 401 }}"
+
+- fail:
+    msg: "Unable to connect to the Ranger admin on {{ _ranger_host }}."
+  when:
+    - not _ranger_https_used
+    - not _ranger_http_used
+
+- set_fact:
+    ranger_url: "https://{{ _ranger_host }}:{{ _ranger_https_port }}"
+  when: _ranger_https_used
+
+- set_fact:
+    ranger_url: "http://{{ _ranger_host }}:{{ _ranger_http_port }}"
+  when: _ranger_http_used
+
+- set_fact:
+    ranger_api_url: "{{ ranger_url }}/service/public/v2/api"

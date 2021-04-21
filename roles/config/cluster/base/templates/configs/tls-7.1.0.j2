@@ -1,0 +1,240 @@
+---
+ATLAS:
+  ATLAS_SERVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  GATEWAY:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+CRUISE_CONTROL:
+  CRUISE_CONTROL_SERVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+DAS:
+  DAS_EVENT_PROCESSOR:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  DAS_WEBAPP:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+FLINK:
+  FLINK_HISTORY_SERVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  GATEWAY:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+HBASE:
+  MASTER:
+    master_truststore_file: {{ tls_truststore_path }}
+    master_truststore_password: {{ tls_truststore_password }}
+  REGIONSERVER:
+    regionserver_truststore_file: {{ tls_truststore_path }}
+    regionserver_truststore_password: {{ tls_truststore_password }}
+HDFS:
+  NAMENODE:
+    namenode_truststore_file: {{ tls_truststore_path }}
+    namenode_truststore_password: {{ tls_truststore_password }}
+HIVE_ON_TEZ:
+  SERVICEWIDE:
+    hiveserver2_enable_ssl: true
+    hiveserver2_keystore_password: {{ tls_keystore_password }}
+    hiveserver2_keystore_path: {{ tls_keystore_path_generic }}
+    hiveserver2_truststore_file: {{ tls_truststore_path }}
+    hiveserver2_truststore_password: {{ tls_truststore_password }}
+  HIVESERVER2:
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+IMPALA:
+  SERVICEWIDE:
+    impala_truststore_file: {{ tls_truststore_path }}
+    impala_truststore_password: {{ tls_truststore_password }}
+INFRA_SOLR:
+  SERVICEWIDE:
+    solr_https_keystore_file: {{ tls_keystore_path_generic }}
+    solr_https_keystore_password: {{ tls_keystore_password }}
+    solr_https_truststore_file: {{ tls_truststore_path }}
+    solr_https_truststore_password: {{ tls_truststore_password }}
+    solr_use_ssl: True
+KAFKA:
+  KAFKA_CONNECT:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KNOX:
+  IDBROKER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  KNOX_GATEWAY:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+LIVY:
+  GATEWAY:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+  LIVY_SERVER:
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+OZONE:
+  DATANODE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  GATEWAY:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+  OZONE_MANAGER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  OZONE_RECON:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  S3_GATEWAY:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  STORAGE_CONTAINER_MANAGER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+NIFI:
+  NIFI_NODE:
+    ssl_enabled: true
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_server_keystore_keypassword: {{ tls_key_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+NIFIREGISTRY:
+  NIFI_REGISTRY_SERVER:
+    ssl_enabled: true
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_server_keystore_keypassword: {{ tls_key_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+QUEUEMANAGER:
+  QUEUEMANAGER_STORE:
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  QUEUEMANAGER_WEBAPP:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+RANGER:
+  RANGER_ADMIN:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  RANGER_TAGSYNC:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  RANGER_USERSYNC:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+SCHEMAREGISTRY:
+  SCHEMA_REGISTRY_SERVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+STREAMS_MESSAGING_MANAGER:
+  STREAMS_MESSAGING_MANAGER_SERVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+    streams.messaging.manager.kafka.client.security.protocol: {{ cluster.security.kerberos | default(false) | ternary('SASL_SSL', 'SSL') }}
+  STREAMS_MESSAGING_MANAGER_UI:
+    ssl_client_truststore_location: {{ tls_chain_path }}
+    ssl_enabled: true
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    ssl_server_certificate_location: {{ tls_cert_path_generic }}
+    ssl_server_privatekey_location: {{ tls_key_path_generic }}
+    ssl_server_privatekey_password: {{ tls_key_password }}
+STREAMS_REPLICATION_MANAGER:
+  STREAMS_REPLICATION_MANAGER_DRIVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  STREAMS_REPLICATION_MANAGER_SERVICE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+ZEPPELIN:
+  ZEPPELIN_SERVER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+ZOOKEEPER:
+  SERVICEWIDE:
+    zookeeper_tls_enabled: true
+    zookeeper_tls_keystore: {{ tls_keystore_path_generic }}
+    zookeeper_tls_keystore_password: {{ tls_keystore_password }}
+    zookeeper_tls_truststore: {{ tls_truststore_path }}
+    zookeeper_tls_truststore_password: {{ tls_truststore_password }}

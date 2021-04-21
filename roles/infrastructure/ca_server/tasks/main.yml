@@ -1,177 +1,87 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
+
+- name: Include OS-specific variables
+  include_vars:
+    file: "{{ ansible_os_family }}.yml"
 
 - name: Install openssl
   package:
     name: openssl
-    state: latest
+    state: present
 
 - name: Install PyOpenSSL
   package:
     name: pyOpenSSL
-    state: latest
+    state: present
+  when: ansible_os_family == "RedHat"
 
-- name: Prepare Root CA directories
-  file:
-    state: directory
-    path: "{{ ca_root_location }}"
-    mode: 0700
-    owner: root
+- name: Install cryptography Python package
+  pip:
+    name: cryptography
+    state: present
+  when: ansible_os_family == "Debian"
 
-- name: Prepare Root CA subdirs
-  file:
-    state: directory
-    path: "{{ ca_root_location }}/{{ item }}"
-    mode: 0700
-    owner: root
-  with_items:
-    - certs
-    - crl
-    - newcerts
-    - private
+- name: Check for the intermediate CA key
+  stat:
+    path: "{{ ca_server_intermediate_path_private }}/intermediate.key.pem"
+  register: intermediate_ca_key_stat
 
-- name: Create index file
-  file:
-    state: touch
-    path: "{{ ca_root_location }}/index.txt"
-    mode: 0700
+- name: Check for the intermediate CA certificate
+  stat:
+    path: "{{ ca_server_intermediate_path_certs }}/{{ ca_server_intermediate_cert_name }}"
+  register: intermediate_ca_cert_stat
 
-- name: Write serial
-  shell: "echo 1000 > {{ ca_root_location }}/serial"
-  args:
-    creates: "{{ ca_root_location }}/serial"
+- name: Check for the intermediate CA config
+  stat:
+    path: "{{ ca_server_intermediate_path }}/openssl.cnf"
+  register: intermediate_ca_conf_stat
 
-- name: Install root ca openssl.cnf
-  template:
-    src: root.openssl.cnf.j2
-    dest: "{{ ca_root_location }}/openssl.cnf"
-    owner: root
-    mode: '0644'
+- set_fact:
+    intermediate_ca_key_exists: "{{ intermediate_ca_key_stat.stat.exists }}"
+    intermediate_ca_cert_exists: "{{ intermediate_ca_cert_stat.stat.exists }}"
+    intermediate_ca_conf_exists: "{{ intermediate_ca_conf_stat.stat.exists }}"
 
-- name: Genereate root private key
-  openssl_privatekey:
-    path: "{{ ca_root_location }}/private/ca.key.pem"
-    size: 4096
-    cipher: aes256
-    passphrase: "{{ ca_root_key_password }}"
-    mode: 0400
+- assert:
+    that:
+      - intermediate_ca_key_exists
+      - intermediate_ca_cert_exists
+      - intermediate_ca_conf_exists
+    success_msg: "All required intermediate CA files exist (key, certificate, config)"
+    fail_msg: >-
+      Not all required intermediate CA files exist (key, certificate, config).
+      The intermediate CA config should exist at {{ ca_server_intermediate_path }}/openssl.cnf.
+      Please clean-up the key and certificate in {{ ca_server_intermediate_path }}.
+  when: intermediate_ca_key_exists or intermediate_ca_cert_exists
 
-- name: "set CA_SUBJECT var"
-  set_fact:
-    ca_subject: '/C={{ ca_countryname_default }}/O={{ ca_org_name }}/OU={{ ca_ou }}/CN={{ ca_root_cn }}'
+- name: Ensure the intermediate CA config has the correct section ([ cloudera_req ])
+  lineinfile:
+    path: "{{ ca_server_intermediate_path }}/openssl.cnf"
+    regexp: '\[\s*cloudera_req\s*\]'
+    state: absent
+  check_mode: yes
+  changed_when: false
+  register: intermediate_conf_check
+  when: intermediate_ca_conf_exists
 
-- name: Generate root certificate
-  shell: >
-    {{ openssl_path }} req -config {{ ca_root_location }}/openssl.cnf -new
-    -key {{ ca_root_location }}/private/ca.key.pem
-    -x509
-    -days 7300
-    -sha256
-    -extensions v3_ca
-    -out {{ ca_root_location }}/certs/{{ root_ca_cert_name }}
-    -passin pass:{{ ca_root_key_password }}
-    -subj "{{ ca_subject }}"
-  args:
-    creates: "{{ ca_root_location }}/certs/{{ root_ca_cert_name }}"
+- assert:
+    that: "{{ intermediate_conf_check.found }}"
+    success_msg: "The intermediate CA config has a cloudera_req section"
+    fail_msg: "The intermediate CA config must have a cloudera_req section for certificate signing"
+  when: intermediate_ca_conf_exists
 
-- name: Intermediate CA directories
-  file:
-    state: directory
-    path: "{{ ca_intermediate_location }}"
-    mode: 0700
-    owner: root
-
-- name: Prepare Intermediate CA subdirs
-  file:
-    state: directory
-    path: "{{ ca_intermediate_location }}/{{ item }}"
-    mode: 0700
-    owner: root
-  with_items:
-    - certs
-    - crl
-    - csr
-    - newcerts
-    - private
-
-- name: Create index file
-  file:
-    state: touch
-    path: "{{ ca_intermediate_location }}/index.txt"
-    mode: 0700
-
-- name: Write serial
-  shell: "echo 1000 > {{ ca_intermediate_location }}/serial"
-  args:
-    creates: "{{ ca_intermediate_location }}/serial"
-
-- name: Install intermediate ca openssl.cnf
-  template:
-    src: intermediate.openssl.cnf.j2
-    dest: "{{ ca_intermediate_location }}/openssl.cnf"
-    owner: root
-    mode: '0644'
-
-- name: Genereate intermediate private key
-  openssl_privatekey:
-    path: "{{ ca_intermediate_location }}/private/intermediate.key.pem"
-    size: 4096
-    cipher: aes256
-    passphrase: "{{ ca_intermediate_key_password }}"
-    mode: 0400
-
-- name: "set INT_CA_SUBJECT var"
-  set_fact:
-    intermediate_ca_subject: '/C={{ ca_countryname_default }}/O={{ ca_org_name }}/OU={{ ca_ou }}/CN={{ ca_intermediate_cn }}'
-
-- name: Generate intermediate CSR
-  shell: "{{ openssl_path }} req -config  {{ ca_intermediate_location }}/openssl.cnf -new -sha256 -key {{ ca_intermediate_location }}/private/intermediate.key.pem -out {{ ca_intermediate_location }}/csr/intermediate.csr.pem -passin pass:{{ ca_intermediate_key_password }} -subj \"{{ intermediate_ca_subject }}\""
-  args:
-    creates: "{{ ca_intermediate_location }}/csr/intermediate.csr.pem"
-
-- name: Sign intermediate certificate
-  shell: "{{ openssl_path }} ca -batch -config  {{ ca_root_location }}/openssl.cnf -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in {{ ca_intermediate_location }}/csr/intermediate.csr.pem -out {{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }} -passin pass:{{ ca_root_key_password }}"
-  args:
-    creates: "{{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }}"
-
-- name: Generate certificate chain file
-  shell: "cat {{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }} {{ ca_root_location }}/certs/{{ root_ca_cert_name }} > {{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
-  args:
-    creates: "{{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
-
-- name: Chmod chain file
-  file:
-    state: file
-    mode: 444
-    path: "{{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
-
-- name: Prepare directory for signed certs
-  local_action:
-    module: file
-    state: directory
-    mode: 0777
-    owner: "{{ ansible_user_id }}"
-    path: "{{ signed_certificates_local_location }}"
-
-- name: Fetch ca files
-  fetch:
-    flat: yes
-    src: "{{ item }}"
-    dest: "{{ signed_certificates_local_location }}/"
-  with_items:
-    - "{{ ca_intermediate_location }}/certs/{{ chain_cert_name }}"
-    - "{{ ca_intermediate_location }}/certs/{{ intermediate_ca_cert_name }}"
-    - "{{ ca_root_location }}/certs/{{ root_ca_cert_name }}"
-
-- name: Identify signed certificates from CA
-  find:
-    paths: "{{ ca_intermediate_location }}/certs/"
-    patterns: ".pem$"
-    use_regex: True
-  register: file_2_fetch
-
-- name: Fetch signed signed_certificates
-  fetch:
-    flat: yes
-    src: "{{ item.path }}"
-    dest: "{{ signed_certificates_local_location }}/"
-  with_items: "{{ file_2_fetch.files }}"
+- include_tasks: create_ca.yml
+  when: not intermediate_ca_key_exists and not intermediate_ca_cert_exists

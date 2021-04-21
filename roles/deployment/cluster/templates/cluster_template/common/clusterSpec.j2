@@ -1,0 +1,7 @@
+{
+{%- if cluster.type | default('base') == 'compute' -%}
+  "dataContextRefs": [{ "name": "{{ cluster.base_cluster.data_context | default('SDX') }}" }]
+{%- else -%}
+  "dataContextRefs": []
+{%- endif -%}
+}

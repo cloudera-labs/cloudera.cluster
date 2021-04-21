@@ -1,0 +1,75 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Download Oracle Connector
+  maven_artifact:
+    group_id: "{{ oracle_connector_group_id }}"
+    artifact_id: "{{ oracle_connector_artifact_id }}"
+    version: "{{ oracle_connector_version }}"
+    dest: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
+    repository_url: "{{ oracle_connector_maven_url }}"
+  become: no
+  run_once: true
+  connection: local
+  delegate_to: localhost
+
+- name: Create /usr/share/java directory
+  file:
+    path: /usr/share/java
+    state: directory
+    mode: 0755
+
+- name: Copy Oracle Connector jar file to correct location
+  copy:
+    src: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
+    dest: /usr/share/java/oracle-connector-java.jar
+    mode: 0644
+
+- name: Ensure directory for the instantclient
+  file:
+    path: /usr/share/oracle/instantclient/lib
+    state: directory
+    mode: 0755
+  when:
+    - oracle_instantclient_basic_zip is defined
+    - oracle_instantclient_sdk_zip is defined
+
+- name: Ensure unzip is available
+  package:
+    name: unzip
+    state: present
+  when:
+    - oracle_instantclient_basic_zip is defined
+    - oracle_instantclient_sdk_zip is defined
+
+- name: Unarchive basic instantclient
+  unarchive:
+    src: "{{ oracle_instantclient_basic_zip }}"
+    dest: /usr/share/oracle/instantclient/lib
+    extra_opts: [ "-j" ]
+  when: oracle_instantclient_basic_zip is defined
+
+- name: Unarchive sdk instantclient
+  unarchive:
+    src: "{{ oracle_instantclient_sdk_zip }}"
+    dest: /usr/share/oracle/instantclient/lib
+    extra_opts: [ "-j" ]
+  when: oracle_instantclient_sdk_zip is defined
+
+- name: Install the libaio package
+  package:
+    name: libaio
+    state: present

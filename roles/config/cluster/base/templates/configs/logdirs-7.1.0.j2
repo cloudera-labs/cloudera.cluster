@@ -1,0 +1,250 @@
+{%- set log_base = cluster.log_base | default('/var/log') | regex_replace('/$','') -%}
+---
+ATLAS:
+  ATLAS_SERVER:
+    log_dir: "{{ log_base }}/atlas"
+    ranger_atlas_plugin_hdfs_audit_spool_directory: "{{ log_base }}/atlas/audit/hdfs/spool"
+    ranger_atlas_plugin_solr_audit_spool_directory: "{{ log_base }}/atlas/audit/solr/spool"
+CORE_SETTINGS:
+  STORAGEOPERATIONS:
+    storageoperations_log_dir: "{{ log_base }}/"
+DAS:
+  DAS_WEBAPP:
+    ranger_hive_plugin_hdfs_audit_spool_directory: "{{ log_base }}/hive/audit/hdfs/spool"
+    ranger_hive_plugin_solr_audit_spool_directory: "{{ log_base }}/hive/audit/solr/spool"
+HBASE:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hbase/audit"
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/hbase/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/hbase/audit/solr/spool"
+  HBASERESTSERVER:
+    hbase_restserver_log_dir: "{{ log_base }}/hbase"
+  HBASETHRIFTSERVER:
+    hbase_thriftserver_log_dir: "{{ log_base }}/hbase"
+  MASTER:
+    hbase_master_log_dir: "{{ log_base }}/hbase"
+  REGIONSERVER:
+    hbase_regionserver_log_dir: "{{ log_base }}/hbase"
+HDFS:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hadoop-hdfs/audit"
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/hdfs/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/hdfs/audit/solr/spool"
+  BALANCER:
+    balancer_log_dir: "{{ log_base }}/hadoop-hdfs"
+  DATANODE:
+    datanode_log_dir: "{{ log_base }}/hadoop-hdfs"
+  FAILOVERCONTROLLER:
+    failover_controller_log_dir: "{{ log_base }}/hadoop-hdfs"
+  HTTPFS:
+    httpfs_log_dir: "{{ log_base }}/hadoop-httpfs"
+  JOURNALNODE:
+    journalnode_log_dir: "{{ log_base }}/hadoop-hdfs"
+  NAMENODE:
+    namenode_log_dir: "{{ log_base }}/hadoop-hdfs"
+  NFSGATEWAY:
+    nfsgateway_log_dir: "{{ log_base }}/hadoop-hdfs"
+  SECONDARYNAMENODE:
+    secondarynamenode_log_dir: "{{ log_base }}/hadoop-hdfs"
+HIVE:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hive/audit"
+    lineage_event_log_dir: "{{ log_base }}/hive/lineage"
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/hive/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/hive/audit/solr/spool"
+  HIVEMETASTORE:
+    hive_log_dir: "{{ log_base }}/hive"
+  HIVESERVER2:
+    hive_log_dir: "{{ log_base }}/hive"
+    hive_server2_logging_operation_log_location: "{{ log_base }}/hive/operation_logs"
+  WEBHCAT:
+    hcatalog_log_dir: "{{ log_base }}/hcatalog"
+HIVE_LLAP:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hive/audit"
+    lineage_event_log_dir: "{{ log_base }}/hive/lineage"
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/hive/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/hive/audit/solr/spool"
+  HIVESERVER2:
+    hive_log_dir: "{{ log_base }}/hive"
+    hive_server2_logging_operation_log_location: "{{ log_base }}/hive/operation_logs"
+  LLAPPROXY:
+    hive_log_dir: "{{ log_base }}/hive"
+HIVE_ON_TEZ:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hive/audit"
+    lineage_event_log_dir: "{{ log_base }}/hive/lineage"
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/hive/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/hive/audit/solr/spool"
+  HIVESERVER2:
+    hive_log_dir: "{{ log_base }}/hive"
+    hive_server2_logging_operation_log_location: "{{ log_base }}/hive/operation_logs"
+HUE:
+  HUE_LOAD_BALANCER:
+    hue_load_balancer_log_dir: "{{ log_base }}/hue-httpd"
+  HUE_SERVER:
+    hue_server_log_dir: "{{ log_base }}/hue"
+  KT_RENEWER:
+    kt_renewer_log_dir: "{{ log_base }}/hue"
+IMPALA:
+  SERVICEWIDE:
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/impala/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/impala/audit/solr/spool"
+  CATALOGSERVER:
+    core_dump_dir: "{{ log_base }}/catalogd"
+    minidump_path: "{{ log_base }}/impala-minidumps"
+    log_dir: "{{ log_base }}/catalogd"
+  IMPALAD:
+    core_dump_dir: "{{ log_base }}/impalad"
+    minidump_path: "{{ log_base }}/impala-minidumps"
+    audit_event_log_dir: "{{ log_base }}/impalad/audit"
+    lineage_event_log_dir: "{{ log_base }}/impalad/lineage"
+    log_dir: "{{ log_base }}/impalad"
+  STATESTORE:
+    core_dump_dir: "{{ log_base }}/statestore"
+    minidump_path: "{{ log_base }}/impala-minidumps"
+    log_dir: "{{ log_base }}/statestore"
+INFRA_SOLR:
+  SERVICEWIDE:
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/solr-infra/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/solr-infra/audit/solr/spool"
+  SOLR_SERVER:
+    solr_log_dir: "{{ log_base }}/solr-infra"
+KAFKA:
+  KAFKA_BROKER:
+    log_dir: "{{ log_base }}/kafka"
+    ranger_kafka_plugin_hdfs_audit_spool_directory: "{{ log_base }}/kafka/audit/hdfs/spool"
+    ranger_kafka_plugin_solr_audit_spool_directory: "{{ log_base }}/kafka/audit/solr/spool"
+  KAFKA_CONNECT:
+    log_dir: "{{ log_base }}/kafka"
+  KAFKA_MIRROR_MAKER:
+    log_dir: "{{ log_base }}/kafka"
+KEYTRUSTEE:
+  KMS_KEYTRUSTEE:
+    log_dir: "{{ log_base }}/kms-keytrustee"
+KMS:
+  KMS:
+    log_dir: "{{ log_base }}/hadoop-kms"
+KNOX:
+  IDBROKER:
+    log_dir: "{{ log_base }}/knox/idbroker"
+    idbroker_log_dir: "{{ log_base }}/knox/idbroker"
+  KNOX_GATEWAY:
+    log_dir: "{{ log_base }}/knox/gateway"
+    gateway_ranger_knox_plugin_hdfs_audit_spool_directory: "{{ log_base }}/knox/gateway/audit/hdfs/spool"
+    gateway_ranger_knox_plugin_solr_audit_spool_directory: "{{ log_base }}/knox/gateway/audit/solr/spool"
+KS_INDEXER:
+  HBASE_INDEXER:
+    hbase_indexer_log_dir: "{{ log_base }}/hbase-solr"
+KUDU:
+  KUDU_MASTER:
+    log_dir: "{{ log_base }}/kudu"
+    master_core_dump_directory: "{{ log_base }}/kudu"
+  KUDU_TSERVER:
+    log_dir: "{{ log_base }}/kudu"
+    tserver_core_dump_directory: "{{ log_base }}/kudu"
+LIVY:
+  LIVY_SERVER:
+    log_dir: "{{ log_base }}/livy"
+OOZIE:
+  OOZIE_SERVER:
+    oozie_log_dir: "{{ log_base }}/oozie"
+OZONE:
+  OZONE_DATANODE:
+    log_dir: "{{ log_base }}/hadoop-ozone"
+    ozone.log.dir: "{{ log_base }}/hadoop-ozone"
+  OZONE_MANAGER:
+    log_dir: "{{ log_base }}/hadoop-ozone"
+    ozone.log.dir: "{{ log_base }}/hadoop-ozone"
+    ranger_ozone_plugin_solr_audit_spool_directory: "{{ log_base }}/hadoop-ozone/ranger-audit/solr/spool"
+  OZONE_RECON:
+    log_dir: "{{ log_base }}/hadoop-ozone"
+    ozone.log.dir: "{{ log_base }}/hadoop-ozone"
+  S3_GATEWAY:
+    log_dir: "{{ log_base }}/hadoop-ozone"
+  STORAGE_CONTAINER_MANAGER:
+    log_dir: "{{ log_base }}/hadoop-ozone"
+    ozone.log.dir: "{{ log_base }}/hadoop-ozone"
+PHOENIX:
+  PHOENIX_QUERY_SERVER:
+    log_dir: "{{ log_base }}/phoenix"
+QUEUEMANAGER:
+  QUEUEMANAGER_STORE:
+    log_dir: "{{ log_base }}/yarn/queuemanager"
+  QUEUEMANAGER_WEBAPP:
+    log_dir: "{{ log_base }}/yarn/queuemanager"
+RANGER:
+  RANGER_ADMIN:
+    log_dir: "{{ log_base }}/ranger/admin"
+  RANGER_TAGSYNC:
+    log_dir: "{{ log_base }}/ranger/tagsync"
+    ranger_tagsync_metrics_filepath: "{{ log_base }}/ranger/metrics-tagsync"
+  RANGER_USERSYNC:
+    log_dir: "{{ log_base }}/ranger/usersync"
+    ranger_usersync_metrics_filepath: "{{ log_base }}/ranger/metrics-usersync"
+RANGER_RAZ:
+  RANGER_RAZ_SERVER:
+    log_dir: "{{ log_base }}/ranger/raz"
+    ranger_raz_plugin_hdfs_audit_spool_directory: "{{ log_base }}/ranger-raz/audit/hdfs/spool"
+    ranger_raz_plugin_solr_audit_spool_directory: "{{ log_base }}/ranger-raz/audit/solr/spool"
+SCHEMA_REGISTRY:
+  SCHEMA_REGISTRY_SERVER:
+    log_dir: "{{ log_base }}/schemaregistry"
+SOLR:
+  SERVICEWIDE:
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/solr/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/solr/audit/solr/spool"
+  SOLR_SERVER:
+    solr_log_dir: "{{ log_base }}/solr"
+SPARK_ON_YARN:
+  SPARK_YARN_HISTORY_SERVER:
+    log_dir: "{{ log_base }}/spark"
+STREAMS_MESSAGING_MANAGER:
+  STREAMS_MESSAGING_MANAGER_SERVER:
+    log_dir: "{{ log_base }}/streams-messaging-manager"
+  STREAMS_MESSAGING_MANAGER_UI:
+    log_dir: "{{ log_base }}/streams-messaging-manager"
+STREAMS_REPLICATION_MANAGER:
+  STREAMS_REPLICATION_MANAGER_DRIVER:
+    log_dir: "{{ log_base }}/streams-replication-manager"
+  STREAMS_REPLICATION_MANAGER_SERVICE:
+    log_dir: "{{ log_base }}/streams-replication-manager"
+YARN:
+  SERVICEWIDE:
+    ranger_audit_hdfs_spool_dir: "{{ log_base }}/yarn/audit/hdfs/spool"
+    ranger_audit_solr_spool_dir: "{{ log_base }}/yarn/audit/solr/spool"
+  GATEWAY:
+    hadoop_job_history_dir: "{{ log_base }}/hadoop-mapreduce/history"
+  JOBHISTORY:
+    mr2_jobhistory_log_dir: "{{ log_base }}/hadoop-mapreduce"
+  NODEMANAGER:
+    node_manager_log_dir: "{{ log_base }}/hadoop-yarn"
+    yarn_nodemanager_log_dirs: "{{ log_base }}/hadoop-yarn/container"
+  RESOURCEMANAGER:
+    resource_manager_log_dir: "{{ log_base }}/hadoop-yarn"
+ZEPPELIN:
+  ZEPPELIN_SERVER:
+    log_dir: "{{ log_base }}/zeppelin"
+ZOOKEEPER:
+  SERVER:
+    zk_server_log_dir: "{{ log_base }}/zookeeper"
+MGMT:
+  ACTIVITYMONITOR:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-firehose"
+  ALERTPUBLISHER:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-alertpublisher"
+  EVENTSERVER:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-eventserver"
+  HOSTMONITOR:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-firehose"
+  NAVIGATOR:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-navigator"
+  NAVIGATORMETASERVER:
+    audit_event_log_dir: "{{ log_base }}/cloudera-scm-navigator/audit"
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-navigator"
+  REPORTSMANAGER:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-headlamp"
+  SERVICEMONITOR:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-firehose"
+  TELEMETRYPUBLISHER:
+    mgmt_log_dir: "{{ log_base }}/cloudera-scm-telemetrypublisher"

@@ -1,0 +1,95 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- set_fact:
+    has_oracle_client: >-
+      {{
+      database.value.type == 'oracle'
+      and teardown_oracle_preamb is defined
+      and teardown_oracle_client_host is defined
+      and teardown_oracle_user is defined
+      }}
+
+- name: Check if the database is managed externally
+  assert:
+    that: database.value.host in groups.db_server | default([])
+    success_msg: >-
+      Database {{ database.value.name }} resides on a database
+      managed by ansible ({{ database.value.host }})
+      and will be deleted.
+    fail_msg: >-
+      Database {{ database.value.name }} resides on a database
+      not managed by ansible ({{ database.value.host }})
+      and will not be deleted.
+  when: not has_oracle_client
+  ignore_errors: true
+
+- name: Delete database (mysql)
+  mysql_db:
+    name: "{{ database.value.name }}"
+    state: absent
+  delegate_to: "{{ database.value.host }}"
+  become: yes
+  when:
+    - database.value.type in ['mariadb', 'mysql']
+    - database.value.host in groups.db_server
+
+- name: Delete database (postgres)
+  postgresql_db:
+    name: "{{ database.value.name }}"
+    state: absent
+  delegate_to: "{{ database.value.host }}"
+  become: yes
+  become_user: postgres
+  when:
+    - database.value.type == 'postgresql'
+    - database.value.host in groups.db_server
+
+- name: Delete user (mysql)
+  mysql_user:
+    name: "{{ database.value.user }}"
+    state: absent
+  delegate_to: "{{ database.value.host }}"
+  become: yes
+  when:
+    - database.value.type in ['mariadb', 'mysql']
+    - database.value.host in groups.db_server
+
+- name: Delete user (postgres)
+  postgresql_user:
+    name: "{{ database.value.user }}"
+    state: absent
+  delegate_to: "{{ database.value.host }}"
+  become: yes
+  become_user: postgres
+  when:
+    - database.value.type == 'postgresql'
+    - database.value.host in groups.db_server
+
+- name: Delete user tables (external, oracle)
+  shell:
+    cmd: |
+      {{ teardown_oracle_preamb }}
+      ORACLE_TMP=$(mktemp)
+      trap "rm $ORACLE_TMP"  EXIT
+      cat > "$ORACLE_TMP" <<EOF
+      {{ lookup('file', 'oracle_drop.sql') }}
+      EOF
+      sqlplus "{{ database.value.user }}/{{ database.value.password }}@{{ database.value.host }}:{{ database.value.port | default(1521) }}/{{ database.value.name }}" @$ORACLE_TMP
+  delegate_to:  "{{ teardown_oracle_client_host }}"
+  become: yes
+  become_user: "{{ teardown_oracle_user }}"
+  when: has_oracle_client

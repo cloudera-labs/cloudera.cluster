@@ -1,0 +1,48 @@
+{%- set template_joiner  = joiner(",") -%}
+[
+{%- for (template_name, role_mapping) in cluster.host_templates.items() -%}
+
+  {%- set role_config_group_refs = [] -%}
+  {%- set filtered_services = [] -%}
+
+  {%- for (service, roles) in role_mapping.items() -%}
+    {%- if service in kms_services -%}
+      {{ filtered_services.append(service) }}
+    {%- else -%}
+      {%- set service_ref = service | lower -%}
+      {%- if (cluster.security.kerberos | default(false) and service == "HUE"
+            and "HUE_SERVER" in roles and not "KT_RENEWER" in roles) -%}
+        {{ roles.append("KT_RENEWER") }}
+      {%- endif -%}
+      {%- for role in roles -%}
+        {{ role_config_group_refs.append("{}-{}-BASE".format(service_ref, role)) }}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- if role_config_group_refs -%}
+  {{ template_joiner() }}
+  {
+    "refName": "HostTemplate-{{ template_name }}",
+    "cardinality": 1,
+    "roleConfigGroupsRefNames": [
+    {%- set rcg_sep = joiner(",") -%}
+      {%- for rcg in role_config_group_refs -%}
+        {{ rcg_sep() }}
+        {{ rcg | to_json }}
+      {%- endfor -%}
+    ]
+  }
+  {# if we filtered everything, add a placeholder template instead #}
+  {%- elif not role_mapping.keys() | difference(filtered_services) -%}
+  {{ template_joiner() }}
+  {
+    "refName": "HostTemplate-{{ template_name }}",
+    "cardinality": 1,
+    {# FIXME - assumption of HDFS service #}
+    "roleConfigGroupsRefNames": ["hdfs-GATEWAY-BASE"]
+  }
+  {%- endif -%}
+
+{%- endfor -%}
+]

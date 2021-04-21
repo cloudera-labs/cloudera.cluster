@@ -1,4 +1,0 @@
----
-dependencies:
-  - role: cloudera_manager/api_hosts
-  - role: deployment/definition

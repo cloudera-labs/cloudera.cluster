@@ -1,0 +1,2 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{{ cm_api.ApiExternalUserMappingList(cloudera_manager_external_auth.type | default('LDAP'), [role_mapping]) }}

@@ -1,0 +1,27 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{%- set service_type = "KEYTRUSTEE_SERVER" -%}
+[
+  {
+    "refName": "{{ service_type | lower }}",
+    "displayName": "{{ service_type | replace("_", " ") }}",
+    "serviceType": "{{ service_type }}",
+    "serviceConfigs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service_type, 'SERVICEWIDE') }},
+    {%- if 'kts_passive' in groups -%}
+      {%- set roles = ['KEYTRUSTEE_ACTIVE_SERVER', 'DB_ACTIVE', 'KEYTRUSTEE_PASSIVE_SERVER', 'DB_PASSIVE'] -%}
+    {%- else -%}
+      {%- set roles = ['KEYTRUSTEE_ACTIVE_SERVER', 'DB_ACTIVE'] -%}
+    {%- endif -%}
+    "roleConfigGroups": [
+    {%- set rcg_joiner = joiner(",") -%}
+    {%- for role_type in roles -%}
+    {{ rcg_joiner() }}
+      {
+        "refName": "{{ service_type | lower }}-{{ role_type }}-BASE",
+        "roleType": "{{ role_type }}",
+        "configs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service_type, role_type) }},
+        "base": true
+      }
+    {%- endfor -%}
+    ]
+  }
+]

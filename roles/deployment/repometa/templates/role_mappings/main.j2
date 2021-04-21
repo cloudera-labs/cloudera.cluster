@@ -1,0 +1,11 @@
+---
+{% for product in products %}
+  {%- if product['product'] == "CDH" %}
+    {%- set template_name = 'cdh' + product['version'][0] %}
+  {%- else %}
+    {%- set template_name = product['product'] | lower %}
+  {%- endif %}
+{% include template_name + '.j2' %}
+{# the following empty line is very important! #}
+
+{% endfor %}

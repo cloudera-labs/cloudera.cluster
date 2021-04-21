@@ -1,0 +1,33 @@
+---
+DAS:
+  SERVICEWIDE:
+    data_analytics_studio_database_host: {{ databases.DAS.host }}
+    data_analytics_studio_database_type: {{ databases.DAS.type | format_database_type }}
+    data_analytics_studio_database_port: {{ databases.DAS.port }}
+    data_analytics_studio_database_name: {{ databases.DAS.name }}
+    data_analytics_studio_database_username: {{ databases.DAS.user }}
+    data_analytics_studio_database_password: {{ databases.DAS.password }}
+RANGER:
+  SERVICEWIDE:
+    ranger_database_host: {{ databases.RANGER.host }}
+    ranger_database_port: {{ databases.RANGER.port }}
+    ranger_database_type: {{ databases.RANGER.type | format_database_type }}
+    ranger_database_name: {{ databases.RANGER.name }}
+    ranger_database_user: {{ databases.RANGER.user }}
+    ranger_database_password: {{ databases.RANGER.password }}
+SCHEMAREGISTRY:
+  SERVICEWIDE:
+    database_host: {{ databases.SCHEMAREGISTRY.host }}
+    database_port: {{ databases.SCHEMAREGISTRY.port }}
+    database_type: {{ databases.SCHEMAREGISTRY.type | format_database_type }}
+    database_name: {{ databases.SCHEMAREGISTRY.name }}
+    database_user: {{ databases.SCHEMAREGISTRY.user }}
+    database_password: {{ databases.SCHEMAREGISTRY.password }}
+STREAMS_MESSAGING_MANAGER:
+  SERVICEWIDE:
+    smm_database_host: {{ databases.STREAMS_MESSAGING_MANAGER.host }}
+    smm_database_port: {{ databases.STREAMS_MESSAGING_MANAGER.port }}
+    smm_database_type: {{ databases.STREAMS_MESSAGING_MANAGER.type | format_database_type }}
+    smm_database_name: {{ databases.STREAMS_MESSAGING_MANAGER.name }}
+    smm_database_user: {{ databases.STREAMS_MESSAGING_MANAGER.user }}
+    smm_database_password: {{ databases.STREAMS_MESSAGING_MANAGER.password }}

@@ -1,0 +1,23 @@
+[ CA_default ]
+# Directory and file locations.
+default_md = sha256
+
+[ req ]
+# Options for the `req` tool (`man req`).
+default_bits        = 2048
+req_extensions      = cloudera_req
+distinguished_name  = req_distinguished_name
+
+[req_distinguished_name]
+
+[ cloudera_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = {{ inventory_hostname }}
+{% for san in subject_alternative_names | default([]) %}
+DNS.{{ loop.index + 1 }} =  {{ san }}
+{% endfor %}

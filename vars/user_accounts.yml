@@ -1,0 +1,230 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+local_accounts:
+
+  - user: accumulo
+    home: /var/lib/accumulo
+    comment: Accumulo
+
+  - user: atlas
+    home: /var/lib/atlas
+    comment: Atlas
+    extra_groups: [hadoop]
+
+  - user: cloudera-scm
+    home: /var/lib/cloudera-scm-server
+    comment: Cloudera Manager
+    mode: '770'
+    keystore_acl: True
+    key_acl: True
+    key_password_acl: True
+
+  - user: cruisecontrol
+    home: /var/lib/cruise_control
+    comment: Cruise Control
+    keystore_acl: True
+
+  - user: druid
+    home: /var/lib/druid
+    comment: Druid
+    extra_groups: [hadoop]
+
+  - user: flink
+    home: /var/lib/flink
+    comment: Flink
+    keystore_acl: True
+
+  - user: flume
+    home: /var/lib/flume-ng
+    comment: Flume
+    keystore_acl: True
+
+  - user: hbase
+    home: /var/lib/hbase
+    comment: HBase
+    keystore_acl: True
+
+  - user: hdfs
+    home: /var/lib/hadoop-hdfs
+    comment: Hadoop HDFS
+    extra_groups: [hadoop] 
+
+  - user: hive
+    home: /var/lib/hive
+    comment: Hive
+    keystore_acl: True
+
+  - user: httpfs
+    home: /var/lib/hadoop-httpfs
+    comment: Hadoop HTTPFS
+    keystore_acl: True
+
+  - user: hue
+    home: /usr/lib/hue
+    comment: Hue
+    key_acl: True
+    key_password_acl: True
+
+  - user: impala
+    home: /var/lib/impala
+    comment: Impala
+    extra_groups: [hive]
+    key_acl: True
+    key_password_acl: True
+
+  - user: kafka
+    home: /var/lib/kafka
+    comment: Kafka
+    keystore_acl: True
+
+  - user: keytrustee
+    home: /var/lib/keytrustee
+    comment: KeyTrustee KMS
+    keystore_acl: True
+    key_acl: True
+    key_password_acl: True
+
+  - user: kms
+    home: /var/lib/hadoop-kms
+    comment: Hadoop KMS
+    keystore_acl: True
+
+  - user: knox
+    home: /var/lib/knox
+    comment: Knox
+    extra_groups: [hadoop]
+    keystore_acl: True
+
+  - user: kudu
+    home: /var/lib/kudu
+    comment: Kudu
+    key_acl: True
+    key_password_acl: True
+
+  - user: livy
+    home: /var/lib/livy
+    comment: Livy
+    keystore_acl: True
+
+  - user: mapred
+    home: /var/lib/hadoop-mapreduce
+    comment: Hadoop MapReduce
+    extra_groups: [hadoop]
+
+  - user: nifi
+    home: /var/lib/nifi
+    command: NiFi
+    keystore_acl: True
+
+  - user: nifiregistry
+    home: /var/lib/nifiregistry
+    command: NiFi Registry
+    keystore_acl: True
+
+  - user: nifi
+    home: /var/lib/nifi
+    command: NiFi
+
+  - user: nifiregistry
+    home: /var/lib/nifiregistry
+    command: NiFi Registry
+
+  - user: oozie
+    home: /var/lib/oozie
+    comment: Oozie User
+    keystore_acl: True
+
+  - user: phoenix
+    home: /var/lib/phoenix
+    comment: Phoenix User
+
+  - user: ranger
+    home: /var/lib/ranger
+    comment: Ranger
+    extra_groups: [hadoop]
+
+  - user: rangerraz
+    home: /var/lib/rangerraz
+    comment: Ranger Raz User
+    extra_groups: [ranger, hadoop]
+
+  - user: rangertagsync
+    home: /var/lib/rangertagsync
+    comment: Ranger Tagsync User
+    extra_groups: [ranger, hadoop]
+
+  - user: schemaregistry
+    home: /var/lib/schemaregistry
+    comment: Schema Registry
+    keystore_acl: True
+
+  - user: sentry
+    home: /var/lib/sentry
+    comment: Sentry
+
+  - user: solr
+    home: /var/lib/solr
+    comment: Solr
+    keystore_acl: True
+
+  - user: spark
+    home: /var/lib/spark
+    comment: Spark
+    keystore_acl: True
+
+  - user: spark2
+    home: /var/lib/spark2
+    comment: Spark2
+
+  - user: sqoop
+    home: /var/lib/sqoop
+    comment: Sqoop
+
+  - user: sqoop2
+    home: /var/lib/sqoop2
+    comment: Sqoop2
+    extra_groups: [sqoop]
+
+  - user: streamsmsgmgr
+    home: /var/lib/streams_messaging_manager
+    comment: Streams Messaging Manager
+    keystore_acl: True
+    key_acl: True
+
+  - user: streamsrepmgr
+    home: /var/lib/streams_replication_manager
+    comment: Streams Replication Manager
+    keystore_acl: True
+
+  - user: superset
+    home: /var/lib/superset
+    comment: Superset
+
+  - user: yarn
+    home: /var/lib/hadoop-yarn
+    comment: Hadoop Yarn
+    extra_groups: [hadoop, spark]
+
+  - user: zeppelin
+    home: /var/lib/zeppelin
+    comment: Zeppelin
+    keystore_acl: True
+
+  - user: zookeeper
+    home: /var/lib/zookeeper
+    comment: ZooKeeper
+    keystore_acl: True

@@ -1,31 +1,36 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
 - name: Install pre-requisite packages for Kerberos
-  hosts: all
+  hosts: cloudera_manager, cluster
+  become: yes
   roles:
-    - prereqs/kerberos
+    - role: prereqs/kerberos
+      when: krb5_kdc_host is defined or 'krb5_server' in groups
   tags:
     - kerberos
+    - prereqs
 
 - name: Configure Cloudera Manager server for Kerberos
-  hosts: localhost
-  gather_facts: no
-  roles:
-    - cloudera_manager/config
-  vars:
-    api_configs:
-      KDC_HOST:       "{{ krb5_kdc_host }}"
-      KDC_TYPE:       "{{ krb5_kdc_type }}"
-      KRB_ENC_TYPES:  "{{ krb5_enc_types }}"
-      SECURITY_REALM: "{{ krb5_realm }}"
-  tags:
-    - kerberos
-
-- name: Import KDC admin creds to Cloudera Manager
   hosts: localhost
   connection: local
   gather_facts: no
   roles:
-    - security/import_kdc_admin_creds
+    - role: cloudera_manager/kerberos
+      when: krb5_kdc_host is defined or 'krb5_server' in groups
   tags:
     - kerberos
+    - configuration

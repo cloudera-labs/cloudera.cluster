@@ -1,0 +1,129 @@
+{%- set oom_heap_dump_dir = cluster.oom.heap_dump_dir | default('/tmp') -%}
+{%- set oom_heap_dump_enabled = cluster.oom.heap_dump_enabled | default(True) -%}
+{%- set oom_sigkill_enabled = cluster.oom.sigkill_enabled | default(True) -%}
+---
+HBASE:
+  HBASERESTSERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  HBASETHRIFTSERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  MASTER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  REGIONSERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+HDFS:
+  DATANODE:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  FAILOVERCONTROLLER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  HTTPFS:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  JOURNALNODE:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  NAMENODE:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  NFSGATEWAY:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  SECONDARYNAMENODE:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+HIVE:
+  HIVEMETASTORE:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  HIVESERVER2:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  WEBHCAT:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+IMPALA:
+  CATALOGSERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  IMPALAD:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+KAFKA:
+  KAFKA_BROKER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  KAFKA_MIRROR_MAKER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+KEYTRUSTEE:
+  KMS_KEYTRUSTEE:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+KMS:
+  KMS:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+KS_INDEXER:
+  HBASE_INDEXER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+OOZIE:
+  OOZIE_SERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+SOLR:
+  SOLR_SERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+SPARK_ON_YARN:
+  SPARK_YARN_HISTORY_SERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+YARN:
+  JOBHISTORY:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  NODEMANAGER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+  RESOURCEMANAGER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}
+ZOOKEEPER:
+  SERVER:
+    oom_heap_dump_dir: {{ oom_heap_dump_dir }}
+    oom_heap_dump_enabled: {{ oom_heap_dump_enabled }}
+    oom_sigkill_enabled: {{ oom_sigkill_enabled }}

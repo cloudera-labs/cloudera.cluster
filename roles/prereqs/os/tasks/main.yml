@@ -1,5 +1,103 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
-- name: Apply OS pre-requisite configurations
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_os_family }}.yml"
+  when: ansible_os_family != "Debian"
+
+- name: Include variables
+  include_vars:
+    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+  when: ansible_os_family == "Debian"
+
+- name: Update kernel flags
+  sysctl:
+    name: "{{ flag.key }}"
+    value: "{{ flag.value }}"
+    state: present
+    sysctl_set: yes
+    reload: yes
+  loop: "{{ kernel_flags }}"
+  loop_control:
+    loop_var: flag
+  when: "'root.hwx.site' not in ansible_domain"
+
+- name: Populate service facts
+  service_facts:
+
+- name: Disable unnecessary services
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  when: "item + '.service' in ansible_facts.services"
+  with_items: "{{ unnecessary_services }}"
+
+- name: Install DNS utils package
+  package:
+    name: "{{ dns_package }}"
+    state: present
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+
+- name: Install {{ ntp_package }} service if ntp or chrony is not installed
+  package:
+    name: "{{ ntp_package }}"
+    state: present
+  when: ('ntp' not in ansible_facts.packages) and ('chrony' not in ansible_facts.packages)
+
+- name: set ntp_service variable if chrony is installed
+  set_fact:
+    ntp_service: chronyd
+  when: "'chrony' in ansible_facts.packages"
+
+- name: Enable {{ ntp_service }} service
+  service:
+    name: "{{ ntp_service }}"
+    state: started
+    enabled: yes
+
+- name: Install nscd service
+  package:
+    name: "{{ nscd_package }}"
+    state: present
+
+- name: Enable nscd service
+  service:
+    name: "{{ nscd_service }}"
+    state: started
+    enabled: yes
+
+- name: Disable nscd caches for services 'passwd', 'group', 'netgroup'
+  replace:
+    path: /etc/nscd.conf
+    regexp: '^(.*enable-cache.*(passwd|group|netgroup).*)yes$'
+    replace: '\1no'
+  notify:
+    - restart nscd
+
+- name: Install rngd service
+  include_tasks:
+    file: rngd.yml
+  when: ansible_virtualization_role == 'guest'
+
+- name: Apply OS-specific configurations
   include_tasks:
     file: "main-{{ ansible_os_family }}.yml"
+  when: "'root.hwx.site' not in ansible_domain"

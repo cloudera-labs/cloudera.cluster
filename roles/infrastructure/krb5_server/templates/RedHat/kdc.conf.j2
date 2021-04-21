@@ -1,0 +1,14 @@
+[kdcdefaults]
+  kdc_ports = 88
+  kdc_tcp_ports = 88
+
+[realms]
+{{ krb5_realm|upper }} = {
+  database_name = {{ krb5_kdc_database }}
+  max_renewable_life = 7d
+  master_key_type = aes256-cts
+  acl_file = {{ krb5_kdc_state_directory }}/kadm5.acl
+  dict_file = /usr/share/dict/words
+  admin_keytab = {{ krb5_kdc_state_directory }}/kadm5.keytab
+  supported_enctypes = {{ krb5_enc_types }}
+}

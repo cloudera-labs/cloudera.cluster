@@ -1,0 +1,134 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Prepare directories for TLS
+  file:
+    state: directory
+    path: "{{ dir }}"
+    mode: 0755
+    owner: root
+  loop:
+    - "{{ base_dir_security }}"
+    - "{{ base_dir_security_pki }}"
+  loop_control:
+    loop_var: dir
+
+- set_fact:
+    subject_attr: "{{ lookup('template', 'certificate_dn.j2') | from_yaml }}"
+
+- set_fact:
+    openssl_subject: "/{{ subject_attr | map('regex_replace', '/', '\\/') | join('/') }}"
+    keytool_subject: "{{ subject_attr | map('regex_replace', ',', '\\,') | join(',') }}"
+
+- name: Create Java keystore
+  shell:
+    cmd: >
+      {{ keytool_path }}
+      -genkeypair
+      -alias {{ keystore_alias | default(inventory_hostname) }}
+      -keyalg RSA
+      -keystore {{ tls_keystore_path }}
+      -keysize 2048
+      -dname "{{ keytool_subject }}"
+      -ext san=dns:{{ inventory_hostname }}
+      -storetype JKS
+      -storepass {{ tls_keystore_password }}
+      -keypass {{ tls_keystore_password }}
+    creates: "{{ tls_keystore_path }}"
+
+- name: Verify that JKS contains a private key
+  shell:
+    cmd: >
+      {{ keytool_path }}
+      -list
+      -keystore {{ tls_keystore_path }}
+      -alias {{ keystore_alias | default(inventory_hostname) }}
+      -storepass {{ tls_keystore_password }} | grep PrivateKeyEntry
+  changed_when: False
+
+- name: Export temporary PKCS12 keystore
+  shell:
+    cmd: >
+      {{ keytool_path }}
+      -importkeystore
+      -srckeystore {{ tls_keystore_path }}
+      -destkeystore {{ base_dir_security_pki }}/{{ inventory_hostname }}.p12
+      -deststoretype PKCS12
+      -srcstorepass {{ tls_keystore_password }}
+      -srckeypass {{ tls_keystore_password }}
+      -deststorepass {{ tls_keystore_password }}
+      -destkeypass {{ tls_keystore_password }}
+      -srcalias {{ keystore_alias | default(inventory_hostname) }}
+      -destalias {{ keystore_alias | default(inventory_hostname) }}
+    creates: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.p12"
+
+- name: Export private key
+  shell:
+    cmd: >
+      {{ openssl_path }} pkcs12
+      -in {{ base_dir_security_pki }}/{{ inventory_hostname }}.p12
+      -out {{ tls_key_path }}
+      -passin pass:{{ tls_keystore_password }}
+      -passout pass:{{ tls_key_password }}
+      -nocerts
+    creates: "{{ tls_key_path }}"
+
+- name: Delete temporary PKCS12 keystore
+  file:
+    path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.p12"
+    state: absent
+
+- name: Write key password to file
+  shell:
+    cmd: echo -n {{ tls_key_password }} > {{ tls_key_password_file }}
+    creates: "{{ tls_key_password_file }}"
+
+- name: Write unencrypted key
+  shell:
+    cmd: >
+      {{ openssl_path }} rsa
+      -in {{ tls_key_path }}
+      -passin pass:{{ tls_key_password }}
+      -out {{ tls_key_path_plaintext }}
+    creates: "{{ tls_key_path_plaintext }}"
+
+- name: Create openssl.cnf for CSR generation
+  template:
+    src: csr.cnf.j2
+    dest: "{{ tls_csr_config_path }}"
+    owner: root
+    mode: 0644
+
+- name: Generate CSR
+  shell:
+    cmd: >
+      {{ openssl_path }} req
+      -key {{ tls_key_path }}
+      -passin pass:{{ tls_key_password }}
+      -subj "{{ openssl_subject }}"
+      -config {{ tls_csr_config_path }}
+      -new
+      -out {{ tls_csr_path }}
+    creates: "{{ tls_csr_path }}"
+
+- name: Set file permissions
+  include_tasks: acls.yml
+
+- name: Bring CSRs back to controller
+  fetch:
+    src: "{{ tls_csr_path }}"
+    dest: "{{ local_csrs_dir }}/"
+    flat: yes

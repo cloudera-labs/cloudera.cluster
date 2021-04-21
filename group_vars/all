@@ -1,10 +1,53 @@
 ---
+database_host: "{{ groups['db_server'][0] | default('localhost') }}"
 database_type: postgresql
-database_version: 9.6
+database_version: 10
+
+# You can skip users and groups creation if you ensure they will exist
+# This may be useful if the users and groups are managed externally
+# The playbook will check the existing users and groups and fail if they do not exist
+skip_user_group_init: false
 
 krb5_realm: CLOUDERA.LOCAL
 krb5_kdc_admin_user: "cloudera-scm/admin@{{ krb5_realm }}"
 krb5_kdc_admin_password: changeme
-krb5_kdc_host: "{{ groups['krb5_server'] | first }}"
 krb5_kdc_type: MIT KDC
 krb5_enc_types: "aes256-cts aes128-cts"
+
+local_temp_dir: /tmp
+
+base_dir_security: /opt/cloudera/security
+base_dir_security_pki: "{{ base_dir_security }}/pki"
+
+# You can disable the playbooks certificate functionality with this flag
+# if you are handling that separately
+# Setting this to true will also enable the TLS configs for CM
+# Clusters TLS configs can be configured by the playbook by setting
+# security.tls to true in the cluster definition
+manual_tls_cert_distribution: false
+
+tls_cert_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+tls_cert_path_generic: "{{ base_dir_security_pki }}/host.pem"
+tls_chain_path: "{{ base_dir_security_pki }}/chain.pem"
+tls_csr_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.csr"
+tls_csr_config_path: "{{ base_dir_security_pki }}/csr.cnf"
+tls_key_password: changeme
+tls_key_password_file: "{{ base_dir_security_pki }}/host.key.pw"
+tls_key_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.key"
+tls_key_path_generic: "{{ base_dir_security_pki }}/host.key"
+tls_key_path_plaintext: "{{ tls_key_path }}.unenc"
+tls_key_path_plaintext_generic: "{{ tls_key_path_generic }}.unenc"
+tls_keystore_password: changeme
+tls_keystore_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.jks"
+tls_keystore_path_generic: "{{ base_dir_security_pki }}/host.jks"
+tls_truststore_password: changeme
+tls_truststore_path: "{{ base_dir_security_pki }}/truststore.jks"
+tls_uber_truststore_path: "{{ base_dir_security_pki }}/full_truststore.jks"
+
+maven_repo: "https://repo1.maven.org/maven2"
+
+ca_server_attrs_general:
+  OU: PS
+  O: Cloudera, Inc.
+  ST: CA
+  C: US

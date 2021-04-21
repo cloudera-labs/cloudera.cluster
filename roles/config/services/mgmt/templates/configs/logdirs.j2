@@ -1,0 +1,21 @@
+{%- set log_base = definition.mgmt.log_base | default('/var/log') | regex_replace('/$','') -%}
+---
+ACTIVITYMONITOR:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-firehose"
+ALERTPUBLISHER:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-alertpublisher"
+EVENTSERVER:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-eventserver"
+HOSTMONITOR:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-firehose"
+NAVIGATOR:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-navigator"
+NAVIGATORMETASERVER:
+  audit_event_log_dir: "{{ log_base }}/cloudera-scm-navigator/audit"
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-navigator"
+REPORTSMANAGER:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-headlamp"
+SERVICEMONITOR:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-firehose"
+TELEMETRYPUBLISHER:
+  mgmt_log_dir: "{{ log_base }}/cloudera-scm-telemetrypublisher"

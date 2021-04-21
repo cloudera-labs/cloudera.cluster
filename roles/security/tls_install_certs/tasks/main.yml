@@ -1,0 +1,190 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- set_fact:
+    tls_signed_certs_dir: "{{ local_certs_dir }}"
+  when: tls_signed_certs_dir is not defined
+
+- set_fact:
+    tls_ca_certs:
+      - alias: intca
+        path: "{{ tls_signed_certs_dir }}/intca.pem"
+      - alias: rootca
+        path: "{{ tls_signed_certs_dir }}/rootca.pem"
+  when: tls_ca_certs is not defined
+
+- name: Check if signed cert is available
+  become: no
+  local_action: stat path={{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem
+  register: signed_cert
+
+- name: Check if signed cert is available remotely
+  stat:
+    path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+  register: signed_cert_remote
+
+- fail:
+    msg: >
+      "Signed cert for {{ inventory_hostname }} could not be found. If manual signing is
+      required, do this now and re-run the playbook with 'tls_signed_certs_dir' variable set.
+  when:
+    - not signed_cert.stat.exists
+    - not signed_cert_remote.stat.exists
+
+- name: Copy signed certs to hosts
+  copy:
+    src: "{{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem"
+    dest: "{{ base_dir_security_pki }}/"
+    mode: 0644
+  when: not signed_cert_remote.stat.exists
+
+- name: Copy CA certs to hosts
+  copy:
+    src: "{{ cacert.path }}"
+    dest: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
+    mode: 0644
+  loop: "{{ tls_ca_certs }}"
+  loop_control:
+    loop_var: cacert
+  register: copied
+
+- name: Generate certificate chain file
+  shell:
+    cmd: >
+      cat {{ copied.results | json_query('[*].dest') | join(' ') }} > {{ tls_chain_path }}
+    creates: "{{ tls_chain_path }}"
+
+- name: Validate certificate
+  shell:
+    cmd: openssl verify -verbose -CAfile {{ tls_chain_path }} {{ tls_cert_path }}
+
+- name: Install CA certificates into keystore
+  java_cert:
+    executable: "{{ keytool_path }}"
+    cert_alias: "{{ cacert.alias }}"
+    cert_path: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
+    keystore_path: "{{ tls_keystore_path }}"
+    keystore_pass: "{{ tls_keystore_password }}"
+    keystore_type: JKS
+    state: present
+  loop: "{{ tls_ca_certs }}"
+  loop_control:
+    loop_var: cacert
+
+- name: Install signed certificate reply into keystore
+  shell:
+    cmd: >
+      {{ keytool_path }}
+      -importcert
+      -alias "{{ keystore_alias | default(inventory_hostname) }}"
+      -file "{{ tls_cert_path }}"
+      -keystore "{{ tls_keystore_path }}"
+      -storepass "{{ tls_keystore_password }}"
+      -trustcacerts
+      -noprompt
+  register: keytool_output
+  changed_when:
+    - "'Certificate reply was installed in keystore' in keytool_output.stderr"
+  failed_when:
+    - "'Certificate reply was installed in keystore' not in keytool_output.stderr"
+    - "'Certificate reply and certificate in keystore are identical' not in keytool_output.stdout"
+
+- name: Install CA certificates into truststore
+  java_cert:
+    executable: "{{ keytool_path }}"
+    cert_alias: "{{ cacert.alias }}"
+    cert_path: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
+    keystore_create: true
+    keystore_path: "{{ tls_truststore_path }}"
+    keystore_pass: "{{ tls_truststore_password }}"
+    keystore_type: JKS
+    state: present
+  loop: "{{ tls_ca_certs }}"
+  loop_control:
+    loop_var: cacert
+
+- name: Update OS trust stores
+  block:
+  - copy:
+      src: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
+      dest: /etc/pki/ca-trust/source/anchors/
+      mode: 0644
+      remote_src: yes
+    loop: "{{ tls_ca_certs }}"
+    loop_control:
+      loop_var: cacert
+  - shell:
+      cmd: update-ca-trust extract
+  when: ansible_os_family == "RedHat"
+
+- name: Find system cacerts file
+  find:
+    paths: "{{ jdk_java_cacerts_paths }}"
+    pattern: "cacerts"
+    follow: yes
+    file_type: any
+  register: java_cacerts
+  when:
+    - jdk_java_cacerts_location is not defined
+    - not (skip_cacerts_import | default(False))
+
+- fail:
+    msg: >-
+      Cloudera Manager TLS is enabled but a copy of cacerts cannot be found.
+      Please update jdk_java_cacerts_location with the location of the cacerts file
+      or set skip_cacerts_import to true.
+  when:
+    - not (skip_cacerts_import | default(False))
+    - jdk_java_cacerts_location is not defined
+    - java_cacerts.matched == 0
+    - "'cloudera_manager' in group_names"
+    - tls | default(False) or manual_tls_cert_distribution | default(False)
+
+- name: Merge cacerts and the truststore
+  shell:
+    cmd: >
+      {{ keytool_path }}
+      -importkeystore
+      -srckeystore "{{ jdk_java_cacerts_location | default(java_cacerts.files[0].path) }}"
+      -destkeystore "{{ tls_uber_truststore_path }}"
+      -srcstorepass "{{ jdk_java_cacerts_password | default('changeit') }}"
+      -deststorepass "{{ tls_truststore_password }}"
+      -noprompt
+  when:
+    - not (skip_cacerts_import | default(False))
+    - jdk_java_cacerts_location is defined or java_cacerts.matched > 0
+
+- name: Merge the truststores
+  shell:
+    cmd: >
+      {{ keytool_path }}
+      -importkeystore
+      -srckeystore "{{ tls_truststore_path }}"
+      -destkeystore "{{ tls_uber_truststore_path }}"
+      -srcstorepass "{{ tls_truststore_password }}"
+      -deststorepass "{{ tls_truststore_password }}"
+      -noprompt
+
+- name: Create host agnostic links
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  with_items:
+    - { src: "{{ tls_cert_path }}", dest: "{{ tls_cert_path_generic }}" }
+    - { src: "{{ tls_keystore_path }}", dest: "{{ tls_keystore_path_generic }}" }
+    - { src: "{{ tls_key_path }}", dest: "{{ tls_key_path_generic }}" }
+    - { src: "{{ tls_key_path_plaintext }}", dest: "{{ tls_key_path_plaintext_generic }}" }

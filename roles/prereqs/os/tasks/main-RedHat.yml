@@ -1,1 +1,51 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
+
+- name: Disable SELinux
+  selinux:
+    policy: targeted
+    state: "{{ selinux_state }}"
+  ignore_errors: yes
+
+- name: Disable Transparent Huge Pages until reboot
+  shell: echo never > /sys/kernel/mm/transparent_hugepage/{{ item }}
+  with_items:
+    - enabled
+    - defrag
+
+- name: Disable Transparent Huge Pages permanently
+  lineinfile:
+    backup: yes
+    path: /etc/rc.d/rc.local
+    line: echo never > /sys/kernel/mm/transparent_hugepage/{{ item }}
+    mode: 0755
+  with_items:
+    - enabled
+    - defrag
+
+- name: Disable Transparent Huge Pages in GRUB config
+  lineinfile:
+    backup: yes
+    state: present
+    path: /etc/default/grub
+    backrefs: yes
+    regexp: '^(GRUB_CMDLINE_LINUX=(?!.*hugepage)\"[^\"]+)(\".*)'
+    line: '\1 transparent_hugepage=never\2'
+  ignore_errors: yes
+
+- name: Rebuild GRUB
+  shell: grub2-mkconfig -o /boot/grub2/grub.cfg
+  ignore_errors: yes

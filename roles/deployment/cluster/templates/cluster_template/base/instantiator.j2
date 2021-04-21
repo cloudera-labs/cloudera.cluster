@@ -1,0 +1,37 @@
+{
+  "clusterName" : "{{ cluster.name }}",
+  "hosts" : [
+{%- set host_joiner = joiner(",") -%}
+{%- for host in groups['cluster'] -%}
+  {%- if 'host_template' in hostvars[host]
+      and hostvars[host]['host_template'] in cluster.host_templates -%}
+    {{ host_joiner() }}
+    {
+      "hostName" : "{{ cloudera_manager_api_hosts[host]['hostname'] }}",
+      "hostTemplateRefName" : "HostTemplate-{{ hostvars[host]['host_template'] }}"
+      {%- if 'role_ref_names' in hostvars[host] -%}
+      ,"roleRefNames" : [ "{{ hostvars[host]['role_ref_names'] }}" ]
+      {%- endif -%}
+      {%- if 'rack_id' in hostvars[host] -%}
+      ,"rackId" : [ "{{ hostvars[host]['rack_id'] }}" ]
+      {%- endif -%}
+    }
+  {%- endif -%}
+{%- endfor -%}
+  ],
+  "variables" : {%- include 'cluster_template/common/variables.j2' -%}{%- if cloudera_manager_version is version('6.2.0','>=') -%},
+  "clusterSpec": {%- include 'cluster_template/common/clusterSpec.j2' -%}{%- endif -%}
+  {%- if cluster.type | default('base') == 'base'
+        and cluster.security.kerberos | default(false)
+        and cloudera_manager_version is version('6.0.0','>=') -%}
+  , "enableKerberos": {
+    {%- if cluster.security.tls | default(false) -%}
+    "datanodeTransceiverPort": 9866,
+    "datanodeWebPort": 9864
+    {%- else -%}
+    "datanodeTransceiverPort": 1004,
+    "datanodeWebPort": 1006
+    {%- endif -%}
+  }
+  {%- endif -%}
+}

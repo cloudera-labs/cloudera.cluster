@@ -1,0 +1,68 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Generate complete base cluster configs
+  include_role:
+    name: config/cluster/base
+
+- name: Create databases and users
+  include_role:
+    name: deployment/databases
+  vars:
+    services: "{{ cluster.services | default({}) }}"
+
+- name: Generate cluster template file
+  template:
+    src: cluster_template/main.j2
+    dest: /tmp/cluster_template_{{ cluster.name | replace(' ','_') }}.json
+    mode: 0600
+  #when: cluster_template_dry_run
+
+- name: Import cluster template
+  cm_api:
+    endpoint: /cm/importClusterTemplate?addRepositories=true
+    method: POST
+    body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
+  register: cluster_template_result
+  ignore_errors: yes
+  when: not cluster_template_dry_run
+
+- name: Find cluster template command URL for troubleshooting
+  set_fact:
+    command_details_url: "{{ cluster_template_result.url | regex_replace('/api/.*','/cmf/command/' ~ cluster_template_result.json.id | string ~ '/details' ) }}"
+  when: cluster_template_result.failed and 'id' in cluster_template_result.json
+
+- name: Delete cluster if template import failed (and if it's safe to do so)
+  import_role:
+    name: operations/delete_cluster
+  when:
+    - cluster_template_result.failed
+    - not (skip_cluster_deletion | default(false))
+
+- name: Fail because of unsuccessful cluster template import
+  fail:
+    msg: >
+      Cluster template import failed.
+      Result message: {{ cluster_template_result.json.message }}
+  when: cluster_template_result.failed and command_details_url is not defined
+
+- name: Fail because of unsuccessful cluster template import
+  fail:
+    msg: >
+      Cluster template import failed.
+      Result message: {{ cluster_template_result.json.resultMessage | default(cluster_template_result.json.message) }}
+      Check {{ command_details_url }} for further troubleshooting information."
+  when: cluster_template_result.failed and command_details_url is defined

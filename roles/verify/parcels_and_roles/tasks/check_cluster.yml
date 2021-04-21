@@ -1,0 +1,142 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Retrieve repository metadata
+  include_role:
+    name: deployment/repometa
+  vars:
+    repositories: "{{ cluster.repositories | default({}) }}"
+
+- name: Ensure services are specified
+  assert:
+    that: "{{ cluster.services is defined }}"
+    success_msg: >-
+      Services have been specified on the cluster
+    fail_msg: >-
+      {{ cluster.name }} must have a 'services' list
+  when: cluster.type is not defined or cluster.type == 'base'
+
+- name: Ensure host templates are specified
+  assert:
+    that: "{{ cluster.host_templates is defined }}"
+    success_msg: >-
+      Host templates have been specified on the cluster
+    fail_msg: >-
+      {{ cluster.name }} must have a 'host_template' dictionary
+  when: cluster.type is not defined or cluster.type == 'base'
+
+- block:
+    - set_fact:
+        invalid_services: >-
+          {{
+          cluster.services
+          | default({})
+          | difference(role_mappings | list)
+          }}
+    - name: Ensure that all the services are valid
+      assert:
+        that: "{{ invalid_services | length == 0 }}"
+        success_msg: >-
+          All services in cluster are valid
+        fail_msg: >-
+          Unknown service(s) {{ invalid_services }} defined
+          in cluster '{{ cluster.name }}'
+
+- block:
+    - set_fact:
+        host_template_services: >-
+          {{
+          cluster.host_templates
+          | default({})
+          | json_query('values(@) | map(&keys(@),@)')
+          | flatten 
+          | unique
+          }}
+    - set_fact:
+        invalid_services: >-
+          {{
+          cluster.services
+          | default({})
+          | difference(host_template_services)
+          }}
+    - name: Ensure that all the services are included in host templates
+      assert:
+        that: "{{ invalid_services | length == 0 }}"
+        success_msg: >-
+          All services in cluster are included in host templates
+        fail_msg: >-
+          Service(s) {{ invalid_services }} defined in cluster
+          '{{ cluster.name }}' but missing from host templates.
+  when: cluster.type | default('base') == 'base'
+
+- block:
+    - set_fact:
+        invalid_services: >-
+          {{
+          cluster.configs
+          | default({})
+          | list
+          | difference(role_mappings | list)
+          }}
+    - name: Ensure all configured services are valid
+      assert:
+        that: "{{ invalid_services | length == 0 }}"
+        success_msg: >-
+          All services in cluster configuration are valid
+        fail_msg: >-
+          Invalid service(s) {{ invalid_services }} defined in
+          configuration block for cluster '{{ cluster.name }}'
+
+- block:
+    - set_fact:
+        invalid_services: >-
+          {{
+          cluster.configs
+          | default({})
+          | list
+          | difference(cluster.services)
+          }}
+    - name: Ensure all configured services are added to the cluster
+      assert:
+        that: "{{ invalid_services | length == 0 }}"
+        success_msg: >-
+          All services in cluster configuration have been
+          correctly added to cluster service list
+        fail_msg: >-
+          Service(s) {{ invalid_services }} are defined in
+          configuration block but not in cluster '{{ cluster.name }}'
+
+- name: Ensure all configured roles are valid
+  include_tasks: check_cluster_config_roles.yml
+  loop: >-
+    {{
+    cluster.configs
+    | default({})
+    | dict2items(key_name='service', value_name='roles')
+    }}
+  loop_control:
+    loop_var: config
+
+- name: Ensure host templates have valid services and roles
+  include_tasks: check_template.yml
+  loop: >-
+    {{
+    cluster.host_templates
+    | default({})
+    | dict2items(key_name='name', value_name='mappings')
+    }}
+  loop_control:
+    loop_var: host_template

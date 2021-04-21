@@ -1,0 +1,9 @@
+---
+AGENT_TLS: true
+KEYSTORE_PATH: {{ tls_keystore_path_generic }}
+KEYSTORE_PASSWORD: {{ tls_keystore_password }}
+NEED_AGENT_HOSTNAME_VALIDATION: true
+NEED_AGENT_VALIDATION: true
+TRUSTSTORE_PATH: {{ tls_truststore_path | default('') }}
+TRUSTSTORE_PASSWORD: {{ tls_truststore_password | default('') }}
+WEB_TLS: true

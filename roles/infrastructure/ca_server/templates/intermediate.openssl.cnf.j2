@@ -7,7 +7,7 @@ default_ca = CA_default
 
 [ CA_default ]
 # Directory and file locations.
-dir               = {{ ca_root_location }}/intermediate
+dir               = {{ ca_server_root_path }}/intermediate
 certs             = $dir/certs
 crl_dir           = $dir/crl
 new_certs_dir     = $dir/newcerts
@@ -33,6 +33,9 @@ cert_opt          = ca_default
 default_days      = 375
 preserve          = no
 policy            = policy_loose
+
+# Copy requested extensions from CSR, e.g. Subject Alternative Name
+copy_extensions   = copy
 
 [ policy_strict ]
 # The root CA should only sign intermediate certificates that match.
@@ -76,14 +79,6 @@ localityName                    = Locality Name
 organizationalUnitName          = Organizational Unit Name
 commonName                      = Common Name
 emailAddress                    = Email Address
-
-# Optionally, specify some defaults.
-countryName_default             = {{ ca_countryname_default }}
-stateOrProvinceName_default     = {{ ca_state_or_province }}
-localityName_default            =
-0.organizationName_default      = {{ ca_org_name }}
-organizationalUnitName_default  = {{ ca_ou }}
-emailAddress_default            =
 
 [ v3_ca ]
 # Extensions for a typical CA (`man x509v3_config`).

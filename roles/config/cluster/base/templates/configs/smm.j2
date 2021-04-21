@@ -1,0 +1,17 @@
+---
+KAFKA:
+  KAFKA_BROKER:
+    super.users: "kafka;streamsmsgmgr"
+SENTRY:
+  SERVICEWIDE:
+    sentry_service_admin_group: hive,impala,hue,solr,kafka,hbase,kudu,streamsmsgmgr
+    sentry_service_allow_connect: hive,impala,hue,hdfs,solr,kafka,hbase,kudu,streamsmsgmgr
+STREAMS_MESSAGING_MANAGER:
+  SERVICEWIDE:
+    cm.metrics.host: {{ cloudera_manager_host }}
+    cm.metrics.password: {{ cloudera_manager_api_password }}
+    cm.metrics.service.name: kafka
+  STREAMS_MESSAGING_MANAGER_SERVER:
+    streams.messaging.manager.storage.connector.connectURI: "jdbc:{{ databases.STREAMS_MESSAGING_MANAGER.type | format_database_type }}://{{ databases.STREAMS_MESSAGING_MANAGER.host }}:{{ databases.STREAMS_MESSAGING_MANAGER.port }}/{{ databases.STREAMS_MESSAGING_MANAGER.name }}"
+    streams.messaging.manager.storage.connector.user: {{ databases.STREAMS_MESSAGING_MANAGER.user }}
+    streams.messaging.manager.storage.connector.password: {{ databases.STREAMS_MESSAGING_MANAGER.password }}

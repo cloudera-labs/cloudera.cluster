@@ -1,0 +1,44 @@
+---
+ATLAS:
+  SERVICEWIDE:
+    solr_service: infra_solr
+INFRA_SOLR:
+  SERVICEWIDE:
+    zookeeper_znode: /solr-infra
+    hdfs_data_dir: /solr-infra
+    ranger_policy_cache_dir: /var/lib/ranger/solr-infra/policy-cache
+    ranger_audit_hdfs_dir: ${ranger_base_audit_url}/solr-infra
+    ranger_audit_hdfs_spool_dir: /var/log/solr-infra/audit/hdfs/spool
+    ranger_audit_solr_spool_dir: /var/log/solr-infra/audit/solr/spool
+  SOLR_SERVER:
+    solr_data_dir: /var/lib/solr-infra
+    solr_log_dir: /var/log/solr-infra
+    solr_http_port: 8993
+    solr_https_port: 8995
+{% if 'SOLR' in cluster.services %}
+HUE:
+  SERVICEWIDE:
+    solr_service: solr
+KS_INDEXER:
+  SERVICEWIDE:
+    solr_service: solr
+{% endif %}
+RANGER:
+  SERVICEWIDE:
+    solr_service: infra_solr
+SOLR:
+  SERVICEWIDE:
+{% if 'RANGER' in cluster.services %}
+    ranger_service: ranger
+{% endif %}
+    zookeeper_znode: /solr
+    hdfs_data_dir: /solr
+    ranger_policy_cache_dir: /var/lib/ranger/solr/policy-cache
+    ranger_audit_hdfs_dir: ${ranger_base_audit_url}/solr
+    ranger_audit_hdfs_spool_dir: /var/log/solr/audit/hdfs/spool
+    ranger_audit_solr_spool_dir: /var/log/solr/audit/solr/spool
+  SOLR_SERVER:
+    solr_data_dir: /var/lib/solr
+    solr_log_dir: /var/log/solr
+    solr_http_port: 8983
+    solr_https_port: 8985

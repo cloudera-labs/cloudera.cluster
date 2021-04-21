@@ -1,5 +1,0 @@
----
-mysql_connector_url: https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.48.zip
-mysql_connector_checksum: md5:5da24facd99964f296ecde32abcd2384
-mysql_connector_download_dir: /tmp
-mysql_connector_extract_dir: /tmp

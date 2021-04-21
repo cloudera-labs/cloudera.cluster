@@ -1,0 +1,33 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- block:
+    - set_fact:
+        invalid_roles: >-
+          {{ config.roles
+          | flatten
+          | difference(['SERVICEWIDE'])
+          | difference(role_mappings[config.service] | list)
+          }}
+    - name: Ensure all configured roles are valid
+      assert:
+        that: "{{ invalid_roles | length == 0 }}"
+        success_msg: >-
+          All roles defined in configuration block for '{{ config.service }}'
+          in cluster '{{ cluster.name }}' are valid
+        fail_msg: >-
+          Unknown role(s) {{ invalid_roles }} defined in configuration
+          block for '{{ config.service }}' in cluster '{{ cluster.name }}'.

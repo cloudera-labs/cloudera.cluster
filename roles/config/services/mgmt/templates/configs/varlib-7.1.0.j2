@@ -1,0 +1,14 @@
+{%- set varlib_base = definition.mgmt.varlib_base | default('/var/lib') | regex_replace('/$','') -%}
+---
+EVENTSERVER:
+  eventserver_index_dir: "{{ varlib_base }}/cloudera-scm-eventserver"
+HOSTMONITOR:
+  firehose_storage_dir: "{{ varlib_base }}/cloudera-host-monitor"
+NAVIGATORMETASERVER:
+  data_dir: "{{ varlib_base }}/cloudera-scm-navigator"
+REPORTSMANAGER:
+  headlamp_scratch_dir: "{{ varlib_base }}/cloudera-scm-headlamp"
+SERVICEMONITOR:
+  firehose_storage_dir: "{{ varlib_base }}/cloudera-service-monitor"
+TELEMETRYPUBLISHER:
+  mgmt_data_dir: "{{ varlib_base }}/cloudera-scm-telemetrypublisher"

@@ -1,0 +1,20 @@
+{% set attr = ca_server_attrs_general | default({}) | combine(ca_server_attrs_host | default({})) %}
+- CN={{ cn_override | default(attr.CN | default(inventory_hostname)) }}
+{% if attr.OU is defined %}
+{% if attr.OU is iterable and attr.OU is not string %}
+{% for ou in attr.OU %}
+- OU={{ ou }}
+{% endfor %}
+{% else %}
+- OU={{ attr.OU }}
+{% endif %}
+{% endif %}
+{% if attr.O is defined %}
+- O={{ attr.O }}
+{% endif %}
+{% if attr.ST is defined %}
+- ST={{ attr.ST }}
+{% endif %}
+{% if attr.C is defined %}
+- C={{ attr.C }}
+{% endif %}

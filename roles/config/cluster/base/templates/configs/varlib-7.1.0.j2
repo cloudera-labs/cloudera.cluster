@@ -1,0 +1,121 @@
+{%- set varlib_base = cluster.varlib_base | default('/var/lib') | regex_replace('/$','') -%}
+---
+ATLAS:
+  ATLAS_SERVER:
+    ranger_atlas_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/atlas/policy-cache"
+DAS:
+  DAS_WEBAPP:
+    ranger_hive_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/hive/policy-cache"
+HBASE:
+  SERVICEWIDE:
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/hbase/policy-cache"
+HDFS:
+  SERVICEWIDE:
+    hdfs_user_home_dir: "{{ varlib_base }}/hadoop-hdfs"
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/hdfs/policy-cache"
+HIVE:
+  SERVICEWIDE:
+    hive_metastore_derby_path: "{{ varlib_base }}/hive/cloudera_manager/derby/metastore_db"
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/hive/policy-cache"
+HIVE_ON_TEZ:
+  SERVICEWIDE:
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/hive/policy-cache"
+HUE:
+  SERVICEWIDE:
+    database_dir: "{{ varlib_base }}/hue/desktop.db"
+IMPALA:
+  SERVICEWIDE:
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/impala/policy-cache"
+  IMPALAD:
+    local_library_dir: "{{ varlib_base }}/impala/udfs"
+KAFKA:
+  KAFKA_BROKER:
+    ranger_kafka_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/kafka/policy-cache"
+KNOX:
+  IDBROKER:
+    idbroker_conf_dir: "{{ varlib_base }}/knox/idbroker/conf"
+    idbroker_data_dir: "{{ varlib_base }}/knox/idbroker/data"
+  KNOX_GATEWAY:
+    gateway_conf_dir: "{{ varlib_base }}/knox/gateway/conf"
+    gateway_data_dir: "{{ varlib_base }}/knox/gateway/data"
+    gateway_ranger_knox_plugin_conf_path: "{{ varlib_base }}/knox/ranger-knox-plugin"
+    gateway_ranger_knox_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/knox/gateway/policy-cache"
+KUDU:
+  KUDU_MASTER:
+    ranger_kudu_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/kudu/policy-cache"
+OOZIE:
+  OOZIE_SERVER:
+    oozie_data_dir: "{{ varlib_base }}/oozie/data"
+    oozie_https_keystore_file: "{{ varlib_base }}/oozie/.keystore"
+OZONE:
+  OZONE_DATANODE:
+    dfs.container.ratis.datanode.storage.dir: "{{ varlib_base }}/hadoop-ozone/datanode/ratis/data"
+    ozone.metadata.dirs: "{{ varlib_base }}/hadoop-ozone/datanode/ozone-metadata"
+    ozone.scm.datanode.id.dir: "{{ varlib_base }}/hadoop-ozone/datanode"
+    dfs.container.ratis.datanode.storage.dir: "{{ varlib_base }}/hadoop-ozone/datanode/ratis/data"
+    ozone.metadata.dirs: "{{ varlib_base }}/hadoop-ozone/datanode/ozone-metadata"
+    ozone.scm.datanode.id.dir: "{{ varlib_base }}/hadoop-ozone/datanode"
+  OZONE_MANAGER:
+    ozone.metadata.dirs: "{{ varlib_base }}/hadoop-ozone/om/ozone-metadata"
+    ozone.om.db.dirs: "{{ varlib_base }}/hadoop-ozone/om/data"
+    ozone.om.ratis.storage.dir: "{{ varlib_base }}/hadoop-ozone/om/ratis"
+    ranger_ozone_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/ozone/policy-cache"
+    ozone.metadata.dirs: "{{ varlib_base }}/hadoop-ozone/om/ozone-metadata"
+    ozone.om.db.dirs: "{{ varlib_base }}/hadoop-ozone/om/data"
+    ozone.om.ratis.storage.dir: "{{ varlib_base }}/hadoop-ozone/om/ratis"
+  PROMETHEUS:
+    ozone.prometheus.db.dir: "{{ varlib_base }}/hadoop-ozone/prometheus/data"
+  OZONE_RECON:
+    ozone.metadata.dirs: "{{ varlib_base }}/hadoop-ozone/recon/ozone-metadata"
+    ozone.recon.db.dir: "{{ varlib_base }}/hadoop-ozone/recon/data"
+    ozone.recon.om.db.dir: "{{ varlib_base }}/hadoop-ozone/recon/om/data"
+    ozone.recon.scm.db.dirs: "{{ varlib_base }}/hadoop-ozone/recon/scm/data"
+  STORAGE_CONTAINER_MANAGER:
+    ozone.metadata.dirs: "{{ varlib_base }}/hadoop-ozone/scm/ozone-metadata"
+    ozone.scm.db.dirs: "{{ varlib_base }}/hadoop-ozone/scm/data"
+RANGER:
+  RANGER_ADMIN:
+    ranger_tomcat_work_dir: "{{ varlib_base }}/ranger/admin"
+RANGER_KMS:
+  RANGER_KMS_SERVER:
+    ranger_kms_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/kms/policy-cache"
+    ranger_kms_tomcat_work_dir: "{{ varlib_base }}/ranger/kms"
+SCHEMA_REGISTRY:
+  SCHEMA_REGISTRY_SERVER:
+    ranger.plugin.schema-registry.policy.cache.dir: "{{ varlib_base }}/schemaregistry/policy-cache"
+INFRA_SOLR:
+  SERVICEWIDE:
+    ranger_policy_cache_dir:  "{{ varlib_base }}/ranger/solr-infra/policy-cache"
+    solr_upgrade_metadata_dir: "{{ varlib_base }}/upgrade/solr-infra/cr7_config"
+  SOLR_SERVER:
+    solr_data_dir:  "{{ varlib_base }}/solr-infra"
+SOLR:
+  SERVICEWIDE:
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/solr/policy-cache"
+    solr_upgrade_metadata_dir: "{{ varlib_base }}/upgrade/solr/cr7_config"
+  SOLR_SERVER:
+    solr_data_dir: "{{ varlib_base }}/solr"
+SPARK_ON_YARN:
+  SPARK_YARN_HISTORY_SERVER:
+    local_storage_dir: "{{ varlib_base }}/spark/history"
+STREAMS_MESSAGING_MANAGER:
+  SERVICEWIDE:
+    ranger_smm_plugin_policy_cache_directory: "{{ varlib_base }}/ranger/kafka/policy-cache"
+  STREAMS_MESSAGING_MANAGER_SERVER:
+    streams.messaging.manager.working.directory: "{{ varlib_base }}/streams_messaging_manager"
+    latencyMetricsConfig.metrics.storage: "{{ varlib_base }}/streams_messaging_manager/latencymetrics/data"
+YARN:
+  SERVICEWIDE:
+    hdfs_user_home_dir: "{{ varlib_base }}/hadoop-yarn"
+    ranger_policy_cache_dir: "{{ varlib_base }}/ranger/yarn/policy-cache"
+  NODEMANAGER:
+    yarn_nodemanager_recovery_dir: "{{ varlib_base }}/hadoop-yarn/yarn-nm-recovery"
+ZEPPELIN:
+  ZEPPELIN_SERVER:
+    zeppelin.dep.localrepo: "{{ varlib_base }}/zeppelin/local-repo"
+    zeppelin.interpreter.localRepo: "{{ varlib_base }}/zeppelin/local-repo"
+    zeppelin.war.tempdir: "{{ varlib_base }}/zeppelin/webapps"
+ZOOKEEPER:
+  SERVER:
+    dataDir: "{{ varlib_base }}/zookeeper"
+    dataLogDir: "{{ varlib_base }}/zookeeper"

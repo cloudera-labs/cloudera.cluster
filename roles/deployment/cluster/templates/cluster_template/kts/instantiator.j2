@@ -1,0 +1,21 @@
+{%- set host_joiner = joiner(",") -%}
+{
+    "clusterName": "{{ cluster.name }}",
+    "hosts": [
+{%- if 'kts_active' in groups -%}
+{{ host_joiner() }}
+      {
+        "hostName": "{{ cloudera_manager_api_hosts[groups.kts_active[0]]['hostname'] }}",
+        "hostTemplateRefName": "HostTemplate-KTS-Active"
+      }
+{%- endif -%}
+{%- if 'kts_passive' in groups -%}
+{{ host_joiner() }}
+      {
+        "hostName": "{{ cloudera_manager_api_hosts[groups.kts_passive[0]]['hostname'] }}",
+        "hostTemplateRefName": "HostTemplate-KTS-Passive"
+      }
+{%- endif -%}
+    ],
+    "variables" : {%- include 'cluster_template/common/variables.j2' -%}
+  }

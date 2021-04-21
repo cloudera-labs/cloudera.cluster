@@ -1,0 +1,12 @@
+---
+KEYTRUSTEE_SERVER:
+  KEYTRUSTEE_ACTIVE_SERVER:
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    ssl_server_certificate_location: {{ tls_cert_path_generic }}
+    ssl_server_privatekey_location: {{ tls_key_path_generic }}
+    ssl_server_privatekey_password: {{ tls_key_password }}
+  KEYTRUSTEE_PASSIVE_SERVER:
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    ssl_server_certificate_location: {{ tls_cert_path_generic }}
+    ssl_server_privatekey_location: {{ tls_key_path_generic }}
+    ssl_server_privatekey_password: {{ tls_key_password }}

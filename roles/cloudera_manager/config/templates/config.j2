@@ -1,21 +1,2 @@
-{%- set j = joiner(",") -%}
-{
-  "items" : [
-{%- for (k,v) in api_configs.items() -%}
-{{ j() }}
-  {
-    {%- if api_config_keys_uppercase -%}
-    "name" : "{{ k | upper }}",
-    {%- else -%}
-    "name" : "{{ k | lower }}",
-    {%- endif -%}
-    {# the double to_json filter renders a dict into properly escaped JSON string for the CM API call #}
-    {%- if v is mapping -%}
-    "value" : {{ v | to_json | to_json }}
-    {%- else -%}
-    "value" : {{ v | to_json }}
-    {%- endif -%}
-  }
-{%- endfor -%}
-  ]
-}
+{% import 'cm_api.j2' as cm_api with context %}
+{{ cm_api.ApiConfigList(filtered_configs) }}

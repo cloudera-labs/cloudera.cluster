@@ -1,0 +1,28 @@
+---
+HDFS:
+  DATANODE:
+    dfs_data_dir_list: /dfs/dn
+  JOURNALNODE:
+    dfs_journalnode_edits_dir: /dfs/jn
+  NAMENODE:
+    dfs_name_dir_list: /dfs/nn
+  SECONDARYNAMENODE:
+    fs_checkpoint_dir_list: /dfs/snn
+KAFKA:
+  KAFKA_BROKER:
+    log.dirs: /var/local/kafka/data
+KUDU:
+  KUDU_MASTER:
+    fs_data_dirs: /kudu/master/data
+    fs_wal_dir: /kudu/master/wal
+  KUDU_TSERVER:
+    fs_data_dirs: /kudu/tablet/data
+    fs_wal_dir: /kudu/tablet/wal
+YARN:
+  NODEMANAGER:
+    yarn_nodemanager_local_dirs: /yarn/nm
+    yarn_nodemanager_recovery_dir: /var/lib/hadoop-yarn/yarn-nm-recovery
+ZOOKEEPER:
+  SERVER:
+    dataDir: /var/lib/zookeeper
+    dataLogDir: /var/lib/zookeeper

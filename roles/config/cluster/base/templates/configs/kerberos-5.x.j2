@@ -1,0 +1,34 @@
+---
+HBASE:
+  SERVICEWIDE:
+    hbase_restserver_security_authentication: kerberos
+    hbase_security_authentication: kerberos
+    hbase_security_authorization: true
+    hbase_thriftserver_security_authentication: auth-conf
+HDFS:
+  SERVICEWIDE:
+    dfs_namenode_acls_enabled: true
+    hadoop_secure_web_ui: true
+    hadoop_security_authorization: true
+    hadoop_security_authentication: kerberos
+{% if not cluster.security.tls | default(false) %}
+  DATANODE:
+    dfs_datanode_port: 1004
+    dfs_datanode_http_port: 1006
+{% endif %}
+KAFKA:
+  SERVICEWIDE:
+    kerberos.auth.enable: true
+KS_INDEXER:
+  SERVICEWIDE:
+    hbase_indexer_security_authentication: kerberos
+SOLR:
+  SERVICEWIDE:
+    solr_security_authentication: kerberos
+YARN:
+  SERVICEWIDE:
+    hadoop_secure_web_ui: true
+ZOOKEEPER:
+  SERVICEWIDE:
+    enableSecurity: true
+    quorum_auth_enable_sasl: true

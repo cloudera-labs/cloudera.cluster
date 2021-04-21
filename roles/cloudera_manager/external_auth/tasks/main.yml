@@ -1,0 +1,63 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Select external auth provider details
+  set_fact:
+    auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
+  when: cloudera_manager_external_auth.provider is defined
+
+- name: Set Cloudera Manager external auth configs
+  include_role:
+    name: cloudera_manager/config
+  vars:
+    api_config_keys_uppercase: True
+    api_configs: "{{ lookup('template', 'external_auth_configs.j2') | from_yaml }}"
+  when: auth_provider is defined
+
+- block:
+
+  - name: Get auth roles from Cloudera Manager
+    cm_api:
+      endpoint: /authRoles
+    register: response
+
+  - name: Create auth role name to UUID mapping
+    set_fact:
+      auth_role_uuids: "{{ response.json['items'] | items2dict(key_name='name', value_name='uuid') }}"
+
+  ## BUG: Can't set all mappings in one API call because of OPSAPS-56242
+  # - name: Set Cloudera Manager external auth user to role mappings
+  #   cm_api:
+  #     endpoint: /externalUserMappings
+  #     body: "{{ lookup('template', 'external_auth_mappings.j2', convert_data=False) }}"
+  #     method: POST
+  #   when: cloudera_manager_external_auth.role_mappings is defined
+
+  - name: Set Cloudera Manager external auth user to role mappings
+    include_tasks: create_mapping.yml
+    loop: "{{ cloudera_manager_external_auth.role_mappings }}"
+    loop_control:
+      loop_var: role_mapping
+
+  - name: Restart Cloudera Manager server
+    service:
+      name: cloudera-scm-server
+      state: restarted
+    become: yes
+    notify:
+      - wait cloudera-scm-server
+
+  when: cloudera_manager_external_auth.role_mappings is defined

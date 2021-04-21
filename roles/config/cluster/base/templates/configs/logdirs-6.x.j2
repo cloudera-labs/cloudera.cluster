@@ -1,0 +1,14 @@
+{%- set log_base = cluster.log_base | default('/var/log') | regex_replace('/$','') -%}
+---
+HDFS:
+  BALANCER:
+    balancer_log_dir: "{{ log_base }}/hadoop-hdfs"
+HUE:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/hue/audit"
+SOLR:
+  SERVICEWIDE:
+    audit_event_log_dir: "{{ log_base }}/solr/audit"
+SPARK_ON_YARN:
+  GATEWAY:
+    lineage_event_log_dir: "{{ log_base }}/spark/lineage"

@@ -1,0 +1,14 @@
+SERVICEWIDE:
+  zookeeper_service: {{ services.json | json_query('items[?type==`ZOOKEEPER`].name') | first }}
+
+KMS_KEYTRUSTEE:
+  cloudera_trustee_keyprovider_hostname-ACTIVE: "{{ keytrustee_server_active }}"
+  cloudera_trustee_keyprovider_hostname-PASSIVE: "{{keytrustee_server_passive | default('') }}"
+  cloudera_trustee_keyprovider_org: "{{ keytrustee_server_org_name }}"
+  cloudera_trustee_keyprovider_auth: "{{ keytrustee_server_auth_secret }}"
+
+RANGER_KMS_SERVER_KTS:
+  cloudera_trustee_keyprovider_hostname-ACTIVE: "{{ keytrustee_server_active }}"
+  cloudera_trustee_keyprovider_hostname-PASSIVE: "{{keytrustee_server_passive | default('') }}"
+  cloudera_trustee_keyprovider_org: "{{ keytrustee_server_org_name }}"
+  cloudera_trustee_keyprovider_auth: "{{ keytrustee_server_auth_secret }}"

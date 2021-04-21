@@ -1,0 +1,108 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+base_cluster_directories:
+  HDFS:
+    SERVICEWIDE:
+      - audit_event_log_dir
+      - ranger_audit_hdfs_spool_dir
+      - ranger_audit_solr_spool_dir
+    BALANCER:
+      - balancer_log_dir
+    DATANODE:
+      - dfs_data_dir_list
+      - datanode_log_dir
+    FAILOVERCONTROLLER:
+      - failover_controller_log_dir
+    HTTPFS:
+      - httpfs_log_dir
+    JOURNALNODE:
+      - dfs_journalnode_edits_dir
+      - journalnode_log_dir
+    NAMENODE:
+      - dfs_name_dir_list
+      - namenode_log_dir
+    NFSGATEWAY:
+      - nfsgateway_log_dir
+    SECONDARYNAMENODE:
+      - fs_checkpoint_dir_list
+      - secondarynamenode_log_dir
+  KAFKA:
+    KAFKA_BROKER:
+      - log.dirs
+      - log_dir
+      - ranger_kafka_plugin_hdfs_audit_spool_directory
+      - ranger_kafka_plugin_solr_audit_spool_directory
+    KAFKA_CONNECT:
+      - log_dir
+    KAFKA_MIRROR_MAKER:
+      - log_dir
+  KUDU:
+    KUDU_MASTER:
+      - fs_data_dirs
+      - fs_wal_dir
+      - log_dir
+    KUDU_TSERVER:
+      - fs_data_dirs
+      - fs_wal_dir
+      - log_dir
+  YARN:
+    SERVICEWIDE:
+      - ranger_audit_hdfs_spool_dir
+      - ranger_audit_solr_spool_dir
+    GATEWAY:
+      - hadoop_job_history_dir
+    JOBHISTORY:
+      - mr2_jobhistory_log_dir
+    NODEMANAGER:
+      - yarn_nodemanager_local_dirs
+      - yarn_nodemanager_recovery_dir
+      - node_manager_log_dir
+      - yarn_nodemanager_log_dirs
+    RESOURCEMANAGER:
+      - resource_manager_log_dir
+  ZOOKEEPER:
+    SERVER:
+      - dataDir
+      - dataLogDir
+      - zk_server_log_dir
+
+kts_cluster_directories: {}
+
+cms_directories:
+  ACTIVITYMONITOR:
+    - mgmt_log_dir
+  ALERTPUBLISHER:
+    - mgmt_log_dir
+  EVENTSERVER:
+    - eventserver_index_dir
+    - mgmt_log_dir
+  HOSTMONITOR:
+    - firehose_storage_dir
+    - mgmt_log_dir
+  NAVIGATOR:
+    - mgmt_log_dir
+  NAVIGATORMETASERVER:
+    - data_dir
+    - audit_event_log_dir
+    - mgmt_log_dir
+  REPORTSMANAGER:
+    - headlamp_scratch_dir
+    - mgmt_log_dir
+  SERVICEMONITOR:
+    - firehose_storage_dir
+    - mgmt_log_dir
+  TELEMETRYPUBLISHER:
+    - mgmt_data_dir
+    - mgmt_log_dir

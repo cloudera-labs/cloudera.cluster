@@ -1,0 +1,55 @@
+HBASE:
+  GATEWAY:
+    hbase_client_config_safety_valve: >
+      <property>
+        <name>phoenix.queryserver.serialization</name>
+        <value>JSON</value>
+      </property>
+      <property>
+        <name>phoenix.schema.isNamespaceMappingEnabled</name>
+        <value>true</value>
+      </property>
+  REGIONSERVER:
+    hbase_regionserver_wal_codec: org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec
+  SERVICEWIDE:
+    hbase_client_keyvalue_maxsize: 52428800
+    hbase_service_config_safety_valve: >
+      <property>
+        <name>hbase.region.server.rpc.scheduler.factory.class</name>
+        <value>org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory</value>
+      </property>
+      <property>
+        <name>hbase.rpc.controllerfactory.class</name>
+        <value>org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory</value>
+      </property>
+      <property>
+        <name>phoenix.functions.allowUserDefinedFunctions</name>
+        <value>true</value>
+      </property>
+      <property>
+        <name>phoenix.queryserver.serialization</name>
+        <value>JSON</value>
+      </property>
+      <property>
+        <name>hbase.server.keyvalue.maxsize</name>
+        <value>52428800</value>
+      </property>
+      <property>
+        <name>phoenix.schema.isNamespaceMappingEnabled</name>
+        <value>true</value>
+      </property>
+PHOENIX:
+  PHOENIX_QUERY_SERVER:
+    'phoenix-site.xml_role_safety_valve': >
+      <property>
+        <name>phoenix.queryserver.serialization</name>
+        <value>JSON</value>
+      </property>
+      <property>
+        <name>phoenix.schema.isNamespaceMappingEnabled</name>
+        <value>true</value>
+      </property>
+WXM:
+  SERVICEWIDE:
+    impala_daemon_host: {{ groups.impala_impalad | first }}
+    phoenix_queryserver_host: {{ groups.phoenix_phoenix_query_server | first }}

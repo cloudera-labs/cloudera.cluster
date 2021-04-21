@@ -1,0 +1,254 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+# Inventory specific
+- block:
+    - set_fact:
+        has_tls: >-
+          {{
+          definition
+          | json_query('clusters[?security.tls]')
+          | length > 0
+          }}
+    - name: Ensure that TLS distribution is configured in the inventory
+      assert:
+        that: "{{ hostvars | dict2items | json_query('[?value.tls]') | length > 0 }}"
+        success_msg: "TLS is configured on a set of nodes"
+        fail_msg: >-
+          TLS certificate distribution is not configured in the cluster inventory
+          file (set manual_tls_cert_distribution if this is intentional)
+      when: has_tls and not (manual_tls_cert_distribution | default(false))
+    - name: Ensure that TLS distribution is not configured in the inventory
+      assert:
+        that: "{{ hostvars | dict2items | json_query('[?value.tls]') | length == 0 }}"
+        success_msg: "TLS certificates and keys are not distributed by the playbook"
+        fail_msg: >-
+          TLS certificate distribution is configured in the cluster inventory
+          file but manual_tls_cert_distribution is set to true
+          (unset manual_tls_cert_distribution if this is intentional)
+      when: manual_tls_cert_distribution | default(false)
+    - name: Ensure that TLS is configured in the mgmt cluster
+      assert:
+        that: "{{ definition.mgmt.security.tls | default(false) }}"
+        success_msg: "TLS is configured for the mgmt cluster"
+        fail_msg: "TLS should be configured for the mgmt cluster"
+      when: has_tls
+
+- block:
+    - set_fact:
+        host_template_names_inventory: >-
+          {{
+          groups
+          | select('match', '^host_template_')
+          | map('regex_replace', '^host_template_', '')
+          | list
+          }}
+        host_template_names_cluster: >-
+          {{
+          definition
+          | json_query('map(&keys(@), clusters[*].host_templates)')
+          | flatten
+          }}
+    - set_fact:
+        unmatched_templates_inventory: >-
+          {{
+          host_template_names_inventory
+          | difference(host_template_names_cluster)
+          }}
+        unmatched_templates_cluster: >-
+          {{
+          host_template_names_cluster
+          | difference(host_template_names_inventory)
+          }}
+    - name: Ensure that all inventory templates match definition templates
+      assert:
+        that: "{{ unmatched_templates_inventory | length == 0 }}"
+        success_msg: "All inventory templates matched against clusters"
+        fail_msg: >-
+          Unused host template(s) '{{ unmatched_templates_inventory }}' found
+          in inventory - check against cluster definition(s).
+    - name: Ensure that all definition templates match inventory templates
+      assert:
+        that: "{{ unmatched_templates_cluster | length == 0 }}"
+        success_msg: "All cluster templates matched against inventory"
+        fail_msg: >-
+          Unused host template(s) '{{ unmatched_templates_cluster }}' found
+          in cluster definitions - check against inventory.
+
+# Kerberos
+- block:
+    - set_fact:
+        expect_kerberos: >-
+          {{
+          definition
+          | json_query("clusters[?security.kerberos].name")
+          | length > 0
+          }}
+    - name: Ensure that Kerberos is not specified when not in use
+      assert:
+        that: "{{ krb5_kdc_host is not defined and 'krb5_server' not in groups }}"
+        success_msg: "Kerberos is not configured on any cluster and the KDC host is not set"
+        fail_msg: "The KDC host is configured but no cluster is configured to use Kerberos"
+      ignore_errors: yes
+      when: not expect_kerberos
+    - name: Ensure that Kerberos is specified when used
+      assert:
+        that: "{{ krb5_kdc_host is defined or 'krb5_server' in groups }}"
+        success_msg: "The KDC host has been configured correctly"
+        fail_msg: >-
+          The KDC host must be configured, either by adding a host to the
+          'krb5_server' group or by setting 'krb5_kdc_host' to an existing KDC host
+      when: expect_kerberos
+    - name: Ensure that the KDC host is only specified in one place
+      assert:
+        that: >-
+          {{
+          (krb5_kdc_host is defined and 'krb5_server' not in groups)
+          or ('krb5_server' in groups and krb5_kdc_host is not defined)
+          }}
+        success_msg: "The KDC host is specified correctly in one location"
+        fail_msg: >-
+          The var 'krb5_kdc_host' and group 'krb5_server' cannot be used together
+          – please unset one
+      when: expect_kerberos
+    - name: Ensure that at most one host is specified in the 'krb5_server' group
+      assert:
+        that: "{{ groups['krb5_server'] | length == 1 }}"
+        success_msg: "'krb5_server' is configured correctly"
+        fail_msg: >-
+          The playbook does not currently support KDC HA and therefore only one
+          host should be specified in the 'krb5_server' group
+      when: "'krb5_server' in groups"
+
+# Service specific
+
+## KMS/KTS
+- block:
+    - set_fact:
+        kts_clusters: >-
+          {{
+          definition
+          | json_query('clusters[?type == `kts`]')
+          }}
+    - set_fact:
+        expect_kts: >-
+          {{ kts_clusters | length > 0
+             or 'kts_active' in groups
+             or 'kts_passive' in groups
+          }}
+    - block:
+        - name: Ensure there is one (and only one) KTS cluster
+          assert:
+            that: "{{ kts_clusters | length == 1 }}"
+            success_msg: "Key Trustee cluster definition present"
+            fail_msg: >-
+              A Key Trustee cluster (type 'kts') must be defined when
+              'kts_active' 'kts_passive' groups are present in inventory
+        - name: Ensure there is one (and only one) active KTS
+          assert:
+            that: "{{ 'kts_active' in groups and groups['kts_active'] | length == 1 }}"
+            success_msg: "Key Trustee Active Server present"
+            fail_msg: >-
+              There must be one server in the 'kts_active' group
+              when a kts cluster is present in the cluster definition
+        - name: Ensure there is one (and only one) passive KTS
+          assert:
+            that: "{{ 'kts_passive' not in groups or groups['kts_passive'] | length == 1 }}"
+            success_msg: "At most one Key Trustee Passive Server present"
+            fail_msg: >-
+              There must be one server in the 'kts_passive' group (this group is optional
+              and can be removed) when a kts cluster is present in the cluster definition
+        - name: Ensure there is one or more KMS servers
+          assert:
+            that: "{{ 'kms_servers' in groups and groups['kms_servers'] | length >= 1 }}"
+            success_msg: "At least one Key Management Server present"
+            fail_msg: >-
+              There must be at least one host in the 'kms_servers' group
+              when a kts cluster is present in the cluster definition
+      when: expect_kts
+
+## Ranger
+- block:
+    - set_fact:
+        kerberos_clusters: >-
+         {{
+         definition
+         | json_query("clusters[?security.kerberos].name")
+         }}
+        ranger_clusters: >-
+         {{
+         definition
+         | json_query('clusters[?services] | [?contains(services, `RANGER`)].name')
+         }}
+        sentry_clusters: >-
+         {{
+         definition
+         | json_query('clusters[?services] | [?contains(services, `SENTRY`)].name')
+         }}
+    - name: Ensure that Kerberos is enabled alongside Ranger and Sentry
+      assert:
+        that: "{{ ranger_clusters | union(sentry_clusters) | difference(kerberos_clusters) | length == 0 }}"
+        success_msg: "Kerberos is enabled on each cluster with Ranger or Sentry"
+        fail_msg: "Kerberos should be enabled on each cluster with Ranger or Sentry"
+      when: ranger_clusters | length > 0 or sentry_clusters | length > 0
+    - name: Ensure that Ranger and Sentry are enabled alongside Kerberos (warning)
+      assert:
+        that: "{{ kerberos_clusters | difference(ranger_clusters | union(sentry_clusters)) | length == 0 }}"
+        success_msg: "Ranger or Sentry is present on each cluster with Kerberos"
+        fail_msg: "Ranger or Sentry should be present on each cluster with Kerberos"
+      ignore_errors: yes
+      when: kerberos_clusters | length > 0
+
+## ZooKeeper
+- block:
+    - set_fact:
+        has_tls: >-
+          {{
+          definition
+          | json_query('clusters[?security.tls]')
+          | length > 0
+          }}
+        zookeeper_clusters: >-
+          {{
+          definition
+          | json_query('clusters[?services] | [?contains(services, `ZOOKEEPER`)].name')
+          }}
+        zookeeper_servicewide_configs: >-
+          {{
+          definition
+          | json_query('map(&keys(@), clusters[].configs.ZOOKEEPER.SERVICEWIDE)[]')
+          }}
+    - name: Ensure the truststore is properly named for zookeeper
+      assert:
+        that: >-
+          {{
+          not has_tls
+          or zookeeper_clusters | length == 0
+          or ((tls_truststore_path.endswith(".jks")
+               or tls_truststore_path.endswith(".pem"))
+              and (tls_keystore_path_generic.endswith(".jks")
+                   or tls_keystore_path_generic.endswith(".pem")))
+          }}
+        success_msg: "The keystore and truststore end with a valid extension"
+        fail_msg: "ZooKeeper expects the truststore and keystore to end with jks or pem"
+      when:
+        - "'zookeeper_tls_truststore' not in zookeeper_servicewide_configs"
+        - "'zookeeper_tls_keystore' not in zookeeper_servicewide_configs"
+        - "'zookeeper_tls_keystore' not in zookeeper_servicewide_configs"
+
+# Version specific
+
+# Add version specific issues here (e.g. Database versions)

@@ -1,0 +1,51 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Check cms exists
+  cm_api:
+    endpoint: /cm/service
+    method: GET
+    status_code: 200,404
+  changed_when: false
+  register: service_before_delete
+
+- name: Stop cms (stop_cms_before_delete)
+  cm_api:
+    endpoint: /cm/service/commands/stop
+    method: POST
+  register: service_stop
+  when:
+    - service_before_delete.status == 200
+    - stop_cms_before_delete|default(false)
+  failed_when: service_stop.status | default(0) != 200
+
+- name: Get the cms service
+  cm_api:
+    endpoint: /cm/service
+    method: GET
+    status_code: 200,404
+  changed_when: false
+  register: service
+  when: service_before_delete.status == 200
+
+- name: Delete cms
+  cm_api:
+    endpoint: /cm/service
+    method: DELETE
+  when:
+    - service_before_delete.status == 200
+    - "'json' in service"
+    - service.json.serviceState == 'STOPPED'

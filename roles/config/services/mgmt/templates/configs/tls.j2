@@ -1,0 +1,32 @@
+---
+ACTIVITYMONITOR:
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+SERVICEWIDE:
+  ssl_client_truststore_location: {{ tls_truststore_path }}
+  ssl_client_truststore_password: {{ tls_truststore_password }}
+HOSTMONITOR:
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+NAVIGATOR:
+  navigator_truststore_file: {{ tls_truststore_path }}
+  navigator_truststore_password: {{ tls_truststore_password }}
+  ssl_enabled: true
+  ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+NAVIGATORMETASERVER:
+  nav_saml_keystore_password: {{ tls_keystore_password }}
+  nav_saml_keystore_path: {{ tls_keystore_path_generic }}
+  ssl_enabled: true
+  ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+SERVICEMONITOR:
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}
+TELEMETRYPUBLISHER:
+  ssl_enabled: true
+  ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+  ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+  ssl_server_keystore_password: {{ tls_keystore_password }}

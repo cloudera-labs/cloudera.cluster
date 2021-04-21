@@ -1,0 +1,136 @@
+---
+{% set auth_provider = auth_providers[service_auth_provider] %}
+#ATLAS:
+#  ATLAS_SERVER:
+#    atlas_authentication_method_ldap: 
+#    atlas_authentication_method_ldap_ad_base_dn: 
+#    atlas_authentication_method_ldap_ad_bind_dn: 
+#    atlas_authentication_method_ldap_ad_bind_password: 
+#    atlas_authentication_method_ldap_ad_default_role: 
+#    atlas_authentication_method_ldap_ad_domain: 
+#    atlas_authentication_method_ldap_ad_referral: 
+#    atlas_authentication_method_ldap_ad_url: 
+#    atlas_authentication_method_ldap_ad_user_searchfilter: 
+#    atlas_authentication_method_ldap_base_dn: 
+#    atlas_authentication_method_ldap_bind_dn: 
+#    atlas_authentication_method_ldap_bind_password: 
+#    atlas_authentication_method_ldap_default_role: 
+#    atlas_authentication_method_ldap_groupRoleAttribute: 
+#    atlas_authentication_method_ldap_groupSearchBase: 
+#    atlas_authentication_method_ldap_groupSearchFilter: 
+#    atlas_authentication_method_ldap_referral: 
+#    atlas_authentication_method_ldap_type: 
+#    atlas_authentication_method_ldap_ugi_groups: 
+#    atlas_authentication_method_ldap_url: 
+#    atlas_authentication_method_ldap_userDNpattern: 
+#    atlas_authentication_method_ldap_user_searchfilter: 
+#DAS:
+#  DAS_WEBAPP:
+#    das_webapp_ldap_basedn: 
+#    das_webapp_ldap_custom_ldap_query: 
+#    das_webapp_ldap_domain: 
+#    das_webapp_ldap_group_class_key: 
+#    das_webapp_ldap_group_dn_pattern: 
+#    das_webapp_ldap_group_filter: 
+#    das_webapp_ldap_group_membership_key: 
+#    das_webapp_ldap_guid_key: 
+#    das_webapp_ldap_url: 
+#    das_webapp_ldap_user_dn_pattern: 
+#    das_webapp_ldap_user_filter: 
+#    das_webapp_ldap_user_membership_key: 
+#HIVE:
+#  SERVICEWIDE:
+#    hive_metastore_enable_ldap_auth: false
+#    hive_metastore_ldap_basedn: 
+#    hive_metastore_ldap_domain: 
+#    hive_metastore_ldap_uri: 
+#    hiveserver2_enable_ldap_auth: false
+#    hiveserver2_ldap_basedn: 
+#    hiveserver2_ldap_domain: 
+#    hiveserver2_ldap_uri: 
+#HIVE_LLAP:
+#  SERVICEWIDE:
+#    hiveserver2_enable_ldap_auth: false
+#    hiveserver2_ldap_basedn: 
+#    hiveserver2_ldap_domain: 
+#    hiveserver2_ldap_uri: 
+#HIVE_ON_TEZ:
+#  SERVICEWIDE:
+#    hiveserver2_enable_ldap_auth: false
+#    hiveserver2_ldap_basedn: 
+#    hiveserver2_ldap_domain: 
+#    hiveserver2_ldap_uri: 
+HUE:
+  SERVICEWIDE:
+    auth_backend: desktop.auth.backend.LdapBackend
+    bind_dn: "{{ auth_provider.ldap_bind_user_dn }}"
+    bind_password: "{{ auth_provider.ldap_bind_password }}"
+    base_dn: "{{ auth_provider.ldap_search_base.common | default('') }}"
+    create_users_on_login: true
+    group_filter: "(objectClass={{ auth_provider.ldap_object_class.group }})"
+    group_member_attr: "{{ auth_provider.ldap_attribute.member }}"
+    group_name_attr: "{{ auth_provider.ldap_attribute.group }}"
+    ldap_cert: "{{ auth_provider.ldap_cert | default('') }}"
+    ldap_url: "{{ auth_provider.ldap_url }}"
+    search_bind_authentication: true
+    use_start_tls: true
+    user_filter: "(objectClass={{ auth_provider.ldap_object_class.user }})"
+    user_name_attr: "{{ auth_provider.ldap_attribute.user }}"
+#IMPALA:
+#  SERVICEWIDE:
+#    enable_ldap_auth: false
+#    enable_ldap_tls: false
+#    impala_ldap_uri: 
+#    ldap_baseDN: 
+#    ldap_bind_pattern: 
+#    ldap_domain: 
+#  IMPALAD:
+#    impalad_ldap_ca_certificate: 
+#KAFKA:
+#  SERVICEWIDE:
+#    ldap.auth.url: 
+#    ldap.auth.user.dn.template: 
+#RANGER:
+#  RANGER_ADMIN:
+#    ranger.ldap.ad.base.dn:
+#    ranger.ldap.ad.bind.dn:
+#    ranger.ldap.ad.domain:
+#    ranger.ldap.ad.referral:
+#    ranger.ldap.ad.url:
+#    ranger.ldap.ad.user.searchfilter:
+#    ranger.ldap.base.dn:
+#    ranger.ldap.bind.dn:
+#    ranger.ldap.group.roleattribute:
+#    ranger.ldap.group.searchbase:
+#    ranger.ldap.group.searchfilter:
+#    ranger.ldap.referral:
+#    ranger.ldap.url:
+#    ranger.ldap.user.dnpattern:
+#    ranger.ldap.user.searchfilter:
+#    ranger_ldap_ad_bind_password:
+#    ranger_ldap_bind_password:
+#RANGER:
+#  RANGER_USERSYNC:
+#    ranger.usersync.ldap.binddn:
+#    ranger.usersync.ldap.deltasync:
+#    ranger.usersync.ldap.grouphierarchylevels:
+#    ranger.usersync.ldap.groupname.caseconversion:
+#    ranger.usersync.ldap.referral:
+#    ranger.usersync.ldap.searchBase:
+#    ranger.usersync.ldap.starttls:
+#    ranger.usersync.ldap.url:
+#    ranger.usersync.ldap.user.groupnameattribute:
+#    ranger.usersync.ldap.user.nameattribute:
+#    ranger.usersync.ldap.user.objectclass:
+#    ranger.usersync.ldap.user.searchbase:
+#    ranger.usersync.ldap.user.searchfilter:
+#    ranger.usersync.ldap.user.searchscope:
+#    ranger.usersync.ldap.username.caseconversion:
+#    ranger_usersync_ldap_ldapbindpassword:
+#SOLR:
+#  SERVICEWIDE:
+#    ldap_domain: 
+#    solr_enable_ldap_auth: false
+#    solr_ldap_basedn: 
+#    solr_ldap_enable_starttls: false
+#    solr_ldap_uri: 

@@ -1,14 +1,39 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
-- name: Update Cloudera Manager configuration (via Cloudera Manager API)
-  uri:
-    url: "{{ cloudera_manager_api }}/{{ api_config_endpoint }}"
-    method: PUT
-    body_format: json
+- name: Get existing configs
+  cm_api:
+    endpoint: "{{ api_config_endpoint }}"
+  register: response
+
+- name: Filter out null configs if necessary
+  set_fact:
+    filtered_configs: >
+      {{ api_configs | filter_null_configs(response.json['items'] | 
+      items2dict(key_name='name', value_name='value')) }}
+
+- name: Update configuration endpoint to contain change message
+  set_fact:
+    api_config_endpoint: "{{ api_config_endpoint }}?message={{ message|urlencode() }}"
+  when: message is defined and "message" not in api_config_endpoint
+
+- name: Update configuration (via Cloudera Manager API)
+  cm_api:
+    endpoint: "{{ api_config_endpoint }}"
     body: "{{ lookup('template', 'config.j2', convert_data=False) }}"
-    status_code: 200
-    force_basic_auth: yes
-    user: "{{ cloudera_manager_api_user }}"
-    password: "{{ cloudera_manager_api_password }}"
-    return_content: yes
-  when: api_configs is defined
+    method: PUT
+  register: response
+  when: api_configs is mapping

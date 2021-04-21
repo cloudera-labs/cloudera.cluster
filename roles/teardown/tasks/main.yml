@@ -1,0 +1,239 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Ensure properly configured
+  assert:
+    that: >-
+      {{
+        (teardown_everything is defined and teardown_everything)
+        or teardown_cluster is defined
+        or (teardown_cms is defined and teardown_cms)
+      }}
+    success_msg: "Teardown is properly configured and will execute"
+    fail_msg: >-
+      Please set teardown_everything to true to teardown
+      every cluster and cm.
+      Alternatively, specify a cluster
+      to teardown using teardown_cluster ('all' to teardown
+      every cluster).
+      Finally, teardown CMS by setting teardown_cms to true.
+      You can also set teardown_skip_cluster_deletion to true
+      to skip cluster deletion in CM.
+
+- set_fact:
+    _tde_clusters: "{{ definition.clusters | json_query(query) | default([]) }}"
+  vars:
+    query: "[?security.hdfs_encryption].name"
+
+- name: Remove CDSW
+  include_tasks: teardown_cdsw.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: cluster
+  when:
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - host_template is defined
+    - "'CDSW' in cluster.host_templates[host_template] | default({})"
+    - not (skip_cdsw_teardown | default(false))
+
+- name: Find available parcels
+  find:
+    paths: /opt/cloudera/parcels
+    file_type: directory
+  register: parcel_paths
+  when: teardown_preserve_parcels | default(False)
+
+- name: Preserve parcels – useful for testing (teardown_preserve_parcels)
+  file:
+    path: "{{ parcel.path }}/.dont_delete"
+    state: touch
+    owner: cloudera-scm
+    group: cloudera-scm
+  loop: "{{ parcel_paths.files }}"
+  loop_control:
+    loop_var: parcel
+    label: "{{ parcel.path }}"
+  when: teardown_preserve_parcels | default(False)
+
+- name: Remove Clusters from Cloudera Manager (compute)
+  include_role:
+    name: operations/delete_cluster
+  vars:
+    stop_cluster_before_delete: true
+    cluster: "{{ default_cluster_compute | combine(_cluster) }}"
+  run_once: true
+  ignore_errors: '{{ ansible_check_mode }}'
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: _cluster
+  when:
+    - "'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - cluster.type | default('base') == 'compute'
+    - not (teardown_skip_cluster_deletion | default(false))
+
+- name: Remove Clusters from Cloudera Manager (base)
+  include_role:
+    name: operations/delete_cluster
+  vars:
+    stop_cluster_before_delete: true
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  run_once: true
+  ignore_errors: '{{ ansible_check_mode }}'
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: _cluster
+  when:
+    - "'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - cluster.type | default('base') == 'base'
+    - not (teardown_skip_cluster_deletion | default(false))
+
+- name: Remove Clusters from Cloudera Manager (kts)
+  include_role:
+    name: operations/delete_cluster
+  vars:
+    stop_cluster_before_delete: true
+    cluster: "{{ default_cluster_kts | combine(_cluster) }}"
+  run_once: true
+  ignore_errors: '{{ ansible_check_mode }}'
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: _cluster
+  when:
+    - "'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - cluster.type | default('base') == 'kts'
+    - not (teardown_skip_cluster_deletion | default(false))
+
+# delete the cms from cm if we are not tearing cm down
+- name: Remove CMS from Cloudera Manager
+  import_role:
+    name: operations/delete_cms
+  vars:
+    stop_cms_before_delete: true
+  run_once: true
+  when:
+    - teardown_everything | default(false) or teardown_cms | default(false)
+    - not (teardown_skip_cluster_deletion | default(false))
+  ignore_errors: '{{ ansible_check_mode }}'
+
+- name: Teardown Cloudera agent
+  include_tasks: teardown_cloudera_agent.yml
+  when:
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+    - teardown_everything | default(false)
+
+- name: Teardown Cloudera server
+  include_tasks: teardown_cloudera_server.yml
+  when:
+    - "'cloudera_manager' in group_names"
+    - teardown_everything | default(false)
+
+- name: Teardown Cloudera daemons
+  package:
+    name: cloudera-manager-daemons
+    state: absent
+  when:
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+    - teardown_everything | default(false)
+    - not (teardown_skip_daemon_package_deletion | default(false))
+
+- name: Teardown Cluster (compute)
+  include_tasks: teardown_cluster.yml
+  vars:
+    cluster: "{{ default_cluster_compute | combine(_cluster) }}"
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: _cluster
+  when:
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - host_template is defined
+    - definition.host_template_cluster_map[host_template] | default('') == cluster.name
+    - cluster.type | default('base') == 'compute'
+
+- name: Teardown Cluster (base)
+  include_tasks: teardown_cluster.yml
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: _cluster
+  when:
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - host_template is defined and definition.host_template_cluster_map[host_template] | default('') == cluster.name
+    - cluster.type | default('base') == 'base'
+
+- name: Teardown Cluster (kts)
+  include_tasks: teardown_cluster.yml
+  vars:
+    cluster: "{{ default_cluster_kts | combine(_cluster) }}"
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    label: "{{ cluster.name }}"
+    loop_var: _cluster
+  when:
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in ['all', cluster.name]
+    - "'kts_active' in group_names or 'kts_passive' in group_names"
+    - cluster.type | default('base') == 'kts'
+
+# refactor once the KMS locactions are properly configured as overlays
+# see teardown_cms.yml for reference and re-purpose teardown_cms_*.yml
+# https://docs.cloudera.com/cloudera-manager/7.2.0/reference/topics/cm_props_cdh710_keytrusteekms.html
+- name: Teardown KMS
+  include_tasks: teardown_kms.yml
+  when:
+    - "'kms_servers' in group_names"
+    - teardown_everything | default(false) or teardown_cluster | default('') in (['all'] + _tde_clusters)
+
+- name: Teardown Cloudera Manager CMS
+  include_tasks: teardown_cms.yml
+  when:
+    - "'cloudera_manager' in group_names"
+    - teardown_everything | default(false) or teardown_cms | default(false)
+
+- name: Delete scm database
+  include_tasks: teardown_database.yml
+  loop: "{{ databases|dict2items }}"
+  loop_control:
+    loop_var: database
+  run_once: true
+  vars:
+    databases:
+      scm:
+        host: "{{ cloudera_manager_database_host }}"
+        name: "{{ cloudera_manager_database_name }}"
+        user: "{{ cloudera_manager_database_user }}"
+        password: "{{ cloudera_manager_database_password }}"
+        type: "{{ cloudera_manager_database_type }}"
+  when: teardown_everything | default(false)
+
+- name: Stop Haproxy
+  service:
+    name: haproxy
+    state: stopped
+    enabled: no
+  when:
+    - "'haproxy' in group_names"
+    - teardown_everything | default(false)

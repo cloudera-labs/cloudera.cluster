@@ -1,23 +1,27 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
 - name: Get the host identifiers and names from Cloudera Manager
-  uri:
-    url: "{{ cloudera_manager_api }}/hosts"
+  cm_api:
+    endpoint: /hosts
     method: GET
-    status_code: 200
-    user: "{{ cloudera_manager_api_user }}"
-    password: "{{ cloudera_manager_api_password }}"
-    force_basic_auth: yes
-    return_content: yes
   register: api_hosts_response
-  when: cloudera_manager_api_host_ids is not defined
+  when: cloudera_manager_api_hosts is not defined
 
 - name: Extract the host identifiers and names into facts
   set_fact:
-    cloudera_manager_api_host_ids: "{{ lookup('template', 'host_list.j2') }}"
-  when: cloudera_manager_api_host_ids is not defined
-
-- name: Print the extracted host identifiers and names
-  debug:
-    var: cloudera_manager_api_host_ids
-    verbosity: 2
+    cloudera_manager_api_hosts: "{{ lookup('template', 'host_list.j2') }}"
+  when: cloudera_manager_api_hosts is not defined

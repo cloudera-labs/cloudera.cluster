@@ -1,0 +1,35 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Check the default Cloudera Manager admin password
+  uri:
+    url: "{{ cloudera_manager_protocol }}://{{ cloudera_manager_host }}:{{ cloudera_manager_port }}/api/v2/tools/echo"
+    validate_certs: "{{ cloudera_manager_tls_validate_certs }}"
+    url_username: "admin"
+    url_password: "admin"
+    force_basic_auth: yes
+  register: default_admin_password_check
+  failed_when: default_admin_password_check.status not in [200, 401]
+  run_once: True
+  when: cloudera_manager_admin_password is defined
+
+- name: Set the playbook to use the non-default Cloudera Manager admin password
+  set_fact:
+    cloudera_manager_api_password: "{{ cloudera_manager_admin_password }}"
+  run_once: True
+  when:
+    - cloudera_manager_admin_password is defined
+    - default_admin_password_check.status == 401

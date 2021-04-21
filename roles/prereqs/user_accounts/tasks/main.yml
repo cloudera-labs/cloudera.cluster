@@ -1,0 +1,74 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- block:
+    - name: Include user groups vars
+      include_vars:
+        file: "user_accounts.yml"
+
+    - name: Create hadoop group
+      group:
+        name: hadoop
+        state: present
+
+    - debug:
+        msg: >-
+          If you have a failure during user creation,
+          please ensure that users and groups can be created
+          locally or that they are already setup correctly,
+          with no collisions, if managed elsewhere.
+          The user module error may not identify the root cause.
+      run_once: true
+
+    - name: Create local user accounts
+      user:
+        name: "{{ account.user }}"
+        home: "{{ account.home }}"
+        comment: "{{ account.comment | default(omit) }}"
+        groups: "{{ account.extra_groups | default([]) }}"
+        shell: /sbin/nologin
+        append: yes
+      loop: "{{ local_accounts }}"
+      loop_control:
+        loop_var: account
+      when: account.when | default(True)
+
+    - name: Set home directory permissions
+      file:
+        path: "{{ account.home }}"
+        owner: "{{ account.user }}"
+        group: "{{ account.user }}"
+        mode: "{{ account.mode | default(0755) }}"
+      loop: "{{ local_accounts }}"
+      loop_control:
+        loop_var: account
+      when: account.when | default(True)
+
+  when: (not skip_user_group_init) | default(true)
+
+# TODO find a better way to handle users/home directories for add-on CSDs and parcels
+- name: Workaround - Create symlink for SMM user's home directory (1/2)
+  stat:
+    path: /var/lib/streams_messaging_manager
+  register: smm_home
+
+- name: Workaround - Create symlink for SMM user's home directory (2/2)
+  file:
+    src: /var/lib/streams_messaging_manager
+    dest: /var/lib/streamsmsgmgr
+    state: link
+  when: smm_home.stat.exists
+

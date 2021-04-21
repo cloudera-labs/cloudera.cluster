@@ -1,0 +1,6 @@
+---
+SCHEMAREGISTRY:
+  SCHEMA_REGISTRY_SERVER:
+    schema.registry.storage.connector.connectURI: "jdbc:{{ databases.SCHEMAREGISTRY.type | format_database_type }}://{{ databases.SCHEMAREGISTRY.host }}:{{ databases.SCHEMAREGISTRY.port }}/{{ databases.SCHEMAREGISTRY.name }}"
+    schema.registry.storage.connector.user: {{ databases.SCHEMAREGISTRY.user }}
+    schema.registry.storage.connector.password: {{ databases.SCHEMAREGISTRY.password }}

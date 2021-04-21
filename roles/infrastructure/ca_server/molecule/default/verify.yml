@@ -1,0 +1,44 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Verify
+  hosts: all
+  gather_facts: no
+  tasks:
+
+  - name: Output Root CA cert details
+    shell: openssl x509 -in /ca/certs/ca.cert.pem -noout -text
+    register: root_ca_output
+
+  - name: Check Root CA issuer
+    assert:
+      that: "'Issuer: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in root_ca_output.stdout"
+
+  - name: Check Root CA subject
+    assert:
+      that: "'Subject: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in root_ca_output.stdout"
+
+  - name: Output Intermediate CA cert details
+    shell: openssl x509 -in /ca/intermediate/certs/intermediate.cert.pem -noout -text
+    register: intermediate_ca_output
+
+  - name: Check Intermediate CA issuer
+    assert:
+      that: "'Issuer: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in intermediate_ca_output.stdout"
+
+  - name: Check Intermediate CA subject
+    assert:
+      that: "'Subject: C=US, O=Cloudera, Inc., OU=PS, CN=Intermediate CA' in intermediate_ca_output.stdout"

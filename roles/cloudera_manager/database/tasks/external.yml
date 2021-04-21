@@ -1,13 +1,30 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
 - name: Create Cloudera Manager database user
   postgresql_user:
-    name: "{{ cloudera_manager_database_name }}"
+    name: "{{ cloudera_manager_database_user }}"
     password: "{{ cloudera_manager_database_password }}"
   delegate_to: "{{ cloudera_manager_database_host }}"
+  connection: ssh
   become: yes
   become_user: postgres
-  when: cloudera_manager_database_type == 'postgresql'
+  when:
+  - cloudera_manager_database_type == 'postgresql'
+  - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Create Cloudera Manager database
   postgresql_db:
@@ -15,19 +32,25 @@
     owner: "{{ cloudera_manager_database_user }}"
     encoding: UTF-8
   delegate_to: "{{ cloudera_manager_database_host }}"
+  connection: ssh
   become: yes
   become_user: postgres
-  when: cloudera_manager_database_type == 'postgresql'
+  when:
+  - cloudera_manager_database_type == 'postgresql'
+  - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Create Cloudera Manager database user
   mysql_user:
-    name: "{{ cloudera_manager_database_name }}"
+    name: "{{ cloudera_manager_database_user }}"
     password: "{{ cloudera_manager_database_password }}"
     update_password: always
     host: '%'
     priv: "{{ cloudera_manager_database_name }}.*:ALL"
   delegate_to: "{{ cloudera_manager_database_host }}"
-  when: cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+  connection: ssh
+  when:
+  - cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+  - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Create Cloudera Manager database
   mysql_db:
@@ -35,12 +58,16 @@
     encoding: utf8
     collation: utf8_general_ci
   delegate_to: "{{ cloudera_manager_database_host }}"
-  when: cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+  connection: ssh
+  when:
+  - cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+  - cloudera_manager_database_host in groups.db_server | default([])
+
 
 - name: Prepare Cloudera Manager Server external database
   command: |
     {{ cloudera_manager_database_prepare_script }}  -f --host {{ cloudera_manager_database_host }}
-    {{ cloudera_manager_database_type }}
+    {{ cloudera_manager_database_type | regex_replace('mariadb', 'mysql') }}
     {{ cloudera_manager_database_name }}
     {{ cloudera_manager_database_user }}
     {{ cloudera_manager_database_password }}

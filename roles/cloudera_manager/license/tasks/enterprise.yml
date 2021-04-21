@@ -1,0 +1,51 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Get current Cloudera license status
+  cm_api:
+    endpoint: /cm/license
+    method: GET
+    status_code: 200,404
+  register: license_response
+
+- set_fact:
+    license_not_installed: >-
+      {{ license_response.json.message | default('') in [
+      'This installation is currently running Cloudera Express.',
+      'This installation currently does not have a Cloudera license.',
+      'This installation currently has no license.'
+      ]}}
+
+- name: Upload license file to Cloudera Manager server
+  copy:
+    src: "{{ cloudera_manager_license_file }}"
+    dest: /tmp/license.txt
+    mode: 0600
+  when: license_not_installed
+
+- name: Post license file to Cloudera Manager API
+  shell: >
+    curl
+    --user {{ cloudera_manager_api_user }}:{{ cloudera_manager_api_password }}
+    --request POST
+    --header 'Content-Type:multipart/form-data'
+    --form license=@/tmp/license.txt
+    {{ license_response.url }}
+  args:
+    warn: False
+  register: response
+  failed_when: "'owner' not in response.stdout"
+  when: license_not_installed

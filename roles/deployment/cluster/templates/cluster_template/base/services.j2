@@ -1,0 +1,37 @@
+{% import 'cm_api.j2' as cm_api with context %}
+[
+  {%- set service_joiner = joiner(",") -%}
+  {%- for service in cluster.services | difference(kms_services) -%}
+  {%- set service_role_types = role_mappings[service] -%}
+  {{ service_joiner() }}
+  {
+    {%- if service == "INFRA_SOLR" -%}
+      {%- set service_type = "SOLR" -%}
+    "displayName": "SOLR (Infra)",
+    {%- else -%}
+      {%- set service_type = service -%}
+    "displayName": "{{ service_type | replace("_", " ") }}",
+    {%- endif -%}
+    {%- set service_ref = service | lower -%}
+    "refName": "{{ service_ref }}",
+    "serviceType": "{{ service_type }}",
+    {% set config_sep = joiner(",") -%}
+    "serviceConfigs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service, 'SERVICEWIDE') }},
+    "roleConfigGroups": [
+    {%- set role_group_sep = joiner(",") -%}
+    {%- if service_role_types is iterable -%}
+      {%- for role_type in service_role_types -%}
+      {{ role_group_sep() }}
+      {
+        "refName": "{{ service_ref }}-{{ role_type }}-BASE",
+        "roleType": "{{ role_type }}",
+        {% set config_sep = joiner(",") -%}
+        "configs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service, role_type) }},
+        "base": true
+      }
+      {%- endfor -%}
+    {%- endif -%}
+    ]
+  }
+  {%- endfor -%}
+]

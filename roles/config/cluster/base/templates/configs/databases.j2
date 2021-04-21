@@ -1,0 +1,32 @@
+---
+HIVE:
+  SERVICEWIDE:
+    hive_metastore_database_host: {{ databases.HIVE.host }}
+    hive_metastore_database_port: {{ databases.HIVE.port }}
+    hive_metastore_database_type: {{ databases.HIVE.type | format_database_type }}
+    hive_metastore_database_name: {{ databases.HIVE.name }}
+    hive_metastore_database_user: {{ databases.HIVE.user }}
+    hive_metastore_database_password: {{ databases.HIVE.password }}
+HUE:
+  SERVICEWIDE:
+    database_host: {{ databases.HUE.host }}
+    database_port: {{ databases.HUE.port }}
+    database_type: {{ databases.HUE.type | format_database_type }}
+    database_name: {{ databases.HUE.name }}
+    database_user: {{ databases.HUE.user }}
+    database_password: {{ databases.HUE.password }}
+OOZIE:
+  OOZIE_SERVER:
+    oozie_database_host: {{ databases.OOZIE.host | append_database_port(databases.OOZIE.port | string) }}
+    oozie_database_type: {{ databases.OOZIE.type | format_database_type }}
+    oozie_database_name: {{ databases.OOZIE.name }}
+    oozie_database_user: {{ databases.OOZIE.user }}
+    oozie_database_password: {{ databases.OOZIE.password }}
+SENTRY:
+  SERVICEWIDE:
+    sentry_server_database_host: {{ databases.SENTRY.host }}
+    sentry_server_database_port: {{ databases.SENTRY.port }}
+    sentry_server_database_type: {{ databases.SENTRY.type | format_database_type }}
+    sentry_server_database_name: {{ databases.SENTRY.name }}
+    sentry_server_database_user: {{ databases.SENTRY.user }}
+    sentry_server_database_password: {{ databases.SENTRY.password }}

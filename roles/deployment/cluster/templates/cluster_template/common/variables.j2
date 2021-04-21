@@ -1,0 +1,17 @@
+{% import 'cm_api.j2' as cm_api with context %}
+[
+{%- set config_joiner = joiner(",") -%}
+{%- for service in cluster.services | difference(kms_services) -%}
+  {%- if merged_configs[service] is mapping -%}
+    {%- for (role_name, configs) in merged_configs[service].items() -%}
+      {%- if configs is mapping -%}
+        {%- for (key, val) in configs.items() -%}
+        {{ config_joiner() }}
+        {%- set var_name = [service, role_name, key] | join("_") | replace('.','_') -%}
+        {{ cm_api.ApiConfig(var_name, val, force_uppercase_keys=True) }}
+        {%- endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor -%}
+]

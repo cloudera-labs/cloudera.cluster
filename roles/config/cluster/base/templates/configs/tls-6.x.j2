@@ -1,0 +1,15 @@
+---
+FLUME:
+  SERVICEWIDE:
+    flume_keystore_file: {{ tls_keystore_path_generic }}
+    flume_keystore_password: {{ tls_keystore_password }}
+HIVE:
+  SERVICEWIDE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+KEYTRUSTEE:
+  KMS_KEYTRUSTEE:
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+KMS:
+  KMS:
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}

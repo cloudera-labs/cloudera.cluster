@@ -1,0 +1,190 @@
+---
+FLUME:
+  SERVICEWIDE:
+    flume_truststore_file: {{ tls_truststore_path }}
+    flume_truststore_password: {{ tls_truststore_password }}
+HBASE:
+  SERVICEWIDE:
+    hbase_hadoop_ssl_enabled: True
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  HBASERESTSERVER:
+    hbase_restserver_keystore_file: {{ tls_keystore_path_generic }}
+    hbase_restserver_keystore_keypassword: {{ tls_keystore_password }}
+    hbase_restserver_keystore_password: {{ tls_keystore_password }}
+    hbase_restserver_ssl_enable: True
+  HBASETHRIFTSERVER:
+    hbase_thriftserver_http_keystore_file: {{ tls_keystore_path_generic }}
+    hbase_thriftserver_http_keystore_keypassword: {{ tls_keystore_password }}
+    hbase_thriftserver_http_keystore_password: {{ tls_keystore_password }}
+    hbase_thriftserver_http_use_ssl: True
+HDFS:
+  SERVICEWIDE:
+    dfs_data_transfer_protection: privacy
+    hadoop_group_mapping_ldap_keystore: {{ tls_keystore_path_generic }}
+    hadoop_group_mapping_ldap_keystore_passwd: {{ tls_keystore_path_generic }}
+    hadoop_group_mapping_ldap_use_ssl: True
+    hdfs_hadoop_ssl_enabled: True
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  HTTPFS:
+    httpfs_https_keystore_file: {{ tls_keystore_path_generic }}
+    httpfs_https_keystore_password: {{ tls_keystore_password }}
+    httpfs_https_truststore_file: {{ tls_truststore_path }}
+    httpfs_https_truststore_password: {{ tls_truststore_password }}
+    httpfs_use_ssl: True
+HIVE:
+  SERVICEWIDE:
+    hiveserver2_enable_ssl: True
+    hiveserver2_keystore_password: {{ tls_keystore_password }}
+    hiveserver2_keystore_path: {{ tls_keystore_path_generic }}
+    hiveserver2_truststore_file: {{ tls_truststore_path }}
+    hiveserver2_truststore_password: {{ tls_truststore_password }}
+  HIVESERVER2:
+    ssl_enabled: True
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+HUE:
+  HUE_LOAD_BALANCER:
+    ssl_certificate: {{ tls_cert_path_generic }}
+    ssl_certificate_key: {{ tls_key_path_generic }}
+    passphrasefile_location: {{ tls_key_password_file }}
+  HUE_SERVER:
+    ssl_cacerts: {{ tls_chain_path }}
+    ssl_certificate: {{ tls_cert_path_generic }}
+    ssl_enable: True
+    ssl_private_key: {{ tls_key_path_generic }}
+    ssl_private_key_password: {{ tls_key_password }}
+IMPALA:
+  SERVICEWIDE:
+    client_services_ssl_enabled: True
+    enable_ldap_tls: True
+    ssl_client_ca_certificate: {{ tls_chain_path }}
+    ssl_private_key: {{ tls_key_path_generic }}
+    ssl_private_key_password: {{ tls_key_password }}
+    ssl_server_certificate: {{ tls_cert_path_generic }}
+  CATALOGSERVER:
+    webserver_certificate_file: {{ tls_cert_path_generic }}
+    webserver_private_key_file: {{ tls_key_path_generic }}
+    webserver_private_key_password_cmd: {{ tls_key_password }}
+  IMPALAD:
+    webserver_certificate_file: {{ tls_cert_path_generic }}
+    webserver_private_key_file: {{ tls_key_path_generic }}
+    webserver_private_key_password_cmd: {{ tls_key_password }}
+  STATESTORE:
+    webserver_certificate_file: {{ tls_cert_path_generic }}
+    webserver_private_key_file: {{ tls_key_path_generic }}
+    webserver_private_key_password_cmd: {{ tls_key_password }}
+ISILON:
+  SERVICEWIDE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+KAFKA:
+  KAFKA_BROKER:
+    jmx.ssl.client.auth.enabled: True
+    jmx.ssl.enabled: True
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: True
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  KAFKA_MIRROR_MAKER:
+    jmx.ssl.client.auth.enabled: True
+    jmx.ssl.enabled: True
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: True
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KEYTRUSTEE:
+  KMS_KEYTRUSTEE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: True
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KMS:
+  KMS:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: True
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+KS_INDEXER:
+  SERVICEWIDE:
+    keystore_indexer_truststore_file: {{ tls_truststore_path }}
+    keystore_indexer_truststore_password: {{ tls_truststore_password }}
+KUDU:
+  KUDU_MASTER:
+    ssl_enabled: True
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    ssl_server_certificate_location: {{ tls_cert_path_generic }}
+    ssl_server_privatekey_location: {{ tls_key_path_generic }}
+    ssl_server_privatekey_password: {{ tls_key_password }}
+  KUDU_TSERVER:
+    ssl_enabled: True
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    ssl_server_certificate_location: {{ tls_cert_path_generic }}
+    ssl_server_privatekey_location: {{ tls_key_path_generic }}
+    ssl_server_privatekey_password: {{ tls_key_password }}
+LUNA_KMS:
+  HSMKP_LUNA:
+    trustee_keyprovider_hsm_keystore_passwd: {{ tls_keystore_path_generic }}
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: True
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+OOZIE:
+  SERVICEWIDE:
+    oozie_use_ssl: True
+  OOZIE_SERVER:
+    oozie_https_keystore_file: {{ tls_keystore_path_generic }}
+    oozie_https_keystore_password: {{ tls_keystore_password }}
+    oozie_https_truststore_file: {{ tls_truststore_path }}
+    oozie_https_truststore_password: {{ tls_truststore_password }}
+SOLR:
+  SERVICEWIDE:
+    solr_https_keystore_file: {{ tls_keystore_path_generic }}
+    solr_https_keystore_password: {{ tls_keystore_password }}
+    solr_https_truststore_file: {{ tls_truststore_path }}
+    solr_https_truststore_password: {{ tls_truststore_password }}
+    solr_ldap_enable_starttls: True
+    solr_use_ssl: True
+SPARK_ON_YARN:
+  SPARK_YARN_HISTORY_SERVER:
+    ssl_enabled: True
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+THALES_HSM:
+  HSMKP_THALES:
+    trustee_keyprovider_hsm_keystore_passwd: {{ tls_keystore_path_generic }}
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: True
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+YARN:
+  SERVICEWIDE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+ZOOKEEPER:
+  SERVER:
+    jmx_tls_client_auth_enabled: True
+    jmx_tls_enabled: True
+    jmx_tls_keystore: {{ tls_keystore_path_generic }}
+    jmx_tls_keystore_password: {{ tls_keystore_password }}
+    jmx_tls_truststore: {{ tls_truststore_path }}
+    jmx_tls_truststore_password: {{ tls_truststore_password }}

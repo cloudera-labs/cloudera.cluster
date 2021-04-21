@@ -1,0 +1,46 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+# ZOOKEEPER-3832
+# - name: Sign the private key
+#   shell:
+#     cmd: |
+#       kinit -kt /etc/krb5.keytab "host/{{ inventory_hostname }}"
+#       trap kdestroy EXIT
+#       ipa-getcert request \
+#         -k "{{ base_dir_security_pki }}/{{ inventory_hostname }}.key" \
+#         -f "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem" \
+#         -p "{{ base_dir_security_pki }}/host.key.pw" \
+#         -U id-kp-serverAuth -U id-kp-clientAuth \
+#         -u nonRepudiation -u digitalSignature -u keyEncipherment \
+#         -D "{{ inventory_hostname }}" -vw \
+#         -C "chmod 644 '{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem'"
+#     creates: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+
+- name: Sign the private key
+  shell:
+    cmd: |
+        kinit -kt /etc/krb5.keytab "host/{{ inventory_hostname }}"
+        trap kdestroy EXIT
+        ipa cert-request \
+        "{{ base_dir_security_pki }}/{{ inventory_hostname }}.csr" \
+        --principal "host/{{ inventory_hostname }}" \
+        --certificate-out "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem" || (
+          rm "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+          exit 1
+        )
+        chmod 644 "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+    creates: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"

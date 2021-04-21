@@ -1,0 +1,6 @@
+NIFI:
+  SERVICEWIDE:
+    NIFI_service_env_safety_valve: "RANGER_SERVICE_NAME={{ cluster.name | lower | regex_replace(' ','_') }}_nifi"
+NIFIREGISTRY:
+  SERVICEWIDE:
+    NIFIREGISTRY_service_env_safety_valve: "RANGER_SERVICE_NAME={{ cluster.name | lower | regex_replace(' ','_') }}_nifiregistry"

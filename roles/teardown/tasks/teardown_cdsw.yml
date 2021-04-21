@@ -1,0 +1,60 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Generate merged configs (base)
+  include_role:
+    name: config/cluster/base
+
+- name: Stop the CDSW node
+  shell: /opt/cloudera/parcels/CDSW/scripts/cdsw-stop-node.sh
+  retries: 3
+  delay: 5
+  register: stop_node_result
+  until: stop_node_result.rc == 0
+
+- name: Stop the kubelet service
+  shell: /opt/cloudera/parcels/CDSW/scripts/stop-kubelet-standalone.sh
+  retries: 3
+  delay: 5
+  register: stop_kubelet_result
+  until: stop_kubelet_result.rc == 0
+
+- name: Stop the docker service
+  shell: /opt/cloudera/parcels/CDSW/scripts/stop-dockerd-standalone.sh
+  retries: 3
+  delay: 5
+  register: stop_docker_result
+  until: stop_docker_result.rc == 0
+
+- name: Cleanup docker state
+  shell: /opt/cloudera/parcels/CDSW/scripts/cleanup-docker-state.sh
+
+- name: Cleanup the network interfaces
+  shell: /opt/cloudera/parcels/CDSW/scripts/cleanup-network-interfaces.sh
+
+- name: Cleanup kubernetes state
+  shell: /opt/cloudera/parcels/CDSW/scripts/cdsw-reset-kube-cluster.sh
+
+- name: Cleanup iptables state
+  shell: iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+
+- name: Clear the first 10Mb of the docker block device
+  shell: "dd if=/dev/zero of={{ block_dev }} bs=1M count=10 oflag=direct"
+  vars:
+    block_dev: "{{ merged_configs['CDSW']['CDSW_DOCKER']['cdsw.docker.devices.config'] | mandatory }}"
+
+- name: Clear the CDSW data directory
+  shell: "rm -rf /var/lib/cdsw/*"

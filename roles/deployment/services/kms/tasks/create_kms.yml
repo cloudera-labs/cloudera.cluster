@@ -1,0 +1,122 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Get cluster parcel details
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/parcels
+  register: parcels_response
+
+- name: Extract active parcels
+  set_fact:
+    active_parcels: >
+      {{ parcels_response.json |
+      json_query('items[?stage==`ACTIVATED`].{product: product, version: version}') }}
+
+- name: Extract version of active runtime parcel
+  set_fact:
+    runtime_parcel_version: >
+      {{ active_parcels |
+      json_query('[?product==`CDH`].version') | first }}
+
+- name: Use KeyTrustee-based KMS services for CDH 5.x or 6.x
+  set_fact:
+    kms_service_type: KEYTRUSTEE
+    kms_role_type: KMS_KEYTRUSTEE
+    kms_display_name: Key Trustee KMS
+  when:
+    - runtime_parcel_version is version('5.0.0', '>=')
+    - runtime_parcel_version is version('7.0.0', '<')
+
+- name: Use Ranger-based KMS services for CDP Private Cloud Base 7.x
+  set_fact:
+    kms_service_type: RANGER_KMS_KTS
+    kms_role_type: RANGER_KMS_SERVER_KTS
+    kms_display_name: Ranger KMS Server with KTS
+  when: runtime_parcel_version is version('7.0.0', '>=')
+
+- name: Set fact for hostname of active Key Trustee server
+  set_fact:
+    keytrustee_server_active: "{{ groups.kts_active | first | default('') }}"
+  when: '"kts_active" in groups'
+
+- name: Set fact for hostname of passive Key Trustee server
+  set_fact:
+    keytrustee_server_passive: "{{ groups.kts_passive | first | default('') }}"
+  when: '"kts_passive" in groups'
+
+- name: Set fact for KMS service name
+  set_fact:
+    kms_service_name: "{{ kms_service_type | lower }}"
+
+- name: Get existing services
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+    method: GET
+  register: services
+
+- set_fact:
+    existing_kms_service_query: items[?name==`{{ kms_service_name }}`]
+
+- set_fact:
+    existing_kms_service: "{{ services.json | json_query(existing_kms_service_query) }}"
+
+- name: Generate KMS configs
+  include_role:
+    name: config/services/kms
+
+- name: Create KMS service
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+    method: POST
+    body: "{{ lookup('template', 'service.j2', convert_data=False) }}"
+  when: not existing_kms_service
+
+- name: Add KMS dependency to HDFS
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/hdfs/config
+    method: PUT
+    body:
+      items:
+        - name: kms_service
+          value: "{{ kms_service_name }}"
+
+- name: Wait for parcels to become active on any new hosts
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/parcels/products/{{ item.product }}/versions/{{ item.version }}
+  register: parcels_response
+  until: parcels_response.json.stage == "ACTIVATED"
+  with_items: "{{ active_parcels }}"
+  retries: "{{ kms_parcel_poll_max_retries | default(30) }}"
+  delay: "{{ kms_parcel_poll_duration | default(20) }}"
+
+- name: Find details of KMS roles
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ kms_service_name }}/roles
+  register: roles
+
+- set_fact:
+    primary_kms_role_query: items[?hostRef.hostname==`{{ cloudera_manager_api_hosts[groups.kms_servers[0]]['hostname'] }}`].name
+
+- name: Start first KMS server instance
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ kms_service_name }}/roleCommands/start
+    method: POST
+    body:
+      items: "{{ roles.json | json_query(primary_kms_role_query) }}"
+
+- name: Wait for GPG key generation
+  pause:
+    seconds: 60

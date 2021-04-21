@@ -1,0 +1,10 @@
+---
+HDFS:
+  SERVICEWIDE:
+    enable_ranger_authorization: true
+RANGER:
+  SERVICEWIDE:
+    keyadmin_user_password: {{ ranger_keyadmin_user_password | default('password123') }}
+    rangeradmin_user_password: {{ ranger_rangeradmin_user_password | default('password123') }}
+    rangertagsync_user_password: {{ ranger_rangertagsync_user_password | default('password123') }}
+    rangerusersync_user_password: {{ ranger_rangerusersync_user_password | default('password123') }}

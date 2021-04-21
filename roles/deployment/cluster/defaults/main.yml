@@ -1,5 +1,0 @@
----
-cluster_definition_file: cluster.yml
-parcel_repo_username: "{{ cloudera_manager_repo_username | default(omit) }}"
-parcel_repo_password: "{{ cloudera_manager_repo_password | default(omit) }}"
-tls: False

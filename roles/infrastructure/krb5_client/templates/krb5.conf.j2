@@ -13,8 +13,8 @@ kdc_timeout = 3000
 
 [realms]
 {{ krb5_realm|upper }} = {
-  kdc = {{ krb5_kdc_host }}
-  admin_server = {{ krb5_kdc_host }}
+  kdc = {{ krb5_kdc_host | default(groups['krb5_server'][0]) }}
+  admin_server = {{ krb5_kdc_host | default(groups['krb5_server'][0]) }}
 }
 
 [domain_realm]

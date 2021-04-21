@@ -1,0 +1,7 @@
+{% set q = "[?host_templates] | map(&{name: name, host_templates: host_templates | keys(@)}, @)" %}
+{% set cluster_host_templates = clusters | json_query(q) %}
+{% for cluster in cluster_host_templates %}
+{% for host_template in cluster.host_templates %}
+{{ host_template }}: {{ cluster.name }}
+{% endfor %}
+{% endfor %}

@@ -1,0 +1,25 @@
+{%- set host_template_joiner = joiner(",") -%}
+[
+{%- if 'kts_active' in groups -%}
+{{ host_template_joiner() }}
+  {
+    "refName": "HostTemplate-KTS-Active",
+    "cardinality": 1,
+    "roleConfigGroupsRefNames": [
+      "keytrustee_server-KEYTRUSTEE_ACTIVE_SERVER-BASE",
+      "keytrustee_server-DB_ACTIVE-BASE"
+    ]
+  }
+{%- endif -%}
+{%- if 'kts_passive' in groups -%}
+{{ host_template_joiner() }}
+  {
+    "refName": "HostTemplate-KTS-Passive",
+    "cardinality": 1,
+    "roleConfigGroupsRefNames": [
+      "keytrustee_server-KEYTRUSTEE_PASSIVE_SERVER-BASE",
+      "keytrustee_server-DB_PASSIVE-BASE"
+    ]
+  }
+{%- endif -%}
+]

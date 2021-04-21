@@ -1,0 +1,51 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Include local CA server vars
+  include_vars: ca_server.yml
+
+- name: Copy CSRs to CA server
+  copy:
+    src: "{{ local_csrs_dir }}/{{ inventory_hostname }}.csr"
+    dest: "{{ ca_server_intermediate_path_csr }}/"
+    mode: 0644
+  delegate_to: "{{ groups.ca_server | first }}"
+  connection: ssh
+
+- name: Sign CSRs
+  shell:
+    cmd: >
+      {{ openssl_path }} ca
+      -batch
+      -config {{ ca_server_intermediate_path }}/openssl.cnf
+      -extensions cloudera_req
+      -days 730
+      -notext
+      -md sha256
+      -in {{ ca_server_intermediate_path_csr }}/{{ inventory_hostname }}.csr
+      -out {{ ca_server_intermediate_path_certs }}/{{ inventory_hostname }}.pem
+      -passin pass:{{ ca_server_root_key_password }}
+    creates: "{{ ca_server_intermediate_path_certs }}/{{ inventory_hostname }}.pem"
+  delegate_to: "{{ groups.ca_server | first }}"
+  connection: ssh
+
+- name: Bring signed certs back to controller
+  fetch:
+    src: "{{ ca_server_intermediate_path_certs }}/{{ inventory_hostname }}.pem"
+    dest: "{{ local_certs_dir }}/"
+    flat: yes
+  delegate_to: "{{ groups.ca_server | first }}"
+  connection: ssh

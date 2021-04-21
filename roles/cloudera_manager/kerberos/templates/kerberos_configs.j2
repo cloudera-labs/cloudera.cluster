@@ -1,0 +1,12 @@
+KDC_HOST:          {{ krb5_kdc_host | default(groups['krb5_server'][0]) }}
+KDC_TYPE:          {{ krb5_kdc_type }}
+KRB_ENC_TYPES:     {{ krb5_enc_types }}
+SECURITY_REALM:    {{ krb5_realm }}
+AD_ACCOUNT_PREFIX: {{ krb5_kdc_active_directory_prefix | default(None) }}
+AD_KDC_DOMAIN:     {{ krb5_kdc_active_directory_suffix | default(None) }}
+AD_DELETE_ON_REGENERATE: {{ krb5_kdc_active_directory_delete_on_regenerate | default('true') }}
+KDC_ACCOUNT_CREATION_HOST_OVERRIDE: {{ krb5_kdc_account_creation_host_override | default(None) }}
+AD_SET_ENCRYPTION_TYPES: {{ krb5_kdc_active_directory_set_encryption_types | default('false') }}
+GEN_KEYTAB_SCRIPT:  {{ krb5_keytab_retrieval_script | default(None) }}
+KRB_AUTH_ENABLE:    {{ krb5_cm_auth_enable | default('false') }}
+

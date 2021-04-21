@@ -1,0 +1,88 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Check the cluster exists
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}
+    method: GET
+    status_code: 200,404
+  changed_when: false
+  register: cluster_before_delete
+
+- name: Stop the cluster (stop_cluster_before_delete)
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/stop
+    method: POST
+  register: services_stop
+  when:
+    - cluster_before_delete.status == 200
+    - stop_cluster_before_delete|default(false)
+  failed_when: services_stop.status | default(0) != 200
+
+- name: Wait for the cluster services to stop
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+    method: GET
+    status_code: 200,404
+  changed_when: false
+  register: services
+  when:
+    - cluster_before_delete.status == 200
+    - stop_cluster_before_delete|default(false)
+  until: >-
+    'json' in services
+    and services.json | json_query(stopped_query) | length
+        == services.json | json_query(all_query) | length
+  vars:
+    stopped_query: 'items[?(serviceState==`STOPPED` || serviceState==`NA`)]'
+    all_query: 'items[*]'
+  retries: "{{ teardown_stop_cluster_poll_max_retries | default(30) }}"
+  delay: "{{ teardown_stop_cluster_poll_duration | default(20) }}"
+
+- name: Get cluster services
+  cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+    method: GET
+    status_code: 200,404
+  changed_when: false
+  register: services
+  when: cluster_before_delete.status == 200
+
+- name: Delete data contexts of {{ cluster.name }}
+  cm_api:
+    endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
+    method: DELETE
+    status_code: 200,404
+  loop: "{{ cluster.data_contexts }}"
+  loop_control:
+    loop_var: data_context
+  when:
+    - cluster.type | default('base') == 'base'
+    - cloudera_manager_version is version('6.2.0','>=')
+    - cluster.data_contexts is iterable
+
+- name: Delete cluster {{ cluster.name }}
+  block:
+    - set_fact:
+        stopped_service_count: "{{ services.json | json_query('items[?(serviceState==`STOPPED` || serviceState==`NA`)]') | length }}"
+        total_service_count: "{{ services.json | json_query('items[*]') | length }}"
+    - cm_api:
+        endpoint: /clusters/{{ cluster.name | urlencode() }}
+        method: DELETE
+      when: stopped_service_count == total_service_count
+  when:
+    - cluster_before_delete.status == 200
+    - "'json' in services"

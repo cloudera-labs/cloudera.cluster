@@ -1,0 +1,31 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Set Cloudera Manager Kerberos configs
+  include_role:
+    name: cloudera_manager/config
+  vars:
+    api_config_keys_uppercase: True
+    api_configs: "{{ lookup('template', 'kerberos_configs.j2') | from_yaml }}"
+
+- name: Import KDC admin credentials
+  cm_api:
+    endpoint: /cm/commands/importAdminCredentials?username={{ krb5_kdc_admin_user | urlencode }}&password={{ krb5_kdc_admin_password | urlencode }}
+    method: POST
+  register: result
+  until: result is not failed
+  retries: 3
+  delay: 10

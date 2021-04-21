@@ -1,3 +1,17 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
 - name: Apply "all hosts" configs
@@ -9,136 +23,68 @@
     api_configs: "{{ definition.hosts.configs }}"
   when: definition.hosts.configs is defined
 
-- name: Check whether cluster already exists
-  uri:
-    url: "{{ cloudera_manager_api }}/clusters/{{ definition.cluster.name | replace(' ', '%20') }}"
-    method: GET
-    status_code: 200,404
-    force_basic_auth: yes
-    user: "{{ cloudera_manager_api_user }}"
-    password: "{{ cloudera_manager_api_password }}"
-    return_content: yes
-  register: response
+- name: Detect Cloudera Manager version
+  cm_api:
+    endpoint: /cm/version
+  register: cm_version_response
 
 - set_fact:
-    cluster_exists: "{{ response.status == 200 }}"
+    cloudera_manager_version: "{{ cm_version_response.json.version }}"
 
-- block:
+- name: Find existing clusters
+  cm_api:
+    endpoint: /clusters?clusterType=any
+  register: clusters_response
 
-  - name: Detect Cloudera Manager version
-    uri:
-      url: "{{ cloudera_manager_api }}/cm/version"
-      method: GET
-      status_code: 200
-      force_basic_auth: yes
-      user: "{{ cloudera_manager_api_user }}"
-      password: "{{ cloudera_manager_api_password }}"
-      return_content: yes
-    register: response
+- set_fact:
+    existing_clusters: "{{ clusters_response.json | json_query('items[*].name') }}"
 
-  - set_fact:
-      cloudera_manager_version: "{{ response.json.version }}"
-      parcel_repositories: "{{ lookup('template', 'cluster_template/repositories.j2', convert_data=False) }}"
+- name: Create base clusters
+  include_tasks: create_base.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  when:
+    - cluster.type | default('base') == 'base'
+    - cluster.name not in existing_clusters
 
-  - name: Download parcel manifest information
-    uri:
-      url: "{{ item | regex_replace('/?$','/manifest.json') }}"
-      status_code: 200
-      body_format: json
-      return_content: yes
-    register: manifests
-    with_items:
-      - "{{ parcel_repositories }}"
+- name: Create base cluster data contexts (SDX)
+  include_tasks: create_data_context.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  when:
+    - cluster.type | default('base') == 'base'
+    - cloudera_manager_version is version('6.2.0','>=')
 
-  - name: Extract product details from parcel manifests
-    set_fact:
-      products: "{{ manifests.results | map(attribute='json') | list | extract_products_from_manifests }}"
+- name: Create Key Trustee server cluster
+  include_tasks: create_kts.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_kts | combine(_cluster) }}"
+  when:
+    - cluster.type | default('base') == 'kts'
+    - cluster.name not in existing_clusters
+    - '"kts_active" in groups'
 
-  - name: Generate custom database configurations
-    set_fact:
-      configs_databases: "{{ lookup('template', 'configs/databases.j2') | from_yaml }}"
+- name: Create compute clusters
+  include_tasks: create_base.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_compute | combine(_cluster) }}"
+  when:
+    - cluster.type | default('base') == 'compute'
+    - cluster.name not in existing_clusters
 
-  - name: Generate custom kerberos configurations
-    set_fact:
-      configs_kerberos: "{{ lookup('template', 'configs/kerberos.j2') | from_yaml }}"
-    when: krb5_kdc_host is defined
-
-  - name: Generate custom log directory configurations
-    set_fact:
-      configs_log_dirs: "{{ lookup('template', 'configs/logdirs.j2') | from_yaml }}"
-    when: definition.cluster.log_base is defined
-
-  - name: Generate custom TLS configurations
-    set_fact:
-      configs_tls: "{{ lookup('template', 'configs/tls.j2') | from_yaml }}"
-    when: tls
-
-  - name: Merge all custom configurations
-    set_fact:
-      merged_configs: >
-        {{ configs_databases | combine(
-        configs_kerberos | default({}),
-        configs_tls | default({}),
-        configs_log_dirs | default({}),
-        definition.cluster.configs, recursive=True) }}
-
-  # note: this is for debugging purposes only and can be removed
-  - name: Generate cluster template
-    template:
-      src: cluster_template/main.j2
-      dest: /tmp/cluster_template.json
-
-  - set_fact:
-      cluster_template: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
-
-  - name: Import cluster template
-    uri:
-      url: "{{ cloudera_manager_api }}/cm/importClusterTemplate?addRepositories=true"
-      method: POST
-      body_format: json
-      body: "{{ cluster_template | to_json }}"
-      status_code: 200
-      force_basic_auth: yes
-      user: "{{ cloudera_manager_api_user }}"
-      password: "{{ cloudera_manager_api_password }}"
-      return_content: yes
-    register: template_resp
-
-  - debug:
-      var: template_resp
-      verbosity: 2
-
-  - set_fact:
-      command_id: "{{ template_resp.json.id }}"
-
-  - name: Wait for import cluster template command to complete
-    uri:
-      url: "{{ cloudera_manager_api }}/commands/{{ command_id }}"
-      body_format: json
-      force_basic_auth: yes
-      user: "{{ cloudera_manager_api_user }}"
-      password: "{{ cloudera_manager_api_password }}"
-      return_content: yes
-    register: result
-    until: not result.json.active
-    retries: 30
-    delay: 60
-    failed_when: "'Failed to import cluster template' in result.content"
-
-  - debug:
-      var: result
-      verbosity: 2
-
-  - name: Restart Cloudera Management Service
-    uri:
-      url: "{{ cloudera_manager_api }}/cm/service/commands/restart"
-      method: POST
-      status_code: 200
-      force_basic_auth: yes
-      user: "{{ cloudera_manager_api_user }}"
-      password: "{{ cloudera_manager_api_password }}"
-      return_content: yes
-    register: start_resp
-    failed_when: "'startTime' not in start_resp.content"
-
-  when: not cluster_exists
+- name: Restart Cloudera Management Service
+  cm_api:
+    endpoint: /cm/service/commands/restart
+    method: POST
