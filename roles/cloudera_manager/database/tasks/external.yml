@@ -66,7 +66,7 @@
 
 - name: Prepare Cloudera Manager Server external database
   command: |
-    {{ cloudera_manager_database_prepare_script }}  -f --host {{ cloudera_manager_database_host }}
+    {{ cloudera_manager_database_prepare_script }}  -f --host {{ cloudera_manager_database_host }} --port {{ cloudera_manager_database_port }}
     {{ cloudera_manager_database_type | regex_replace('mariadb', 'mysql') }}
     {{ cloudera_manager_database_name }}
     {{ cloudera_manager_database_user }}

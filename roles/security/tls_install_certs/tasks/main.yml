@@ -116,6 +116,13 @@
   loop_control:
     loop_var: cacert
 
+- name: Update truststore permissions
+  file:
+    path: "{{ tls_truststore_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Update OS trust stores
   block:
   - copy:

@@ -227,6 +227,7 @@
         user: "{{ cloudera_manager_database_user }}"
         password: "{{ cloudera_manager_database_password }}"
         type: "{{ cloudera_manager_database_type }}"
+        port: "{{ cloudera_manager_database_port }}"
   when: teardown_everything | default(false)
 
 - name: Stop Haproxy

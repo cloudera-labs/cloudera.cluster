@@ -20,6 +20,7 @@
   when: krb5_kdc_type == 'Red Hat IPA'
 - import_playbook: prepare_nodes.yml
 - import_playbook: prepare_tls.yml
+- import_playbook: nifi_workaround.yml
 - import_playbook: install_cloudera_manager.yml
 - import_playbook: set_cloudera_manager_password.yml
 - import_playbook: prepare_security.yml

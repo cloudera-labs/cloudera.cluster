@@ -14,29 +14,37 @@
 
 ---
 
-- name: Download Oracle Connector
-  maven_artifact:
-    group_id: "{{ oracle_connector_group_id }}"
-    artifact_id: "{{ oracle_connector_artifact_id }}"
-    version: "{{ oracle_connector_version }}"
-    dest: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
-    repository_url: "{{ oracle_connector_maven_url }}"
-  become: no
-  run_once: true
-  connection: local
-  delegate_to: localhost
+- name: Setup the Oracle JDBC Driver
+  block:
 
-- name: Create /usr/share/java directory
-  file:
-    path: /usr/share/java
-    state: directory
-    mode: 0755
+    - name: Download Oracle Connector
+      maven_artifact:
+        group_id: "{{ oracle_connector_group_id }}"
+        artifact_id: "{{ oracle_connector_artifact_id }}"
+        version: "{{ oracle_connector_version }}"
+        dest: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
+        repository_url: "{{ oracle_connector_maven_url }}"
+      become: no
+      run_once: true
+      connection: local
+      delegate_to: localhost
 
-- name: Copy Oracle Connector jar file to correct location
-  copy:
-    src: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
-    dest: /usr/share/java/oracle-connector-java.jar
-    mode: 0644
+    - name: Create /usr/share/java directory
+      file:
+        path: /usr/share/java
+        state: directory
+        mode: 0755
+
+    - name: Copy Oracle Connector jar file to correct location
+      copy:
+        src: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
+        dest: /usr/share/java/oracle-connector-java.jar
+        mode: 0644
+
+  when:
+    - not (skip_oracle_jdbc_driver_distribution | default(False))
+    - oracle_connector_maven_url is defined
+    - oracle_connector_maven_url != ''
 
 - name: Ensure directory for the instantclient
   file:

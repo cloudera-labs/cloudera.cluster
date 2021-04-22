@@ -1,0 +1,12 @@
+---
+{% set additional_realms = auth_providers | default({}) | dict2items | json_query('[?value.type == `KERBEROS`].value.krb5_realm') %}
+CORE_SETTINGS:
+  SERVICEWIDE:
+    trusted_realms: "{{ ','.join([krb5_realm] + additional_realms) }}"
+HDFS:
+  SERVICEWIDE:
+    trusted_realms: "{{ ','.join([krb5_realm] + additional_realms) }}"
+KAFKA:
+  KAFKA_BROKER:
+    kafka.properties_role_safety_valve: |
+      sasl.kerberos.principal.to.local.rules={% for trusted_realm in additional_realms %}RULE:[1:$1@$0](.*@{{ trusted_realm|upper }})s/@{{ trusted_realm|upper }}// , RULE:[2:$1@$0](.*@{{ trusted_realm|upper }})s/@{{ trusted_realm|upper }}// , {% endfor %}DEFAULT

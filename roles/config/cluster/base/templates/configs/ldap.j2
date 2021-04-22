@@ -70,7 +70,7 @@ HUE:
     group_filter: "(objectClass={{ auth_provider.ldap_object_class.group }})"
     group_member_attr: "{{ auth_provider.ldap_attribute.member }}"
     group_name_attr: "{{ auth_provider.ldap_attribute.group }}"
-    ldap_cert: "{{ auth_provider.ldap_cert | default('') }}"
+    ldap_cert: "{{ auth_provider.ldap_cert | default(tls_chain_path) }}"
     ldap_url: "{{ auth_provider.ldap_url }}"
     search_bind_authentication: true
     use_start_tls: true
@@ -90,6 +90,31 @@ HUE:
 #  SERVICEWIDE:
 #    ldap.auth.url: 
 #    ldap.auth.user.dn.template: 
+NIFI:
+  NIFI_NODE:
+    nifi.ldap.authentication.strategy: LDAPS
+    nifi.ldap.enabled: true
+    nifi.ldap.manager.dn: "{{ auth_provider.ldap_bind_user_dn }}"
+    nifi.ldap.manager.password: "{{ auth_provider.ldap_bind_password }}"
+    nifi.ldap.tls.client.auth: NONE
+    nifi.ldap.tls.truststore: "{{ tls_truststore_path }}"
+    nifi.ldap.tls.truststore.password: "{{ tls_truststore_password }}"
+    nifi.ldap.tls.truststore.type: jks
+    nifi.ldap.url: "{{ auth_provider.ldap_url }}"
+    nifi.ldap.user.search.base: "{{ auth_provider.ldap_search_base.user }}"
+    nifi.ldap.tls.protocol: TLS
+    xml.authorizers.userGroupProvider.file-user-group-provider.enabled: false
+    xml.authorizers.authorizer.ranger-provider.property.User Group Provider: composite-user-group-provider
+    xml.authorizers.userGroupProvider.composite-configurable-user-group-provider.enabled: false
+    xml.authorizers.userGroupProvider.composite-user-group-provider.enabled: true
+    xml.authorizers.userGroupProvider.composite-user-group-provider.property.User Group Provider 1: ldap-user-group-provider
+    xml.authorizers.userGroupProvider.composite-user-group-provider.property.User Group Provider 2: cm-user-group-provider
+    xml.authorizers.userGroupProvider.ldap-user-group-provider.property.Group Member Attribute: "{{ auth_provider.ldap_attribute.member }}"
+    xml.authorizers.userGroupProvider.ldap-user-group-provider.property.Group Name Attribute: "{{ auth_provider.ldap_attribute.group }}"
+    xml.authorizers.userGroupProvider.ldap-user-group-provider.property.Group Object Class: "{{ auth_provider.ldap_object_class.group }}"
+    xml.authorizers.userGroupProvider.ldap-user-group-provider.property.Group Search Base: "{{ auth_provider.ldap_search_base.group }}"
+    xml.authorizers.userGroupProvider.ldap-user-group-provider.property.User Group Name Attribute: "{{ auth_provider.ldap_attribute.user_member }}"
+    xml.authorizers.userGroupProvider.ldap-user-group-provider.property.User Identity Attribute: "{{ auth_provider.ldap_attribute.user }}"
 #RANGER:
 #  RANGER_ADMIN:
 #    ranger.ldap.ad.base.dn:

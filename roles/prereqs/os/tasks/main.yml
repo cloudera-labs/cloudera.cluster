@@ -34,7 +34,7 @@
   loop: "{{ kernel_flags }}"
   loop_control:
     loop_var: flag
-  when: "'root.hwx.site' not in ansible_domain"
+  when: not(ansible_virtualization_type == "docker" and ansible_virtualization_role == "guest")
 
 - name: Populate service facts
   service_facts:
@@ -100,4 +100,4 @@
 - name: Apply OS-specific configurations
   include_tasks:
     file: "main-{{ ansible_os_family }}.yml"
-  when: "'root.hwx.site' not in ansible_domain"
+  when: not(ansible_virtualization_type == "docker" and ansible_virtualization_role == "guest")
