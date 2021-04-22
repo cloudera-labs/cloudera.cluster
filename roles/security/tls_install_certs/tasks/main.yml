@@ -20,10 +20,10 @@
 
 - set_fact:
     tls_ca_certs:
-      - alias: intca
-        path: "{{ tls_signed_certs_dir }}/intca.pem"
-      - alias: rootca
-        path: "{{ tls_signed_certs_dir }}/rootca.pem"
+      - alias: cluster_intca
+        path: "{{ tls_signed_certs_dir }}/cluster_intca.pem"
+      - alias: cluster_rootca
+        path: "{{ tls_signed_certs_dir }}/cluster_rootca.pem"
   when: tls_ca_certs is not defined
 
 - name: Check if signed cert is available
@@ -119,6 +119,13 @@
 - name: Update truststore permissions
   file:
     path: "{{ tls_truststore_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Update chain certificate permissions
+  file:
+    path: "{{ tls_chain_path }}"
     owner: root
     group: root
     mode: "0644"

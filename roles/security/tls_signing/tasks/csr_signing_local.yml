@@ -28,6 +28,8 @@
 - name: Sign CSRs
   shell:
     cmd: >
+      exec 100>/tmp/ca_server.lock;
+      flock 100 &&
       {{ openssl_path }} ca
       -batch
       -config {{ ca_server_intermediate_path }}/openssl.cnf
