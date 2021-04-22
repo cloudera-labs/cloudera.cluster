@@ -29,7 +29,10 @@ class FilterModule(object):
         'default_database_port': self.default_database_port,
         'get_database_encoding_mysql': self.get_database_encoding_mysql,
         'get_database_collation_mysql': self.get_database_collation_mysql,
+        'cluster_service_role_hosts': self.cluster_service_role_hosts,
+        'find_clusters': self.find_clusters
     }
+
 
   def extract_products_from_manifests(self, manifests):
     products = dict()
@@ -45,10 +48,12 @@ class FilterModule(object):
           products[product] = version
     return products
 
+
   def format_database_type(self, database_type):
     if database_type == "mariadb":
       return "mysql"
     return database_type.lower()
+
 
   def get_product_version(self, products, product_name):
     for product in products:
@@ -56,15 +61,18 @@ class FilterModule(object):
         version = product['version']
         return version[:version.index('-')] if "-" in version else version
 
+
   def get_major_version(self, products, product_name):
     version = self.get_product_version(products, product_name)
     if version:
       return version.split('.')[0]
 
+
   def append_database_port(self, database_host, database_port=None):
     if ":" not in database_host and database_port:
       return database_host + ":" + database_port
     return database_host
+
 
   def default_database_port(self, database_type):
     if database_type == "postgresql":
@@ -75,6 +83,7 @@ class FilterModule(object):
       return 1521
     return None
 
+
   def get_database_encoding_mysql(self, service_name):
     # workaround for https://jira.cloudera.com/browse/CDPD-9290
     if service_name == "RANGER":
@@ -83,6 +92,7 @@ class FilterModule(object):
       database_encoding = "utf8"
     return database_encoding
 
+
   def get_database_collation_mysql(self, service_name):
     # workaround for https://jira.cloudera.com/browse/CDPD-9290
     if service_name == "RANGER":
@@ -90,3 +100,41 @@ class FilterModule(object):
     else:
       database_collation = "utf8_general_ci"
     return database_collation
+
+
+  def cluster_service_role_hosts(self, cluster, hostvars, service, roles=None):
+    candidate_templates = []
+
+    if 'host_templates' in cluster:
+      templates = cluster['host_templates']
+
+      if roles:
+        for role in roles:
+          for t_name, t_services in templates.items():
+            if service in t_services and role in t_services[service]:
+              if t_name not in candidate_templates:
+                candidate_templates.append(t_name)
+
+      else:
+        for t_name, t_services in templates.items():
+          if service in t_services:
+            candidate_templates.append(t_name)
+
+    hosts = []
+    for t_name in candidate_templates:
+      t_hosts = [
+          host
+          for host, hostvar in hostvars.items()
+          if host not in hosts
+          if hostvar.get('host_template') == t_name]
+
+      hosts = hosts + t_hosts
+
+    return hosts
+
+
+  def find_clusters(self, clusters, name):
+    return [
+      cluster
+      for cluster in clusters
+      if cluster.get('name') == name]

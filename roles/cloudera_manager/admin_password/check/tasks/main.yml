@@ -26,6 +26,10 @@
   run_once: True
   when: cloudera_manager_admin_password is defined
 
+- set_fact:
+    cloudera_manager_api_password: "admin"
+  run_once: True
+
 - name: Set the playbook to use the non-default Cloudera Manager admin password
   set_fact:
     cloudera_manager_api_password: "{{ cloudera_manager_admin_password }}"
