@@ -134,24 +134,28 @@ NIFI:
 #    ranger.ldap.user.searchfilter:
 #    ranger_ldap_ad_bind_password:
 #    ranger_ldap_bind_password:
-#RANGER:
-#  RANGER_USERSYNC:
-#    ranger.usersync.ldap.binddn:
+RANGER:
+  RANGER_USERSYNC:
+    ranger.usersync.group.memberattributename: "{{ auth_provider.ldap_attribute.member }}"
+    ranger.usersync.group.nameattribute: "{{ auth_provider.ldap_attribute.group }}"
+    ranger.usersync.group.objectclass: "{{ auth_provider.ldap_object_class.group }}"
+    ranger.usersync.group.searchbase: "{{ auth_provider.ldap_search_base.group | default('') }}"
+    ranger.usersync.ldap.binddn: "{{ auth_provider.ldap_bind_user_dn }}"
+    ranger.usersync.ldap.searchBase: "{{ auth_provider.ldap_search_base.common | default('') }}"
+    ranger.usersync.ldap.url: "{{ auth_provider.ldap_url }}"
+    ranger.usersync.ldap.user.groupnameattribute: "{{ auth_provider.ldap_attribute.group }}"
+    ranger.usersync.ldap.user.nameattribute: "{{ auth_provider.ldap_attribute.user }}"
+    ranger.usersync.ldap.user.objectclass: "{{ auth_provider.ldap_object_class.user }}"
+    ranger.usersync.ldap.user.searchbase: "{{ auth_provider.ldap_search_base.user | default('') }}"
+    ranger_usersync_ldap_ldapbindpassword: "{{ auth_provider.ldap_bind_password }}"
 #    ranger.usersync.ldap.deltasync:
 #    ranger.usersync.ldap.grouphierarchylevels:
 #    ranger.usersync.ldap.groupname.caseconversion:
 #    ranger.usersync.ldap.referral:
 #    ranger.usersync.ldap.searchBase:
 #    ranger.usersync.ldap.starttls:
-#    ranger.usersync.ldap.url:
-#    ranger.usersync.ldap.user.groupnameattribute:
-#    ranger.usersync.ldap.user.nameattribute:
-#    ranger.usersync.ldap.user.objectclass:
-#    ranger.usersync.ldap.user.searchbase:
 #    ranger.usersync.ldap.user.searchfilter:
-#    ranger.usersync.ldap.user.searchscope:
 #    ranger.usersync.ldap.username.caseconversion:
-#    ranger_usersync_ldap_ldapbindpassword:
 #SOLR:
 #  SERVICEWIDE:
 #    ldap_domain: 
