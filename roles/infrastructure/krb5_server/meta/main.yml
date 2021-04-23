@@ -14,4 +14,4 @@
 
 ---
 dependencies:
-  - role: infrastructure/krb5_client
+  - role: cloudera.cluster.infrastructure.krb5_client

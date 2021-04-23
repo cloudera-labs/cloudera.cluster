@@ -16,7 +16,7 @@
 
 - fail:
     msg: You must pass a cluster variable to this role
-  when: cluster is not defined
+  when: __cluster_item is not defined
 
 - name: Find Ranger admin
   include_tasks: cluster_find_ranger.yml
@@ -53,6 +53,6 @@
     - "'localhost' in kms_service.configs.provider"
 
 - name: Setup Ranger Plugins
-  cm_api:
-    endpoint: "/clusters/{{ cluster.name | urlencode }}/services/ranger/commands/SetupPluginServices"
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ __cluster_item.name | urlencode }}/services/ranger/commands/SetupPluginServices"
     method: POST

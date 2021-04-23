@@ -27,7 +27,7 @@
 - block:
 
   - name: Import cluster template
-    cm_api:
+    cloudera.cluster.cm_api:
       endpoint: /cm/importClusterTemplate?addRepositories=true
       method: POST
       body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
@@ -42,7 +42,7 @@
   # If we have installed a cluster with Key Trustee Server HA, first run will have failed (but this is ok)
   # Stop the service now in preparation for remedial action
   - name: Stop Key Trustee Server service when first run failed
-    cm_api:
+    cloudera.cluster.cm_api:
       endpoint: /clusters/{{ cluster.name | urlencode() }}/services/keytrustee_server/commands/stop
       method: POST
     when: "'kts_passive' in groups and first_run_failure"

@@ -1,4 +1,4 @@
-# Ansible Playbooks for Cloudera Data Platform
+# Ansible Collection for Cloudera Private Cloud
 
 ## Requirements
 
@@ -8,7 +8,10 @@
 
 **Do not use Ansible 2.9.0**. This version has an [issue with templating](https://github.com/ansible/ansible/issues/64745) which causes the playbook execution to fail. Instead, use any 2.8.x version or a later 2.9.x version as these are not affected.
 
-## Supported Platforms
+## Usage
+This Ansible Collection is designed to work hand-in-hand with [Cloudera Deploy](https://github.com/cloudera-labs/cloudera-deploy), which contains reference Playbooks and Example Definitions.
+
+## Tested Platforms
 
 ### Cloudera Distributions
 
@@ -24,22 +27,7 @@
 
 Active development is focused on **CDP Private Cloud Base** (formerly CDP-DC) deployments and their respective platform compatibility matrices.
 
-> While these playbooks can be used to deploy CDH 5.x and CDH 6.x environments, it is only possible to install a subset of their supported platform components (i.e JDK and database versions) using this tool.
-
-## Getting Started
-
-For help setting up the playbook, creating configs and deploying clusters, see the [Getting Started](docs/getting-started.md) guide.
-
-## How-to Guides
-
-For more detailed information, check the following guides:
-
-* Deploying [secure clusters](docs/security.md)
-* Deploying [data contexts (SDX) and virtual private clusters](docs/how-to/virtual-private-clusters.md)
-
-## Help!
-
-Common issues and their solutions are documented on the [Troubleshooting](docs/troubleshooting.md) page. Check here first.
+> While these roles etc. can be used to deploy CDH 5.x and CDH 6.x environments, it is only possible to install a subset of their supported platform components (i.e JDK and database versions) using this tooling.
 
 ## How do I contribute code?
 You need to first sign and return an

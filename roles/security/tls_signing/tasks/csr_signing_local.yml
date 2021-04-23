@@ -14,9 +14,6 @@
 
 ---
 
-- name: Include local CA server vars
-  include_vars: ca_server.yml
-
 - name: Copy CSRs to CA server
   copy:
     src: "{{ local_csrs_dir }}/{{ inventory_hostname }}.csr"

@@ -13,6 +13,10 @@
 # limitations under the License.
 
 ---
+- name: Include config cluster defaults for deployment
+  ansible.builtin.include_role:
+    name: cloudera.cluster.config.cluster.common
+    public: yes
 
 - name: Apply "all hosts" configs
   include_role:
@@ -24,7 +28,7 @@
   when: definition.hosts.configs is defined
 
 - name: Detect Cloudera Manager version
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/version
   register: cm_version_response
 
@@ -32,13 +36,14 @@
     cloudera_manager_version: "{{ cm_version_response.json.version }}"
 
 - name: Find existing clusters
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters?clusterType=any
   register: clusters_response
 
 - set_fact:
     existing_clusters: "{{ clusters_response.json | json_query('items[*].name') }}"
 
+# If you get failures here check in CM to ensure you don't have empty clusters or other oddities
 - name: Create base clusters
   include_tasks: create_base.yml
   loop: "{{ definition.clusters }}"
@@ -47,7 +52,7 @@
   vars:
     cluster: "{{ default_cluster_base | combine(_cluster) }}"
   when:
-    - cluster.type | default('base') == 'base'
+    - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name not in existing_clusters
 
 - name: Create base cluster data contexts (SDX)
@@ -58,7 +63,7 @@
   vars:
     cluster: "{{ default_cluster_base | combine(_cluster) }}"
   when:
-    - cluster.type | default('base') == 'base'
+    - cluster.type | default(default_cluster_type) == 'base'
     - cloudera_manager_version is version('6.2.0','>=')
 
 - name: Create Key Trustee server cluster
@@ -69,7 +74,7 @@
   vars:
     cluster: "{{ default_cluster_kts | combine(_cluster) }}"
   when:
-    - cluster.type | default('base') == 'kts'
+    - cluster.type | default(default_cluster_type) == 'kts'
     - cluster.name not in existing_clusters
     - '"kts_active" in groups'
 
@@ -81,10 +86,10 @@
   vars:
     cluster: "{{ default_cluster_compute | combine(_cluster) }}"
   when:
-    - cluster.type | default('base') == 'compute'
+    - cluster.type | default(default_cluster_type) == 'compute'
     - cluster.name not in existing_clusters
 
 - name: Restart Cloudera Management Service
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service/commands/restart
     method: POST

@@ -13,8 +13,9 @@
 # limitations under the License.
 
 ---
+
 custom_config_templates:
-# Explicit defaults
+# Explicit defaults
   - template: configs/defaults.j2
 # Custom configurations for databases
   - template: configs/databases.j2

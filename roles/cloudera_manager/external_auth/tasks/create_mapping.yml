@@ -13,7 +13,7 @@
 # limitations under the License.
 
 - name: Create Cloudera Manager external auth user to role mapping
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /externalUserMappings
     body: "{{ lookup('template', 'external_auth_mapping.j2', convert_data=False) }}"
     status_code: [200, 400]

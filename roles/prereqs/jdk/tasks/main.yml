@@ -30,7 +30,8 @@
   when: jdk_package is not defined
 
 - name: Install JDK
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name:
     - "{{ jdk_package }}"
     state: present

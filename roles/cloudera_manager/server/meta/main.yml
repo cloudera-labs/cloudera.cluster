@@ -14,4 +14,4 @@
 
 ---
 dependencies:
-  - role: cloudera_manager/repo
+  - role: cloudera.cluster.cloudera_manager.repo

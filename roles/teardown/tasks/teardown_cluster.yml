@@ -46,12 +46,9 @@
   when:
     - cluster.type | default('base') == 'kts'
 
-# refactor and merge into the above task once the KTS locations are properly configured in the overlays
+# refactor and merge into the above task once the KTS locations are properly configured in the overlays
 # https://docs.cloudera.com/cloudera-manager/7.2.0/reference/topics/cm_props_cdh710_keytrusteeserver.html
 - block:
-    - set_fact:
-        keytrustee_server_conf_dir: "{{ hostvars[groups.kts_active[0]]['keytrustee_server_conf_dir'] }}"
-        keytrustee_server_db_dir: /var/lib/keytrustee/db
     - name: Remove the KTS configuration directory
       file:
         path: "{{ keytrustee_server_conf_dir }}"

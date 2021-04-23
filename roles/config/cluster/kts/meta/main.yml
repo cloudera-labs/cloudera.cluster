@@ -13,7 +13,9 @@
 # limitations under the License.
 
 ---
+
 dependencies:
-  - role: cloudera_manager/common
-  - role: deployment/definition
-  - role: config/cluster/common
+  - role: cloudera.cluster.cloudera_manager.common
+  - role: cloudera.cluster.deployment.definition
+  - role: cloudera.cluster.config.cluster.common
+  - role: cloudera.cluster.infrastructure.ca_common

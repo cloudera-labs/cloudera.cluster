@@ -17,8 +17,8 @@
 - name: Create databases
   mysql_db:
     name: "{{ databases[service].name }}"
-    encoding: "{{ service | get_database_encoding_mysql }}"
-    collation: "{{ service | get_database_collation_mysql }}"
+    encoding: "{{ service | cloudera.cluster.get_database_encoding_mysql }}"
+    collation: "{{ service | cloudera.cluster.get_database_collation_mysql }}"
   become: yes
   loop: "{{ databases | intersect(services) }}"
   loop_control:

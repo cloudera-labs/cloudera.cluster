@@ -13,19 +13,10 @@
 # limitations under the License.
 
 ---
+- name: Install MIT KRB5 Client setup
+  when: krb5_kdc_type != 'Red Hat IPA'
+  ansible.builtin.include_tasks: mit.yml
 
-- name: Include variables
-  include_vars:
-    file: "{{ ansible_os_family }}.yml"
-
-- name: Install KRB5 client libraries
-  package:
-    name: "{{ krb5_packages }}"
-    state: present
-
-- name: Create krb5.conf
-  template:
-    src: "{{ krb5_conf_template | default('krb5.conf.j2') }}"
-    dest: /etc/krb5.conf
-    backup: yes
-  when: not (skip_krb5_conf_distribution | default(False))
+- name: Install FreeIPA KRB5 Client setup
+  when: krb5_kdc_type == 'Red Hat IPA'
+  ansible.builtin.include_tasks: freeipa.yml

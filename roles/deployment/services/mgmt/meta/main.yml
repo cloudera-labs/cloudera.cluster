@@ -13,5 +13,6 @@
 # limitations under the License.
 
 ---
+
 dependencies:
-  - role: cloudera_manager/api_hosts
+  - role: cloudera.cluster.cloudera_manager.api_hosts

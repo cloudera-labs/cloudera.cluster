@@ -19,12 +19,14 @@
     file: "{{ ansible_os_family }}.yml"
 
 - name: Install openssl
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: openssl
     state: present
 
 - name: Install PyOpenSSL
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: pyOpenSSL
     state: present
   when: ansible_os_family == "RedHat"

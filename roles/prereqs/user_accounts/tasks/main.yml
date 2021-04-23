@@ -15,10 +15,6 @@
 ---
 
 - block:
-    - name: Include user groups vars
-      include_vars:
-        file: "user_accounts.yml"
-
     - name: Create hadoop group
       group:
         name: hadoop
@@ -34,16 +30,18 @@
       run_once: true
 
     - name: Create local user accounts
-      user:
+      ansible.builtin.user:
         name: "{{ account.user }}"
         home: "{{ account.home }}"
         comment: "{{ account.comment | default(omit) }}"
         groups: "{{ account.extra_groups | default([]) }}"
+        uid: "{{ account.uid | default(omit) }}"
         shell: /sbin/nologin
         append: yes
       loop: "{{ local_accounts }}"
       loop_control:
         loop_var: account
+        label: "{{ account.user }}"
       when: account.when | default(True)
 
     - name: Set home directory permissions

@@ -48,7 +48,8 @@
   with_items: "{{ unnecessary_services }}"
 
 - name: Install DNS utils package
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: "{{ dns_package }}"
     state: present
 
@@ -57,7 +58,8 @@
     manager: auto
 
 - name: Install {{ ntp_package }} service if ntp or chrony is not installed
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: "{{ ntp_package }}"
     state: present
   when: ('ntp' not in ansible_facts.packages) and ('chrony' not in ansible_facts.packages)
@@ -74,7 +76,8 @@
     enabled: yes
 
 - name: Install nscd service
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: "{{ nscd_package }}"
     state: present
 

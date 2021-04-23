@@ -16,21 +16,21 @@
 
 - name: Generate mgmt configs
   include_role:
-    name: config/services/mgmt
+    name: cloudera.cluster.config.services.mgmt
 
 - name: Create databases and users
   include_role:
-    name: deployment/databases
+    name: cloudera.cluster.deployment.databases
   vars:
     services: "{{ definition.mgmt.services }}"
 
 - name: Define target host ID for Cloudera Management Service installation
   set_fact:
-    mgmt_service_api_host_id: "{{ cloudera_manager_api_hosts[cloudera_manager_host]['id'] }}"
+    mgmt_service_api_host_id: "{{ cloudera_manager_api_hosts[cloudera_manager_host_local]['id'] }}"
   when: mgmt_service_api_host_id is not defined
 
 - name: Add Cloudera Management Service
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service
     method: PUT
     body: "{{ lookup('template', 'service.j2', convert_data=False) }}"
@@ -40,7 +40,7 @@
     - "'CMS instance already exists' not in api_cm_service_response.content"
 
 - name: Start Cloudera Management Service
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service/commands/restart
     method: POST
   register: api_cm_service_start

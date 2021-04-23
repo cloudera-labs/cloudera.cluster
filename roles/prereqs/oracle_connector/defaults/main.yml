@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
+
+maven_repo: "https://repo1.maven.org/maven2"
+
 oracle_connector_group_id: com.oracle.database.jdbc
 oracle_connector_artifact_id: ojdbc8
 oracle_connector_version: 19.7.0.0

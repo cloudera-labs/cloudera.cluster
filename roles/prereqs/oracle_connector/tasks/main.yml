@@ -56,7 +56,8 @@
     - oracle_instantclient_sdk_zip is defined
 
 - name: Ensure unzip is available
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: unzip
     state: present
   when:
@@ -78,6 +79,7 @@
   when: oracle_instantclient_sdk_zip is defined
 
 - name: Install the libaio package
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: libaio
     state: present

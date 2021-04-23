@@ -13,6 +13,7 @@
 # limitations under the License.
 
 ---
+
 keytool_path: /usr/bin/keytool
 openssl_path: /usr/bin/openssl
 jdk_java_cacerts_paths:

@@ -18,8 +18,10 @@
   tasks:
     - name: Include jdk role
       include_role:
-        name: ../prereqs/jdk
+        name: cloudera.cluster.prereqs.jdk
+
     - name: Install openssl
-      package:
+      ansible.builtin.package:
+        lock_timeout: 60
         name: openssl
         state: present

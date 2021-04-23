@@ -13,5 +13,7 @@
 # limitations under the License.
 
 ---
+
 dependencies:
-  - role: deployment/definition
+  - role: cloudera.cluster.deployment.definition
+  - role: cloudera.cluster.infrastructure.ca_common

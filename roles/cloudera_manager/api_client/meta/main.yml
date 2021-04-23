@@ -14,5 +14,5 @@
 
 ---
 dependencies:
-  - role: cloudera_manager/common
-  - role: cloudera_manager/admin_password/check
+  - role: cloudera.cluster.cloudera_manager.common
+  - role: cloudera.cluster.cloudera_manager.admin_password.check

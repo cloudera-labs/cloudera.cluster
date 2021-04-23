@@ -13,9 +13,11 @@
 # limitations under the License.
 
 ---
-cluster_definition_file: cluster.yml
+
 cluster_template_dry_run: False
 tls: False
+
+default_cluster_type: base
 
 kms_services: [KEYTRUSTEE, RANGER_KMS, RANGER_KMS_KTS]
 sdx_services: [ATLAS, HDFS, HIVE, RANGER, SENTRY]

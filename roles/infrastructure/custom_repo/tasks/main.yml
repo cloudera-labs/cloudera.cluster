@@ -19,12 +19,19 @@
     file: "{{ ansible_os_family }}.yml"
 
 - name: Install {{ httpd_package }}
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: "{{ httpd_package }}"
     state: present
 
-- name: Populate parcel repository contents
-  include_tasks: install_parcels.yml
+# Runs before tars process in case you are rehosting tars
+- name: Populate parcel repository contents from a Download Mirror
+  when: custom_repo_rehost_files
+  include_tasks: rehost_files_from_download.yml
+
+# Upload files directly from Ansible Controller to custom repo
+- name: Populate parcel repository contents from tars on Ansible controller
+  include_tasks: install_parcels_from_tars_on_controller.yml
   loop: "{{ repo_tar_files }}"
   loop_control:
     loop_var: repo_tar_file

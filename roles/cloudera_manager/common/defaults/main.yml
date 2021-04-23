@@ -15,7 +15,11 @@
 ---
 cloudera_manager_agent_config_file: /etc/cloudera-scm-agent/config.ini
 cloudera_manager_protocol: http
-cloudera_manager_host: "{{ groups.cloudera_manager | first | default('localhost') }}"
+# Allows the cloudera_manager_host to be set to the public FQDN for proxied connections like EC2 when ansible_host is set
+cloudera_manager_host_local: "{{ groups.cloudera_manager | first | default('localhost') }}"
+cloudera_manager_host_remote: "{{ hostvars[groups.cloudera_manager[0]].ansible_host | default(cloudera_manager_host_local) }}"
+cloudera_manager_host: "{{ cloudera_manager_host_remote if 'localhost' in inventory_hostname else cloudera_manager_host_local }}"
+#
 cloudera_manager_port: 7180
 cloudera_manager_database_embedded: False
 cloudera_manager_database_host: "{{ database_host }}"

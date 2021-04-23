@@ -13,6 +13,7 @@
 # limitations under the License.
 
 ---
+
 dependencies:
-  - role: cloudera_manager/api_client
-  - role: deployment/definition
+  - role: cloudera.cluster.cloudera_manager.api_client
+  - role: cloudera.cluster.deployment.definition

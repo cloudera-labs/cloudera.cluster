@@ -15,4 +15,6 @@
 ---
 api_config_endpoint: cm/config
 api_config_keys_uppercase: True
-api_configs: {}
+cm_api_defaults:
+  PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND: 256000
+api_configs: "{{ cm_api_defaults | combine(cloudera_manager_options | default({}), recursive=True) }}"

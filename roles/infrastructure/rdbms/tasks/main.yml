@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Include database type specific variables
   include_vars:
     file: "{{ database_type }}.yml"

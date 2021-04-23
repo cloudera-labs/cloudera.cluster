@@ -16,7 +16,8 @@
 
 - name: Set Cloudera Manager TLS configs
   include_role:
-    name: cloudera_manager/config
+    name: cloudera.cluster.cloudera_manager.config
+  when: tls | default(False)
   vars:
     api_config_keys_uppercase: True
     api_configs: "{{ lookup('template', 'tls_configs.j2') | from_yaml }}"
@@ -38,6 +39,7 @@
     - "'javax.net.ssl.trustStorePassword' not in opts"
 
 - name: Restart Cloudera Manager Server
+  when: tls | default(False)
   service:
     name: cloudera-scm-server
     state: restarted

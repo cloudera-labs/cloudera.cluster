@@ -1,0 +1,78 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# Populate custom_repo
+- name: Ensure repo directories exist for file downloads to match required object structure
+  loop: "{{ custom_repo_rehost_files }}"
+  loop_control:
+    loop_var: __tmp_parcel_dir_item
+  ansible.builtin.file:
+    path: "/var/www/html/{{ __tmp_parcel_dir_item | urlsplit('path') | dirname }}"
+    state: directory
+
+- name: Request Async Download of files to tmp dir
+  register: __infra_download_parcels_results
+  loop: "{{ custom_repo_rehost_files }}"
+  loop_control:
+    loop_var: __parcel_download_item
+  async: 3600
+  poll: 0
+  ansible.builtin.get_url:
+    url: "{{ __parcel_download_item }}"
+    dest: "/var/www/html/{{ __parcel_download_item | urlsplit('path') }}"
+
+- name: Track async downloads to completion  [ This may take a while if your files are very large or far away ]
+  loop: "{{ __infra_download_parcels_results.results }}"
+  loop_control:
+    loop_var: __download_async_item
+  register: __async_download_results
+  until: __async_download_results.finished is defined and __async_download_results.finished
+  delay: 15
+  retries: 300
+  async_status:
+    jid: "{{ __download_async_item.ansible_job_id }}"
+  failed_when:
+    - __download_async_item.failed == True
+    - __download_async_item.finished != 1
+
+- name: Ensure paths for unpacked repo-as-tars
+  loop: "{{ custom_repo_rehost_files | select('search', 'tar.gz') | select('search', 'repo-as-tarball') | list }}"
+  loop_control:
+    loop_var: __tmp_tar_dir_item
+  ansible.builtin.file:
+    path: "/var/www/html{{ __tmp_tar_dir_item | urlsplit('path') | regex_replace('^(.+)repo.+-(.+)\\.tar\\.gz$', '\\1\\2' + '/yum/') }}"
+    state: directory
+
+- name: Unpack repo-as-tar archives
+  loop: "{{ custom_repo_rehost_files | select('search', 'tar.gz') | select('search', 'repo-as-tarball') | list }}"
+  loop_control:
+    loop_var: __tmp_unpack_item
+  ansible.builtin.unarchive:
+    extra_opts: [--strip-components=1]
+    remote_src: yes
+    src: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') }}"
+    dest: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') | regex_replace('^(.+)repo.+-(.+)\\.tar\\.gz$', '\\1\\2' + '/yum/') }}"
+    keep_newer: "{{ keep_newer }}"
+
+- name: Set Cloudera Manager Base Repo if included in rehosting list
+  when: "{{ custom_repo_rehost_files | select('search', 'tar.gz') | list | select('search', '/cm') | list }} | length > 0"
+  ansible.builtin.set_fact:
+    cloudera_archive_base_url: "http://{{ groups['custom_repo'] | first }}"
+  delegate_to: "{{ __play_host }}"
+  delegate_facts: true
+  loop: "{{ groups.cloudera_manager + groups.cluster }}"
+  loop_control:
+    loop_var: __play_host
+    label: __play_host
