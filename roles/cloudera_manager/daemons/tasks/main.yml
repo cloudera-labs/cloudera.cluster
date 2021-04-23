@@ -15,7 +15,8 @@
 ---
 
 - name: Install Cloudera Manager daemons package
-  package:
+  ansible.builtin.package:
+    lock_timeout: 180
     name: cloudera-manager-daemons
     update_cache: yes
     state: present

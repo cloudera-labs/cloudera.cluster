@@ -1,0 +1,53 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Ensure the NiFi home directory exists
+  file:
+    path: "{{ nifi_dir_path }}"
+    owner: "{{ nifi_dir_owner }}"
+    group: "{{ nifi_dir_group }}"
+    state: directory
+
+- name: Ensure the link for the NiFi keystore exists
+  file:
+    src: "{{ tls_keystore_path }}"
+    dest: "{{ nifi_dir_path }}/{{ cm_auto_host_keystore_name }}"
+    state: link
+
+- name: Ensure the link for the NiFi truststore exists
+  file:
+    src: "{{ tls_truststore_path }}"
+    dest: "{{ nifi_dir_path }}/{{ cm_auto_cluster_truststore_name }}"
+    state: link
+
+- name: Ensure the NiFi Registry home directory exists
+  file:
+    path: "{{ nifireg_dir_path }}"
+    owner: "{{ nifireg_dir_owner }}"
+    group: "{{ nifireg_dir_group }}"
+    state: directory
+
+- name: Ensure the link for the NiFi Registry keystore exists
+  file:
+    src: "{{ tls_keystore_path }}"
+    dest: "{{ nifireg_dir_path }}/{{ cm_auto_host_keystore_name }}"
+    state: link
+
+- name: Ensure the link for the NiFi Registry truststore exists
+  file:
+    src: "{{ tls_truststore_path }}"
+    dest: "{{ nifireg_dir_path }}/{{ cm_auto_cluster_truststore_name }}"
+    state: link

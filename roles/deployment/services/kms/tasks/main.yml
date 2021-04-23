@@ -14,13 +14,6 @@
 
 ---
 
-- set_fact:
-    keytrustee_server_conf_dir: "{{ hostvars[groups.kts_active[0]]['keytrustee_server_conf_dir'] }}"
-    keytrustee_server_org_name: "{{ hostvars[groups.kts_active[0]]['keytrustee_server_org_name'] }}"
-
-- set_fact:
-    auth_secret_query: "{{ keytrustee_server_org_name }}.auth_secret"
-
 - name: Get Key Trustee organisation auth secret
   shell: >
     keytrustee-orgtool --confdir {{ keytrustee_server_conf_dir }} list
@@ -32,13 +25,15 @@
 - name: Extract auth secret from keytrustee-orgtool output
   set_fact:
     keytrustee_server_auth_secret: "{{ orgtool_output.stdout | from_json | json_query(auth_secret_query) }}"
+  vars:
+    auth_secret_query: "{{ keytrustee_server_org_name }}.auth_secret"
 
 - name: Create KMS services
   include_tasks: create_kms.yml
   loop: "{{ definition.clusters }}"
   loop_control:
-    loop_var: cluster
+    loop_var: __kms_cluster
   when:
-    - cluster.type | default('base') == 'base'
-    - cluster.security.hdfs_encryption | default(false)
+    - __kms_cluster.type | default('base') == 'base'
+    - __kms_cluster.security.hdfs_encryption | default(False)
     - '"kms_servers" in groups'

@@ -28,7 +28,9 @@
 
 - name: Check if signed cert is available
   become: no
-  local_action: stat path={{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem
+  delegate_to: localhost
+  stat:
+    path: "{{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem"
   register: signed_cert
 
 - name: Check if signed cert is available remotely

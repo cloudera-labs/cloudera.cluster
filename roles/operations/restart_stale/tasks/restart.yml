@@ -15,7 +15,7 @@
 ---
 
 - name: Get cluster services
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services
   register: services
 
@@ -24,13 +24,13 @@
     stale_client_config_count: "{{ services.json | json_query('items[?clientConfigStalenessStatus==`STALE`]') | length }}"
 
 - name: Restart cluster
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/restart
     method: POST
   when: stale_service_count | int > 0
 
 - name: Re-deploy client configurations
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/deployClientConfig
     method: POST
     timeout: "{{ client_config_timeout | default(omit) }}"

@@ -15,8 +15,8 @@
 ---
 
 - name: Get cluster parcel details
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/parcels
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/parcels
   register: parcels_response
 
 - name: Extract active parcels
@@ -62,8 +62,8 @@
     kms_service_name: "{{ kms_service_type | lower }}"
 
 - name: Get existing services
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/services
     method: GET
   register: services
 
@@ -78,15 +78,15 @@
     name: config/services/kms
 
 - name: Create KMS service
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/services
     method: POST
     body: "{{ lookup('template', 'service.j2', convert_data=False) }}"
   when: not existing_kms_service
 
 - name: Add KMS dependency to HDFS
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/hdfs/config
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/services/hdfs/config
     method: PUT
     body:
       items:
@@ -94,8 +94,8 @@
           value: "{{ kms_service_name }}"
 
 - name: Wait for parcels to become active on any new hosts
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/parcels/products/{{ item.product }}/versions/{{ item.version }}
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/parcels/products/{{ item.product }}/versions/{{ item.version }}
   register: parcels_response
   until: parcels_response.json.stage == "ACTIVATED"
   with_items: "{{ active_parcels }}"
@@ -103,16 +103,16 @@
   delay: "{{ kms_parcel_poll_duration | default(20) }}"
 
 - name: Find details of KMS roles
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ kms_service_name }}/roles
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/services/{{ kms_service_name }}/roles
   register: roles
 
 - set_fact:
     primary_kms_role_query: items[?hostRef.hostname==`{{ cloudera_manager_api_hosts[groups.kms_servers[0]]['hostname'] }}`].name
 
 - name: Start first KMS server instance
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ kms_service_name }}/roleCommands/start
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/services/{{ kms_service_name }}/roleCommands/start
     method: POST
     body:
       items: "{{ roles.json | json_query(primary_kms_role_query) }}"

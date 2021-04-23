@@ -15,7 +15,7 @@
 ---
 
 - name: Create data contexts
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /dataContexts
     method: POST
     body: "{{ lookup('template', 'sdx/data_context.j2', convert_data=False) }}"

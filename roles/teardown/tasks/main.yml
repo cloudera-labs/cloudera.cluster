@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
+
+- name: Include config cluster defaults for deployment
+  ansible.builtin.include_role:
+    name: cloudera.cluster.config.cluster.common
+    public: yes
+
 - name: Ensure properly configured
   assert:
     that: >-
@@ -147,7 +154,8 @@
     - teardown_everything | default(false)
 
 - name: Teardown Cloudera daemons
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: cloudera-manager-daemons
     state: absent
   when:

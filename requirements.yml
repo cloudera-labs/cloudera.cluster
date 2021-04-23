@@ -15,7 +15,6 @@
 ---
 
 roles:
-
   - name: geerlingguy.postgresql
     version: 2.2.0
 

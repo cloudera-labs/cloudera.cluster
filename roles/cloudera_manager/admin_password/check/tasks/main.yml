@@ -14,6 +14,15 @@
 
 ---
 
+- name: Wait for Cloudera Manager Port to be up
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
+  ansible.builtin.wait_for:
+    port: "{{ cloudera_manager_port }}"
+    host: localhost
+    connect_timeout: 180
+    sleep: 5
+
+# https://github.com/ansible/ansible/issues/34989
 - name: Check the default Cloudera Manager admin password
   uri:
     url: "{{ cloudera_manager_protocol }}://{{ cloudera_manager_host }}:{{ cloudera_manager_port }}/api/v2/tools/echo"
@@ -21,8 +30,12 @@
     url_username: "admin"
     url_password: "admin"
     force_basic_auth: yes
+    status_code: [200, 401]
   register: default_admin_password_check
-  failed_when: default_admin_password_check.status not in [200, 401]
+  retries: 30
+  until:
+    - default_admin_password_check.status is defined
+    - default_admin_password_check.status != -1
   run_once: True
   when: cloudera_manager_admin_password is defined
 

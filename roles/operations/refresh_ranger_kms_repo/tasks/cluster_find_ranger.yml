@@ -17,12 +17,12 @@
 - name: Check a cluster has been specified
   fail:
     msg: This task list expects a cluster var.
-  when: cluster is not defined
+  when: __cluster_item is not defined
 
 - name: Check the cluster has a Ranger service
   fail:
     msg: This task list expects a the cluster to have a Ranger service.
-  when: "'RANGER' not in cluster.services | default([])"
+  when: "'RANGER' not in __cluster_item.services | default([])"
 
 - name: Identify the host template with the Ranger admin
   set_fact:
@@ -30,7 +30,7 @@
   vars:
     host_templates: >
       {{
-        cluster.host_templates
+        __cluster_item.host_templates
          | dict2items(key_name='name', value_name='services')
       }}
     query: "[?services.RANGER[?contains(@, `RANGER_ADMIN`)]].name"
@@ -59,13 +59,13 @@
 - name: Identify Ranger service defaults
   set_fact:
     _ranger_host: "{{ _ranger_hosts | first }}"
-    _ranger_http_port: "{{ cluster.configs.RANGER.SERVICEWIDE.ranger_service_http_port | default(6080) }}"
-    _ranger_https_port: "{{ cluster.configs.RANGER.SERVICEWIDE.ranger_service_https_port | default(6182) }}"
+    _ranger_http_port: "{{ __cluster_item.configs.RANGER.SERVICEWIDE.ranger_service_http_port | default(6080) }}"
+    _ranger_https_port: "{{ __cluster_item.configs.RANGER.SERVICEWIDE.ranger_service_https_port | default(6182) }}"
 
 - name: Identify Ranger credentials
   set_fact:
     ranger_keyadmin_username: "keyadmin"
-    ranger_keyadmin_password: "{{ cluster.configs.RANGER.SERVICEWIDE.keyadmin_user_password | default('password123') }}"
+    ranger_keyadmin_password: "{{ __cluster_item.configs.RANGER.SERVICEWIDE.keyadmin_user_password | default('password123') }}"
 
 - name: Check if HTTPS is used
   uri:

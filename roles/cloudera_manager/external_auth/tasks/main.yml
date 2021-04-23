@@ -30,7 +30,7 @@
 - block:
 
   - name: Get auth roles from Cloudera Manager
-    cm_api:
+    cloudera.cluster.cm_api:
       endpoint: /authRoles
     register: response
 
@@ -40,7 +40,7 @@
 
   ## BUG: Can't set all mappings in one API call because of OPSAPS-56242
   # - name: Set Cloudera Manager external auth user to role mappings
-  #   cm_api:
+  #   cloudera.cluster.cm_api:
   #     endpoint: /externalUserMappings
   #     body: "{{ lookup('template', 'external_auth_mappings.j2', convert_data=False) }}"
   #     method: POST

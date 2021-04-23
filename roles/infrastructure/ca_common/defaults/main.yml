@@ -1,0 +1,68 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+openssl_path: /usr/bin/openssl
+
+ca_server_root_path: /ca
+ca_server_root_path_certs: "{{ ca_server_root_path }}/certs"
+ca_server_root_path_crl: "{{ ca_server_root_path }}/crl"
+ca_server_root_path_newcerts: "{{ ca_server_root_path }}/newcerts"
+ca_server_root_path_private: "{{ ca_server_root_path }}/private"
+ca_server_root_key_name: ca.key.pem
+ca_server_root_key_size: 4096
+ca_server_root_cert_name: ca.cert.pem
+ca_server_root_cert_path: "{{ ca_server_root_path_certs }}/{{ ca_server_root_cert_name }}"
+ca_server_root_key_password: password
+
+ca_server_intermediate_path: /ca/intermediate
+ca_server_intermediate_path_certs: "{{ ca_server_intermediate_path }}/certs"
+ca_server_intermediate_path_crl: "{{ ca_server_intermediate_path }}/crl"
+ca_server_intermediate_path_csr: "{{ ca_server_intermediate_path }}/csr"
+ca_server_intermediate_path_newcerts: "{{ ca_server_intermediate_path }}/newcerts"
+ca_server_intermediate_path_private: "{{ ca_server_intermediate_path }}/private"
+ca_server_intermediate_key_password: password
+ca_server_intermediate_cert_name: intermediate.cert.pem
+ca_server_intermediate_cert_path: "{{ ca_server_intermediate_path_certs }}/{{ ca_server_intermediate_cert_name }}"
+
+ca_server_chain_cert_name: ca-chain.cert.pem
+ca_server_chain_cert_path: "{{ ca_server_intermediate_path_certs }}/{{ ca_server_chain_cert_name }}"
+
+base_dir_security: /opt/cloudera/security
+base_dir_security_pki: "{{ base_dir_security }}/pki"
+
+tls_cert_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+tls_cert_path_generic: "{{ base_dir_security_pki }}/host.pem"
+tls_chain_path: "{{ base_dir_security_pki }}/chain.pem"
+tls_csr_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.csr"
+tls_csr_config_path: "{{ base_dir_security_pki }}/csr.cnf"
+tls_key_password: changeme
+tls_key_password_file: "{{ base_dir_security_pki }}/host.key.pw"
+tls_key_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.key"
+tls_key_path_generic: "{{ base_dir_security_pki }}/host.key"
+tls_key_path_plaintext: "{{ tls_key_path }}.unenc"
+tls_key_path_plaintext_generic: "{{ tls_key_path_generic }}.unenc"
+tls_keystore_password: changeme
+tls_keystore_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.jks"
+tls_keystore_path_generic: "{{ base_dir_security_pki }}/host.jks"
+tls_truststore_password: changeme
+tls_truststore_path: "{{ base_dir_security_pki }}/truststore.jks"
+tls_uber_truststore_path: "{{ base_dir_security_pki }}/full_truststore.jks"
+
+ca_server_attrs_general:
+  OU: PS
+  O: Cloudera, Inc.
+  ST: CA
+  C: US

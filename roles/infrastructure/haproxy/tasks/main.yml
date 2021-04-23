@@ -15,7 +15,8 @@
 ---
 
 - name: Install HAProxy
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: haproxy
     state: latest
 

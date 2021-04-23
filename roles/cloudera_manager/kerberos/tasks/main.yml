@@ -16,13 +16,13 @@
 
 - name: Set Cloudera Manager Kerberos configs
   include_role:
-    name: cloudera_manager/config
+    name: cloudera.cluster.cloudera_manager.config
   vars:
     api_config_keys_uppercase: True
     api_configs: "{{ lookup('template', 'kerberos_configs.j2') | from_yaml }}"
 
 - name: Import KDC admin credentials
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/commands/importAdminCredentials?username={{ krb5_kdc_admin_user | urlencode }}&password={{ krb5_kdc_admin_password | urlencode }}
     method: POST
   register: result

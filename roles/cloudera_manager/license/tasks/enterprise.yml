@@ -15,7 +15,7 @@
 ---
 
 - name: Get current Cloudera license status
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/license
     method: GET
     status_code: 200,404
@@ -29,12 +29,21 @@
       'This installation currently has no license.'
       ]}}
 
-- name: Upload license file to Cloudera Manager server
-  copy:
-    src: "{{ cloudera_manager_license_file }}"
-    dest: /tmp/license.txt
-    mode: 0600
-  when: license_not_installed
+- name: Check for Trial License
+  when: not license_not_installed
+  ansible.builtin.set_fact:
+    license_not_installed: "{{ 'Trial' in license_response.json.owner | default('') }}"
+
+- name: Determine if License File is present
+  ansible.builtin.stat:
+    path: "{{ license_local_tmp_path }}"
+  register: __cloudera_license_file
+
+- name: Check License File Stat
+  ansible.builtin.assert:
+    that: __cloudera_license_file.stat.exists
+    fail_msg: "Expected to find Cloudera License file at {{ license_local_tmp_path }}"
+    quiet: yes
 
 - name: Post license file to Cloudera Manager API
   shell: >
@@ -42,7 +51,7 @@
     --user {{ cloudera_manager_api_user }}:{{ cloudera_manager_api_password }}
     --request POST
     --header 'Content-Type:multipart/form-data'
-    --form license=@/tmp/license.txt
+    --form license=@{{ license_local_tmp_path }}
     {{ license_response.url }}
   args:
     warn: False

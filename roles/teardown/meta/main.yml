@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
+
 dependencies:
-  - role: cloudera_manager/common
-  - role: deployment/definition
-  - role: config/cluster/common
+  - role: cloudera.cluster.cloudera_manager.common
+  - role: cloudera.cluster.deployment.definition
+  - role: cloudera.cluster.deployment.services.kts_common

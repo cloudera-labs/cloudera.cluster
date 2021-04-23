@@ -31,7 +31,8 @@
     name: geerlingguy.postgresql
 
 - name: Install python-psycopg2
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: python-psycopg2
     state: present
 

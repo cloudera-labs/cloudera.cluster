@@ -13,4 +13,5 @@
 # limitations under the License.
 
 ---
+
 ca_server_root_key_cipher: aes256

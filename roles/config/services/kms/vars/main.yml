@@ -13,6 +13,7 @@
 # limitations under the License.
 
 ---
+
 custom_config_templates:
   - template: configs/defaults.j2
   - template: configs/tls.j2

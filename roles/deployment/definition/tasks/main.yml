@@ -14,20 +14,19 @@
 
 ---
 
-- name: Load cluster definition
-  include_vars:
-    file: "{{ cluster_definition }}/cluster.yml"
-    name: _definition
-
-- set_fact:
+- name: Generate host_template cluster map
+  ansible.builtin.set_fact:
     _host_template_cluster_map: "{{ lookup('template', './template_cluster_map.j2') | from_yaml }}"
   vars:
-    clusters: "{{ _definition.clusters | default([]) }}"
+    clusters: "{{ clusters | default([]) }}"
 
-- set_fact:
-    definition:
-      clusters: "{{ _definition.clusters | default({}) }}"
-      mgmt: "{{ _definition.mgmt | default({}) }}"
-      hosts: "{{ _definition.hosts | default({}) }}"
-      host_template_cluster_map: "{{ _host_template_cluster_map }}"
-  when: definition is not defined
+- name: Generate definition canonical structure from supplied Definition details
+  ansible.builtin.set_fact:
+    definition: "{{ definition | default({}) | combine(__def_item, recursive=True) }}"
+  loop_control:
+    loop_var: __def_item
+  loop:
+    - clusters: "{{ clusters | default([]) }}"
+    - mgmt: "{{ mgmt | default({}) }}"
+    - hosts: "{{ hosts | default({}) }}"
+    - host_template_cluster_map: "{{ _host_template_cluster_map }}"

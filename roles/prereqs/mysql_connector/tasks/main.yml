@@ -31,7 +31,8 @@
     mode: 0755
 
 - name: Install unzip package
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: unzip
     state: present
 

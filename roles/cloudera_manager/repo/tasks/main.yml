@@ -42,5 +42,6 @@
   when: cloudera_manager_repo_key is not defined
 
 - name: Install Cloudera Manager repository
+  when: install_repo_on_host
   include_tasks:
     file: "main-{{ ansible_os_family }}.yml"

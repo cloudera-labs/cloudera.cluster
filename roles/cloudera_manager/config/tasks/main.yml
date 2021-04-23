@@ -15,14 +15,14 @@
 ---
 
 - name: Get existing configs
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: "{{ api_config_endpoint }}"
   register: response
 
 - name: Filter out null configs if necessary
   set_fact:
     filtered_configs: >
-      {{ api_configs | filter_null_configs(response.json['items'] | 
+      {{ api_configs | cloudera.cluster.filter_null_configs(response.json['items'] |
       items2dict(key_name='name', value_name='value')) }}
 
 - name: Update configuration endpoint to contain change message
@@ -31,7 +31,7 @@
   when: message is defined and "message" not in api_config_endpoint
 
 - name: Update configuration (via Cloudera Manager API)
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: "{{ api_config_endpoint }}"
     body: "{{ lookup('template', 'config.j2', convert_data=False) }}"
     method: PUT

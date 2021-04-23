@@ -14,12 +14,9 @@
 
 ---
 
-- name: Include user groups vars
-  include_vars:
-    file: "user_accounts.yml"
-
 - name: Install acls package
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: acl
     state: present
 

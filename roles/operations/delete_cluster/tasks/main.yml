@@ -15,7 +15,7 @@
 ---
 
 - name: Check the cluster exists
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}
     method: GET
     status_code: 200,404
@@ -23,7 +23,7 @@
   register: cluster_before_delete
 
 - name: Stop the cluster (stop_cluster_before_delete)
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/stop
     method: POST
   register: services_stop
@@ -33,7 +33,7 @@
   failed_when: services_stop.status | default(0) != 200
 
 - name: Wait for the cluster services to stop
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services
     method: GET
     status_code: 200,404
@@ -53,7 +53,7 @@
   delay: "{{ teardown_stop_cluster_poll_duration | default(20) }}"
 
 - name: Get cluster services
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services
     method: GET
     status_code: 200,404
@@ -62,7 +62,7 @@
   when: cluster_before_delete.status == 200
 
 - name: Delete data contexts of {{ cluster.name }}
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
     method: DELETE
     status_code: 200,404
@@ -79,7 +79,7 @@
     - set_fact:
         stopped_service_count: "{{ services.json | json_query('items[?(serviceState==`STOPPED` || serviceState==`NA`)]') | length }}"
         total_service_count: "{{ services.json | json_query('items[*]') | length }}"
-    - cm_api:
+    - cloudera.cluster.cm_api:
         endpoint: /clusters/{{ cluster.name | urlencode() }}
         method: DELETE
       when: stopped_service_count == total_service_count

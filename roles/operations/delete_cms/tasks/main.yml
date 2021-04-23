@@ -15,7 +15,7 @@
 ---
 
 - name: Check cms exists
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service
     method: GET
     status_code: 200,404
@@ -23,7 +23,7 @@
   register: service_before_delete
 
 - name: Stop cms (stop_cms_before_delete)
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service/commands/stop
     method: POST
   register: service_stop
@@ -33,7 +33,7 @@
   failed_when: service_stop.status | default(0) != 200
 
 - name: Get the cms service
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service
     method: GET
     status_code: 200,404
@@ -42,7 +42,7 @@
   when: service_before_delete.status == 200
 
 - name: Delete cms
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service
     method: DELETE
   when:

@@ -25,7 +25,8 @@
   when: ansible_os_family == "Debian"
 
 - name: Install OpenLDAP client libraries
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: "{{ ldap_packages }}"
     state: present
   when: "'cloudera_manager' in group_names"

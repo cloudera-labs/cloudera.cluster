@@ -13,28 +13,73 @@
 # limitations under the License.
 
 ---
+- name: Query for KTS Cluster
+  set_fact:
+    kts_cluster: "{{ definition.clusters | json_query('[?type==`kts`]') | first }}"
 
-- set_fact:
-    cluster: "{{ definition.clusters | json_query('[?type==`kts`]') | first }}"
+- name: Check Cluster and Inventory suitable for KTS
+  ansible.builtin.assert:
+    that:
+      - kts_cluster.name is defined
+      - groups.kts_passive is defined
+      - groups.kts_active is defined
+    fail_msg: "Cluster type kts not present or expected kts_active and kts_passive not present"
 
-- fail:
-    msg: No Key Trustee Server cluster was found
-  when: cluster.name is not defined
+- name: Create temp directory for keys
+  file:
+    path: "{{ local_temp_dir }}/kts"
+    owner: root
+    group: root
+    state: directory
+    mode: 0777
+
+- name: Fetch GPG keys and configs from active Key Trustee Server
+  delegate_to: "{{ groups.kts_active | first }}"
+  fetch:
+    src: "{{ keytrustee_server_conf_dir }}/{{ item }}"
+    dest: "{{ local_temp_dir }}/kts"
+  loop: "{{ keytrustee_server_key_files }}"
+
+- name: Copy to passive Key Trustee Server
+  delegate_to: "{{ groups.kts_passive | first }}"
+  copy:
+    src: "{{ local_temp_dir }}/kts/{{ inventory_hostname }}{{ keytrustee_server_conf_dir }}/"
+    dest: "{{ keytrustee_server_conf_dir }}"
+    owner: keytrustee
+    group: keytrustee
+    mode: 0600
+
+- name: Delete temp directory
+  file:
+    path: "{{ local_temp_dir }}/kts"
+    state: absent
+
+- name: Initialize passive Key Trustee Server
+  delegate_to: "{{ groups.kts_passive | first }}"
+  shell: ktadmin init --confdir {{ keytrustee_server_conf_dir }}
 
 - name: Start Key Trustee Server service
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/keytrustee_server/commands/restart
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ kts_cluster.name | urlencode() }}/services/keytrustee_server/commands/restart
     method: POST
-  when: cluster.name is defined
+  when: kts_cluster.name is defined
 
 - name: Setup Key Trustee Server database replication
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/keytrustee_server/commands/SetupSyncReplicationCommand
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ kts_cluster.name | urlencode() }}/services/keytrustee_server/commands/SetupSyncReplicationCommand
     method: POST
-  when: cluster.name is defined
+  when: kts_cluster.name is defined
 
 - name: Restart Key Trustee Server service
-  cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/keytrustee_server/commands/restart
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ kts_cluster.name | urlencode() }}/services/keytrustee_server/commands/restart
     method: POST
-  when: cluster.name is defined
+  when: kts_cluster.name is defined
+
+- name: Create Key Trustee Server organisation
+  delegate_to: "{{ groups.kts_active | first }}"
+  shell: >
+    keytrustee-orgtool add
+    -n {{ keytrustee_server_org_name }}
+    -c {{ keytrustee_server_org_email }}
+    --confdir {{ keytrustee_server_conf_dir }}

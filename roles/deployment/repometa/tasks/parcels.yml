@@ -15,6 +15,7 @@
 ---
 
 - name: Download parcel manifest information
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   uri:
     url: "{{ repository | regex_replace('/?$','') + '/manifest.json' }}"
     status_code: 200
@@ -35,12 +36,12 @@
       {{ manifests.results
       | map(attribute='json')
       | list
-      | extract_products_from_manifests
+      | cloudera.cluster.extract_products_from_manifests
       | dict2items(key_name='product', value_name='version')
       }}
   run_once: true
 
 - name: Extract runtime version from products list
   set_fact:
-    cloudera_runtime_version: "{{ products | get_product_version('CDH') }}"
+    cloudera_runtime_version: "{{ products | cloudera.cluster.get_product_version('CDH') }}"
   run_once: true

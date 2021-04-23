@@ -1,0 +1,90 @@
+{% macro ApiConfig(k, v, force_uppercase_keys=False) -%}
+  {%- set config = {} -%}
+  {%- if force_uppercase_keys -%}
+    {{ config.update({"name": k | upper}) }}
+  {%- else -%}
+    {{ config.update({"name": k}) }}
+  {%- endif -%}
+  {# the extra to_json filter renders a dict into properly escaped JSON string for the CM API call #}
+  {%- if v is mapping -%}
+    {{ config.update({"value": v | to_json}) }}
+  {%- else -%}
+    {{ config.update({"value": v}) }}
+  {%- endif -%}
+  {{ config | to_json }}
+{%- endmacro %}
+
+{% macro ApiConfigList(configs, force_uppercase_keys=False) -%}
+  {%- set config_list = { "items": [] } -%}
+  {%- if configs is mapping -%}
+    {%- for (k, v) in configs.items() -%}
+      {%- set config = ApiConfig(k, v, force_uppercase_keys) -%}
+      {{ config_list["items"].append(config | from_json) }}
+    {%- endfor -%}
+  {%- endif -%}
+  {{ config_list | to_json }}
+{%- endmacro %}
+
+{% macro ApiClusterTemplateConfig(key, service_type, role_type, value, value_type="value") -%}
+  {%- set config = {} -%}
+  {{ config.update({"name": key}) }}
+  {%- if value_type == "ref" or value_type == "value" -%}
+    {{ config.update({ value_type: value }) }}
+  {%- else -%}
+    {%- set var_name = [service_type, role_type, key] | join("_") | replace('.','_') -%}
+    {{ config.update({ "variable": var_name | upper }) }}
+  {%- endif -%}
+  {{ config | to_json }}
+{%- endmacro %}
+
+{% macro ApiClusterTemplateConfigList(service_merged_configs, service_type, role_type) -%}
+  {%- set config_list = [] -%}
+  {%- if service_type in service_merged_configs -%}
+    {%- if service_merged_configs[service_type][role_type] is mapping -%}
+      {%- for (k, v) in service_merged_configs[service_type][role_type].items() -%}
+        {%- if k.endswith("_service") and not "suppression" in k -%}
+          {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "ref") -%}
+        {%- else -%}
+          {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "variable") -%}
+        {%- endif -%}
+        {{ config_list.append(config | from_json) }}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endif -%}
+  {{ config_list | to_json }}
+{%- endmacro %}
+
+{% macro ApiService(service) -%}
+{}
+{%- endmacro %}
+
+{% macro ApiServiceList(services) -%}
+  {%- set api_service_list = { "items": [] } -%}
+  {%- if services -%}
+    {%- for service in services -%}
+      {%- set api_service = ApiService(service) -%}
+      {{ api_service_list["items"].append(api_service | from_json) }}
+    {%- endfor -%}
+  {%- endif -%}
+  {{ api_service_list | to_json }}
+{%- endmacro %}
+
+{% macro ApiExternalUserMapping(auth_type, user_mapping) %}
+  {%- set external_user_mapping = {'name': user_mapping.group, 'type': auth_type, 'authRoles': []} -%}
+  {%- for role in user_mapping.roles -%}
+    {{ external_user_mapping['authRoles'].append(ApiAuthRoleRef(role) | from_json) }}
+  {%- endfor -%}
+  {{ external_user_mapping | to_json }}
+{%- endmacro %}
+
+{% macro ApiExternalUserMappingList(auth_type, auth_user_mappings) %}
+  {%- set external_user_mapping_list = { "items": [] } -%}
+  {%- for user_mapping in auth_user_mappings -%}
+    {{ external_user_mapping_list["items"].append(ApiExternalUserMapping(auth_type, user_mapping) | from_json) }}
+  {%- endfor -%}
+  {{ external_user_mapping_list | to_json }}
+{%- endmacro %}
+
+{% macro ApiAuthRoleRef(name) -%}
+  { "uuid": {{ auth_role_uuids[name] | to_json }} }
+{%- endmacro %}

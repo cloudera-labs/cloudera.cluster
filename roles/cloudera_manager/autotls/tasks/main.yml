@@ -15,7 +15,7 @@
 ---
 
 - name: Check Cloudera Manager version
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/version
   register: response
 
@@ -24,7 +24,7 @@
   when: response.json.version is version('7.1', '<')
 
 - name: Enable Auto-TLS
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/commands/generateCmca
     method: POST
     body: "{{ lookup('template', 'request.j2', convert_data=False) }}"
@@ -40,6 +40,6 @@
   meta: flush_handlers
 
 - name: Restart Cloudera Management Service
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/service/commands/restart
     method: POST

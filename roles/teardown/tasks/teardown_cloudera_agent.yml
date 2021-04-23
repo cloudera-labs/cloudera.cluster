@@ -23,7 +23,8 @@
   ignore_errors: true
 
 - name: Remove Cloudera agent package
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name: cloudera-manager-agent
     state: absent
 

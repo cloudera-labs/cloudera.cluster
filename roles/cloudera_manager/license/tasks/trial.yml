@@ -15,7 +15,7 @@
 ---
 
 - name: Begin Cloudera Manager trial license
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/trial/begin
     method: POST
     status_code: 200,204

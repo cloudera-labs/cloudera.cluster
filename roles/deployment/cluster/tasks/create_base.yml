@@ -32,7 +32,7 @@
   #when: cluster_template_dry_run
 
 - name: Import cluster template
-  cm_api:
+  cloudera.cluster.cm_api:
     endpoint: /cm/importClusterTemplate?addRepositories=true
     method: POST
     body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"

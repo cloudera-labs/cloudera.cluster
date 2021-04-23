@@ -15,7 +15,8 @@
 ---
 
 - name: Install Cloudera Manager embedded database
-  package:
+  ansible.builtin.package:
+    lock_timeout: 60
     name:
     - cloudera-manager-server-db-2
     state: present

@@ -18,7 +18,7 @@
   lineinfile:
     dest: "{{ cloudera_manager_agent_config_file }}"
     regexp: "^server_host"
-    line: "server_host={{ cloudera_manager_host }}"
+    line: "server_host={{ cloudera_manager_host_local }}"
   notify:
     - restart cloudera-scm-agent
 

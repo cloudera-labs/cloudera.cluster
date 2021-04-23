@@ -14,4 +14,5 @@
 
 ---
 dependencies:
-  - role: cloudera_manager/common
+  - role: cloudera.cluster.cloudera_manager.common
+  - role: cloudera.cluster.deployment.credential

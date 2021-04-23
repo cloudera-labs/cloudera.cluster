@@ -18,10 +18,10 @@
   include_tasks: setup_cluster.yml
   loop: "{{ definition.clusters }}"
   loop_control:
-    loop_var: cluster
-    label: "{{ cluster.name }}"
+    loop_var: __cluster_item
+    label: "{{ __cluster_item.name }}"
   when:
-    - cluster.type | default('base') == 'base'
-    - cluster.security.hdfs_encryption | default(false)
-    - "'RANGER' in cluster.services | default([])"
+    - __cluster_item.type | default('base') == 'base'
+    - __cluster_item.security.hdfs_encryption | default(false)
+    - "'RANGER' in __cluster_item.services | default([])"
     - '"kms_servers" in groups'
