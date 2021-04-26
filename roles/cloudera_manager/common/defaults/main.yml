@@ -27,6 +27,6 @@ cloudera_manager_database_type: "{{ database_type }}"
 cloudera_manager_database_name: scm
 cloudera_manager_database_user: scm
 cloudera_manager_database_password: changeme
-cloudera_manager_database_port: "{{ database_type | default_database_port }}"
+cloudera_manager_database_port: "{{ database_type | cloudera.cluster.default_database_port }}"
 cloudera_manager_agent_lib_directory: /var/lib/cloudera-scm-agent
 cloudera_manager_cmf_java_opts_default: "-Xmx4G -XX:MaxPermSize=256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
