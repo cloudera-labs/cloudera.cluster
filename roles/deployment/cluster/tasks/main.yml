@@ -55,6 +55,17 @@
     - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name not in existing_clusters
 
+- name: Update base clusters
+  include_tasks: update_base.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  when:
+    - cluster.type | default(default_cluster_type) == 'base'
+    - cluster.name in existing_clusters
+
 - name: Create base cluster data contexts (SDX)
   include_tasks: create_data_context.yml
   loop: "{{ definition.clusters }}"

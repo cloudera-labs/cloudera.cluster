@@ -1,0 +1,207 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Generate complete base cluster configs
+  include_role:
+    name: config/cluster/base
+
+- name: Create databases and users
+  include_role:
+    name: deployment/databases
+  vars:
+    services: "{{ cluster.services | default({}) }}"
+
+- name: Debug _cluster
+  debug:
+    msg: "{{ _cluster }}"
+    verbosity: 3
+
+- name: Debug Default cluster base combined with _cluster
+  debug:
+    msg: "{{ default_cluster_base | combine(_cluster) }}"
+    verbosity: 3
+
+- name: Debug Merged Configs
+  debug:
+    msg: "{{ merged_configs }}"
+    verbosity: 3
+
+- name: Print some debug information
+  vars:
+    msg: |
+      Module Variables ("vars"):
+      --------------------------------
+      {{ vars | to_nice_json }}
+
+      Environment Variables ("environment"):
+      --------------------------------
+      {{ environment | to_nice_json }}
+
+      GROUP NAMES Variables ("group_names"):
+      --------------------------------
+      {{ group_names | to_nice_json }}
+
+      GROUPS Variables ("groups"):
+      --------------------------------
+      {{ groups | to_nice_json }}
+
+      HOST Variables ("hostvars"):
+      --------------------------------
+      {{ hostvars | to_nice_json }}
+
+  debug:
+    msg: "{{ msg.split('\n') }}"
+    verbosity: 3
+
+- name: Get CM config
+  cloudera.cluster.cm_api:
+    endpoint: "cm/config"
+    method: GET
+  register: cm_config
+
+- set_fact:
+    parcel_repos: "{{ (cm_config.json | json_query('items[?name==`REMOTE_PARCEL_REPO_URLS`].value') | default(['']))[0].split(',') | default([]) | union(cluster.repositories) }}"
+
+- name: Update parcelrepos
+  cloudera.cluster.cm_api:
+    endpoint: "cm/config"
+    body:
+      items:
+        - name: REMOTE_PARCEL_REPO_URLS
+          value: "{{ parcel_repos | join(', ') }}"
+    method: PUT
+
+- name: Refresh parcel repos command
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/commands/refreshParcelRepos"
+    method: POST
+
+- set_fact:
+    parcel_version: "{{ products | json_query('[?product==`CDH`].version') | first }}"
+
+- name: Start Parcel Download
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}/commands/startDownload"
+    method: POST
+
+- name: Wait for parcels to download
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}
+  register: parcels_response
+  until: parcels_response.json.stage in ("DOWNLOADED", "DISTRIBUTED")
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
+
+- name: Start Parcel Download
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}/commands/startDistribution"
+    method: POST
+
+- name: Wait for parcels to become distributed to all hosts
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}
+  register: parcels_response
+  until: parcels_response.json.stage == "DISTRIBUTED"
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
+
+- name: Find existing services
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+  register: services_response
+
+- set_fact:
+    existing_services: "{{ services_response.json | json_query('items[*].name') }}"
+
+- name: Debug cluster services
+  debug:
+    msg: "{{ existing_services }}"
+    verbosity: 3
+
+- name: Create new services
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+    method: POST
+    body: "{{ lookup('template', 'services/service.j2', convert_data=False) }}"
+  loop: "{{ cluster.services }}"
+  loop_control:
+    loop_var: service
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  when:
+    - cluster.type | default(default_cluster_type) == 'base'
+    - service | lower not in existing_services
+
+- name: Update service Configs
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ service | lower }}/config
+    method: PUT
+    body: "{{ lookup('template', 'services/serviceConfig.j2', convert_data=False) }}"
+  loop: "{{ cluster.services }}"
+  loop_control:
+    loop_var: service
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  when:
+    - cluster.type | default(default_cluster_type) == 'base'
+    - service | lower in existing_services
+
+- name: Update service role configs
+  include_tasks: update_role_config_group.yml
+  loop: "{{ cluster.services }}"
+  loop_control:
+    loop_var: service
+  vars:
+    cluster: "{{ default_cluster_base | combine(_cluster) }}"
+  when:
+    - cluster.type | default(default_cluster_type) == 'base'
+    - service | lower in existing_services
+
+- name: FS2CS
+  include_tasks: fs2cs.yml
+  when:
+    - cluster.type | default(default_cluster_type) == 'base'
+
+- name: Nav2Atlas
+  include_tasks: nav2atlas.yml
+  when:
+    - cluster.type | default(default_cluster_type) == 'base'
+
+- name: Get data contexts
+  cloudera.cluster.cm_api:
+    endpoint: /dataContexts
+    method: GET
+  register: data_contexts
+  when: "{{ upgrade_cluster | default(false) }}"
+
+#- name: Delete data contexts of {{ cluster.name }}
+#  cloudera.cluster.cm_api:
+#    endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
+#    method: DELETE
+#    status_code: 200,404
+#  loop: "{{ data_contexts.json | json_query('[?clusterRef==cluster.name]') }}"
+#  loop_control:
+#    loop_var: data_context
+#  when: upgrade_cluster | default(false)
+
+- name: Upgrade Cluster
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/upgradeCdh
+    method: POST
+    body:
+      cdhParcelVersion: "{{ parcel_version }}"
+  when: "{{ upgrade_cluster | default(false) }}"
+

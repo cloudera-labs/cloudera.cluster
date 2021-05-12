@@ -1,0 +1,190 @@
+---
+ATLAS:
+  SERVICEWIDE:
+    hbase_service: hbase
+    hdfs_service: hdfs
+    kafka_service: kafka
+    ranger_service: ranger
+    solr_service: infra_solr
+
+HBASE:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    zookeeper_service: zookeeper
+
+HDFS:
+  SERVICEWIDE:
+    zookeeper_service: zookeeper
+
+HIVE:
+  SERVICEWIDE:
+    mapreduce_yarn_service: yarn
+{% if 'SENTRY' in cluster.services %}
+    sentry_service: sentry
+{% endif %}
+{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+    ranger_service: ranger
+{% endif %}
+{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+    atlas_service: atlas
+{% endif %}
+    spark_on_yarn_service: spark_on_yarn
+    zookeeper_service: zookeeper
+
+HIVE_ON_TEZ:
+  SERVICEWIDE:
+    mapreduce_yarn_service: yarn
+    hms_connector: hive
+    hdfs_service: hdfs
+{% if 'ATLAS' in cluster.services %}
+    atlas_service: atlas
+{% endif %}
+{% if 'RANGER' in cluster.services %}
+    ranger_service: ranger
+{% endif %}
+    tez_service: tez
+    zookeeper_service: zookeeper
+
+HUE:
+  SERVICEWIDE:
+{% if 'SOLR' in cluster.services %}
+    solr_service: solr
+{% endif %}
+{% if cloudera_runtime_version is version('7.0.0','>=') and not major_version_upgrade %}
+    hms_service: hive
+    hive_service: hive_on_tez
+{% else %}
+    hive_service: hive
+{% endif %}
+{% if 'IMPALA' in cluster.services %}
+    impala_service: impala
+{% endif %}
+    oozie_service: oozie
+{% if 'SENTRY' in cluster.services %}
+    sentry_service: sentry
+{% endif %}
+{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+    atlas_service: atlas
+{% endif %}
+    zookeeper_service: zookeeper
+
+FLINK:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    hive_service: hive
+    yarn_service: yarn
+    zookeeper_service: zoookeeper
+{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+    atlas_service: atlas
+{% endif %}
+
+IMPALA:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    hive_service: hive
+{% if 'SENTRY' in cluster.services %}
+    sentry_service: sentry
+{% endif %}
+{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+    ranger_service: ranger
+{% endif %}
+{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+    atlas_service: atlas
+{% endif %}
+
+INFRA_SOLR:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    zookeeper_service: zookeeper
+
+KAFKA:
+  SERVICEWIDE:
+{% if 'HDFS' in cluster.services %}
+    hdfs_service: hdfs
+{% endif %}
+{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+    ranger_service: ranger
+{% endif %}
+    zookeeper_service: zookeeper
+
+KS_INDEXER:
+  SERVICEWIDE:
+    solr_service: solr
+
+NIFI:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    zookeeper_service: zookeeper
+{% if 'KAFKA' in cluster.services %}
+    kafka_service: kafka
+{% endif %}
+
+OOZIE:
+  hive_service: hive
+  mapreduce_yarn_service: yarn
+  spark_on_yarn_service: spark_on_yarn
+  zookeeper_service: zookeeper
+
+QUEUEMANAGER:
+  SERVICEWIDE:
+    zookeeper_service: zookeeper
+
+RANGER:
+  SERVICEWIDE:
+    solr_service: infra_solr
+    hdfs_service: hdfs
+
+SENTRY:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    zookeeper_service: zookeeper
+
+SOLR:
+  SERVICEWIDE:
+{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+    ranger_service: ranger
+{% endif %}
+    hdfs_service: hdfs
+    zookeeper_service: zookeeper
+
+SPARK_ON_YARN:
+  SERVICEWIDE:
+    yarn_service: yarn
+{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+    atlas_service: atlas
+{% endif %}
+
+SPARK2_ON_YARN:
+  SERVICEWIDE:
+    yarn_service: yarn
+{% if 'HBASE' in cluster.services %}
+    hbase_service: hbase
+{% endif %}
+{% if 'HIVE' in cluster.services %}
+    hive_service: hive
+{% endif %}
+
+SPARK3_ON_YARN:
+  SERVICEWIDE:
+    yarn_service: yarn
+{% if 'HBASE' in cluster.services %}
+    hbase_service: hbase
+{% endif %}
+{% if 'HIVE' in cluster.services %}
+    hive_service: hive
+{% endif %}
+
+TEZ:
+  SERVICEWIDE:
+    yarn_service: yarn
+
+YARN:
+  SERVICEWIDE:
+    hdfs_service: hdfs
+    zookeeper_service: zookeeper
+{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+    ranger_service: ranger
+{% endif %}
+{% if 'QUEUEMANAGER' in cluster.services and not major_version_upgrade %}
+    queuemanager_service: queuemanager
+{% endif %}

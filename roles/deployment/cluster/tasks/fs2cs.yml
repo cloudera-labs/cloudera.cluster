@@ -1,0 +1,75 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Debug _cluster
+  debug:
+    msg: "{{ _cluster }}"
+    verbosity: 3
+
+- name: Get Fair Scheduler XML
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/config
+    method: GET
+    return_content: yes
+  register: this
+
+- name: Create temporary fs2cs directory
+  ansible.builtin.tempfile:
+    state: directory
+    path: "{{ local_temp_dir }}"
+    suffix: fs2cs
+  delegate_to: "{{ groups.yarn_resourcemanager | first }}"
+  register: fs2cs_temp_dir_out
+
+- set_fact:
+    fs2cs_temp_dir: "{{ fs2cs_temp_dir_out.path }}"
+
+- name: Execute FS to CS on RM node
+  ansible.builtin.template:
+    src: upgrade_scripts/fs2cs.j2
+    dest: "{{ fs2cs_temp_dir }}/fs2cs.sh"
+    mode: u=rwx,g=r,o=r
+  delegate_to: "{{ groups.yarn_resourcemanager | first }}"
+
+- name: Execute FS to CS on RM node
+  ansible.builtin.command:
+    cmd: "{{ fs2cs_temp_dir }}/fs2cs.sh"
+    creates: "{{ fs2cs_temp_dir }}/capacity-scheduler.xml"
+  delegate_to: "{{ groups.yarn_resourcemanager | first }}"
+
+- name: Retrieve contents of capacity-scheduler.xml
+  ansible.builtin.slurp:
+    src: "{{ fs2cs_temp_dir }}/capacity-scheduler.xml"
+  delegate_to: "{{ groups.yarn_resourcemanager | first }}"
+  register: capacity_scheduler
+
+- set_fact:
+    capacity_scheduler: "{{ capacity_scheduler.content | b64decode }}"
+
+- name: Update Capacity Scheduler Config in CM
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/config
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/roleConfigGroups/yarn-RESOURCEMANAGER-BASE/config
+    method: PUT
+    body:
+      items:
+        - name: resourcemanager_capacity_scheduler_configuration
+          value: "{{ capacity_scheduler }}"
+
+- name: Delete content & directory
+  file:
+    state: absent
+    path: "{{ fs2cs_temp_dir }}"

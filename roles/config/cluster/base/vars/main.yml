@@ -30,6 +30,8 @@ custom_config_templates:
     condition: "{{ cloudera_runtime_version is version('6.0.0','>=') and cloudera_runtime_version is version('7.0.0','<') }}"
   - template: configs/logdirs-7.1.0.j2
     condition: "{{ cloudera_runtime_version is version('7.1.0','>=') }}"
+  - template: configs/logdirs-ranger-spooldirs.j2
+    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and  (cloudera_runtime_pre_upgrade is version('7.1.0','>=') | default(true)) }}"
 # Custom configurations for out-of-memory behaviour, heap dumps etc
   - template: configs/oom.j2
     condition: "{{ cluster.oom is defined }}"
@@ -52,7 +54,9 @@ custom_config_templates:
   - template: configs/tls-7.1.0.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.0','>=') }}"
   - template: configs/tls-7.1.4.j2
-    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') }}"
+    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') and cloudera_runtime_pre_upgrade is version('7.1.4','>=') | default(true) }}"
+  - template: configs/tls-cm-7.j2
+    condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.1.0','>=') }}"
 # Custom configurations for Cloudera Streams Processing components on CDH 6.x
   - template: configs/schemaregistry.j2
     condition: >-
@@ -84,6 +88,9 @@ custom_config_templates:
          and service_auth_provider in auth_providers | default({})
          and auth_providers[service_auth_provider].type | default('LDAP') == "LDAP"
        }}
+# Custom configuration for when adding services
+  - template: configs/inter-service-dependencies.j2
+    condition: "{{ update_services | default(false) or upgrade_runtime | default(false) }}"
 # Workarounds for bugs / known issues
   - template: workarounds/OPSAPS-56076.j2
     # TODO update fix version
