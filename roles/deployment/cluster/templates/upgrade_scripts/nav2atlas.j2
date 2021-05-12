@@ -1,0 +1,13 @@
+#!/bin/bash -x
+
+export JAVA_HOME=$(echo $(dirname $(readlink -f $(which java))) | sed 's/\/bin$//g;s/\/jre$//g')
+export KEYSTORE_PATH={{ tls_keystore_path }};
+export KEYSTORE_PASSWORD={{ tls_keystore_password }};
+export TRUSTSTORE_PATH={{ tls_truststore_path }};
+export TRUSTSTORE_PASSWORD={{ tls_truststore_password }}
+
+/opt/cloudera/cm-agent/service/navigator/cnav.sh -n {{ navigator_protocol }}://{{ navigator_hostname }}:{{ navigator_port }} -u {{ navigator_migration_username | default('admin') }} -p {{ navigator_migration_password | default(cloudera_manager_api_password) }} -c '{{ cluster.name }}' -o '{{ nav2atlas_dir }}/{{ cluster.name | replace(' ','_') }}-navigator-data.zip'
+
+/opt/cloudera/parcels/CDH-{{ parcel_version }}/lib/atlas/tools/nav2atlas/nav2atlas.sh -f '{{ nav2atlas_dir }}/{{ cluster.name | replace(' ','_') }}-navigator-data.zip' -o '{{ nav2atlas_dir }}{{ cluster.name | replace(' ','_') }}-atlas-data.zip' -clusterName 'cm'
+
+exit $?

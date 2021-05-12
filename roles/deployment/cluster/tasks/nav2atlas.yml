@@ -1,0 +1,88 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Get CM Service role description
+  cloudera.cluster.cm_api:
+    endpoint: /cm/service/roles/
+    method: GET
+    return_content: yes
+  register: cm_roles
+
+- name: Debug _cluster
+  debug:
+    msg: "{{ cm_roles.json }}"
+    verbosity: 3
+
+- set_fact:
+    nav_service: "{{ cm_roles.json | json_query('items[?type==`NAVIGATORMETASERVER`].name') | first }}"
+
+- set_fact:
+    navigator_hostname: "{{ cm_roles.json | json_query('items[?type==`NAVIGATORMETASERVER`].hostRef.hostname') | first }}"
+
+- name: Get Navigator Config
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/service/roles/{{ nav_service }}/config"
+    method: GET
+    return_content: yes
+  register: nav_config
+
+- set_fact:
+    atlas_home: "{{ local_accounts | json_query('[?user==`atlas`].home') | first }}"
+
+- set_fact:
+    navigator_port: "{{ nav_config.json | json_query('items[?name==`navigator_server_port`].value') | first | default(7187) }}"
+- set_fact:
+    navigator_protocol: "{{ 'https' if (nav_config.json | json_query('items[?name==`ssl_enabled`].value') | first | default(false)) else 'http' }}"
+
+- set_fact:
+    nav2atlas_dir: "{{ nav2atlas_dir | default(atlas_home + '/nav2atlas-data/') }}"
+
+- name: Create nav2atlas directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ nav2atlas_dir }}"
+    mode: 700
+    owner: atlas
+    group: atlas
+  delegate_to: "{{ groups.atlas_atlas_server | first }}"
+
+
+- name: Create nav2atlas script
+  ansible.builtin.template:
+    src: upgrade_scripts/nav2atlas.j2
+    dest: "{{ nav2atlas_dir }}/nav2atlas.sh"
+    mode: u=rwx,g=r,o=r
+  delegate_to: "{{ groups.atlas_atlas_server | first }}"
+
+- name: Execute Nav 2 Atlas on Atlas node
+  ansible.builtin.command:
+    cmd: "{{ nav2atlas_dir }}/nav2atlas.sh"
+    creates: "{{ nav2atlas_dir }}/{{ cluster.name | replace(' ','_') }}-atlas-data.zip"
+  delegate_to: "{{ groups.atlas_atlas_server | first }}"
+
+- set_fact:
+    atlas_migration_conf: "atlas.migration.data.filename={{ nav2atlas_dir }}/{{ cluster.name | replace(' ','_') }}-atlas-data.zip\natlas.migration.mode.batch.size=200\natlas.migration.mode.workers=8\natlas.patch.numWorkers=14\natlas.patch.batchSize=3000"
+
+- name: Update Capacity Scheduler Config in CM
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster.name | urlencode() }}/services/atlas/roleConfigGroups/atlas-ATLAS_SERVER-BASE/config"
+    method: PUT
+    body:
+      items:
+        - name: "conf/atlas-application.properties_role_safety_valve"
+          value: "{{ atlas_migration_conf }}"
+
+

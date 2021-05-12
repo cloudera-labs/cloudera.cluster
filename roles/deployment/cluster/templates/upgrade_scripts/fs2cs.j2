@@ -1,0 +1,23 @@
+#!/bin/bash -x
+
+PROCESS_PATH=$(ls -1dt /var/run/cloudera-scm-agent/process/*-yarn-RESOURCEMANAGER | head -1)/
+FAIR_SCHEDULER=${PROCESS_PATH}/fair-scheduler.xml
+CORE_SITE=${PROCESS_PATH}/core-site.xml
+YARN_SITE=${PROCESS_PATH}yarn-site.xml
+
+KEYTAB=$(ls -1dt /var/run/cloudera-scm-agent/process/*-yarn-RESOURCEMANAGER | head -1)/yarn.keytab
+PRINC_NAME=$(klist -kt ${KEYTAB} | grep yarn | awk '{print $4;}' | tail -1)
+
+kinit -kt ${KEYTAB} ${PRINC_NAME}
+
+cluster_metrics=$(curl -u u:p --negotiate https://{{ groups.yarn_resourcemanager | first }}:8090/ws/v1/cluster/metrics)$(curl -u u:p --negotiate https://{{ groups.yarn_resourcemanager | last }}:8090/ws/v1/cluster/metrics)
+
+total_vcores=$(echo ${cluster_metrics} | grep -oP 'totalVirtualCores\":([0-9]*)' | cut -d : -f 2)
+total_mem=$(echo ${cluster_metrics} | grep -oP 'totalMB\":([0-9]*)' | cut -d : -f 2)
+
+cp ${FAIR_SCHEDULER} fs2cs/fair-scheduler.xml
+cp ${CORE_SITE} fs2cs/core-site.xml
+
+/opt/cloudera/parcels/CDH-{{ parcel_version }}/bin/yarn fs2cs --cluster-resource memory-mb=${total_mem},vcores=${total_vcores} --no-terminal-rule-check --yarnsiteconfig ${YARN_SITE}  --fsconfig ${FAIR_SCHEDULER} --output-directory {{ fs2cs_temp_dir }}
+
+exit $?

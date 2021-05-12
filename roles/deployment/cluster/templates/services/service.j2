@@ -1,0 +1,53 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{
+  "items": [{
+    {%- set service_ref = service | lower -%}
+    {%- set service_role_types = role_mappings[service] -%}
+    "name": "{{ service_ref }}",
+    {%- if service == "INFRA_SOLR" -%}
+      {%- set service_type = "SOLR" -%}
+    "displayName": "SOLR (Infra)",
+    {%- else -%}
+      {%- set service_type = service -%}
+    "displayName": "{{ service_type | replace("_", " ") }}",
+    {%- endif -%}
+    "type": "{{ service_type }}",
+    "serviceVersion": "CDH {{ cloudera_runtime_version }}",
+    "config": {%- include 'services/serviceConfig.j2' -%},
+    "roles": [
+    {%- set role_joiner = joiner(",") -%}
+    {%- if service_role_types is iterable -%}
+      {%- for role_type in service_role_types -%}
+       {%- for host in (groups[service_ref + '_' + role_type | lower] | default([])) -%}
+       {{ role_joiner() }}
+       {
+           "type" : "{{ role_type }}",
+           "hostRef" : {
+             "hostId" : "{{ cloudera_manager_api_hosts[host]['id'] }}"
+           },
+          "roleConfigGroupRef" : {
+            "roleConfigGroupName" : "{{ service_ref }}-{{ role_type }}-BASE"
+          }
+        }
+       {%- endfor -%}
+      {%- endfor -%}
+
+    {%- endif -%}
+    ],
+    "roleConfigGroups": [
+      {%- set role_group_sep = joiner(",") -%}
+      {%- if service_role_types is iterable -%}
+        {%- for role_type in service_role_types -%}
+        {{ role_group_sep() }}
+        {
+          "name": "{{ service_ref }}-{{ role_type }}-BASE",
+          "roleType": "{{ role_type }}",
+          {% set config_sep = joiner(",") -%}
+          "config": {%- include 'services/roleConfigGroupConfig.j2' -%},
+          "base": true
+        }
+        {%- endfor -%}
+      {%- endif -%}
+    ]
+  }
+]}

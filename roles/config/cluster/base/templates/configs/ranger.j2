@@ -1,7 +1,9 @@
 ---
+{% if ((cloudera_runtime_pre_upgrade | default('7.1.0')) is version('7.1.0','>=')) %}
 HDFS:
   SERVICEWIDE:
     enable_ranger_authorization: true
+{% endif %}
 RANGER:
   SERVICEWIDE:
     keyadmin_user_password: {{ ranger_keyadmin_user_password | default('password123') }}

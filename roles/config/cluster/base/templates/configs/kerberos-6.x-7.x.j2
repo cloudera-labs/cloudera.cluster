@@ -13,7 +13,18 @@ NIFI:
 NIFIREGISTRY:
   SERVICEWIDE:
     kerberos.auth.enabled: true
+QUEUEMANAGER:
+  SERVICEWIDE:
+    kerberos.auth.enabled: true
 SPARK_ON_YARN:
+  SERVICEWIDE:
+    spark_authenticate: true
+  SPARK_YARN_HISTORY_SERVER:
+    history_server_spnego_enabled: true
+  GATEWAY:
+    spark_io_encryption_enabled: true
+    spark_network_encryption_enabled: true
+SPARK3_ON_YARN:
   SERVICEWIDE:
     spark_authenticate: true
   SPARK_YARN_HISTORY_SERVER:

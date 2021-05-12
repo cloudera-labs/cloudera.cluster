@@ -14,9 +14,30 @@
 
 ---
 
-- name: Install Cloudera Manager agent packages
+- name: Gather the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Stop Cloudera Manager Agent
+  service:
+    name: cloudera-scm-agent
+    state: stopped
+  when: >
+    'cloudera-manager-agent' in ansible_facts.packages and
+    ansible_facts.packages['cloudera-manager-agent'][0].version is version(cloudera_manager_version, '<')
+
+- name: Stop Cloudera Manager Server
+  service:
+    name: cloudera-scm-server
+    state: stopped
+  when: >
+    'cloudera-manager-server' in ansible_facts.packages and
+    ansible_facts.packages['cloudera-manager-server'][0].version is version(cloudera_manager_version, '<')
+
+# Note on the CM server this will perform an upgrade of the server if it hasn't already been upgraded
+- name: Install or Upgrade Cloudera Manager agent packages
   ansible.builtin.package:
     lock_timeout: 60
     name: cloudera-manager-agent
     update_cache: yes
-    state: present
+    state: latest
