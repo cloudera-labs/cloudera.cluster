@@ -49,7 +49,7 @@
         path: "{{ account.home }}"
         owner: "{{ account.user }}"
         group: "{{ account.user }}"
-        mode: "{{ account.mode | default(0755) }}"
+        mode: "{{ account.mode | default('0755') }}"
       loop: "{{ local_accounts }}"
       loop_control:
         loop_var: account
