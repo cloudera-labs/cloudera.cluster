@@ -16,7 +16,7 @@
 
 - name: Generate merged configs
   include_role:
-    name: config/services/mgmt
+    name: cloudera.cluster.config.services.mgmt
 
 - name: Delete service database
   include_tasks: teardown_database.yml
