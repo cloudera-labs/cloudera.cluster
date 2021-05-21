@@ -16,7 +16,7 @@
 
 - name: Generate complete kts cluster configs
   include_role:
-    name: config/cluster/kts
+    name: cloudera.cluster.config.cluster.kts
 
 - name: Generate cluster template file
   template:

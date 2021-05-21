@@ -77,7 +77,7 @@
 
 - name: Remove Clusters from Cloudera Manager (compute)
   include_role:
-    name: operations/delete_cluster
+    name: cloudera.cluster.operations.delete_cluster
   vars:
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_compute | combine(_cluster) }}"
@@ -95,7 +95,7 @@
 
 - name: Remove Clusters from Cloudera Manager (base)
   include_role:
-    name: operations/delete_cluster
+    name: cloudera.cluster.operations.delete_cluster
   vars:
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_base | combine(_cluster) }}"
@@ -113,7 +113,7 @@
 
 - name: Remove Clusters from Cloudera Manager (kts)
   include_role:
-    name: operations/delete_cluster
+    name: cloudera.cluster.operations.delete_cluster
   vars:
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_kts | combine(_cluster) }}"
@@ -132,7 +132,7 @@
 # delete the cms from cm if we are not tearing cm down
 - name: Remove CMS from Cloudera Manager
   import_role:
-    name: operations/delete_cms
+    name: cloudera.cluster.operations.delete_cms
   vars:
     stop_cms_before_delete: true
   run_once: true

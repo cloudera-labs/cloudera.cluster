@@ -16,12 +16,12 @@
 
 - name: Generate merged configs (base, compute)
   include_role:
-    name: config/cluster/base
+    name: cloudera.cluster.config.cluster.base
   when: cluster.type | default('base') in ['base', 'compute']
 
 - name: Generate merged configs (kts)
   include_role:
-    name: config/cluster/kts
+    name: cloudera.cluster.config.cluster.kts
   when: cluster.type | default('base') == 'kts'
 
 - name: Remove cluster service directories (base, compute)

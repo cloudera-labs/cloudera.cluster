@@ -16,7 +16,7 @@
 
 - name: Generate merged configs (base)
   include_role:
-    name: config/cluster/base
+    name: cloudera.cluster.config.cluster.base
 
 - name: Stop the CDSW node
   shell: /opt/cloudera/parcels/CDSW/scripts/cdsw-stop-node.sh
