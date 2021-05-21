@@ -16,11 +16,11 @@
 
 - name: Generate complete base cluster configs
   include_role:
-    name: config/cluster/base
+    name: cloudera.cluster.config.cluster.base
 
 - name: Create databases and users
   include_role:
-    name: deployment/databases
+    name: cloudera.cluster.deployment.databases
   vars:
     services: "{{ cluster.services | default({}) }}"
 
