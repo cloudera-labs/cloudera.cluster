@@ -21,7 +21,7 @@
 
 - name: Set Cloudera Manager external auth configs
   include_role:
-    name: cloudera_manager/config
+    name: cloudera.cluster.cloudera_manager.config
   vars:
     api_config_keys_uppercase: True
     api_configs: "{{ lookup('template', 'external_auth_configs.j2') | from_yaml }}"

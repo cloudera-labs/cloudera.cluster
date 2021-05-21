@@ -75,7 +75,7 @@
 
 - name: Generate KMS configs
   include_role:
-    name: config/services/kms
+    name: cloudera.cluster.config.services.kms
 
 - name: Create KMS service
   cloudera.cluster.cm_api:

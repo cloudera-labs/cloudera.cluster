@@ -16,7 +16,7 @@
 
 - name: Retrieve repository metadata
   include_role:
-    name: deployment/repometa
+    name: cloudera.cluster.deployment.repometa
   vars:
     repositories: "{{ cluster.repositories | default({}) }}"
 
