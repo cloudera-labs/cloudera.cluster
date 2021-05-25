@@ -29,6 +29,14 @@
           The user module error may not identify the root cause.
       run_once: true
 
+    - set_fact:
+        local_accounts: "{{ local_accounts | union(postgres_accounts) }}"
+      when: '"db_server" in group_names and database_type == "postgresql"'
+
+    - set_fact:
+        local_accounts: "{{ local_accounts | union(mariadb_accounts) }}"
+      when: '"db_server" in group_names and database_type == "mariadb"'
+
     - name: Create local user accounts
       ansible.builtin.user:
         name: "{{ account.user }}"

@@ -15,3 +15,4 @@
 ---
 dependencies:
   - role: cloudera.cluster.prereqs.local_accounts_common
+  - role: cloudera.cluster.deployment.definition
