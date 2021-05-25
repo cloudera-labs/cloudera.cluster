@@ -228,3 +228,19 @@ local_accounts:
     home: /var/lib/zookeeper
     comment: ZooKeeper
     keystore_acl: True
+
+postgres_accounts:
+  - user: postgres
+    home: /var/lib/pgsql
+    uid: 26
+    comment: PostgreSQL Server
+    mode: '770'
+    unencrypted_key_acl: True
+
+mariadb_accounts:
+  - user: mysql
+    home: /var/lib/mysql
+    uid: 27
+    comment: MariaDB Server
+    mode: '770'
+    unencrypted_key_acl: True
