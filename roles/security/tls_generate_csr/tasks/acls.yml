@@ -62,11 +62,10 @@
     label: "{{ account.user }}"
   when: account.when | default(True)
 
-
 - name: Change permissions on private key
   file:
     state: file
-    path: item
+    path: {{ item }}
     mode: 0440
     owner: root
     group: root
@@ -124,7 +123,7 @@
 - name: Change permissions on unencrypted key
   file:
     state: file
-    path: item
+    path: {{ item }}
     mode: 0440
     owner: root
     group: root
