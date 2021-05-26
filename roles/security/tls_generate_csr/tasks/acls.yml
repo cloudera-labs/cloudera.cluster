@@ -41,17 +41,55 @@
     label: "{{ account.user }}"
   when: account.when | default(True)
 
+- name: Change permissions on keystore hard link
+  file:
+    state: file
+    path: "{{ tls_keystore_path_generic }}"
+    mode: 0640
+    owner: root
+    group: hadoop
+
+- name: Add ACLs to keystore hard link
+  acl:
+    path: "{{ tls_keystore_path_generic }}"
+    entity: "{{ account.user }}"
+    etype: group
+    permissions: r
+    state: present
+  loop: "{{ local_accounts | json_query('[?@.keystore_acl]') }}"
+  loop_control:
+    loop_var: account
+    label: "{{ account.user }}"
+  when: account.when | default(True)
+
+
 - name: Change permissions on private key
   file:
     state: file
-    path: "{{ tls_key_path }}"
+    path: item
     mode: 0440
     owner: root
     group: root
+  loop:
+    - "{{ tls_key_path }}"
+    - "{{ tls_key_path_generic }}"
 
 - name: Add ACLs to private key
   acl:
     path: "{{ tls_key_path }}"
+    entity: "{{ account.user }}"
+    etype: group
+    permissions: r
+    state: present
+  loop: "{{ local_accounts | json_query('[?@.key_acl]') }}"
+  loop_control:
+    loop_var: account
+    label: "{{ account.user }}"
+  when: account.when | default(True)
+
+- name: Add ACLs to private key hard link
+  acl:
+    path: "{{ tls_key_path_generic }}"
     entity: "{{ account.user }}"
     etype: group
     permissions: r
@@ -86,14 +124,30 @@
 - name: Change permissions on unencrypted key
   file:
     state: file
-    path: "{{ tls_key_path_plaintext }}"
+    path: item
     mode: 0440
     owner: root
     group: root
+  loop:
+    - "{{ tls_key_path_plaintext }}"
+    - "{{ tls_key_path_plaintext_generic }}"
 
 - name: Add ACLs to unencrypted key
   acl:
     path: "{{ tls_key_path_plaintext }}"
+    entity: "{{ account.user }}"
+    etype: group
+    permissions: r
+    state: present
+  loop: "{{ local_accounts | json_query('[?@.unencrypted_key_acl]') }}"
+  loop_control:
+    loop_var: account
+    label: "{{ account.user }}"
+  when: account.when | default(True)
+
+- name: Add ACLs to unencrypted key hard link
+  acl:
+    path: "{{ tls_key_path_plaintext_generic }}"
     entity: "{{ account.user }}"
     etype: group
     permissions: r

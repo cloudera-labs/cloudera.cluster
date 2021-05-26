@@ -105,6 +105,19 @@
       -out {{ tls_key_path_plaintext }}
     creates: "{{ tls_key_path_plaintext }}"
 
+- name: Create host agnostic links
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: hard
+  with_items:
+    - { src: "{{ tls_keystore_path }}", dest: "{{ tls_keystore_path_generic }}" }
+    - { src: "{{ tls_key_path }}", dest: "{{ tls_key_path_generic }}" }
+    - { src: "{{ tls_key_path_plaintext }}", dest: "{{ tls_key_path_plaintext_generic }}" }
+
+- name: Set file permissions
+  include_tasks: acls.yml
+
 - name: Create openssl.cnf for CSR generation
   template:
     src: csr.cnf.j2
@@ -123,9 +136,6 @@
       -new
       -out {{ tls_csr_path }}
     creates: "{{ tls_csr_path }}"
-
-- name: Set file permissions
-  include_tasks: acls.yml
 
 - name: Bring CSRs back to controller
   fetch:

@@ -15,3 +15,4 @@
 ---
 dependencies:
   - role: cloudera.cluster.deployment.definition
+  - role: cloudera.cluster.infrastructure.ca_common

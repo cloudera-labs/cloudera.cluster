@@ -73,6 +73,15 @@
   shell:
     cmd: openssl verify -verbose -CAfile {{ tls_chain_path }} {{ tls_cert_path }}
 
+- name: Create host agnostic link for signed certificate
+  file:
+    src: "{{ tls_cert_path }}"
+    dest: "{{ tls_cert_path_generic }}"
+    state: hard
+    mode: 0644
+    owner: root
+    group: root
+
 - name: Install CA certificates into keystore
   java_cert:
     executable: "{{ keytool_path }}"
@@ -193,14 +202,3 @@
       -srcstorepass "{{ tls_truststore_password }}"
       -deststorepass "{{ tls_truststore_password }}"
       -noprompt
-
-- name: Create host agnostic links
-  file:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    state: link
-  with_items:
-    - { src: "{{ tls_cert_path }}", dest: "{{ tls_cert_path_generic }}" }
-    - { src: "{{ tls_keystore_path }}", dest: "{{ tls_keystore_path_generic }}" }
-    - { src: "{{ tls_key_path }}", dest: "{{ tls_key_path_generic }}" }
-    - { src: "{{ tls_key_path_plaintext }}", dest: "{{ tls_key_path_plaintext_generic }}" }
