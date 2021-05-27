@@ -16,7 +16,7 @@
 database_host: "{{ groups['db_server'][0] | default('localhost') }}"
 database_type: postgresql
 database_default_password: changeme
-database_version: 10.2
+database_version: "{{ 10 if database_type == 'postgresql' else 10.2 }}"
 database_tls: false
 
 krb5_realm: CLOUDERA.LOCAL
