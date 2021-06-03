@@ -74,7 +74,6 @@
   vars:
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_compute | combine(_cluster) }}"
-  run_once: true
   ignore_errors: '{{ ansible_check_mode }}'
   loop: "{{ definition.clusters }}"
   loop_control:
@@ -92,7 +91,6 @@
   vars:
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_base | combine(_cluster) }}"
-  run_once: true
   ignore_errors: '{{ ansible_check_mode }}'
   loop: "{{ definition.clusters }}"
   loop_control:
@@ -110,7 +108,6 @@
   vars:
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_kts | combine(_cluster) }}"
-  run_once: true
   ignore_errors: '{{ ansible_check_mode }}'
   loop: "{{ definition.clusters }}"
   loop_control:
@@ -128,8 +125,8 @@
     name: operations/delete_cms
   vars:
     stop_cms_before_delete: true
-  run_once: true
   when:
+    - "'cloudera_manager' in group_names"
     - teardown_everything | default(false) or teardown_cms | default(false)
     - not (teardown_skip_cluster_deletion | default(false))
   ignore_errors: '{{ ansible_check_mode }}'
