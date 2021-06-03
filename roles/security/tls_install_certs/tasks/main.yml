@@ -28,7 +28,9 @@
 
 - name: Check if signed cert is available
   become: no
-  local_action: stat path={{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem
+  delegate_to: localhost
+  stat:
+    path: "{{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem"
   register: signed_cert
 
 - name: Check if signed cert is available remotely
@@ -116,6 +118,15 @@
   loop_control:
     loop_var: cacert
 
+- name: Create combined key and certificate
+  shell:
+    cmd: >
+      umask 077 ;
+      cat
+      "{{ tls_cert_path }}"
+      "{{ tls_key_path_plaintext }}"
+      > "{{ tls_cert_key_combined_path_plaintext }}"
+
 - name: Update truststore permissions
   file:
     path: "{{ tls_truststore_path }}"
@@ -202,3 +213,7 @@
     - { src: "{{ tls_keystore_path }}", dest: "{{ tls_keystore_path_generic }}" }
     - { src: "{{ tls_key_path }}", dest: "{{ tls_key_path_generic }}" }
     - { src: "{{ tls_key_path_plaintext }}", dest: "{{ tls_key_path_plaintext_generic }}" }
+    - { src: "{{ tls_cert_key_combined_path_plaintext }}", dest: "{{ tls_cert_key_combined_path_plaintext_generic }}" }
+
+- name: Set file permissions
+  include_tasks: acls.yml

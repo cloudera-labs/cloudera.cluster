@@ -53,6 +53,12 @@ local_accounts:
     comment: Flume
     keystore_acl: True
 
+  - user: haproxy
+    home: /var/lib/haproxy
+    comment: HAProxy
+    unencrypted_key_acl: True
+    when: '{{ "haproxy" in group_names }}'
+
   - user: hbase
     home: /var/lib/hbase
     comment: HBase

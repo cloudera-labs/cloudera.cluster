@@ -42,6 +42,8 @@ tls_keystore_path: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.jks"
 tls_keystore_path_generic: "{{ base_dir_security_pki }}/host.jks"
 tls_truststore_password: changeme
 tls_truststore_path: "{{ base_dir_security_pki }}/truststore.jks"
+tls_cert_key_combined_path_plaintext: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.key_and_cert.unenc"
+tls_cert_key_combined_path_plaintext_generic: "{{ base_dir_security_pki }}/host.key_and_cert.unenc"
 tls_uber_truststore_path: "{{ base_dir_security_pki }}/full_truststore.jks"
 
 maven_repo: "https://repo1.maven.org/maven2"
