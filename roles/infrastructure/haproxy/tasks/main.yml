@@ -22,18 +22,16 @@
 
 - name: Locate HAProxy cluster
   set_fact:
-    _haproxy_cluster_matches: "{{ clusters | json_query('[?name==`{{ haproxy_cluster }}`]') }}"
+    _haproxy_cluster_matches: '{{ definition.clusters | find_clusters(haproxy_cluster)}}'
 
 - name: Ensure HAProxy cluster exists
   assert:
     that: "{{ _haproxy_cluster_matches | length > 0 }}"
     success_msg: "Configured cluster {{ haproxy_cluster }} located successfully"
     fail_msg: "Configured cluster {{ haproxy_cluster }} does not exist"
-  vars:
-    query: 'clusters[?name==`{{ haproxy_cluster }}`]'
 
 - set_fact:
-    _haproxy_cluster: "{{ clusters | json_query('[?name==`{{ haproxy_cluster }}`]') }}"
+    _haproxy_cluster: "{{ _haproxy_cluster_matches | first }}"
 
 - name: Install HAProxy
   ansible.builtin.package:
@@ -47,8 +45,6 @@
     dest: /etc/haproxy/haproxy.cfg
     owner: haproxy
     group: haproxy
-  vars:
-    haproxy_cluster: _haproxy_cluster
 
 - name: Enable HAProxy
   service:

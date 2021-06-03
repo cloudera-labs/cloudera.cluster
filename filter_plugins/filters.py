@@ -18,7 +18,7 @@ class FilterModule(object):
 
   def filters(self):
     return {
-        'flatten_dict_list': self.flatten_dict_list
+        'flatten_dict_list': self.flatten_dict_list,
         'cluster_service_role_hosts': self.cluster_service_role_hosts,
         'find_clusters': self.find_clusters
     }

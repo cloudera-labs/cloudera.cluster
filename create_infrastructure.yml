@@ -51,6 +51,14 @@
     - security
     - tls
 
+- name: Group hosts using host template information
+  hosts: all
+  gather_facts: no
+  tasks:
+    - import_tasks: tasks/group_hosts.yml
+  tags:
+    - always
+
 - name: Install HAProxy
   hosts: haproxy
   become: yes
