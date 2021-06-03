@@ -33,6 +33,12 @@
 - set_fact:
     _haproxy_cluster: "{{ _haproxy_cluster_matches | first }}"
 
+- name: Ensure TLS is enabled for HAProxy cluster
+  assert:
+    that: "{{ _haproxy_cluster.security.tls | default(False) }}"
+    success_msg: "TLS is enabled for proxied cluster as required"
+    fail_msg: "TLS must be enabled to configure a cluster with HAProxy"
+
 - name: Install HAProxy
   ansible.builtin.package:
     lock_timeout: 60
