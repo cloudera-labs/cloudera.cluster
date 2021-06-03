@@ -29,8 +29,6 @@ class FilterModule(object):
         'default_database_port': self.default_database_port,
         'get_database_encoding_mysql': self.get_database_encoding_mysql,
         'get_database_collation_mysql': self.get_database_collation_mysql,
-        'cluster_service_role_hosts': self.cluster_service_role_hosts,
-        'find_clusters': self.find_clusters
     }
 
 
@@ -100,41 +98,3 @@ class FilterModule(object):
     else:
       database_collation = "utf8_general_ci"
     return database_collation
-
-
-  def cluster_service_role_hosts(self, cluster, hostvars, service, roles=None):
-    candidate_templates = []
-
-    if 'host_templates' in cluster:
-      templates = cluster['host_templates']
-
-      if roles:
-        for role in roles:
-          for t_name, t_services in templates.items():
-            if service in t_services and role in t_services[service]:
-              if t_name not in candidate_templates:
-                candidate_templates.append(t_name)
-
-      else:
-        for t_name, t_services in templates.items():
-          if service in t_services:
-            candidate_templates.append(t_name)
-
-    hosts = []
-    for t_name in candidate_templates:
-      t_hosts = [
-          host
-          for host, hostvar in hostvars.items()
-          if host not in hosts
-          if hostvar.get('host_template') == t_name]
-
-      hosts = hosts + t_hosts
-
-    return hosts
-
-
-  def find_clusters(self, clusters, name):
-    return [
-      cluster
-      for cluster in clusters
-      if cluster.get('name') == name]
