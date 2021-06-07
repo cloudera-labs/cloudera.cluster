@@ -40,7 +40,7 @@
     fail_msg: "TLS must be enabled to configure a cluster with HAProxy"
 
 - name: Install HAProxy
-  ansible.builtin.package:
+  package:
     lock_timeout: 60
     name: haproxy
     state: latest
