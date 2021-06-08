@@ -55,7 +55,7 @@ defaults
 {% if 'SOLR' in _haproxy_cluster.haproxy | default([]) %}
 
 frontend ft_solrsec
-    bind 0.0.0.0:8985 name https ssl crt {{ haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3 no-tlsv10 no-tlsv11
+    bind 0.0.0.0:{{ haproxy_solr_proxy_port | default(8985) }} name https ssl crt {{ haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3 no-tlsv10 no-tlsv11
     mode http
     option tcplog
     log global
@@ -66,7 +66,7 @@ backend bk_solr
     mode http
     balance roundrobin
     {% for host in _haproxy_cluster | cluster_service_role_hosts(hostvars, 'SOLR', ['SOLR_SERVER']) %}
-    server solr{{ host }} {{ host }}:8995 ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
+    server solr{{ host }} {{ host }}:{{ haproxy_solr_source_port | default(8995) }} ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
     {% endfor %}
 
 {% endif %}
@@ -76,7 +76,7 @@ backend bk_solr
 {% if 'IMPALA' in _haproxy_cluster.haproxy | default([]) %}
 
 frontend ft_impala-thrift-sec
-    bind 0.0.0.0:25004 ssl crt {{ haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3 no-tlsv10 no-tlsv11
+    bind 0.0.0.0:{{ haproxy_impala_thrift_proxy_port | default(25004) }} ssl crt {{ haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3 no-tlsv10 no-tlsv11
     mode tcp
     option tcplog
     timeout client 1h
@@ -88,13 +88,13 @@ backend bk_impalathrift
     balance source
     timeout server 1h
     {% for host in _haproxy_cluster | cluster_service_role_hosts(hostvars, 'IMPALA', ['IMPALAD']) %}
-    server impala{{ host }} {{ host }}:21050 ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
+    server impala{{ host }} {{ host }}:{{ haproxy_impala_thrift_source_port | default(21050) }} ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
     {% endfor %}
 
 # load balance the port shared by impala-shell and odbc version 1
 
 frontend ft_impala-shell-sec
-    bind 0.0.0.0:25003 ssl crt {{ haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3
+    bind 0.0.0.0:{{ haproxy_impala_shell_proxy_port | default(25003) }} ssl crt {{ haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3
     mode tcp
     option tcplog
     timeout client 1h
@@ -106,7 +106,7 @@ backend bk_impalashell
     balance source
     timeout server 1h
     {% for host in _haproxy_cluster | cluster_service_role_hosts(hostvars, 'IMPALA', ['IMPALAD']) %}
-    server impala2{{ host }} {{ host }}:21000 ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
+    server impala2{{ host }} {{ host }}:{{ haproxy_impala_shell_source_port | default(21000) }} ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
     {% endfor %}
 
 {% endif %}
@@ -114,7 +114,7 @@ backend bk_impalashell
 {% if 'HIVE' in _haproxy_cluster.haproxy | default([]) %}
 
 frontend ft_hs2-sec
-    bind 0.0.0.0:10000 ssl crt {{  haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3 no-tlsv10 no-tlsv11
+    bind 0.0.0.0:{{ haproxy_hive_proxy_port | default(10000) }} ssl crt {{  haproxy_combined_key_cert | default(tls_cert_key_combined_path_plaintext_generic) }} no-sslv3 no-tlsv10 no-tlsv11
     mode tcp
     option tcplog
     timeout client 12h
@@ -126,7 +126,7 @@ backend bk_hs2
     balance source
     timeout server 12h
     {% for host in _haproxy_cluster | cluster_service_role_hosts(hostvars, 'HIVE_ON_TEZ', ['HIVESERVER2']) %}
-    server hive{{ host }} {{ host }}:10000 ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
+    server hive{{ host }} {{ host }}:{{ haproxy_hive_source_port | default(10000) }} ssl ca-file {{ haproxy_ca_cert | default(tls_chain_path) }}
     {% endfor %}
 
 {% endif %}
