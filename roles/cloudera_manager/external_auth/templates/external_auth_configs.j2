@@ -20,8 +20,10 @@ LDAP_URL: {{ auth_provider.ldap_url | default(None) }}
 LDAP_USER_SEARCH_BASE: {{ auth_provider.ldap_search_base.user | default(None) }}
 LDAP_USER_SEARCH_FILTER: "({{ auth_provider.ldap_attribute.user | default('sAMAccountName') }}={0})"
 NT_DOMAIN: {{ auth_provider.domain | default(None) }}
+{% if cloudera_manager_version is version('7.1.0','>=') %}
 FRONTEND_URL: {{ frontend_url | default(None) }}
 PROXYUSER_KNOX_GROUPS: "{{ proxyuser_knox_groups | default('*') }}"
 PROXYUSER_KNOX_USERS: "{{ proxyuser_knox_users | default('*') }}"
 PROXYUSER_KNOX_HOSTS: "{{ proxyuser_knox_hosts | default('*') }}"
 PROXYUSER_KNOX_PRINCIPAL: "{{ proxyuser_knox_principal | default('knox') }}"
+{% endif %}
