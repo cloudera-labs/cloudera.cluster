@@ -249,6 +249,15 @@
         - "'zookeeper_tls_keystore' not in zookeeper_servicewide_configs"
         - "'zookeeper_tls_keystore' not in zookeeper_servicewide_configs"
 
+## Passwords
+- block:
+    - name: Ensure that the admin password is not part of the hostname(s)
+      assert:
+        that: groups.cluster is not search(cloudera_manager_admin_password)
+        success_msg: "The CM admin password is not part of the hostname"
+        fail_msg: "The CM admin password must not be part of the hostname"
+      when: cloudera_manager_admin_password is defined
+
 # Version specific
 
 # Add version specific issues here (e.g. Database versions)
