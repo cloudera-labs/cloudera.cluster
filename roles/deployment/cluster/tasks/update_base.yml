@@ -187,15 +187,15 @@
   register: data_contexts
   when: "{{ upgrade_cluster | default(false) }}"
 
-#- name: Delete data contexts of {{ cluster.name }}
-#  cloudera.cluster.cm_api:
-#    endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
-#    method: DELETE
-#    status_code: 200,404
-#  loop: "{{ data_contexts.json | json_query('[?clusterRef==cluster.name]') }}"
-#  loop_control:
-#    loop_var: data_context
-#  when: upgrade_cluster | default(false)
+- name: Delete data contexts of {{ cluster.name }}
+  cloudera.cluster.cm_api:
+    endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
+    method: DELETE
+    status_code: 200,404
+  loop: "{{ data_contexts.json | json_query('[?clusterRef==cluster.name]') }}"
+  loop_control:
+    loop_var: data_context
+  when: upgrade_cluster | default(false)
 
 - name: Upgrade Cluster
   cloudera.cluster.cm_api:
