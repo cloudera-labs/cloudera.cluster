@@ -136,7 +136,7 @@
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services
     method: POST
     body: "{{ lookup('template', 'services/service.j2', convert_data=False) }}"
-  loop: "{{ cluster.services }}"
+  loop: "{{ cluster_services_ordered | intersect(cluster.services) | difference(existing_services) }}"
   loop_control:
     loop_var: service
   vars:
