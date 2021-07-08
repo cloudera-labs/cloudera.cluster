@@ -14,17 +14,31 @@
 
 ---
 
-- name: Debug _cluster
-  debug:
-    msg: "{{ _cluster }}"
-    verbosity: 3
+- set_fact:
+    ts_minus_one_week: "{{ '%Y-%m-%dT%H:%M:%S'| strftime(ansible_date_time.epoch|int - 604800) }}"
 
-- name: Get Fair Scheduler XML
+- name: Retrieve YARN stats from CM
+  cloudera.cluster.cm_api:
+    endpoint: "/timeseries?query=SELECT%20fair_share_mb_cumulative,%20fair_share_vcores_cumulative%20WHERE%20queueName%20=%20root&from={{ ts_minus_one_week }}&desiredRollup=DAILY"
+    method: GET
+    return_content: yes
+  register: yarn_stats
+
+- set_fact:
+    yarn_cpus: "{{ yarn_stats.json | json_query('max(items[0].*[?metadata.metricName==`fair_share_mb_cumulative`].data[*].aggregateStatistics.max[][])') }}"
+
+- set_fact:
+    yarn_memory: "{{ yarn_stats.json | json_query('max(items[0].*[?metadata.metricName==`fair_share_vcores_cumulative`].data[*].aggregateStatistics.max[][])') }}"
+
+- name: Get YARN Config
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/config
     method: GET
     return_content: yes
-  register: this
+  register: yarn_conf
+
+- set_fact:
+    yarn_web_tls: "{{ yarn_conf.json | json_query('*[?name==`hadoop_secure_web_ui`].value') | default(false) }}"
 
 - name: Create temporary fs2cs directory
   ansible.builtin.tempfile:

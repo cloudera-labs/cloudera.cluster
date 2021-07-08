@@ -15,8 +15,9 @@
 ---
 
 custom_config_templates:
-# Explicit defaults
+# Explicit defaults - only run if we're neither updating services nor doing an upgrade
   - template: configs/defaults.j2
+    condition: "{{ not(update_services|default(false)|bool or cdh_cdp_upgrade|default(false)|bool) }}"
 # Custom configurations for databases
   - template: configs/databases.j2
   - template: configs/databases-7.1.0.j2
@@ -90,7 +91,7 @@ custom_config_templates:
        }}
 # Custom configuration for when adding services
   - template: configs/inter-service-dependencies.j2
-    condition: "{{ update_services | default(false) or upgrade_runtime | default(false) }}"
+    condition: "{{ update_services | default(false) or (cdh_cdp_upgrade|default(false)|bool)) }}"
 # Workarounds for bugs / known issues
   - template: workarounds/OPSAPS-56076.j2
     # TODO update fix version

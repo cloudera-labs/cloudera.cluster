@@ -21,11 +21,6 @@
     return_content: yes
   register: cm_roles
 
-- name: Debug _cluster
-  debug:
-    msg: "{{ cm_roles.json }}"
-    verbosity: 3
-
 - set_fact:
     nav_service: "{{ cm_roles.json | json_query('items[?type==`NAVIGATORMETASERVER`].name') | first }}"
 
@@ -59,7 +54,6 @@
     group: atlas
   delegate_to: "{{ groups.atlas_atlas_server | first }}"
 
-
 - name: Create nav2atlas script
   ansible.builtin.template:
     src: upgrade_scripts/nav2atlas.j2
@@ -84,5 +78,3 @@
       items:
         - name: "conf/atlas-application.properties_role_safety_valve"
           value: "{{ atlas_migration_conf }}"
-
-
