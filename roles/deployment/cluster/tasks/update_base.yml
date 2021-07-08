@@ -18,53 +18,12 @@
   include_role:
     name: config/cluster/base
 
+# In case there's any new databases required, we'll run the create role again
 - name: Create databases and users
   include_role:
     name: deployment/databases
   vars:
     services: "{{ cluster.services | default({}) }}"
-
-- name: Debug _cluster
-  debug:
-    msg: "{{ _cluster }}"
-    verbosity: 3
-
-- name: Debug Default cluster base combined with _cluster
-  debug:
-    msg: "{{ default_cluster_base | combine(_cluster) }}"
-    verbosity: 3
-
-- name: Debug Merged Configs
-  debug:
-    msg: "{{ merged_configs }}"
-    verbosity: 3
-
-- name: Print some debug information
-  vars:
-    msg: |
-      Module Variables ("vars"):
-      --------------------------------
-      {{ vars | to_nice_json }}
-
-      Environment Variables ("environment"):
-      --------------------------------
-      {{ environment | to_nice_json }}
-
-      GROUP NAMES Variables ("group_names"):
-      --------------------------------
-      {{ group_names | to_nice_json }}
-
-      GROUPS Variables ("groups"):
-      --------------------------------
-      {{ groups | to_nice_json }}
-
-      HOST Variables ("hostvars"):
-      --------------------------------
-      {{ hostvars | to_nice_json }}
-
-  debug:
-    msg: "{{ msg.split('\n') }}"
-    verbosity: 3
 
 - name: Get CM config
   cloudera.cluster.cm_api:
@@ -90,31 +49,31 @@
     method: POST
 
 - set_fact:
-    parcel_version: "{{ products | json_query('[?product==`CDH`].version') | first }}"
+    new_parcel_version: "{{ products | json_query('[?product==`CDH`].version') | first }}"
 
 - name: Start Parcel Download
   cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}/commands/startDownload"
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}/commands/startDownload"
     method: POST
 
 - name: Wait for parcels to download
   cloudera.cluster.cm_api:
-    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}
   register: parcels_response
-  until: parcels_response.json.stage in ("DOWNLOADED", "DISTRIBUTED")
+  until: parcels_response.json.stage in ("DOWNLOADED", "DISTRIBUTED", "ACTIVATED")
   retries: "{{ parcel_poll_max_retries | default(30) }}"
   delay: "{{ parcel_poll_duration | default(60) }}"
 
-- name: Start Parcel Download
+- name: Start Parcel Distribution
   cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}/commands/startDistribution"
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}/commands/startDistribution"
     method: POST
 
 - name: Wait for parcels to become distributed to all hosts
   cloudera.cluster.cm_api:
-    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ parcel_version }}
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}
   register: parcels_response
-  until: parcels_response.json.stage == "DISTRIBUTED"
+  until:  parcels_response.json.stage in ("DISTRIBUTED", "ACTIVATED")
   retries: "{{ parcel_poll_max_retries | default(30) }}"
   delay: "{{ parcel_poll_duration | default(60) }}"
 
@@ -125,11 +84,6 @@
 
 - set_fact:
     existing_services: "{{ services_response.json | json_query('items[*].name') }}"
-
-- name: Debug cluster services
-  debug:
-    msg: "{{ existing_services }}"
-    verbosity: 3
 
 - name: Create new services
   cloudera.cluster.cm_api:
@@ -144,10 +98,11 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - service | lower not in existing_services
+    - (update_services|default(false)|bool) or (cdh_cdp_upgrade|default(false)|bool)
 
 - name: Update service Configs
   cloudera.cluster.cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ service | lower }}/config
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ service | lower }}/config?message=Automated%20updates%20from%20Ansible
     method: PUT
     body: "{{ lookup('template', 'services/serviceConfig.j2', convert_data=False) }}"
   loop: "{{ cluster.services }}"
@@ -158,6 +113,7 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - service | lower in existing_services
+    - (update_services|default(false)|bool) or (cdh_cdp_upgrade|default(false)|bool)
 
 - name: Update service role configs
   include_tasks: update_role_config_group.yml
@@ -169,39 +125,58 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - service | lower in existing_services
+    - (update_services|default(false)|bool) or (cdh_cdp_upgrade|default(false)|bool)
 
 - name: FS2CS
   include_tasks: fs2cs.yml
   when:
     - cluster.type | default(default_cluster_type) == 'base'
+    - '"YARN" in cluster.services'
+      - cdh_cdp_upgrade|default(false)|bool
 
 - name: Nav2Atlas
   include_tasks: nav2atlas.yml
   when:
     - cluster.type | default(default_cluster_type) == 'base'
+    - '"ATLAS" in cluster.services'
+    - cdh_cdp_upgrade|default(false)|bool
 
 - name: Get data contexts
   cloudera.cluster.cm_api:
     endpoint: /dataContexts
     method: GET
   register: data_contexts
-  when: "{{ upgrade_cluster | default(false) }}"
+  when: cdh_cdp_upgrade|default(false)|bool
 
 - name: Delete data contexts of {{ cluster.name }}
   cloudera.cluster.cm_api:
     endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
     method: DELETE
     status_code: 200,404
-  loop: "{{ data_contexts.json | json_query('[?clusterRef==cluster.name]') }}"
+  loop: "{{ data_contexts.json | json_query('items[?clusterRef==cluster.name]') }}"
   loop_control:
     loop_var: data_context
-  when: upgrade_cluster | default(false)
+  when: cdh_cdp_upgrade|default(false)|bool
 
 - name: Upgrade Cluster
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/upgradeCdh
     method: POST
     body:
-      cdhParcelVersion: "{{ parcel_version }}"
-  when: "{{ upgrade_cluster | default(false) }}"
+      cdhParcelVersion: "{{ new_parcel_version }}"
+  when: (cdh_cdp_upgrade|default(false)|bool) or (upgrade_runtime_cluster|default(false)|bool)
 
+- name: Start Parcel Activation
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}/commands/activate"
+    method: POST
+  when: activate_runtime_upgrade|default(false)|bool
+
+- name: Wait for parcels to become activated on all hosts
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}"
+  register: parcels_response
+  until: parcels_response.json.stage == "ACTIVATED"
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
+  when: activate_runtime_upgrade|default(false)|bool

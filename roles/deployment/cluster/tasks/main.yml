@@ -65,6 +65,7 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name in existing_clusters
+    - (cdh_cdp_upgrade|default(false)|bool) or (update_services|default(false)|bool)
 
 - name: Create base cluster data contexts (SDX)
   include_tasks: create_data_context.yml
@@ -88,6 +89,19 @@
     - cluster.type | default(default_cluster_type) == 'kts'
     - cluster.name not in existing_clusters
     - '"kts_active" in groups'
+
+- name: Upgrade Key Trustee server cluster
+  include_tasks: upgrade_kts.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_kts | combine(_cluster) }}"
+  when:
+    - cluster.type | default(default_cluster_type) == 'kts'
+    - cluster.name in existing_clusters
+    - '"kts_active" in groups'
+    - upgrade_kts_cluster | default(false)
 
 - name: Create compute clusters
   include_tasks: create_base.yml

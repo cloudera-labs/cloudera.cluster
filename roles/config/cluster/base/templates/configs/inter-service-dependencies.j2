@@ -22,10 +22,10 @@ HIVE:
 {% if 'SENTRY' in cluster.services %}
     sentry_service: sentry
 {% endif %}
-{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+{% if 'RANGER' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     ranger_service: ranger
 {% endif %}
-{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+{% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
     spark_on_yarn_service: spark_on_yarn
@@ -50,7 +50,7 @@ HUE:
 {% if 'SOLR' in cluster.services %}
     solr_service: solr
 {% endif %}
-{% if cloudera_runtime_version is version('7.0.0','>=') and not major_version_upgrade %}
+{% if cloudera_runtime_version is version('7.0.0','>=') and not (cdh_cdp_upgrade|default(false)|bool) %}
     hms_service: hive
     hive_service: hive_on_tez
 {% else %}
@@ -63,7 +63,7 @@ HUE:
 {% if 'SENTRY' in cluster.services %}
     sentry_service: sentry
 {% endif %}
-{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+{% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
     zookeeper_service: zookeeper
@@ -74,7 +74,7 @@ FLINK:
     hive_service: hive
     yarn_service: yarn
     zookeeper_service: zoookeeper
-{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+{% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
 
@@ -85,10 +85,10 @@ IMPALA:
 {% if 'SENTRY' in cluster.services %}
     sentry_service: sentry
 {% endif %}
-{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+{% if 'RANGER' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     ranger_service: ranger
 {% endif %}
-{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+{% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
 
@@ -102,7 +102,7 @@ KAFKA:
 {% if 'HDFS' in cluster.services %}
     hdfs_service: hdfs
 {% endif %}
-{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+{% if 'RANGER' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     ranger_service: ranger
 {% endif %}
     zookeeper_service: zookeeper
@@ -141,7 +141,7 @@ SENTRY:
 
 SOLR:
   SERVICEWIDE:
-{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+{% if 'RANGER' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     ranger_service: ranger
 {% endif %}
     hdfs_service: hdfs
@@ -150,7 +150,7 @@ SOLR:
 SPARK_ON_YARN:
   SERVICEWIDE:
     yarn_service: yarn
-{% if 'ATLAS' in cluster.services and not major_version_upgrade %}
+{% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
 
@@ -182,9 +182,9 @@ YARN:
   SERVICEWIDE:
     hdfs_service: hdfs
     zookeeper_service: zookeeper
-{% if 'RANGER' in cluster.services and not major_version_upgrade %}
+{% if 'RANGER' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     ranger_service: ranger
 {% endif %}
-{% if 'QUEUEMANAGER' in cluster.services and not major_version_upgrade %}
+{% if 'QUEUEMANAGER' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     queuemanager_service: queuemanager
 {% endif %}
