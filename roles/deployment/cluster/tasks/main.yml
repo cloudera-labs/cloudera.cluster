@@ -65,7 +65,7 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name in existing_clusters
-    - (cdh_cdp_upgrade|default(false)|bool) or (update_services|default(false)|bool)
+    - (cdh_cdp_upgrade|default(false)|bool) or (update_services|default(false)|bool) or (upgrade_runtime|default(false)|bool)
 
 - name: Create base cluster data contexts (SDX)
   include_tasks: create_data_context.yml

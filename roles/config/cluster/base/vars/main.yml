@@ -91,7 +91,7 @@ custom_config_templates:
        }}
 # Custom configuration for when adding services
   - template: configs/inter-service-dependencies.j2
-    condition: "{{ update_services | default(false) or (cdh_cdp_upgrade|default(false)|bool)) }}"
+    condition: "{{ (update_services | default(false) or (cdh_cdp_upgrade|default(false)|bool)) }}"
 # Workarounds for bugs / known issues
   - template: workarounds/OPSAPS-56076.j2
     # TODO update fix version

@@ -132,7 +132,7 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - '"YARN" in cluster.services'
-      - cdh_cdp_upgrade|default(false)|bool
+    - cdh_cdp_upgrade|default(false)|bool
 
 - name: Nav2Atlas
   include_tasks: nav2atlas.yml
@@ -146,14 +146,13 @@
     endpoint: /dataContexts
     method: GET
   register: data_contexts
-  when: cdh_cdp_upgrade|default(false)|bool
 
 - name: Delete data contexts of {{ cluster.name }}
   cloudera.cluster.cm_api:
     endpoint: /dataContexts/{{ data_context.name | urlencode()  }}
     method: DELETE
     status_code: 200,404
-  loop: "{{ data_contexts.json | json_query('items[?clusterRef==cluster.name]') }}"
+  loop: "{{ data_contexts | default([]) | json_query('json.items[?clusterRef==cluster.name]') }}"
   loop_control:
     loop_var: data_context
   when: cdh_cdp_upgrade|default(false)|bool
@@ -164,7 +163,7 @@
     method: POST
     body:
       cdhParcelVersion: "{{ new_parcel_version }}"
-  when: (cdh_cdp_upgrade|default(false)|bool) or (upgrade_runtime_cluster|default(false)|bool)
+  when: (cdh_cdp_upgrade|default(false)|bool) or (upgrade_runtime|default(false)|bool)
 
 - name: Start Parcel Activation
   cloudera.cluster.cm_api:
