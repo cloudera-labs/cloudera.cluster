@@ -63,47 +63,50 @@
 - set_fact:
     installed_parcel_version: "{{ installed_parcels.json | json_query('items[?product==`KEYTRUSTEE_SERVER` && stage==`ACTIVATED`]') | cloudera.cluster.get_product_version('KEYTRUSTEE_SERVER') }}"
 
-- name: Start Parcel Download
-  cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}/commands/startDownload"
-    method: POST
+- name: Download and upgrade KTS Parcel
+  block:
+    - name: Start Parcel Download
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}/commands/startDownload"
+        method: POST
+
+    - name: Wait for parcels to download
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}"
+      register: parcels_response
+      until: parcels_response.json.stage in ("DOWNLOADED", "DISTRIBUTED")
+      retries: "{{ parcel_poll_max_retries | default(30) }}"
+      delay: "{{ parcel_poll_duration | default(60) }}"
+
+    - name: Start Parcel Distribution
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}/commands/startDistribution"
+        method: POST
+
+    - name: Wait for parcels to become distributed to all hosts
+      cloudera.cluster.cm_api:
+        endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}
+      register: parcels_response
+      until: parcels_response.json.stage == "DISTRIBUTED"
+      retries: "{{ parcel_poll_max_retries | default(30) }}"
+      delay: "{{ parcel_poll_duration | default(60) }}"
+
+    - name: Start Parcel Activation
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}/commands/activate"
+        method: POST
+
+    - name: Wait for parcels to become activated on all hosts
+      cloudera.cluster.cm_api:
+        endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}
+      register: parcels_response
+      until: parcels_response.json.stage == "ACTIVATED"
+      retries: "{{ parcel_poll_max_retries | default(30) }}"
+      delay: "{{ parcel_poll_duration | default(60) }}"
+
+    - name: Restart KTS cluster
+      cloudera.cluster.cm_api:
+        endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/restart
+        method: POST
+
   when: (parcel_version | regex_search('([0-9]+[.]?)+')) is version(installed_parcel_version, '>')
-
-- name: Wait for parcels to download
-  cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}"
-  register: parcels_response
-  until: parcels_response.json.stage in ("DOWNLOADED", "DISTRIBUTED")
-  retries: "{{ parcel_poll_max_retries | default(30) }}"
-  delay: "{{ parcel_poll_duration | default(60) }}"
-
-- name: Start Parcel Distribution
-  cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}/commands/startDistribution"
-    method: POST
-
-- name: Wait for parcels to become distributed to all hosts
-  cloudera.cluster.cm_api:
-    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}
-  register: parcels_response
-  until: parcels_response.json.stage == "DISTRIBUTED"
-  retries: "{{ parcel_poll_max_retries | default(30) }}"
-  delay: "{{ parcel_poll_duration | default(60) }}"
-
-- name: Start Parcel Activation
-  cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}/commands/activate"
-    method: POST
-
-- name: Wait for parcels to become activated on all hosts
-  cloudera.cluster.cm_api:
-    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/KEYTRUSTEE_SERVER/versions/{{ parcel_version }}
-  register: parcels_response
-  until: parcels_response.json.stage == "ACTIVATED"
-  retries: "{{ parcel_poll_max_retries | default(30) }}"
-  delay: "{{ parcel_poll_duration | default(60) }}"
-
-- name: Restart KTS cluster
-  cloudera.cluster.cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/commands/restart
-    method: POST
