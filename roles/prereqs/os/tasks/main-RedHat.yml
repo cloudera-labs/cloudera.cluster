@@ -13,6 +13,23 @@
 # limitations under the License.
 
 ---
+- name: Setup System python on Rhel8
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version | int >= 8
+  block:
+    - name: install python 2 for CM7
+      ansible.builtin.package:
+        lock_timeout: 180
+        name: python2
+        update_cache: yes
+        state: present
+
+    - name: Set python2 as default 'python' command
+      debug:
+        msg: "Pick up here"
+    - pause:
+
 
 - name: Disable SELinux
   selinux:
