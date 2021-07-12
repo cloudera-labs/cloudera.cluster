@@ -20,7 +20,7 @@ HBASE:
 HDFS:
   SERVICEWIDE:
     audit_event_log_dir: "{{ log_base }}/hadoop-hdfs/audit"
-{% if ((cloudera_runtime_pre_upgrade | default('7.1.0')) is version('6.0.0','>=')) %}
+{% if (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('6.0.0','>=')) %}
   BALANCER:
     balancer_log_dir: "{{ log_base }}/hadoop-hdfs"
 {% endif %}

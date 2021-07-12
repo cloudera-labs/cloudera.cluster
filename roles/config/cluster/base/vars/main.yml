@@ -32,7 +32,7 @@ custom_config_templates:
   - template: configs/logdirs-7.1.0.j2
     condition: "{{ cloudera_runtime_version is version('7.1.0','>=') }}"
   - template: configs/logdirs-ranger-spooldirs.j2
-    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and  (cloudera_runtime_pre_upgrade is version('7.1.0','>=') | default(true)) }}"
+    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and  (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) }}"
 # Custom configurations for out-of-memory behaviour, heap dumps etc
   - template: configs/oom.j2
     condition: "{{ cluster.oom is defined }}"
@@ -55,7 +55,7 @@ custom_config_templates:
   - template: configs/tls-7.1.0.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.0','>=') }}"
   - template: configs/tls-7.1.4.j2
-    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') and cloudera_runtime_pre_upgrade is version('7.1.4','>=') | default(true) }}"
+    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.4','>=')) }}"
   - template: configs/tls-cm-7.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.1.0','>=') }}"
 # Custom configurations for Cloudera Streams Processing components on CDH 6.x

@@ -1,5 +1,5 @@
 ---
-{% if ((cloudera_runtime_pre_upgrade | default('7.1.0')) is version('7.1.0','>=')) %}
+{% if (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) %}
 HDFS:
   SERVICEWIDE:
     enable_ranger_authorization: true
