@@ -231,7 +231,7 @@ ZEPPELIN:
     ssl_enabled: true
     ssl_server_keystore_location: {{ tls_keystore_path_generic }}
     ssl_server_keystore_password: {{ tls_keystore_password }}
-{% if ((cloudera_runtime_pre_upgrade | default('7.1.0')) is version('7.1.0','>=')) %}
+{% if (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) %}
 ZOOKEEPER:
   SERVICEWIDE:
     zookeeper_tls_keystore: {{ tls_keystore_path_generic }}
