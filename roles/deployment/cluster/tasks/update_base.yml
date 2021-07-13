@@ -18,6 +18,15 @@
   include_role:
     name: config/cluster/base
 
+- name: Print out full cluster config
+  debug:
+    var: cluster
+  when: dry_run is defined and dry_run
+
+- name: Ensure that we're safe to proceed
+  assert:
+    that: dry_run is undefined or not dry_run
+
 # In case there's any new databases required, we'll run the create role again
 - name: Create databases and users
   include_role:

@@ -54,6 +54,7 @@ cluster_services_ordered:
   - HDFS
   - CORE_SETTINGS
   - ISILON
+  - OZONE
   - SENTRY
   - KAFKA
   - HBASE
@@ -86,7 +87,6 @@ cluster_services_ordered:
   - NIFI
   - NIFIREGISTRY
   - NIFITOOLKITCA
-  - OZONE
   - PHOENIX
   - QUEUEMANAGER
   - SCHEMAREGISTRY
