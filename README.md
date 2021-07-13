@@ -1,3 +1,22 @@
+# IMPORTANT NOTICE:
+
+This feature branch includes support for:
+- Upgrading Cloudera Manager Server and Cloudera Manager Agents
+- Upgrading CDH 5 and/or CDH6 to CDP Private Cloud Base
+- Refreshing the config for running clusters, including adding new services or updating the config of existing services.
+
+These features are potentially very dangerous and can cause damage to running clusters if used incorrectly. If you plan to use these features, please ensure that you test thoroughly on a disposable environment, before running on clusters that are not disposable.
+
+Cloudera recommends that Cloudera Professional Services be engaged before using these features, particularly as none of the automation products are not covered under your Cloudera Support agreements.
+
+In order to use these capabilities you will need some permutation of the following variables:
+- `cloudera_runtime_pre_upgrade` (specify the version of the legacy cluster - e.g. 5.16.2)
+- `update_services` (true if you want to update the config of existing services)
+- `upgrade_kts_cluster` (true to upgrade a kts cluster)
+- `activate_runtime_upgrade` (true to do a patch release activation)
+- `cdh_cdp_upgrade` (true to do a CDH to CDP upgrade)
+- `upgrade_runtime` (true to upgrade between versions of CDH or CDP)
+
 # Ansible Collection for Cloudera Private Cloud
 
 ## Requirements
