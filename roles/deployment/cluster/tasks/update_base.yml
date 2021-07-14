@@ -20,7 +20,7 @@
 
 - name: Print out full cluster config
   debug:
-    var: cluster
+    var: merged_configs
   when: cluster_template_dry_run is defined and cluster_template_dry_run
 
 - name: Ensure that we're safe to proceed
