@@ -3,9 +3,9 @@
 HDFS:
   SERVICEWIDE:
     enable_ranger_authorization: true
-    {% if 'RANGER_RMS' in cluster.services %}
+{% if 'RANGER_RMS' in cluster.services %}
     ranger_security_safety_valve: "<property><name>ranger.plugin.hdfs.chained.services</name><value>cm_hive</value><description>Ranger RMS related config</description></property><property><name>ranger.plugin.hdfs.chained.services.cm_hive.impl</name><value>org.apache.ranger.chainedplugin.hdfs.hive.RangerHdfsHiveChainedPlugin</value><description>Ranger RMS related config</description></property>"
-    {% endif %}
+{% endif %}
 {% endif %}
 RANGER:
   SERVICEWIDE:
