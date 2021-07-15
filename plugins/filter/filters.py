@@ -214,5 +214,5 @@ class FilterModule(object):
         for role_mapping in host_templates.values():
             for (service, roles) in role_mapping.items():
                 for custom_role in filter(lambda x: '/' in x, roles):
-                    custom_role_groups.append("-".join([service, "1"] + custom_role.split("/")))
+                    custom_role_groups.append("-".join([service.lower()] + custom_role.split("/")))
         return custom_role_groups

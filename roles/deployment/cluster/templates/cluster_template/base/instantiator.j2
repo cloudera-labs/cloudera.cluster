@@ -32,9 +32,9 @@
     "datanodeTransceiverPort": 1004,
     "datanodeWebPort": 1006
     {%- endif -%}
-  },
+  }
   {%- endif -%}
-  "roleConfigGroups": [
+  , "roleConfigGroups": [
   {%- set role_group_sep = joiner(",") -%}
   {%- for custom_rcg in cluster.host_templates | cloudera.cluster.extract_custom_role_groups -%}
     {{ role_group_sep() }}
