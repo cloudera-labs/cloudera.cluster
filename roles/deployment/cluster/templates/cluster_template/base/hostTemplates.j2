@@ -15,7 +15,7 @@
         {{ roles.append("KT_RENEWER") }}
       {%- endif -%}
       {%- for role in roles -%}
-        {%- set (role_type, config_group) = role | extract_role_and_group -%}
+        {%- set (role_type, config_group) = role | cloudera.cluster.extract_role_and_group -%}
         {{ role_config_group_refs.append("{}-{}-{}".format(service_ref, role_type, config_group)) }}
       {%- endfor -%}
     {%- endif -%}
