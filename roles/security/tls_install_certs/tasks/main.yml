@@ -24,7 +24,13 @@
         path: "{{ tls_signed_certs_dir }}/cluster_intca.pem"
       - alias: cluster_rootca
         path: "{{ tls_signed_certs_dir }}/cluster_rootca.pem"
-  when: tls_ca_certs is not defined
+  when: tls_ca_certs is not defined and 'ca_server' in groups
+
+- set_fact:
+    tls_ca_certs:
+      - alias: cluster_ca
+        path: "{{ tls_signed_certs_dir }}/cluster_ca.pem"
+  when: tls_ca_certs is not defined and krb5_kdc_type | defaut(None) == 'Red Hat IPA'
 
 - name: Check if signed cert is available
   become: no

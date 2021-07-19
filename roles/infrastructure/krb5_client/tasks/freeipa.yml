@@ -23,12 +23,21 @@
     ipaclient_servers: "{{ groups['krb5_server'] }}"
   when: "krb5_kdc_type == 'Red Hat IPA' and 'krb5_server' in groups"
 
-- name: Set sssd to enumerate users and groups
+- name: Set up renew_lifetime in krb5.conf
   lineinfile:
-    path: /etc/sssd/sssd.conf
-    insertafter: "^\\[domain/.+\\]"
-    regexp: "^enumerate"
-    line: "enumerate = True"
-  when: "krb5_kdc_type == 'Red Hat IPA' and 'krb5_server' in groups"
-  notify:
-    - restart sssd
+    path: /etc/krb5.conf
+    insertafter: "^\\[libdefaults\\]"
+    regexp: "^  renew_lifetime"
+    line: "  renew_lifetime = 7d"
+  when: 
+    - krb5_kdc_type == 'Red Hat IPA'
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
+
+- name: Remove default_ccache_name in krb5.conf
+  lineinfile:
+    path: /etc/krb5.conf
+    regexp: "^  default_ccache_name"
+    state: absent
+  when: 
+    - krb5_kdc_type == 'Red Hat IPA'
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"

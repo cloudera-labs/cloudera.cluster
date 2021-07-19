@@ -13,12 +13,5 @@
 # limitations under the License.
 
 ---
-krb5_kdc_state_directory: /var/kerberos/krb5kdc
-krb5_kdc_database: "{{ krb5_kdc_state_directory }}/principal"
-krb5_packages:
-  - krb5-libs
-  - krb5-server
-  - krb5-workstation
-krb5_services:
-  - krb5kdc
-  - kadmin
+dependencies:
+  - role: cloudera.cluster.infrastructure.krb5_common

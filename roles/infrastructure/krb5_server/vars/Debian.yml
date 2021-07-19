@@ -18,6 +18,7 @@ krb5_kdc_database: /var/lib/krb5kdc/principal
 krb5_packages:
   - krb5-kdc
   - krb5-admin-server
+  - krb5-user
 krb5_services:
   - krb5-kdc
   - krb5-admin-server

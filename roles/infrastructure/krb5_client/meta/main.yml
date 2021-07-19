@@ -15,3 +15,4 @@
 ---
 dependencies:
   - role: cloudera.cluster.infrastructure.krb5_common
+  - role: cloudera.cluster.infrastructure.krb5_conf
