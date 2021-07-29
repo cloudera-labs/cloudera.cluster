@@ -96,6 +96,10 @@ KNOX:
     ssl_enabled: true
     ssl_server_keystore_location: {{ tls_keystore_path_generic }}
     ssl_server_keystore_password: {{ tls_keystore_password }}
+KUDU:
+  MASTER:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
 LIVY:
   GATEWAY:
     ssl_client_truststore_location: {{ tls_truststore_path }}
