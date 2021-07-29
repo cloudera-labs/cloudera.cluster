@@ -123,8 +123,6 @@ KS_INDEXER:
     keystore_indexer_truststore_password: {{ tls_truststore_password }}
 KUDU:
   KUDU_MASTER:
-    ssl_client_truststore_location: {{ tls_truststore_path }}
-    ssl_client_truststore_password: {{ tls_truststore_password }}
     ssl_enabled: True
     ssl_server_ca_certificate_location: {{ tls_chain_path }}
     ssl_server_certificate_location: {{ tls_cert_path_generic }}
