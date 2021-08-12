@@ -205,7 +205,6 @@ STREAMS_MESSAGING_MANAGER:
     ssl_server_keystore_keypassword: {{ tls_keystore_password }}
     ssl_server_keystore_location: {{ tls_keystore_path_generic }}
     ssl_server_keystore_password: {{ tls_keystore_password }}
-    streams.messaging.manager.kafka.client.security.protocol: {{ cluster.security.kerberos | default(false) | ternary('SASL_SSL', 'SSL') }}
   STREAMS_MESSAGING_MANAGER_UI:
     ssl_client_truststore_location: {{ tls_chain_path }}
     ssl_enabled: true
