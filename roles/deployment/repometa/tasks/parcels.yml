@@ -36,7 +36,7 @@
       {{ manifests.results
       | map(attribute='json')
       | list
-      | cloudera.cluster.extract_products_from_manifests
+      | cloudera.cluster.extract_products_from_manifests(os_distribution=ansible_distribution_release)
       | dict2items(key_name='product', value_name='version')
       }}
   run_once: true
