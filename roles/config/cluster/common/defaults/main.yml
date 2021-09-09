@@ -37,6 +37,10 @@ default_cluster_kts:
       KEYTRUSTEE_PASSIVE_SERVER: {}
       DB_PASSIVE: {}
 
+default_cluster_ecs:
+  name: ECS
+  services: [DOCKER, ECS]
+
 default_cluster_compute:
   base_cluster:
     data_context: SDX

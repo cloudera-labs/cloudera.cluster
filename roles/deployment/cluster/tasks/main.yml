@@ -114,6 +114,18 @@
     - cluster.type | default(default_cluster_type) == 'compute'
     - cluster.name not in existing_clusters
 
+- name: Create ECS clusters
+  include_tasks: create_ecs.yml
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  vars:
+    cluster: "{{ default_cluster_ecs | combine(_cluster) }}"
+  when:
+    - cluster.type | default(default_cluster_type) == 'ecs'
+    - cluster.name not in existing_clusters
+
+
 - name: Restart Cloudera Management Service
   cloudera.cluster.cm_api:
     endpoint: /cm/service/commands/restart
