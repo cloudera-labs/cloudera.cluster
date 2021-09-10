@@ -41,6 +41,8 @@ default_cluster_ecs:
   name: ECS
   services: [DOCKER, ECS]
 
+ecs_databases: [ALERTS, DEX, DWX, ENV, LIFTIE, MLX, UMS]
+
 default_cluster_compute:
   base_cluster:
     data_context: SDX

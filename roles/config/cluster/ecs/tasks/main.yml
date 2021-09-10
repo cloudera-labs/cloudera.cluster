@@ -14,6 +14,11 @@
 
 ---
 
+# This variable is used by other roles
+# please take care when changing it
+- set_fact:
+    databases: "{{ database_defaults | combine(cluster.databases | default({}), recursive=True) }}"
+
 - name: Retrieve repository metadata
   include_role:
     name: cloudera.cluster.deployment.repometa

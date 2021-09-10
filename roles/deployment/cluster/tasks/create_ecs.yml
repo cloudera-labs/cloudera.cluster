@@ -22,7 +22,7 @@
   include_role:
     name: cloudera.cluster.deployment.databases
   vars:
-    services: "{{ cluster.databases | combine(['ALERTS', 'DEX', 'DWX', 'ENV', 'LIFTIE', 'MLX', 'UMS']) }}"
+    services: "{{ cluster.ecs_databases | default(ecs_databases) }}"
 
 - name: Generate cluster template file
   template:
