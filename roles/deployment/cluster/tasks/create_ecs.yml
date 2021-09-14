@@ -37,3 +37,22 @@
   register: cluster_template_result
   failed_when: '"Status code was 400" in cluster_template_result.msg'
   when: not cluster_template_dry_run
+
+- name: Find cluster template command URL for troubleshooting
+  set_fact:
+    command_details_url: "{{ cluster_template_result.url | regex_replace('/api/.*','/cmf/command/' ~ cluster_template_result.json.id | string ~ '/details' ) }}"
+  when: cluster_template_result.failed and 'id' in cluster_template_result.json
+
+- name: Delete cluster if template import failed (and if it's safe to do so)
+  import_role:
+    name: operations/delete_cluster
+  when:
+    - cluster_template_result.failed
+    - not (skip_cluster_deletion | default(false))
+
+- name: Fail because of unsuccessful cluster template import
+  fail:
+    msg: >
+      Cluster template import failed.
+      Result message: {{ cluster_template_result.json.message }}
+  when: cluster_template_result.failed and command_details_url is not defined
