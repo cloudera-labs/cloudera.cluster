@@ -22,13 +22,24 @@
     {%- if service_role_types is iterable -%}
       {%- for role_type in service_role_types -%}
       {{ role_group_sep() }}
-      {
-        "refName": "{{ service_ref }}-{{ role_type }}-BASE",
-        "roleType": "{{ role_type }}",
-        {% set config_sep = joiner(",") -%}
-        "configs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service, role_type) }},
-        "base": true
-      }
+        {
+          "refName": "{{ service_ref }}-{{ role_type }}-BASE",
+          "roleType": "{{ role_type }}",
+          {% set config_sep = joiner(",") -%}
+          "configs": {{ cm_api.ApiClusterTemplateConfigList(merged_configs, service, role_type) }},
+          "base": true
+        }
+      {%- endfor -%}
+      {%- for custom_role in cluster.host_templates | cloudera.cluster.extract_custom_roles(service) -%}
+        {%- set (role_type, config_group) = custom_role | cloudera.cluster.extract_role_and_group -%}
+        {{ role_group_sep() }}
+        {
+          "refName": "{{ service_ref }}-{{ role_type }}-{{ config_group }}",
+          "roleType": "{{ role_type }}",
+          {% set config_sep = joiner(",") -%}
+          "configs": {{ cm_api.ApiClusterTemplateCustomConfigList(merged_configs, service, role_type, custom_role) }},
+          "base": false
+        }
       {%- endfor -%}
     {%- endif -%}
     ]

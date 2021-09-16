@@ -19,6 +19,7 @@
         invalid_roles: >-
           {{ config.roles
           | flatten
+          | map('regex_replace','/.+','')
           | difference(['SERVICEWIDE'])
           | difference(role_mappings[config.service] | list)
           }}
