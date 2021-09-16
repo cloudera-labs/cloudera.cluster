@@ -21,6 +21,7 @@
     ipaserver_realm: "{{ krb5_realm }}"
     ipaserver_domain: "{{ krb5_domain }}"
     ipaclient_servers: "{{ groups['krb5_server'] }}"
+  when: "krb5_kdc_type == 'Red Hat IPA' and 'krb5_server' in groups"
 
 - name: Set sssd to enumerate users and groups
   lineinfile:
