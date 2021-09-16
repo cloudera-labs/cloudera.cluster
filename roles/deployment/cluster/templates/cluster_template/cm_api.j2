@@ -31,7 +31,7 @@
   {%- if value_type == "ref" or value_type == "value" -%}
     {{ config.update({ value_type: value }) }}
   {%- else -%}
-    {%- set var_name = [service_type, role_type, key] | join("_") | replace('.','_') -%}
+    {%- set var_name = [service_type, role_type, key] | join("_") | replace('.','_') | replace('/','_') -%}
     {{ config.update({ "variable": var_name | upper }) }}
   {%- endif -%}
   {{ config | to_json }}
@@ -46,6 +46,28 @@
           {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "ref") -%}
         {%- else -%}
           {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "variable") -%}
+        {%- endif -%}
+        {{ config_list.append(config | from_json) }}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endif -%}
+  {{ config_list | to_json }}
+{%- endmacro %}
+
+{% macro ApiClusterTemplateCustomConfigList(service_merged_configs, service_type, role_type, custom_role_type) -%}
+  {%- set config_list = [] -%}
+  {%- if service_type in service_merged_configs -%}
+    {%- if service_merged_configs[service_type][role_type] is mapping -%}
+      {%- set new_merged_configs = service_merged_configs[service_type][custom_role_type] | combine(service_merged_configs[service_type][role_type]) -%}
+      {%- for (k, v) in new_merged_configs.items() -%}
+        {%- if k.endswith("_service") and not "suppression" in k -%}
+          {%- set config = ApiClusterTemplateConfig(k, service_type, custom_role_type, v, "ref") -%}
+        {%- else -%}
+          {%- if k in service_merged_configs[service_type][custom_role_type] %}
+            {%- set config = ApiClusterTemplateConfig(k, service_type, custom_role_type, v, "variable") -%}
+          {%- else -%}
+            {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "variable") -%}
+          {%- endif -%}
         {%- endif -%}
         {{ config_list.append(config | from_json) }}
       {%- endfor -%}
