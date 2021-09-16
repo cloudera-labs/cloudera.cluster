@@ -13,7 +13,7 @@
       ,"roleRefNames" : [ "{{ hostvars[host]['role_ref_names'] }}" ]
       {%- endif -%}
       {%- if 'rack_id' in hostvars[host] -%}
-      ,"rackId" : [ "{{ hostvars[host]['rack_id'] }}" ]
+      ,"rackId" : "{{ hostvars[host]['rack_id'] }}"
       {%- endif -%}
     }
   {%- endif -%}

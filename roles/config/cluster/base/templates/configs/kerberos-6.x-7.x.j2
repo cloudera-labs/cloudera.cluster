@@ -21,6 +21,3 @@ SPARK_ON_YARN:
   GATEWAY:
     spark_io_encryption_enabled: true
     spark_network_encryption_enabled: true
-STREAMS_MESSAGING_MANAGER:
-  STREAMS_MESSAGING_MANAGER_SERVER:
-    streams.messaging.manager.kafka.client.security.protocol: {{ cluster.security.tls | default(false) | ternary('SASL_SSL', 'SASL_PLAINTEXT') }}
