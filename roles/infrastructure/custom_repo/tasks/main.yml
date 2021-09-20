@@ -21,6 +21,7 @@
 - name: Install {{ httpd_package }}
   ansible.builtin.package:
     lock_timeout: 60
+    update_cache: yes
     name: "{{ httpd_package }}"
     state: present
 

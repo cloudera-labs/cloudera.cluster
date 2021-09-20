@@ -14,6 +14,6 @@
 
 ---
 cloudera_archive_base_url: https://archive.cloudera.com
-cloudera_manager_version: 7.1.4
+cloudera_manager_version: 7.4.4
 
 install_repo_on_host: yes
