@@ -18,18 +18,17 @@
     - ansible_os_family == 'RedHat'
     - ansible_distribution_major_version | int >= 8
   block:
-    - name: install python 2 for CM7
+    - name: install python versions
       ansible.builtin.package:
         lock_timeout: 180
-        name: python2
+        name: "{{ __pyver_item }}"
         update_cache: yes
         state: present
-
-    - name: Set python2 as default 'python' command
-      debug:
-        msg: "Pick up here"
-    - pause:
-
+      loop:
+        - python3
+        - python2
+      loop_control:
+        loop_var: __pyver_item
 
 - name: Disable SELinux
   selinux:
