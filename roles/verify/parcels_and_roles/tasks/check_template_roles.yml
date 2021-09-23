@@ -22,6 +22,7 @@
           | map('regex_replace','/.+','')
           | difference(role_mappings[template.service] | list)
           }}
+
     - name: Ensure the host template service roles are valid
       assert:
         that: "{{ invalid_roles | length == 0 }}"
@@ -31,3 +32,12 @@
         fail_msg: >-
           Unknown role(s) {{ invalid_roles }} for service '{{ template.service }}'
           defined in host template '{{ host_template.name }}'.
+
+    - name: Ensure the Tez gateway has been deployed
+      assert:
+        that: "{{ 'GATEWAY' in (host_template.mappings['TEZ'] | default({})) }}"
+        success_msg: The Tez gateway has been included as required
+        fail_msg: The Tez gateway should be colocated with Hive On Tez roles
+      when:
+        - template.service == 'HIVE_ON_TEZ'
+        - "'HIVESERVER2' in template.roles or 'GATEWAY' in template.roles"
