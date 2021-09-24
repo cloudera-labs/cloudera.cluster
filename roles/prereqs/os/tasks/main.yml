@@ -24,6 +24,11 @@
     file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
   when: ansible_os_family == "Debian"
 
+- name: Refresh Package cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
 - name: Update kernel flags
   sysctl:
     name: "{{ flag.key }}"
@@ -49,7 +54,7 @@
 
 - name: Install DNS utils package
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ dns_package }}"
     state: present
 
@@ -59,7 +64,7 @@
 
 - name: Install {{ ntp_package }} service if ntp or chrony is not installed
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ ntp_package }}"
     state: present
   when: ('ntp' not in ansible_facts.packages) and ('chrony' not in ansible_facts.packages)
@@ -77,7 +82,7 @@
 
 - name: Install nscd service
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ nscd_package }}"
     state: present
 

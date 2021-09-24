@@ -20,13 +20,13 @@
 
 - name: Install openssl
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: openssl
     state: present
 
 - name: Install PyOpenSSL
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: pyOpenSSL
     state: present
   when: ansible_os_family == "RedHat"

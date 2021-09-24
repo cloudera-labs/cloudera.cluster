@@ -14,4 +14,4 @@
 
 ---
 dependencies:
-  - role: deployment/definition
+  - role: cloudera.cluster.deployment.definition

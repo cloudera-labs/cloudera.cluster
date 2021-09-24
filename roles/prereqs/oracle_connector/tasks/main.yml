@@ -57,7 +57,7 @@
 
 - name: Ensure unzip is available
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: unzip
     state: present
   when:
@@ -80,6 +80,6 @@
 
 - name: Install the libaio package
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: libaio
     state: present
