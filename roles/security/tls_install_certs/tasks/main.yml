@@ -18,19 +18,36 @@
     tls_signed_certs_dir: "{{ local_certs_dir }}"
   when: tls_signed_certs_dir is not defined
 
+# remote certificates for ca_server ca
 - set_fact:
     tls_ca_certs:
-      - alias: cluster_intca
-        path: "{{ tls_signed_certs_dir }}/cluster_intca.pem"
       - alias: cluster_rootca
-        path: "{{ tls_signed_certs_dir }}/cluster_rootca.pem"
+        path: "{{ ca_server_root_cert_path }}"
+        remote_host: "{{ groups.ca_server | first }}"
+      - alias: cluster_intca
+        path: "{{ ca_server_intermediate_cert_path }}"
+        remote_host: "{{ groups.ca_server | first }}"
   when: tls_ca_certs is not defined and 'ca_server' in groups
 
+# remote certificates for freeipa ca
 - set_fact:
     tls_ca_certs:
       - alias: cluster_ca
-        path: "{{ tls_signed_certs_dir }}/cluster_ca.pem"
-  when: tls_ca_certs is not defined and krb5_kdc_type | defaut(None) == 'Red Hat IPA'
+        path: "/etc/ipa/ca.crt"
+        remote_host: "{{ groups.krb5_server | first | default(omit) }}"
+  when: tls_ca_certs is not defined and krb5_kdc_type | default(None) == 'Red Hat IPA'
+
+- name: Fetch the remote CA certs
+  fetch:
+    src: "{{ cert.path }}"
+    dest: "{{ tls_signed_certs_dir }}/{{ cert.alias }}.pem"
+    flat: yes
+  run_once: yes
+  delegate_to: "{{ cert.remote_host }}"
+  loop: "{{ tls_ca_certs }}"
+  loop_control:
+    loop_var: cert
+  when: cert.remote_host is defined
 
 - name: Check if signed cert is available
   become: no
@@ -61,7 +78,12 @@
 
 - name: Copy CA certs to hosts
   copy:
-    src: "{{ cacert.path }}"
+    src: >-
+      {{
+        tls_signed_certs_dir ~ '/' ~ cacert.alias ~ '.pem'
+        if cacert.remote_host is defined
+        else cacert.path
+      }}
     dest: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
     mode: 0644
   loop: "{{ tls_ca_certs }}"
