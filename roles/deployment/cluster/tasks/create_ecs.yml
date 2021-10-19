@@ -24,19 +24,26 @@
   vars:
     services: "{{ cluster.ecs_databases | default(ecs_databases) }}"
 
-- name: Generate cluster template file
-  template:
-    src: cluster_template/main.j2
-    dest: /tmp/cluster_template_{{ cluster.name | replace(' ','_') }}.json
-
-- name: Import cluster template
+- name: Create ECS cluster
   cloudera.cluster.cm_api:
-    endpoint: /cm/importClusterTemplate?addRepositories=true
+    endpoint: /clusters
     method: POST
-    body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
-  register: cluster_template_result
-  failed_when: '"Status code was 400" in cluster_template_result.msg'
+    body: "{{ lookup('template', 'cluster_template/ecs/clusters.j2', convert_data=False) }}"
+  register: cluster_creation_result
+  failed_when: '"Status code was 400" in cluster_creation_result.msg'
   when: not cluster_template_dry_run
+
+- name: Add hosts to ECS cluster
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/hosts
+    method: POST
+    body: "{{ lookup('template', 'cluster_template/ecs/clusters.j2', convert_data=False) }}"
+  register: cluster_creation_result
+  failed_when: '"Status code was 400" in cluster_creation_result.msg'
+  when: not cluster_template_dry_run
+
+
+
 
 - name: Find cluster template command URL for troubleshooting
   set_fact:
