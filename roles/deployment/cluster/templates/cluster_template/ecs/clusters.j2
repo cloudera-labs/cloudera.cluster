@@ -1,0 +1,13 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{
+{% set cluster_type = cluster.type | default('base') %}
+"items":
+[
+  {
+    "name" : "{{ cluster.name }}",
+    "displayName": "{{ cluster.name }}",
+    "fullVersion": "{{ products | cloudera.cluster.get_product_version('ECS') }}",
+    "clusterType": "EXPERIENCE_CLUSTER"
+  }
+]
+}
