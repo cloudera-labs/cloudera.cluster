@@ -30,6 +30,10 @@
     loop_var: repository
   check_mode: no
 
+- debug:
+    msg: "This Play Host OS Distro is {{ cluster_os_distribution }}"
+    verbosity: 3
+
 - name: Extract product details from parcel manifests
   ansible.builtin.set_fact:
     products: >
