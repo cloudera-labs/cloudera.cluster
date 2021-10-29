@@ -24,6 +24,8 @@
   vars:
     services: "{{ cluster.ecs_databases | default(ecs_databases) }}"
 
+# Add PVC parcel repo - assume that this has been set via REMOTE_PARCEL_REPO_URLS in the cm config. We can add this in later if needed
+
 - name: Create ECS cluster
   cloudera.cluster.cm_api:
     endpoint: /clusters
@@ -37,29 +39,44 @@
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/hosts
     method: POST
-    body: "{{ lookup('template', 'cluster_template/ecs/clusters.j2', convert_data=False) }}"
-  register: cluster_creation_result
-  failed_when: '"Status code was 400" in cluster_creation_result.msg'
+    body: "{{ lookup('template', 'cluster_template/ecs/hosts.j2', convert_data=False) }}"
+  register: cluster_hosts_result
+  failed_when: '"Status code was 400" in cluster_hosts_result.msg'
   when: not cluster_template_dry_run
 
+- name: Add services to ECS cluster
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services
+    method: POST
+    body: "{{ lookup('template', 'cluster_template/ecs/services.j2', convert_data=False) }}"
+  register: cluster_services_result
+  failed_when: '"Status code was 400" in cluster_services_result.msg'
+  when: not cluster_template_dry_run
 
+- name: Wait for parcels to become active on any new hosts
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/parcels/products/{{ item.product }}/versions/{{ item.version }}
+  register: parcels_response
+  until: parcels_response.json.stage == "ACTIVATED"
+  with_items: "{{ active_parcels }}"
+  retries: "{{ ecs_parcel_poll_max_retries | default(30) }}"
+  delay: "{{ ecs_parcel_poll_duration | default(20) }}"
 
-
-- name: Find cluster template command URL for troubleshooting
+- name: Generate custom values
   set_fact:
-    command_details_url: "{{ cluster_template_result.url | regex_replace('/api/.*','/cmf/command/' ~ cluster_template_result.json.id | string ~ '/details' ) }}"
-  when: cluster_template_result.failed and 'id' in cluster_template_result.json
+    custom_values: "{{ cluster.controlplane_config | combine(lookup('template', 'cluster_template/ecs/controlPlaneValues.j2') | from_yaml, recursive=True) }}"
 
-- name: Delete cluster if template import failed (and if it's safe to do so)
-  import_role:
-    name: operations/delete_cluster
-  when:
-    - cluster_template_result.failed
-    - not (skip_cluster_deletion | default(false))
+- name: Show custom values
+  debug:
+    var: custom_values
 
-- name: Fail because of unsuccessful cluster template import
-  fail:
-    msg: >
-      Cluster template import failed.
-      Result message: {{ cluster_template_result.json.message }}
-  when: cluster_template_result.failed and command_details_url is not defined
+- name: Install ECS cluster
+  cloudera.cluster.cm_api:
+    endpoint: /controlPlanes/commands/installEmbeddedControlPlane
+    method: POST
+    body:
+      remoteRepoUrl: cluster.pvc_repository
+      experienceClusterName: cluster.name
+      datalakeClusterName:  cluster.datalake
+      valuesYaml: custom_values
+  register: controlplan_response

@@ -1,0 +1,199 @@
+Services:
+  thunderheadenvironment:
+    Config:
+      database:
+        name: {{ databases.ENV.name }}
+        mode: {{ databases.ENV.mode | default(ecs_database_mode) }}
+        host: {{ databases.ENV.host }}
+        port: {{ databases.ENV.port }}
+        username: {{ databases.ENV.user }}
+        password: {{ databases.ENV.password }}
+  clusterproxy:
+    Config:
+      database:
+        name: {{ databases.CLUSTER_PROXY.name }}
+        mode: {{ databases.CLUSTER_PROXY.mode | default(ecs_database_mode) }}
+        host: {{ databases.CLUSTER_PROXY.host }}
+        port: {{ databases.CLUSTER_PROXY.port }}
+        username: {{ databases.CLUSTER_PROXY.user }}
+        password: {{ databases.CLUSTER_PROXY.password }}
+  classicclusters:
+    Config:
+      database:
+        name: {{ databases.CLASSIC_CLUSTERS.name }}
+        mode: {{ databases.CLASSIC_CLUSTERS.mode | default(ecs_database_mode) }}
+        host: {{ databases.CLASSIC_CLUSTERS.host }}
+        port: {{ databases.CLASSIC_CLUSTERS.port }}
+        username: {{ databases.CLASSIC_CLUSTERS.user }}
+        password: {{ databases.CLASSIC_CLUSTERS.password }}
+  mlxcontrolplaneapp:
+    Config:
+      database:
+        name: {{ databases.MLX.name }}
+        mode: {{ databases.MLX.mode | default(ecs_database_mode) }}
+        host: {{ databases.MLX.host }}
+        port: {{ databases.MLX.port }}
+        username: {{ databases.MLX.user }}
+        password: {{ databases.MLX.password }}
+  cpxliftie:
+    Config:
+      database:
+        name: {{ databases.LIFTIE.name }}
+        mode: {{ databases.LIFTIE.mode | default(ecs_database_mode) }}
+        host: {{ databases.LIFTIE.host }}
+        port: {{ databases.LIFTIE.port }}
+        username: {{ databases.LIFTIE.user }}
+        password: {{ databases.LIFTIE.password }}
+  monitoringapp:
+    Config:
+      database:
+        name: {{ databases.ALERTS.name }}
+        mode: {{ databases.ALERTS.mode | default(ecs_database_mode) }}
+        host: {{ databases.ALERTS.host }}
+        port: {{ databases.ALERTS.port }}
+        username: {{ databases.ALERTS.user }}
+        password: {{ databases.ALERTS.password }}
+      prometheus:
+        ingressForCM:
+          enabled: false
+          # The control plane prometheus ingress hostname will be <subdomain>.apps.<ApplicationDomain>
+          subdomain: "prometheus-cp"
+          # This is a username and password hash in htpasswd format encoded in base64
+          htpasswdCredentials: "YWRtaW46JDJ5JDA1JDJwOTJFNVRRa1VnelkvbFNsVklYMGUyVnEzd0JtRExuc3RTRUZUanJEUGVSRHUzS0J5UUoyCg=="
+  dwx:
+    Config:
+      database:
+        name: {{ databases.DWX.name }}
+        mode: {{ databases.DWX.mode | default(ecs_database_mode) }}
+        host: {{ databases.DWX.host }}
+        port: {{ databases.DWX.port }}
+        username: {{ databases.DWX.user }}
+        password: {{ databases.DWX.password }}
+  dex:
+    Config:
+      database:
+        name: {{ databases.DEX.name }}
+        mode: {{ databases.DEX.mode | default(ecs_database_mode) }}
+        host: {{ databases.DEX.host }}
+        port: {{ databases.DEX.port }}
+        username: {{ databases.DEX.user }}
+        password: {{ databases.DEX.password }}
+  resourcepoolmanager:
+    Config:
+      database:
+        name: {{ databases.RESOURCEPOOL_MANAGER.name }}
+        mode: {{ databases.RESOURCEPOOL_MANAGER.mode | default(ecs_database_mode) }}
+        host: {{ databases.RESOURCEPOOL_MANAGER.host }}
+        port: {{ databases.RESOURCEPOOL_MANAGER.port }}
+        username: {{ databases.RESOURCEPOOL_MANAGER.user }}
+        password: {{ databases.RESOURCEPOOL_MANAGER.password }}
+  clusteraccessmanager:
+    Config:
+      database:
+        name: {{ databases.CLUSTER_ACCESS_MANAGER.name }}
+        mode: {{ databases.CLUSTER_ACCESS_MANAGER.mode | default(ecs_database_mode) }}
+        host: {{ databases.CLUSTER_ACCESS_MANAGER.host }}
+        port: {{ databases.CLUSTER_ACCESS_MANAGER.port }}
+        username: {{ databases.CLUSTER_ACCESS_MANAGER.user }}
+        password: {{ databases.CLUSTER_ACCESS_MANAGER.password }}
+
+  thunderheadusermanagementprivate:
+    Config:
+      database:
+        name: {{ databases.UMS.name }}
+        mode: {{ databases.UMS.mode | default(ecs_database_mode) }}
+        host: {{ databases.UMS.host }}
+        port: {{ databases.UMS.port }}
+        username: {{ databases.UMS.user }}
+        password: {{ databases.UMS.password }}
+      replicaCount: 2
+
+  thunderheadiamconsole:
+    Config:
+      replicaCount: 2
+
+  thunderheadiamapi:
+    Config:
+      replicaCount: 2
+
+ContainerInfo:
+  ## The mode can be public or custom
+  Mode: embedded
+  CopyDocker: true
+  ## Docker read credentials are typically required.
+  # Username:
+  # Password:
+  ## If the mode is custom, then enter the docker registry + repository here:
+  ## e.g. registry.example.com/repository_name
+  # Registry:
+
+Database:
+  ## The mode can be either embedded or existing
+  ## If existing is set, then database host, port, username, password must be
+  ## set for each database in the services section above.
+  Mode: embedded
+  ## The amount of storage in GB given to the embedded database.
+  EmbeddedDbStorage: 5
+
+Vault:
+  ## The mode can be either embedded or external.
+  Mode: embedded
+  ## The amount of storage in GB given to the embedded vault.
+  EmbeddedStorage: 2
+  ## If external is set, then you also need to set the following:
+  # Address: <The Vault URL>
+  # Token: <The authorization token that has the ability to write permissions inside the vault>
+  # CaCert: <The CA Certificate in base64 encoded format>
+  # SecretPath: kv
+  # K8AuthPathPrefix: cloudera
+  # InClusterAddress: <Vault URL to use from within the cluster>
+  # VaultK8sAddress: <K8S address Vault should use with the cluster>
+  # SkipVaultTLS: <true/false>
+
+OptionalCerts:
+  MiscCaCerts: ""
+
+{% set auth_provider = auth_providers[service_auth_provider] %}
+## If you want to use LDAP, uncomment the following
+{%- if service_auth_provider is defined and service_auth_provider in auth_providers | default({}) -%}
+ExternalAuth:
+  Type: {%- if auth_provider.type == "LDAP" -%}LDAP{%- else -%}ACTIVE_DIRECTORY{%- endif -%}
+  Config:
+    ldap_url: "{{ auth_provider.ldap_url }}"
+    ldap_bind_dn: "{{ auth_provider.ldap_bind_user_dn }}"
+    ldap_bind_pw: "{{ auth_provider.ldap_bind_password }}
+    ldap_user_search_base: "{{ auth_provider.ldap_search_base.common | default('') }}"
+    ldap_user_search_filter: "(objectClass={{ auth_provider.ldap_object_class.user }})"
+    ldap_group_search_base: "{{ auth_provider.ldap_search_base.group | default('') }}"
+    ldap_group_search_filter: "(objectClass={{ auth_provider.ldap_object_class.group }})"
+{%- endif -%}
+## You should fill in the following information. Otherwise, you might not be able to
+## communicate with the Cloudera Manager instance or send diagnostics to Cloudera.
+Other:
+  cmLicense:
+    uuid: {{ cloudera_manager_repo_username }}
+    owner: "{{ cloudera_manager_license | regex_replace('(.|\n)*\"name\"\\s*:\\s*\"([^\"]*)\"(.|\n)*', '\\2') }}"
+#   truststoreJKS: <The truststore certificate in base64 encoded JKS format to communicate with the primary Cloudera Manager instance>
+#   truststorePEM: <The truststore certificate in base64 encoded PEM format to communicate with the primary Cloudera Manager instance>
+#   truststoreChecksum: <The truststore certificate checksum to communicate with the primary Cloudera Manager instance>
+## If you want to use a Storage Class other than the default, uncomment the following
+# Storage:
+#   StorageClass: <Storage Class Name>
+
+## Valid values for Name: openshift/standard
+## standard (non-openshift, rancher, etc.)
+## Note: values in lowercase
+Platform:
+  Name: standard
+## Only filled for Standard platform
+  WebConsoleUrl: ""
+
+## For Rancher, set the appropriate application domain name. e.g. rancher-1.vpc.cloudera.com
+ApplicationDomain: "{{ cluster.application_domain }}"
+
+
+## Openshift injects a valid fsGroup value for securityContext for its deployments. Since Rke2 doesn't have
+## this feature built-in, it causes a permission issue due to which postgresql fails to create the data directory
+## for persisting data (OPSX-1633). This flag needs to be set to false for Openshift, true otherwise.
+SecurityContext:
+  Enabled: true
