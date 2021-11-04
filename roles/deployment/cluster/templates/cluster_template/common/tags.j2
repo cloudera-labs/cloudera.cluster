@@ -1,5 +1,0 @@
-{%- if cluster.type | default('base') == 'ecs' -%}
-
-  "tags": [{ "name": "_cldr_cm_ek8s_datalake", "value" : "{{ cluster.datalake }}" }],
-
-{%- endif -%}
