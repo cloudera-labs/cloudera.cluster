@@ -15,6 +15,7 @@
 ---
 dependencies:
   - role: cloudera.cluster.cloudera_manager.api_hosts
+  - role: cloudera.cluster.deployment.credential
   - role: cloudera.cluster.infrastructure.ca_common
   - role: cloudera.cluster.prereqs.local_accounts_common
 

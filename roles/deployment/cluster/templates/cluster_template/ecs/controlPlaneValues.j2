@@ -57,9 +57,9 @@ Services:
         ingressForCM:
           enabled: false
           # The control plane prometheus ingress hostname will be <subdomain>.apps.<ApplicationDomain>
-          subdomain: "prometheus-cp"
+          subdomain: {{ cluster.prometheus_subdomain | default("prometheus-cp") }}
           # This is a username and password hash in htpasswd format encoded in base64
-          htpasswdCredentials: "YWRtaW46JDJ5JDA1JDJwOTJFNVRRa1VnelkvbFNsVklYMGUyVnEzd0JtRExuc3RTRUZUanJEUGVSRHUzS0J5UUoyCg=="
+          htpasswdCredentials: {{ cluster.htpasswd }}
   dwx:
     Config:
       database:

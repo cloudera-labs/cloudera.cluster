@@ -53,14 +53,70 @@
   failed_when: '"Status code was 400" in cluster_services_result.msg'
   when: not cluster_template_dry_run
 
-- name: Wait for parcels to become active on any new hosts
+- name: Get CM config
   cloudera.cluster.cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/parcels/products/{{ item.product }}/versions/{{ item.version }}
+    endpoint: "cm/config"
+    method: GET
+  register: cm_config
+
+- set_fact:
+    parcel_repos: "{{ (cm_config.json | json_query('items[?name==`REMOTE_PARCEL_REPO_URLS`].value') | default(['']))[0].split(',') | default([]) | union(cluster.repositories) }}"
+
+- name: Update parcelrepos
+  cloudera.cluster.cm_api:
+    endpoint: "cm/config"
+    body:
+      items:
+        - name: REMOTE_PARCEL_REPO_URLS
+          value: "{{ parcel_repos | join(', ') }}"
+    method: PUT
+
+- name: Refresh parcel repos command
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/commands/refreshParcelRepos"
+    method: POST
+
+- set_fact:
+    new_parcel_version: "{{ products | json_query('[?product==`ECS`].version') | first }}"
+
+- name: Start Parcel Download
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/ECS/versions/{{ new_parcel_version }}/commands/startDownload"
+    method: POST
+
+- name: Wait for parcels to download
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/ECS/versions/{{ new_parcel_version }}
   register: parcels_response
-  until: parcels_response.json.stage == "ACTIVATED"
-  with_items: "{{ active_parcels }}"
-  retries: "{{ ecs_parcel_poll_max_retries | default(30) }}"
-  delay: "{{ ecs_parcel_poll_duration | default(20) }}"
+  until: parcels_response.json.stage in ("DOWNLOADED", "DISTRIBUTED", "ACTIVATED")
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
+
+- name: Start Parcel Distribution
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/ECS/versions/{{ new_parcel_version }}/commands/startDistribution"
+    method: POST
+
+- name: Wait for parcels to become distributed to all hosts
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/ECS/versions/{{ new_parcel_version }}
+  register: parcels_response
+  until:  parcels_response.json.stage in ("DISTRIBUTED", "ACTIVATED")
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
+
+- name: Activate Parcels
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{cluster.name | urlencode() }}/parcels/products/ECS/versions/{{ new_parcel_version }}/commands/activate"
+    method: POST
+
+- name: Wait for parcels to become distributed to all hosts
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/ECS/versions/{{ new_parcel_version }}
+  register: parcels_response
+  until:  parcels_response.json.stage in ("ACTIVATED")
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
 
 - name: Generate custom values
   set_fact:

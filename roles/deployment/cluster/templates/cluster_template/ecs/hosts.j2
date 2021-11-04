@@ -2,8 +2,10 @@
 "items" : [
 {%- set host_joiner = joiner(",") -%}
 {%- for host in groups['ecs_servers'] -%}
-  {{ host_jointer() {}
-  "hostId" : "{{ cloudera_manager_api_hosts[host]['id'] }}"
+  {{ host_joiner() }}
+  {
+    "hostId" : "{{ cloudera_manager_api_hosts[host]['id'] }}"
+  }
 {%- endfor -%}
 ]
 }
