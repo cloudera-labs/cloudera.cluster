@@ -120,7 +120,7 @@
 
 - name: Generate custom values
   set_fact:
-    custom_values: "{{ cluster.controlplane_config | combine(lookup('template', 'cluster_template/ecs/controlPlaneValues.j2') | from_yaml, recursive=True) }}"
+    custom_values: "{{ lookup('template', 'cluster_template/ecs/controlPlaneValues.j2') | from_yaml | combine(cluster.controlplane_config, recursive=True) }}"
 
 - name: Show custom values
   debug:
