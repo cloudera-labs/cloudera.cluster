@@ -131,8 +131,9 @@
     endpoint: /controlPlanes/commands/installEmbeddedControlPlane
     method: POST
     body:
-      remoteRepoUrl: cluster.pvc_repository
-      experienceClusterName: cluster.name
-      datalakeClusterName:  cluster.datalake
-      valuesYaml: custom_values
-  register: controlplan_response
+      remoteRepoUrl: "{{ cluster.pvc_repository }}"
+      experienceClusterName: "{{ cluster.name }}"
+      datalakeClusterName: "{{ cluster.datalake }}"
+      valuesYaml: "{{ custom_values | to_yaml }}"
+  register: controlplane_response
+
