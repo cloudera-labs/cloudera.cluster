@@ -17,7 +17,7 @@
 - name: Select external auth provider details
   set_fact:
     auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
-  when: cloudera_manager_external_auth.provider is defined
+  when: cloudera_manager_external_auth.provider is defined and cloudera_manager_version is version('6.0.0','>=')
 
 - name: Set Cloudera Manager external auth configs
   include_role:
@@ -25,7 +25,7 @@
   vars:
     api_config_keys_uppercase: True
     api_configs: "{{ lookup('template', 'external_auth_configs.j2') | from_yaml }}"
-  when: auth_provider is defined
+  when: auth_provider is defined and cloudera_manager_version is version('6.0.0','>=')
 
 - block:
 
@@ -60,4 +60,4 @@
     notify:
       - wait cloudera-scm-server
 
-  when: cloudera_manager_external_auth.role_mappings is defined
+  when: cloudera_manager_external_auth.role_mappings is defined and cloudera_manager_version is version('6.0.0','>=')

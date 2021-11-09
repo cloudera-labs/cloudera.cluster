@@ -96,10 +96,6 @@ KNOX:
     ssl_enabled: true
     ssl_server_keystore_location: {{ tls_keystore_path_generic }}
     ssl_server_keystore_password: {{ tls_keystore_password }}
-KUDU:
-  MASTER:
-    ssl_client_truststore_location: {{ tls_truststore_path }}
-    ssl_client_truststore_password: {{ tls_truststore_password }}
 LIVY:
   GATEWAY:
     ssl_client_truststore_location: {{ tls_truststore_path }}
@@ -205,6 +201,7 @@ STREAMS_MESSAGING_MANAGER:
     ssl_server_keystore_keypassword: {{ tls_keystore_password }}
     ssl_server_keystore_location: {{ tls_keystore_path_generic }}
     ssl_server_keystore_password: {{ tls_keystore_password }}
+    streams.messaging.manager.kafka.client.security.protocol: {{ cluster.security.kerberos | default(false) | ternary('SASL_SSL', 'SSL') }}
   STREAMS_MESSAGING_MANAGER_UI:
     ssl_client_truststore_location: {{ tls_chain_path }}
     ssl_enabled: true
@@ -234,12 +231,3 @@ ZEPPELIN:
     ssl_enabled: true
     ssl_server_keystore_location: {{ tls_keystore_path_generic }}
     ssl_server_keystore_password: {{ tls_keystore_password }}
-{% if (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) %}
-ZOOKEEPER:
-  SERVICEWIDE:
-    zookeeper_tls_keystore: {{ tls_keystore_path_generic }}
-    zookeeper_tls_keystore_password: {{ tls_keystore_password }}
-    zookeeper_tls_truststore: {{ tls_truststore_path }}
-    zookeeper_tls_truststore_password: {{ tls_truststore_password }}
-    zookeeper_tls_enabled: true
-{% endif %}

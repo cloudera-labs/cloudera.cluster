@@ -26,6 +26,7 @@
         (teardown_everything is defined and teardown_everything)
         or teardown_cluster is defined
         or (teardown_cms is defined and teardown_cms)
+        or (teardown_skip_cluster_deletion is defined and teardown_skip_cluster_deletion)
       }}
     success_msg: "Teardown is properly configured and will execute"
     fail_msg: >-

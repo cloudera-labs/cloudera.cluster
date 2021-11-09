@@ -13,7 +13,7 @@
       ,"roleRefNames" : [ "{{ hostvars[host]['role_ref_names'] }}" ]
       {%- endif -%}
       {%- if 'rack_id' in hostvars[host] -%}
-      ,"rackId" : [ "{{ hostvars[host]['rack_id'] }}" ]
+      ,"rackId" : "{{ hostvars[host]['rack_id'] }}"
       {%- endif -%}
     }
   {%- endif -%}
@@ -34,4 +34,13 @@
     {%- endif -%}
   }
   {%- endif -%}
+  , "roleConfigGroups": [
+  {%- set role_group_sep = joiner(",") -%}
+  {%- for custom_rcg in cluster.host_templates | cloudera.cluster.extract_custom_role_groups -%}
+    {{ role_group_sep() }}
+    {
+      "rcgRefName": "{{ custom_rcg }}"
+    }
+  {%- endfor -%}
+  ]
 }
