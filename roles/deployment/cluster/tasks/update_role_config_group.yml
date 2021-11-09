@@ -14,18 +14,11 @@
 
 ---
 
-- name: Add Cloudera Manager yum repository
-  yum_repository:
-    name: cloudera-manager
-    description: Cloudera Manager
-    baseurl: "{{ cloudera_manager_repo_url }}"
-    gpgkey: "{{ cloudera_manager_repo_key }}"
-    gpgcheck: "{{ cloudera_manager_repo_gpgcheck | default((cloudera_manager_version.split('.')[0] == '5' ) | ternary('no', 'yes')) }}"
-    enabled: yes
-    username: "{{ cloudera_manager_repo_username | default('') }}"
-    password: "{{ cloudera_manager_repo_password | default('') }}"
-
-- name: yum-clean-metadata
-  command: yum clean metadata
-  args:
-    warn: no
+- name: Update service role configs
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/{{ service | lower }}/roleConfigGroups/{{ service | lower }}-{{ role_type }}-BASE/config?message=Automated%20updates%20from%20Ansible
+    method: PUT
+    body: "{{ lookup('template', 'services/roleConfigGroupConfig.j2', convert_data=False) }}"
+  loop: "{{ role_mappings[service] }}"
+  loop_control:
+    loop_var: role_type
