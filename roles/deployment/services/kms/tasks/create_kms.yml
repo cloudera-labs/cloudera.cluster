@@ -81,7 +81,7 @@
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/services
     method: POST
-    body: "{{ lookup('template', 'service.j2', convert_data=False) }}"
+    body: "{{ lookup('template', 'kms_service.j2', convert_data=False) }}"
   when: not existing_kms_service
 
 - name: Add KMS dependency to HDFS
