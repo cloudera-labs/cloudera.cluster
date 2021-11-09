@@ -23,7 +23,7 @@ HDFS:
   SERVICEWIDE:
     dfs_data_transfer_protection: privacy
     hadoop_group_mapping_ldap_keystore: {{ tls_keystore_path_generic }}
-    hadoop_group_mapping_ldap_keystore_passwd: {{ tls_keystore_path_generic }}
+    hadoop_group_mapping_ldap_keystore_passwd: {{ tls_keystore_password }}
     hadoop_group_mapping_ldap_use_ssl: True
     hdfs_hadoop_ssl_enabled: True
     ssl_client_truststore_location: {{ tls_truststore_path }}
@@ -123,8 +123,6 @@ KS_INDEXER:
     keystore_indexer_truststore_password: {{ tls_truststore_password }}
 KUDU:
   KUDU_MASTER:
-    ssl_client_truststore_location: {{ tls_truststore_path }}
-    ssl_client_truststore_password: {{ tls_truststore_password }}
     ssl_enabled: True
     ssl_server_ca_certificate_location: {{ tls_chain_path }}
     ssl_server_certificate_location: {{ tls_cert_path_generic }}
@@ -159,7 +157,6 @@ SOLR:
     solr_https_keystore_password: {{ tls_keystore_password }}
     solr_https_truststore_file: {{ tls_truststore_path }}
     solr_https_truststore_password: {{ tls_truststore_password }}
-    solr_ldap_enable_starttls: True
     solr_use_ssl: True
 SPARK_ON_YARN:
   SPARK_YARN_HISTORY_SERVER:
