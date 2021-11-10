@@ -18,6 +18,15 @@ postgresql_global_config_options:
     value: '*'
   - option: max_connections
     value: 300
+  - option: ssl
+    value: "{{ 'on' if database_tls else 'off' }}"
+  - option: ssl_cert_file
+    value: "{{ tls_cert_path_generic if database_tls else None }}"
+  - option: ssl_key_file
+    value: "{{ tls_key_path_plaintext_generic if database_tls else None }}"
+  - option: ssl_ca_file
+    value: "{{ tls_chain_path if database_tls else None }}"
+
 postgresql_hba_entries:
   - {type: local, database: all, user: postgres, auth_method: peer}
   - {type: local, database: all, user: all, auth_method: peer}

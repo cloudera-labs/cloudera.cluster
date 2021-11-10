@@ -235,7 +235,8 @@ postgres_accounts:
     uid: 26
     comment: PostgreSQL Server
     mode: '770'
-    unencrypted_key_acl: True
+    shell: /bin/bash
+    unencrypted_key_acl: "{{ database_tls }}"
 
 mariadb_accounts:
   - user: mysql
@@ -243,4 +244,5 @@ mariadb_accounts:
     uid: 27
     comment: MariaDB Server
     mode: '770'
-    unencrypted_key_acl: True
+    shell: /bin/bash
+    unencrypted_key_acl: "{{ database_tls }}"

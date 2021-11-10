@@ -44,7 +44,7 @@
         comment: "{{ account.comment | default(omit) }}"
         groups: "{{ account.extra_groups | default([]) }}"
         uid: "{{ account.uid | default(omit) }}"
-        shell: /sbin/nologin
+        shell: "{{ account.shell | default('/sbin/nologin') }}"
         append: yes
       loop: "{{ local_accounts }}"
       loop_control:

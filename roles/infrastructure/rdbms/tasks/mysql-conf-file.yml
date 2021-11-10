@@ -13,8 +13,8 @@
 # limitations under the License.
 
 ---
-mysql_pid_file: /var/run/mariadb/mariadb.pid
-mysql_innodb_large_prefix: 0
-mysql_config_include_files:
-  - src: "{{ local_temp_dir }}/cloudera.cnf"
-    force: true
+
+- name: Build mysql.cnf
+  ansible.builtin.template:
+    src: cloudera.cnf.j2
+    dest: "{{ local_temp_dir }}/cloudera.cnf"
