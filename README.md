@@ -69,7 +69,7 @@ This release includes support for:
 
 These features are potentially very dangerous and can cause damage to running clusters if used incorrectly. If you plan to use these features, please ensure that you test thoroughly on a disposable environment, before running on clusters that are not disposable.
 
-Cloudera recommends that Cloudera Professional Services be engaged before using these features, particularly as none of the automation products are not covered under your Cloudera Support agreements.
+Cloudera recommends that Cloudera Professional Services be engaged before using these features, particularly as none of the automation products are covered under your Cloudera Support agreements.
 
 In order to use these capabilities you will need some permutation of the following variables:
 - `cloudera_runtime_pre_upgrade` (specify the version of the legacy cluster - e.g. 5.16.2)
