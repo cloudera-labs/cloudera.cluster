@@ -15,7 +15,7 @@
 ---
 
 - name: Copy CSRs to CA server
-  copy:
+  ansible.builtin.copy:
     src: "{{ local_csrs_dir }}/{{ inventory_hostname }}.csr"
     dest: "{{ ca_server_intermediate_path_csr }}/"
     mode: 0644
@@ -23,7 +23,8 @@
   connection: ssh
 
 - name: Sign CSRs
-  shell:
+  ansible.builtin.shell:
+    executable: /bin/bash
     cmd: >
       exec 100>/tmp/ca_server.lock;
       flock 100 &&
@@ -42,7 +43,7 @@
   connection: ssh
 
 - name: Bring signed certs back to controller
-  fetch:
+  ansible.builtin.fetch:
     src: "{{ ca_server_intermediate_path_certs }}/{{ inventory_hostname }}.pem"
     dest: "{{ local_certs_dir }}/"
     flat: yes

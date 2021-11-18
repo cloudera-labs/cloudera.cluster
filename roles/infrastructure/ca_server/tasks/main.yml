@@ -24,15 +24,25 @@
     name: openssl
     state: present
 
-- name: Install PyOpenSSL
+- name: Install PyOpenSSL on Rhel7
   ansible.builtin.package:
     lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: pyOpenSSL
     state: present
-  when: ansible_os_family == "RedHat"
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_major_version | int < 8
+
+- name: Install PyOpenSSL on Rhel8
+  ansible.builtin.pip:
+    name: pyOpenSSL
+    state: present
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_major_version | int >= 8
 
 - name: Install cryptography Python package
-  pip:
+  ansible.builtin.pip:
     name: cryptography
     state: present
   when: ansible_os_family == "Debian"

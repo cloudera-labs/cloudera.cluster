@@ -17,17 +17,11 @@
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
-  when: ansible_os_family != "Debian"
 
-- name: Include variables
-  include_vars:
-    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
-  when: ansible_os_family == "Debian"
-
-- name: Refresh Package cache
-  ansible.builtin.apt:
-    update_cache: yes
-  when: ansible_os_family == "Debian"
+- name: Apply OS-specific configurations
+  include_tasks:
+    file: "main-{{ ansible_os_family }}.yml"
+  when: not((ansible_virtualization_type == "docker" or ansible_virtualization_type == "container") and ansible_virtualization_role == "guest")
 
 - name: Update kernel flags
   sysctl:
@@ -104,8 +98,3 @@
   include_tasks:
     file: rngd.yml
   when: ansible_virtualization_role == 'guest'
-
-- name: Apply OS-specific configurations
-  include_tasks:
-    file: "main-{{ ansible_os_family }}.yml"
-  when: not((ansible_virtualization_type == "docker" or ansible_virtualization_type == "container") and ansible_virtualization_role == "guest")

@@ -17,12 +17,6 @@
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
-  when: ansible_os_family != "Debian"
-
-- name: Include variables
-  include_vars:
-    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
-  when: ansible_os_family == "Debian"
 
 - name: Define JDK package
   set_fact:

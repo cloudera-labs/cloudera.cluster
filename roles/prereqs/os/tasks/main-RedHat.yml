@@ -30,6 +30,12 @@
       loop_control:
         loop_var: __pyver_item
 
+    - name: Ensure Python symlink available for Cloudera Manager and Ranger
+      ansible.builtin.raw: |
+        if [ -f /usr/bin/python2 ] && [ ! -f /usr/bin/python ]; then
+          ln --symbolic /usr/bin/python2 /usr/bin/python;
+        fi
+
 - name: Disable SELinux
   selinux:
     policy: targeted
