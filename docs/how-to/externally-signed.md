@@ -33,7 +33,7 @@ As we wish to use an external CA, it should be omitted from the inventory file.
 
 ## Set `tls_ca_certs` to point to the external CA certificates
 
-Here, we need to set `tls_ca_certs` in `extra_vars.yml` to point to the external CA certificates (on the Ansible controller):
+Here, we need to set `tls_ca_certs` in `defintion.yml` to point to the external CA certificates (on the Ansible controller):
 
 ```
 tls_ca_certs:

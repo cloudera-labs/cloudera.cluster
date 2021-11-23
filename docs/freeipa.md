@@ -17,7 +17,7 @@ Before continuing, a few questions you may want to ask yourself are:
 
 ## Common steps
 
-Regardless of how you choose to use FreeIPA in your deployment, you'll have to set the following variables via extra vars:
+Regardless of how you choose to use FreeIPA in your deployment, you'll have to set the following variables via the definition file:
 
 - `krb5_realm` (e.g. `CLOUDERA.LOCAL`)
 - `krb5_kdc_admin_user` (e.g. the FreeIPA default `admin@{{ krb5_realm }}`)
@@ -79,7 +79,7 @@ You may need to add the FreeIPA to the CA certs (via the API or wizard).
 
 #### FreeIPA or externally provisioned certificates
 
-Here, you'll want to unset any TLS configurations in the `cluster.yml` file. This is because AutoTLS takes on the role of configuring the cluster here.
+Here, you'll want to unset any TLS configurations in the `definition.yml` file. This is because AutoTLS takes on the role of configuring the cluster here.
 
 You'll then need to enable AutoTLS using the certificates provisioned (by default) under `/opt/cloudera/security/pki` using the API https://blog.cloudera.com/auto-tls-in-cloudera-data-platform-data-center/ immediately after installing the Cloudera Manager.
 
@@ -133,9 +133,3 @@ Configure the services:
 ```
 service_auth_provider: freeipa
 ```
-
-## YCloud
-
-YCloud will work, but you will need to change the group running `systemd` (not pretty):
-
-`yum install -y gdb && yes | gdb -p 1 --ex 'call setgid(0)' --ex quit`

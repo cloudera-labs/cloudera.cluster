@@ -7,7 +7,7 @@
 (no extra vars)
 ```
 
-With no variables overridden, the default behaviour is to install the latest or recommended version of Cloudera Manager (currently `7.0.3`). The version number is specified as `cloudera_manager_version` in the role default variables (`roles/cloudera_manager/repo/defaults/main.yml`).
+With no variables overridden, the default behaviour is to install the latest or recommended version of Cloudera Manager (currently `7.4.4`). The version number is specified as `cloudera_manager_version` in the role default variables (`roles/cloudera_manager/repo/defaults/main.yml`).
 
 ## Install a custom Cloudera Manager version (public archive, not paywalled)
 
@@ -39,6 +39,8 @@ cloudera_manager_repo_password: !vault |
           3338663739 ... snip ...
 ```
 
+You can also, rather than specifying the `cloudera_manager_repo_username` and `cloudera_manager_repo_password` simply specify a `license_file` in the profile or definition file, and the paywall credentials will be extracted from the license file itself.
+
 ## Install a custom Cloudera Manager version (custom archive)
 
 ### Method 1:
@@ -48,7 +50,7 @@ and a version. This method is OS agnostic. For example, if deploying on RHEL or 
 the `redhat7/yum` portion of the final repo location.
 
 ```
-cloudera_archive_base_url: http://cloudera-build-us-west-1.vpc.cloudera.com/s3/build/2535749
+cloudera_archive_base_url: http://myprivaterepo.com/
 cloudera_manager_version: 7.1.1
 ```
 
@@ -58,5 +60,5 @@ If the custom archive does not follow the same directory structure as Cloudera's
 repository location. Note: `cloudera_manager_repo_url` takes precedence over `cloudera_manager_version`. Any specified version number is ignored when a custom repository URL is set in this manner.
 
 ```
-cloudera_manager_repo_url: http://cloudera-build-us-west-1.vpc.cloudera.com/s3/build/2400091/cm7/7.1.1/redhat7/yum/
+cloudera_manager_repo_url: http://myprivaterepo.com/cm7/7.1.1/redhat7/yum/
 ```

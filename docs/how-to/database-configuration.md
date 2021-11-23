@@ -10,7 +10,7 @@ Create the cluster definition you wish to deploy.
 
 ### Configure the Cloudera Manager database
 
-Add the following variables to `extra_vars.yml`:
+Add the following variables to `definition.yml`:
 
 - `cloudera_manager_database_host`
 - `cloudera_manager_database_name`

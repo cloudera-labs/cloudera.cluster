@@ -14,7 +14,7 @@ Here, it is important you ensure that each service has the required permissions 
 
 The playbook will install the JDBC driver via maven.
 
-By default, the playbook will search for the public maven repository, however, this can be overridden by setting `maven_repo` in `extra_vars.yml` to your maven repository.
+By default, the playbook will search for the public maven repository, however, this can be overridden by setting `maven_repo` in `definition.yml` to your maven repository.
 
 3. Ensure the instant client is available
 
@@ -22,7 +22,7 @@ The playbook will install the instant client using zip files local to the Ansibl
 
 Please upload the instant client basic and sdk zip to the Ansible controller and set `oracle_instantclient_basic_zip` and `oracle_instantclient_sdk_zip` to these locations.
 
-4. Configure `extra_vars.yml` with the connection information
+4. Configure `definition.yml` with the connection information
 
 Here, you'll want to set:
 
@@ -149,7 +149,7 @@ Optionally, the playbook can be configured to delete each Oracle user's tablespa
 
 Please first ensure you have access (via SSH) to a host that is able to access the Oracle database using the `sqlplus` client.
 
-Then, in `extra_vars.yml`, configure the following:
+Then, in `definition.yml`, configure the following:
 
 - `teardown_oracle_preamb` (shell commands required to setup environment)
 - `teardown_oracle_client_host` (hostname of database client)
