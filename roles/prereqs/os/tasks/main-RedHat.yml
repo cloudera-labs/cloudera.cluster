@@ -13,6 +13,28 @@
 # limitations under the License.
 
 ---
+- name: Setup System python on Rhel8
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version | int >= 8
+  block:
+    - name: install python versions
+      ansible.builtin.package:
+        lock_timeout: 180
+        name: "{{ __pyver_item }}"
+        update_cache: yes
+        state: present
+      loop:
+        - python3
+        - python2
+      loop_control:
+        loop_var: __pyver_item
+
+    - name: Ensure Python symlink available for Cloudera Manager and Ranger
+      ansible.builtin.raw: |
+        if [ -f /usr/bin/python2 ] && [ ! -f /usr/bin/python ]; then
+          ln --symbolic /usr/bin/python2 /usr/bin/python;
+        fi
 
 - name: Disable SELinux
   selinux:

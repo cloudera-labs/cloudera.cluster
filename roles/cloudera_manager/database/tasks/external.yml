@@ -14,7 +14,7 @@
 
 ---
 
-- name: Create Cloudera Manager database user
+- name: Create Cloudera Manager database user for Postgres
   postgresql_user:
     name: "{{ cloudera_manager_database_user }}"
     password: "{{ cloudera_manager_database_password }}"
@@ -39,7 +39,7 @@
   - cloudera_manager_database_type == 'postgresql'
   - cloudera_manager_database_host in groups.db_server | default([])
 
-- name: Create Cloudera Manager database user
+- name: Create Cloudera Manager database user for MySQL
   mysql_user:
     name: "{{ cloudera_manager_database_user }}"
     password: "{{ cloudera_manager_database_password }}"
@@ -66,7 +66,7 @@
 
 - name: Prepare Cloudera Manager Server external database
   command: |
-    {{ cloudera_manager_database_prepare_script }}  -f --host {{ cloudera_manager_database_host }} --port {{ cloudera_manager_database_port }}
+    {{ cloudera_manager_database_prepare_script }} -f --host {{ cloudera_manager_database_host }} --port {{ cloudera_manager_database_port }}
     {{ cloudera_manager_database_type | regex_replace('mariadb', 'mysql') }}
     {{ cloudera_manager_database_name }}
     {{ cloudera_manager_database_user }}

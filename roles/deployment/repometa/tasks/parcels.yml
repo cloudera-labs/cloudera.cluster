@@ -30,13 +30,17 @@
     loop_var: repository
   check_mode: no
 
+- debug:
+    msg: "This Play Host OS Distro is {{ cluster_os_distribution }}"
+    verbosity: 3
+
 - name: Extract product details from parcel manifests
-  set_fact:
+  ansible.builtin.set_fact:
     products: >
       {{ manifests.results
       | map(attribute='json')
       | list
-      | cloudera.cluster.extract_products_from_manifests
+      | cloudera.cluster.extract_products_from_manifests(os_distribution=cluster_os_distribution)
       | dict2items(key_name='product', value_name='version')
       }}
   run_once: true

@@ -17,12 +17,11 @@
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
-  when: ansible_os_family != "Debian"
 
-- name: Include variables
-  include_vars:
-    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
-  when: ansible_os_family == "Debian"
+- name: Apply OS-specific configurations
+  include_tasks:
+    file: "main-{{ ansible_os_family }}.yml"
+  when: not((ansible_virtualization_type == "docker" or ansible_virtualization_type == "container") and ansible_virtualization_role == "guest")
 
 - name: Update kernel flags
   sysctl:
@@ -49,7 +48,7 @@
 
 - name: Install DNS utils package
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ dns_package }}"
     state: present
 
@@ -59,7 +58,7 @@
 
 - name: Install {{ ntp_package }} service if ntp or chrony is not installed
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ ntp_package }}"
     state: present
   when: ('ntp' not in ansible_facts.packages) and ('chrony' not in ansible_facts.packages)
@@ -77,7 +76,7 @@
 
 - name: Install nscd service
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ nscd_package }}"
     state: present
 
@@ -99,8 +98,3 @@
   include_tasks:
     file: rngd.yml
   when: ansible_virtualization_role == 'guest'
-
-- name: Apply OS-specific configurations
-  include_tasks:
-    file: "main-{{ ansible_os_family }}.yml"
-  when: not((ansible_virtualization_type == "docker" or ansible_virtualization_type == "container") and ansible_virtualization_role == "guest")

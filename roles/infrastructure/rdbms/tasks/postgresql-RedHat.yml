@@ -30,6 +30,15 @@
     gpgkey: https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG
   when: not (skip_rdbms_repo_setup | default(False))
 
+- name: disable default Postgres module in Rhel 8
+  command: dnf module disable -y postgresql
+  register: __postgres_module_result
+  changed_when:
+    - '"Disabling modules" in __postgres_module_result.stdout'
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version | int >= 8
+
 - name: Install PostgreSQL
   include_role:
     name: geerlingguy.postgresql

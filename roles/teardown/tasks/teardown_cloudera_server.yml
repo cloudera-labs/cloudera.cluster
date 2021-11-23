@@ -21,7 +21,7 @@
 
 - name: Remove Cloudera manager package
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: cloudera-manager-server
     state: absent
 

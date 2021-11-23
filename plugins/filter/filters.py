@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+from typing import Optional
 import re
 
 __metaclass__ = type
@@ -74,15 +74,24 @@ class FilterModule(object):
 
         return state
 
-    def extract_products_from_manifests(self, manifests):
+    def extract_products_from_manifests(self, manifests, os_distribution: Optional[str] = None):
         products = dict()
         for manifest in manifests:
-            for parcel in manifest['parcels']:
+            for parcel in manifest["parcels"]:
+                # fetch the full parcel name from the manifest
+                full_parcel_name = str(parcel["parcelName"])
+                # the parcel OS distribution is between the last "-" and the ".parcel" extension
+                parcel_os_distribution = full_parcel_name[
+                    full_parcel_name.rindex("-")
+                    + 1: full_parcel_name.rindex(".parcel")
+                ]
                 # take first parcel, strip off OS name and file extension
-                parcel_name = re.sub(r"-[a-z0-9]+\.parcel$", "", str(parcel['parcelName']))
+                parcel_name = re.sub(r"-[a-z0-9]+\.parcel$", "", full_parcel_name)
                 # the product name is before the first dash
-                product = parcel_name[:parcel_name.index("-")]
-                if product not in products:
+                product = parcel_name[: parcel_name.index("-")]
+                if product not in products and (
+                    os_distribution == parcel_os_distribution or os_distribution is None
+                ):
                     # the version string is everything after the first dash
                     version = parcel_name[parcel_name.index("-") + 1:]
                     products[product] = version

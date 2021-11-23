@@ -17,16 +17,10 @@
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
-  when: ansible_os_family != "Debian"
-
-- name: Include variables
-  include_vars:
-    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
-  when: ansible_os_family == "Debian"
 
 - name: Install OpenLDAP client libraries
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: "{{ ldap_packages }}"
     state: present
   when: "'cloudera_manager' in group_names"

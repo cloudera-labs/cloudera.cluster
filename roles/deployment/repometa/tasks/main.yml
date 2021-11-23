@@ -13,6 +13,9 @@
 # limitations under the License.
 
 ---
+- name: Determine OS-specific values
+  include_tasks:
+    file: "prepare-{{ ansible_os_family }}.yml"
 
 - name: Set products and parcel repositories
   include_tasks: parcels.yml

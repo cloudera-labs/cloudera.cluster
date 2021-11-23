@@ -22,6 +22,6 @@
 
     - name: Install openssl
       ansible.builtin.package:
-        lock_timeout: 60
+        lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
         name: openssl
         state: present

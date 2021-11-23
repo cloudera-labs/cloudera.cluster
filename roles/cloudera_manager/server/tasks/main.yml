@@ -37,7 +37,7 @@
 # This will update the daemons and the agent on this host as well.
 - name: Install Cloudera Manager Server
   ansible.builtin.package:
-    lock_timeout: 60
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: cloudera-manager-server
     state: latest
 

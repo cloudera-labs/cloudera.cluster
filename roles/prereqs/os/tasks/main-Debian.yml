@@ -13,3 +13,34 @@
 # limitations under the License.
 
 ---
+- name: Refresh Package cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Ensure pip is upgraded
+  ansible.builtin.package:
+    name: "{{ (ansible_python_version[0] == '2') | ternary('python-pip', 'python3-pip') }}"
+    state: latest
+
+- ansible.builtin.debug:
+    msg: "OS is {{ansible_distribution}} {{ ansible_distribution_version }}"
+    verbosity: 3
+
+# https://askubuntu.com/questions/1250974/user-root-cant-write-to-file-in-tmp-owned-by-someone-else-in-20-04-but-can-in
+- name: Fix Ubuntu 20.04 blocking root from editing files owned by other users
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - ansible_distribution_version == '20.04'
+  block:
+    - name: Enable root can edit any file in Ubuntu 20.04 after reboot
+      lineinfile:
+        dest: /usr/lib/sysctl.d/protect-links.conf
+        regexp: "^fs.protected_regular"
+        line: "fs.protected_regular = 0"
+
+    - name: Set protected_regular to 0 in sysctl for current session
+      sysctl:
+        name: fs.protected_regular
+        value: 0
+        state: present
+        reload: yes

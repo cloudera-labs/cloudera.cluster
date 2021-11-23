@@ -14,10 +14,9 @@
 
 ---
 
-- name: Include variables for not-Debian in cm6/7
+- name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
-  when: ansible_os_family != "Debian"
 
 - name: Correct repo URL for Redhat with cm5
   ansible.builtin.set_fact:
@@ -25,11 +24,6 @@
   when:
     - ansible_os_family != "Debian"
     - cloudera_manager_version.split('.')[0] == "5"
-
-- name: Include variables
-  include_vars:
-    file: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
-  when: ansible_os_family == "Debian"
 
 - name: Define Cloudera Manager trial repository details
   set_fact:
