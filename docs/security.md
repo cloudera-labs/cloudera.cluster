@@ -29,10 +29,10 @@ clusters:
       tls: true
 ```
 
-2) Set `tls: True` on all inventory host groups for which TLS keystores and truststores need to be generated.
+2) Set `tls: True` on all inventory host groups for which TLS keystores and truststores need to be generated (which could include database servers).
 
 ```ini
-[cluster:vars]
+[deployment:vars]
 tls=True
 ```
 
