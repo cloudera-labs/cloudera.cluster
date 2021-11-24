@@ -22,8 +22,10 @@ This Ansible Collection is designed to work hand-in-hand with [Cloudera Deploy](
 
 ### Operating Systems
 
-- Red Hat / CentOS 7.x and 8.x
-- Ubuntu 18.04 LTS (Bionic Beaver) and 20.04 LTS (Focal Fossa)
+- Red Hat / CentOS 7.x
+- Red Hat / CentOS 8.x
+- Ubuntu 18.04 LTS (Bionic Beaver)
+- Ubuntu 20.04 LTS (Focal Fossa)
 
 Active development is focused on **CDP Private Cloud Base** (formerly CDP-DC) deployments and their respective platform compatibility matrices.
 
