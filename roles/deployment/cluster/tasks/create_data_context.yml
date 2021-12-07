@@ -28,3 +28,4 @@
     - "'already exists' not in result.json.message | default('')"
   when:
     - cluster.data_contexts is iterable
+    - "'HDFS' in cluster.services"
