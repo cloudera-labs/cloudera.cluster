@@ -29,7 +29,9 @@
         success_msg: "TLS is configured on a set of nodes"
         fail_msg: >-
           TLS certificate distribution is not configured in the cluster inventory
-          file (set manual_tls_cert_distribution if this is intentional)
+          file.
+          If this is intential, set manual_tls_cert_distribution=true.
+          Otherwise, set tls=true for each host requiring a certificate.
       when: has_tls and not (manual_tls_cert_distribution | default(false))
     - name: Ensure that TLS distribution is not configured in the inventory
       assert:
