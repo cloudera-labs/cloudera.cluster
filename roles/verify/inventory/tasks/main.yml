@@ -32,3 +32,18 @@
       not (
       'ca_server' in groups and krb5_kdc_type == "Red Hat IPA")
       }}
+
+- block:
+    - set_fact:
+          cluster_hosts: >-
+            {{ groups.cluster | default([])
+               | union(groups.cloudera_manager | default([]))
+            }}
+
+    - name: Ensure that all hosts requiring TLS certificates have a FreeIPA client
+      assert:
+        that: >-
+          {{ groups.tls | difference(cluster_hosts) | length == 0 }}
+  when:
+    - krb5_kdc_type == "Red Hat IPA"
+    - not (skip_ipa_signing | default(false))
