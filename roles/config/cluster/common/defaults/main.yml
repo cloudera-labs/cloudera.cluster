@@ -75,6 +75,7 @@ cluster_services_ordered:
   - CRUISE_CONTROL
   - DAS
   - FLINK
+  - SQL_STREAM_BUILDER
   - SPARK
   - SPARK2_ON_YARN
   - SPARK3_ON_YARN

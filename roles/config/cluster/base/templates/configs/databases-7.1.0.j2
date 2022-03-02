@@ -31,6 +31,18 @@ SCHEMAREGISTRY:
     database_name: {{ databases.SCHEMAREGISTRY.name }}
     database_user: {{ databases.SCHEMAREGISTRY.user }}
     database_password: {{ databases.SCHEMAREGISTRY.password }}
+SQL_STREAM_BUILDER:
+  SERVICEWIDE:
+    database_host: {{ databases.SQL_STREAM_BUILDER.host }}
+    database_port: {{ databases.SQL_STREAM_BUILDER.port }}
+    database_type: {{ databases.SQL_STREAM_BUILDER.type | cloudera.cluster.format_database_type }}
+    database_schema: {{ databases.SQL_STREAM_BUILDER.name }}
+    database_user: {{ databases.SQL_STREAM_BUILDER.user }}
+    database_password: {{ databases.SQL_STREAM_BUILDER.password }}
+  MATERIALIZED_VIEW_ENGINE:
+    ssb.mve.datasource.url: jdbc:{{ databases.SQL_STREAM_BUILDER_MVE.type | cloudera.cluster.format_database_type }}://{{ databases.SQL_STREAM_BUILDER_MVE.host }}:{{ databases.SQL_STREAM_BUILDER_MVE.port }}/{{ databases.SQL_STREAM_BUILDER_MVE.name }}
+    ssb.mve.datasource.username: {{ databases.SQL_STREAM_BUILDER_MVE.user }}
+    ssb.mve.datasource.password: {{ databases.SQL_STREAM_BUILDER_MVE.password }}
 STREAMS_MESSAGING_MANAGER:
   SERVICEWIDE:
     smm_database_host: {{ databases.STREAMS_MESSAGING_MANAGER.host }}

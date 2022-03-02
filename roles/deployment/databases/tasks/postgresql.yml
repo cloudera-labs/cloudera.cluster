@@ -20,7 +20,7 @@
     password: "{{ databases[item].password }}"
   become: yes
   become_user: postgres
-  with_items: "{{ databases | intersect(services) }}"
+  with_items: "{{ databases }}"
   delegate_to: "{{ databases[item].host }}"
   connection: ssh
   when: databases[item].host in groups.db_server
@@ -32,7 +32,7 @@
     encoding: UTF-8
   become: yes
   become_user: postgres
-  with_items: "{{ databases | intersect(services) }}"
+  with_items: "{{ databases }}"
   delegate_to: "{{ databases[item].host }}"
   connection: ssh
   when: databases[item].host in groups.db_server

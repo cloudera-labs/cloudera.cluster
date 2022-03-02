@@ -48,6 +48,13 @@ local_accounts:
     comment: Flink
     keystore_acl: True
 
+  - user: ssb
+    home: /var/lib/ssb
+    comment: SQL Stream Builder
+    keystore_acl: True
+    key_acl: True
+    key_password_acl: True
+
   - user: flume
     home: /var/lib/flume-ng
     comment: Flume

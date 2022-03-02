@@ -20,7 +20,7 @@
     encoding: "{{ service | cloudera.cluster.get_database_encoding_mysql }}"
     collation: "{{ service | cloudera.cluster.get_database_collation_mysql }}"
   become: yes
-  loop: "{{ databases | intersect(services) }}"
+  loop: "{{ databases }}"
   loop_control:
     loop_var: service
   delegate_to: "{{ databases[service].host }}"
@@ -36,7 +36,7 @@
     priv: "{{ databases[service].name }}.*:ALL"
   no_log: yes
   become: yes
-  loop: "{{ databases | intersect(services) }}"
+  loop: "{{ databases }}"
   loop_control:
     loop_var: service
   delegate_to: "{{ databases[service].host }}"
