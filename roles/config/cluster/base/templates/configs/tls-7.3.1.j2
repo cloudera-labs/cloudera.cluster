@@ -2,3 +2,25 @@
 OZONE:
   OZONE_PROMETHEUS:
     ozone.prometheus.ca.file: {{ tls_chain_path }}
+SQL_STREAM_BUILDER:
+  STREAMING_SQL_ENGINE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  MATERIALIZED_VIEW_ENGINE:
+    ssl_client_truststore_location: {{ tls_truststore_path }}
+    ssl_client_truststore_password: {{ tls_truststore_password }}
+    ssl_enabled: true
+    ssl_server_keystore_keypassword: {{ tls_keystore_password }}
+    ssl_server_keystore_location: {{ tls_keystore_path_generic }}
+    ssl_server_keystore_password: {{ tls_keystore_password }}
+  STREAMING_SQL_CONSOLE:
+    ssl_client_truststore_location: {{ tls_chain_path }}
+    ssl_enabled: true
+    ssl_server_ca_certificate_location: {{ tls_chain_path }}
+    ssl_server_certificate_location: {{ tls_cert_path_generic }}
+    ssl_server_privatekey_location: {{ tls_key_path_generic }}
+    ssl_server_privatekey_password: {{ tls_key_password }}

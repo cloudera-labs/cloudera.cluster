@@ -99,6 +99,20 @@ database_defaults:
     name: schemaregistry
     user: schemaregistry
     password: "{{ database_default_password }}"
+  SQL_STREAM_BUILDER:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: ssb_admin
+    user: ssb_admin
+    password: "{{ database_default_password }}"
+  SQL_STREAM_BUILDER_MVE:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: ssb_mve
+    user: ssb_mve
+    password: "{{ database_default_password }}"
   STREAMS_MESSAGING_MANAGER:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
