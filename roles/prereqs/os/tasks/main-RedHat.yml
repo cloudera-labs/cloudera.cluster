@@ -14,27 +14,44 @@
 
 ---
 - name: Setup System python on Rhel8
-  when:
-    - ansible_os_family == 'RedHat'
-    - ansible_distribution_major_version | int >= 8
+  when: ansible_distribution_major_version | int >= 8
   block:
-    - name: install python versions
+    - name: Check if Python3 is installed so we don't end up with multiple versions
+      shell: python3 --version
+      register: __py3_check
+      changed_when: false
+      ignore_errors: true
+
+    - name: install python3 if not already present
+      when: __py3_check.rc != 0
       ansible.builtin.package:
         lock_timeout: 180
-        name: "{{ __pyver_item }}"
+        name: python3
         update_cache: yes
         state: present
-      loop:
-        - python3
-        - python2
-      loop_control:
-        loop_var: __pyver_item
+
+    - name: Check if Python2 is installed so we don't end up with multiple versions
+      shell: python2 --version
+      register: __py2_check
+      changed_when: false
+      ignore_errors: true
+
+    - name: install python2 if not already present
+      when: __py2_check.rc != 0
+      ansible.builtin.package:
+        lock_timeout: 180
+        name: python2
+        update_cache: yes
+        state: present
 
     - name: Ensure Python symlink available for Cloudera Manager and Ranger
       ansible.builtin.raw: |
         if [ -f /usr/bin/python2 ] && [ ! -f /usr/bin/python ]; then
-          ln --symbolic /usr/bin/python2 /usr/bin/python;
+          alternatives --set python /usr/bin/python2
         fi
+
+    - name: Ensure pip3 is upgraded
+      ansible.builtin.command: "pip3 install --upgrade pip"
 
 - name: Disable SELinux
   selinux:
