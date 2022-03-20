@@ -24,10 +24,15 @@
 
 - name: Download CSDs
   get_url:
-    url: "{{ item }}"
+    url: "{{ __csd_item }}"
     dest: "{{ cloudera_manager_csd_directory }}"
     url_username: "{{ cloudera_manager_repo_username | default(omit) }}"
     url_password: "{{ cloudera_manager_repo_password | default(omit) }}"
     mode: 0644
-  with_items: "{{ cloudera_manager_csds }}"
-  when: cloudera_manager_csds is defined
+  loop: "{{ cloudera_manager_csds }}"
+  loop_control:
+    loop_var: __csd_item
+  when:
+    - cloudera_manager_csds is defined
+    - cloudera_manager_csds | length > 0
+    - __csd_item | length > 0
