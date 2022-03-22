@@ -35,10 +35,10 @@ OZONE:
     ozone.recon.scm.db.dirs: /var/lib/hadoop-ozone/recon/scm/data
     ozone.recon.om.db.dir: /var/lib/hadoop-ozone/recon/om/data
     ozone.metadata.dirs: /var/lib/hadoop-ozone/recon/ozone-metadata
-STORAGE_CONTAINER_MANAGER:
-  - ozone.scm.db.dirs: /var/lib/hadoop-ozone/scm/data
-  - ozone.metadata.dirs: /var/lib/hadoop-ozone/scm/ozone-metadata
-  - ozone.scm.ha.ratis.storage.dir: /var/lib/hadoop-ozone/scm/ratis
+  STORAGE_CONTAINER_MANAGER:
+    ozone.scm.db.dirs: /var/lib/hadoop-ozone/scm/data
+    ozone.metadata.dirs: /var/lib/hadoop-ozone/scm/ozone-metadata
+    ozone.scm.ha.ratis.storage.dir: /var/lib/hadoop-ozone/scm/ratis
 YARN:
   NODEMANAGER:
     yarn_nodemanager_local_dirs: /yarn/nm
