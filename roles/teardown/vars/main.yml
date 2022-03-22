@@ -57,6 +57,27 @@ base_cluster_directories:
       - fs_data_dirs
       - fs_wal_dir
       - log_dir
+  OZONE:
+    OZONE_DATANODE:
+      - ozone.scm.datanode.id.dir
+      - dfs.container.ratis.datanode.storage.dir
+      - hdds.datanode.dir
+      - ozone.metadata.dirs
+    OZONE_MANAGER:
+      - ozone.om.db.dirs
+      - ozone.metadata.dirs
+      - ozone.om.ratis.storage.dir
+    OZONE_PROMETHEUS:
+      - ozone.prometheus.db.dir
+    OZONE_RECON:
+      - ozone.recon.db.dir
+      - ozone.recon.scm.db.dirs
+      - ozone.recon.om.db.dir
+      - ozone.metadata.dirs
+    STORAGE_CONTAINER_MANAGER:
+      - ozone.scm.db.dirs
+      - ozone.metadata.dirs
+      - ozone.scm.ha.ratis.storage.dir
   YARN:
     SERVICEWIDE:
       - ranger_audit_hdfs_spool_dir
