@@ -32,6 +32,7 @@
         fail_msg: >-
           Unknown role(s) {{ invalid_roles }} for service '{{ template.service }}'
           defined in host template '{{ host_template.name }}'.
+          Valid roles are: {{ role_mappings[template.service] | list }}.
 
     - name: Ensure the Tez gateway has been deployed
       assert:

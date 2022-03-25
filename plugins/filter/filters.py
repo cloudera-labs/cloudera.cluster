@@ -211,17 +211,17 @@ class FilterModule(object):
         return (role, template_group)
 
     def extract_custom_roles(self, host_templates, service):
-        custom_roles = []
+        custom_roles = set([])
         for role_mapping in host_templates.values():
             if service in role_mapping:
                 for custom_role in filter(lambda x: '/' in x, role_mapping[service]):
-                    custom_roles.append(custom_role)
-        return custom_roles
+                    custom_roles.add(custom_role)
+        return list(custom_roles)
 
     def extract_custom_role_groups(self, host_templates):
-        custom_role_groups = []
+        custom_role_groups = set([])
         for role_mapping in host_templates.values():
             for (service, roles) in role_mapping.items():
                 for custom_role in filter(lambda x: '/' in x, roles):
-                    custom_role_groups.append("-".join([service.lower()] + custom_role.split("/")))
-        return custom_role_groups
+                    custom_role_groups.add("-".join([service.lower()] + custom_role.split("/")))
+        return list(custom_role_groups)
