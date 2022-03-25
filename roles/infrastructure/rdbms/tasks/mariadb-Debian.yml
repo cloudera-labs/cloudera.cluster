@@ -14,10 +14,6 @@
 
 ---
 
-- name: Set MySQL cnf file
-  include_tasks:
-    file: mysql-conf-file.yml
-
 - name: Install MariaDB apt key
   apt_key:
     url: https://mariadb.org/mariadb_release_signing_key.asc

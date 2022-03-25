@@ -16,5 +16,5 @@
 mysql_pid_file: /var/run/mariadb/mariadb.pid
 mysql_innodb_large_prefix: 0
 mysql_config_include_files:
-  - src: "{{ local_temp_dir }}/cloudera.cnf"
+  - src: "cloudera.cnf"
     force: true
