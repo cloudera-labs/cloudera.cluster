@@ -29,3 +29,12 @@
   vars:
     heartbeat_time: "{{ host_status.json['lastHeartbeat'] | default('') }}"
     current_time: "{{ ansible_date_time.iso8601 }}"
+
+- name: Ensure the hostname reported in the heartbeat matches the inventory name
+  assert:
+    that: "{{ inventory_hostname == host_status.json.hostname }}"
+    success_msg: The hostname reported by the agent matches the expected
+    fail_msg: >
+      The hostname reported by the agent ({{ host_status.json.hostname }})
+      doesn't match the expected ({{ cloudera_manager_host }}).
+      Ensure the host entry in /etc/hosts starts with: {{ host_status.json.ipAddress }} {{ cloudera_manager_host }} ...
