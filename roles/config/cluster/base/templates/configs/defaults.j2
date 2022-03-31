@@ -18,6 +18,27 @@ KUDU:
   KUDU_TSERVER:
     fs_data_dirs: /kudu/tablet/data
     fs_wal_dir: /kudu/tablet/wal
+OZONE:
+  OZONE_DATANODE:
+    ozone.scm.datanode.id.dir: /var/lib/hadoop-ozone/datanode
+    dfs.container.ratis.datanode.storage.dir: /var/lib/hadoop-ozone/datanode/ratis/data
+    hdds.datanode.dir: /var/lib/hadoop-ozone/datanode/data
+    ozone.metadata.dirs: /var/lib/hadoop-ozone/datanode/ozone-metadata
+  OZONE_MANAGER:
+    ozone.om.db.dirs: /var/lib/hadoop-ozone/datanode/ozone-metadata
+    ozone.metadata.dirs: /var/lib/hadoop-ozone/om/ozone-metadata
+    ozone.om.ratis.storage.dir: /var/lib/hadoop-ozone/om/ratis
+  OZONE_PROMETHEUS:
+    ozone.prometheus.db.dir: /var/lib/hadoop-ozone/prometheus/data
+  OZONE_RECON:
+    ozone.recon.db.dir: /var/lib/hadoop-ozone/recon/data
+    ozone.recon.scm.db.dirs: /var/lib/hadoop-ozone/recon/scm/data
+    ozone.recon.om.db.dir: /var/lib/hadoop-ozone/recon/om/data
+    ozone.metadata.dirs: /var/lib/hadoop-ozone/recon/ozone-metadata
+  STORAGE_CONTAINER_MANAGER:
+    ozone.scm.db.dirs: /var/lib/hadoop-ozone/scm/data
+    ozone.metadata.dirs: /var/lib/hadoop-ozone/scm/ozone-metadata
+    ozone.scm.ha.ratis.storage.dir: /var/lib/hadoop-ozone/scm/ratis
 YARN:
   NODEMANAGER:
     yarn_nodemanager_local_dirs: /yarn/nm
