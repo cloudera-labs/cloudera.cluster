@@ -71,9 +71,11 @@ HUE:
 FLINK:
   SERVICEWIDE:
     hdfs_service: hdfs
-    hive_service: hive
     yarn_service: yarn
-    zookeeper_service: zoookeeper
+    zookeeper_service: zookeeper
+{% if 'HIVE' in cluster.services %}
+    hive_service: hive
+{% endif %}
 {% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
@@ -172,6 +174,17 @@ SPARK3_ON_YARN:
 {% endif %}
 {% if 'HIVE' in cluster.services %}
     hive_service: hive
+{% endif %}
+
+SQL_STREAM_BUILDER:
+  SERVICEWIDE:
+    flink_service: flink
+    kafka_service: kafka
+{% if 'HIVE' in cluster.services %}
+    hive_service: hive
+{% endif %}
+{% if 'KNOX' in cluster.services %}
+    knox_service: knox
 {% endif %}
 
 TEZ:
