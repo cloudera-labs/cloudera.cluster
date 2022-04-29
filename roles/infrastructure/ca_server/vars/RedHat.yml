@@ -14,4 +14,4 @@
 
 ---
 
-ca_server_root_key_cipher: aes256
+ca_server_root_key_cipher: auto
