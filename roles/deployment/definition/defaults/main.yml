@@ -36,6 +36,38 @@ database_defaults:
     name: amon
     user: amon
     password: "{{ database_default_password }}"
+  ALERTS:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-alerts
+    user: db-alerts
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
+  CLASSIC_CLUSTERS:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: classic-clusters
+    user: classic-clusters
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
+  CLUSTER_ACCESS_MANAGER:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-clusteraccessmanager
+    user: db-clusteraccessmanager
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
+  CLUSTER_PROXY:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: cluster-proxy
+    user: cluster-proxy
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   DAS:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -43,6 +75,30 @@ database_defaults:
     name: das
     user: das
     password: "{{ database_default_password }}"
+  DEX:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-dex
+    user: db-dex
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
+  DWX:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-dwx
+    user: db-dwx
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
+  ENV:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-env
+    user: db-env
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   HIVE:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -57,6 +113,14 @@ database_defaults:
     name: hue
     user: hue
     password: "{{ database_default_password }}"
+  LIFTIE:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-liftie
+    user: db-liftie
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   NAVIGATOR:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -71,6 +135,14 @@ database_defaults:
     name: navms
     user: navms
     password: "{{ database_default_password }}"
+  MLX:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-mlx
+    user: db-mlx
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   OOZIE:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -92,6 +164,14 @@ database_defaults:
     name: rman
     user: rman
     password: "{{ database_default_password }}"
+  RESOURCEPOOL_MANAGER:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-resourcepoolmanager
+    user: db-resourcepoolmanager
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   SCHEMAREGISTRY:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -113,3 +193,12 @@ database_defaults:
     name: sentry
     user: sentry
     password: "{{ database_default_password }}"
+  UMS:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: db-ums
+    user: db-ums
+    password: "{{ database_default_password }}"
+    mode: "{{ cluster.ecs_database_mode | default('existing') }}"
+

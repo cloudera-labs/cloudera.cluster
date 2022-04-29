@@ -1,0 +1,12 @@
+{
+"items":
+[
+  {
+    "name" : "{{ cluster.name }}",
+    "displayName": "{{ cluster.name }}",
+    "version" : "EXPERIENCE1",
+    "fullVersion": "{{ products | cloudera.cluster.get_product_version('ECS') }}",
+    "clusterType": "EXPERIENCE_CLUSTER"
+  }
+]
+}

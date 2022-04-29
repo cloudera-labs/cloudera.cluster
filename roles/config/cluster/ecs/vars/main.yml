@@ -13,9 +13,7 @@
 # limitations under the License.
 
 ---
-dependencies:
-  - role: cloudera.cluster.cloudera_manager.api_hosts
-  - role: cloudera.cluster.deployment.credential
-  - role: cloudera.cluster.infrastructure.ca_common
-  - role: cloudera.cluster.prereqs.local_accounts_common
 
+custom_config_templates:
+# Custom configurations for ECS
+  - template: configs/ecs.j2

@@ -1,0 +1,56 @@
+{% import 'cm_api.j2' as cm_api with context %}
+{
+  "items": [
+  {%- set service_joiner = joiner(",") -%}
+  {%- for service in cluster.services -%}
+  {%- set service_role_types = role_mappings[service] -%}
+  {{ service_joiner() }}
+  {
+    {%- set service_type = service -%}
+    {%- set service_name = service | lower -%}
+    "name": "{{ service_name }}",
+    "displayName": "{{ service_type | replace("_", " ") }}",
+    "type": "{{ service_type }}",
+    {% set config_sep = joiner(",") -%}
+    "config": {{ cm_api.ApiConfigList(merged_configs[service]['SERVICEWIDE']) }},
+    "roles": [
+      {% set role_sep = joiner(",") -%}
+      {%- for (template_name, role_mapping) in cluster.host_templates.items() -%}
+        {%- for (template_service, roles) in role_mapping.items() -%}
+          {%- if template_service == service -%}
+            {%- for role in roles -%}
+              {%- for host in groups[template_name] -%}
+                {{ role_sep() }}
+                {
+                  "type": "{{ role }}",
+                  "hostRef" : {
+                    "hostId" : "{{ cloudera_manager_api_hosts[host]['id'] }}"
+                  },
+                  "roleConfigGroupRef" : {
+                    "roleConfigGroupName" : "{{ service_name }}-{{ role }}-BASE"
+                  }
+                }
+              {%- endfor -%}
+            {%- endfor -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+    ],
+    "roleConfigGroups": [
+      {%- set role_group_sep = joiner(",") -%}
+      {%- if service_role_types is iterable -%}
+        {%- for role_type in service_role_types -%}
+          {{ role_group_sep() }}
+          {
+            "name": "{{ service_name }}-{{ role_type }}-BASE",
+            "roleType": "{{ role_type }}",
+            {% set config_sep = joiner(",") -%}
+            "config": {{ cm_api.ApiConfigList(merged_configs[service][role_type]) }},
+            "base": true
+          }
+        {%- endfor -%}
+      {%- endif -%}
+    ]
+  }
+  {%- endfor -%}
+]}

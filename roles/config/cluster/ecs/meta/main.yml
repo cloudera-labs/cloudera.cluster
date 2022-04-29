@@ -13,9 +13,9 @@
 # limitations under the License.
 
 ---
-dependencies:
-  - role: cloudera.cluster.cloudera_manager.api_hosts
-  - role: cloudera.cluster.deployment.credential
-  - role: cloudera.cluster.infrastructure.ca_common
-  - role: cloudera.cluster.prereqs.local_accounts_common
 
+dependencies:
+  - role: cloudera.cluster.cloudera_manager.common
+  - role: cloudera.cluster.deployment.definition
+  - role: cloudera.cluster.config.cluster.common
+  - role: cloudera.cluster.infrastructure.ca_common
