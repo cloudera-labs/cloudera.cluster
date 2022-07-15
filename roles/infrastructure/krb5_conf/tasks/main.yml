@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-- name: Clean CA Certs directory
-  file:
-    name: "{{ ca_server_root_path }}"
-    state: absent
+- name: Setup MIT KRB5 Configuration
+  when: krb5_kdc_type != 'Red Hat IPA'
+  ansible.builtin.include_tasks: mit.yml

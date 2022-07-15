@@ -13,15 +13,5 @@
 # limitations under the License.
 
 ---
-- name: Fetch CA Certs
-  fetch:
-    src: "{{ cert.src }}"
-    dest: "{{ cert.dest }}"
-    flat: yes
-  loop:
-    - src: "{{ ca_server_root_cert_path }}"
-      dest: "{{ local_temp_dir }}/certs/cluster_rootca.pem"
-    - src: "{{ ca_server_intermediate_cert_path }}"
-      dest: "{{ local_temp_dir }}/certs/cluster_intca.pem"
-  loop_control:
-    loop_var: cert
+dependencies:
+  - role: cloudera.cluster.infrastructure.krb5_common

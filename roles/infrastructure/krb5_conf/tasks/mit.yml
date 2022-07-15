@@ -13,5 +13,10 @@
 # limitations under the License.
 
 ---
-dependencies:
-  - role: cloudera.cluster.infrastructure.ca_common
+
+- name: Create krb5.conf
+  template:
+    src: "{{ krb5_conf_template | default('krb5.conf.j2') }}"
+    dest: /etc/krb5.conf
+    backup: yes
+  when: not (skip_krb5_conf_distribution | default(False))

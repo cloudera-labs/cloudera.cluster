@@ -13,4 +13,6 @@
 # limitations under the License.
 
 ---
-krb5_packages: krb5-server
+krb5_packages:
+  - krb5-server
+  - krb5-client

@@ -18,6 +18,7 @@ krb5_kdc_database: "{{ krb5_kdc_state_directory }}/principal"
 krb5_packages:
   - krb5-libs
   - krb5-server
+  - krb5-workstation
 krb5_services:
   - krb5kdc
   - kadmin
