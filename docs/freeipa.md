@@ -47,14 +47,6 @@ The playbook will not provision a firewall around the FreeIPA server.
 
 ## FreeIPA CA signed certificates or externally signed certificates?
 
-In both cases, you'll want to refer to each CA certificate used (particularly important if you are using a different CA) by adding entries to `tls_ca_certs` e.g. (IPA CA)
-
-```
-tls_ca_certs:
-  - path: /etc/ipa/ca.crt
-    alias: ipaca
-```
-
 ### FreeIPA CA signed certificates
 
 Here, nothing has to be done.
@@ -66,6 +58,15 @@ Provided each host is enrolled as a FreeIPA client then the playbook will automa
 In this case, please set `skip_ipa_signing` to `true`.
 
 This will cause the playbook to stop after generating CSRs – identical to the non-FreeIPA case.
+
+You will also need to configure your CA certificate like so (where `/path/to/ca.crt` is a path on the controller host):
+```
+tls_ca_certs:
+  - path: /path/to/ca.crt
+    alias: clusterca
+```
+
+This will ensure that the generated truststore includes your external CA.
 
 ## AutoTLS or playbook configured?
 
