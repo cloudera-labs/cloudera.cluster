@@ -13,11 +13,15 @@
 # limitations under the License.
 
 ---
+- name: Run FreeIPA Collection fix before IPA Server deployment
+  include_tasks:
+    file: fix_freeipa_collection.yml
+
 - name: Setup FreeIPA Server
   ansible.builtin.include_role:
     name: freeipa.ansible_freeipa.ipaserver
   vars:
     state: present
     ipaserver_realm: "{{ krb5_realm }}"
-    ipaserver_domain: "{{ krb5_domain }}"
+    ipaserver_domain: "{{ krb5_domain | default(krb5_realm | lower) }}"
     ipaserver_setup_firewalld: "no"

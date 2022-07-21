@@ -1,0 +1,29 @@
+{
+    "items": [
+      {
+        "name": "ssl_enabled",
+        "value": "true"
+      },
+      {
+        "name": "ssl_server_keystore_location",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_server_keystore_password",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_client_truststore_location",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_client_truststore_password",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "hadoop_kms_authentication_signer_secret_provider_zookeeper_auth_type",
+        "value": "kerberos"
+      }
+
+    ]
+  }

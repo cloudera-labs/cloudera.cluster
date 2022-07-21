@@ -28,5 +28,6 @@ unnecessary_services:
   - ip6tables
   - postfix
   - tuned
+  - firewalld  # Added for ECS deployments on RedHat
 
 selinux_state: permissive

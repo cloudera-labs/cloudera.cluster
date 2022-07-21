@@ -1,0 +1,11 @@
+---
+- name: Get All services from CM
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services"
+  register: cloudera_manager_all_services
+
+- name: Handle Restarts
+  include_tasks: service_restart.yml
+  loop: "{{ services_to_restart }}"
+  loop_control:
+    loop_var: __service_restart_item

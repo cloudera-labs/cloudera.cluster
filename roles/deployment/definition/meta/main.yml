@@ -1,0 +1,3 @@
+---
+dependencies:
+  - cloudera.cluster.infrastructure.krb5_common

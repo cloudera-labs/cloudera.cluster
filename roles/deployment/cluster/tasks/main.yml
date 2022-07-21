@@ -125,7 +125,6 @@
     - cluster.type | default(default_cluster_type) == 'ecs'
     - cluster.name not in existing_clusters
 
-
 - name: Restart Cloudera Management Service
   cloudera.cluster.cm_api:
     endpoint: /cm/service/commands/restart

@@ -1,0 +1,90 @@
+{
+    "id": "1",
+    "guid": "...",
+    "isEnabled": true,
+    "version": 1,
+    "service": "cm_hdfs",
+    "name": "Audit and tmp policies for internal users",
+    "policyType": 0,
+    "policyPriority": 0,
+    "description": "Policy for all users from hadoop group",
+    "isAuditEnabled": true,
+    "resources": {
+      "path": {
+        "values": [
+          "/user",
+          "/tmp",
+          "/ranger/audit"
+        ],
+        "isExcludes": false,
+        "isRecursive": true
+      }
+    },
+    "policyItems": [
+      {
+        "accesses": [
+          {
+            "type": "read",
+            "isAllowed": true
+          },
+          {
+            "type": "write",
+            "isAllowed": true
+          },
+          {
+            "type": "execute",
+            "isAllowed": true
+          }
+        ],
+        "users": [
+          "solr",
+          "kafka",
+          "hive",
+          "hdfs",
+          "impala",
+          "knox",
+          "yarn",
+          "atlas",
+          "ozone",
+          "francois"
+        ],
+        "groups": [
+          "hadoop"
+        ],
+        "roles": [
+          
+        ],
+        "conditions": [
+          
+        ],
+        "delegateAdmin": true
+      }
+    ],
+    "denyPolicyItems": [
+      
+    ],
+    "allowExceptions": [
+      
+    ],
+    "denyExceptions": [
+      
+    ],
+    "dataMaskPolicyItems": [
+      
+    ],
+    "rowFilterPolicyItems": [
+      
+    ],
+    "serviceType": "hdfs",
+    "options": {
+      
+    },
+    "validitySchedules": [
+      
+    ],
+    "policyLabels": [
+      
+    ],
+    "zoneName": "",
+    "isDenyAllElse": false
+  }

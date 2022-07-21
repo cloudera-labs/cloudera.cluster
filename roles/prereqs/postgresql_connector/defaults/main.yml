@@ -16,3 +16,4 @@
 
 postgresql_connector_url: https://jdbc.postgresql.org/download/postgresql-42.3.3.jar
 postgresql_connector_checksum: md5:bef0b2e1c6edcd8647c24bed31e1a4ac
+install_py3_psycopg2: false

@@ -1,0 +1,6 @@
+cluster_name: Default
+ranger_user: "{{ ranger_rangeradmin_user | default('admin') }}"
+ranger_password: "{{ ranger_rangeradmin_user_password | default(cloudera_manager_admin_password) }}"
+solr_admin_password: "{{ solr_solradmin_user_password | default(cloudera_manager_admin_password) }}"
+
+wxm_api_port: 12022
