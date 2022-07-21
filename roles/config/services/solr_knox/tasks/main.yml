@@ -1,0 +1,17 @@
+---
+# Add Solr host to Knox
+- name: add solr host in config
+  include_tasks: add_solr_knox_host.yml
+  loop: "{{ solr_all_hosts }}"
+  loop_control:
+    loop_var: solr_host
+  when: solr_all_hosts | length > 0
+
+# Restart Knox
+- name: Restart Knox
+  cloudera.cluster.cm_api:
+    method: POST
+    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ knox_service_name | lower }}/commands/restart"
+  when:
+    - __add_solr_knox is defined
+    - __add_solr_knox.changed

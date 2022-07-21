@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-- name: restart cloudera-scm-agent
-  service:
-    name: cloudera-scm-agent
-    state: restarted
+
+dependencies:
+  - role: cloudera.cluster.cloudera_manager.services_info

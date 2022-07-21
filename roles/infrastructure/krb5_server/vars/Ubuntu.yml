@@ -1,0 +1,2 @@
+---
+ipaserver_packages: [ "freeipa-server" ]

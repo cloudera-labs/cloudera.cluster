@@ -1,0 +1,19 @@
+{
+    "isEnabled": true,
+    "createdBy": "Admin",
+    "updatedBy": "Admin",
+    "type": "solr",
+    "name": "cm_solr",
+    "displayName": "cm_solr",
+    "description": "",
+    "tagService": "cm_tag",
+    "configs": {
+      "username": "admin",
+      "password": "{{ solr_admin_password }}",
+      "solr.url": "{{ solr_url }}/solr",
+      "commonNameForCertificate": "",
+      "tag.download.auth.users": "solr",
+      "policy.download.auth.users": "solr",
+      "ranger.plugin.audit.filters": "[{'accessResult':'DENIED','isAudited':true},{'users':['hive','hdfs','kafka','hbase','solr','rangerraz','knox','atlas'],'isAudited':false}]"
+    }
+  }

@@ -1,0 +1,24 @@
+{
+    "items": [
+      {
+        "name": "ssl_enabled",
+        "value": "true"
+      },
+      {
+        "name": "ssl_server_keystore_location",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_server_keystore_password",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_client_truststore_location",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_client_truststore_password",
+        "value": "{{CM_AUTO_TLS}}"
+      }
+    ]
+  }

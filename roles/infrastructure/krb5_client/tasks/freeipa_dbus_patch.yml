@@ -1,0 +1,25 @@
+---
+- name: Copy DBUS config file
+  copy:
+    src: dbus_session.conf
+    dest: /etc/dbus-1/session-local.conf
+  ignore_errors: true
+
+- name: Ensure dbus is enabled and unmasked
+  systemd:
+    name: dbus
+    enabled: yes
+    masked: no
+  ignore_errors: true
+
+- name: Restart DBUS
+  service:
+    name: dbus
+    state: restarted
+  ignore_errors: true
+
+- name: Restart logind
+  service:
+    name: systemd-logind
+    state: restarted
+  ignore_errors: true

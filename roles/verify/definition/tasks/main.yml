@@ -90,7 +90,7 @@
           Unused host template(s) '{{ unmatched_templates_cluster }}' found
           in cluster definitions - check against inventory.
 
-# Kerberos
+# Kerberos
 - block:
     - set_fact:
         expect_kerberos: >-
@@ -106,6 +106,7 @@
         fail_msg: "The KDC host is configured but no cluster is configured to use Kerberos"
       ignore_errors: yes
       when: not expect_kerberos
+
     - name: Ensure that Kerberos is specified when used
       assert:
         that: "{{ krb5_kdc_host is defined or 'krb5_server' in groups }}"
@@ -114,6 +115,7 @@
           The KDC host must be configured, either by adding a host to the
           'krb5_server' group or by setting 'krb5_kdc_host' to an existing KDC host
       when: expect_kerberos
+
     - name: Ensure that the KDC host is only specified in one place
       assert:
         that: >-
@@ -126,6 +128,7 @@
           The var 'krb5_kdc_host' and group 'krb5_server' cannot be used together
           – please unset one
       when: expect_kerberos
+
     - name: Ensure that at most one host is specified in the 'krb5_server' group
       assert:
         that: "{{ groups['krb5_server'] | length == 1 }}"
@@ -135,9 +138,21 @@
           host should be specified in the 'krb5_server' group
       when: "'krb5_server' in groups"
 
-# Service specific
+    - name: Ensure that FreeIpa and custom_repo are not on the same host
+      assert:
+        that: "{{ groups['krb5_server'] != groups['custom_repo'] }}"
+        success_msg: krb5_server for FreeIPA Server and custom_repo do not share a host
+        fail_msg: >-
+          FreeIPA and httpd share a near-hardcoded dependency on port 8443, therefore
+          they should not be colocated on the same host
+      when:
+        - "'krb5_server' in groups"
+        - "'custom_repo' in groups"
+        - free_ipa == True
 
-## KMS/KTS
+# Service specific
+
+## KMS/KTS
 - block:
     - set_fact:
         kts_clusters: >-
@@ -182,7 +197,7 @@
               when a kts cluster is present in the cluster definition
       when: expect_kts
 
-## Ranger
+## Ranger
 - block:
     - set_fact:
         kerberos_clusters: >-
@@ -260,6 +275,6 @@
         fail_msg: "The CM admin password must not be part of the hostname"
       when: cloudera_manager_admin_password is defined
 
-# Version specific
+# Version specific
 
 # Add version specific issues here (e.g. Database versions)

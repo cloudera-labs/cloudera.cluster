@@ -76,9 +76,6 @@
   register: _ranger_https_resp
   changed_when: false
 
-- set_fact:
-    _ranger_https_used: "{{ _ranger_https_resp.status == 401 }}"
-
 - name: Check if HTTP is used
   uri:
     url: "http://{{ _ranger_host }}:{{ _ranger_http_port }}"
@@ -87,10 +84,10 @@
       - -1
   register: _ranger_http_resp
   changed_when: false
-  when: not _ranger_https_used
 
 - set_fact:
-    _ranger_http_used: "{{ not _ranger_https_used and _ranger_http_used.status | default(omit) == 401 }}"
+    _ranger_https_used: "{{ ( _ranger_https_resp.status == 401 ) | bool }}"
+    _ranger_http_used: "{{ ( _ranger_http_resp.status == 401 ) | bool }}"
 
 - fail:
     msg: "Unable to connect to the Ranger admin on {{ _ranger_host }}."
@@ -99,12 +96,12 @@
     - not _ranger_http_used
 
 - set_fact:
-    ranger_url: "https://{{ _ranger_host }}:{{ _ranger_https_port }}"
-  when: _ranger_https_used
-
-- set_fact:
     ranger_url: "http://{{ _ranger_host }}:{{ _ranger_http_port }}"
   when: _ranger_http_used
+
+- set_fact:
+    ranger_url: "https://{{ _ranger_host }}:{{ _ranger_https_port }}"
+  when: _ranger_https_used
 
 - set_fact:
     ranger_api_url: "{{ ranger_url }}/service/public/v2/api"

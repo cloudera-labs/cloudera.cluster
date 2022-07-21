@@ -14,6 +14,6 @@
 
 ---
 dependencies:
-  - role: cloudera_manager/api_client
+  - role: cloudera.cluster.cloudera_manager.api_client
 
 

@@ -1,0 +1,9 @@
+{
+    "customCA" : false,
+    "configureAllServices" : "true",
+    "sshPort" : 22,
+    {% if free_ipa %}"trustedCaCerts" : "/etc/ipa/ca.crt",{% endif %}
+    "userName" : "root",
+    "privateKey": "{{ node_key_one_line }}"
+} 
+    

@@ -46,12 +46,12 @@
     loop_var: role
   when: host_template is defined
 
+- name: Group hosts based on whether TLS flag is set in inventory
+  group_by:
+    key: "{{ 'tls' if tls | default(False) else 'no_tls' }}"
+
 - name: (debug) Show derived groups
   delegate_to: localhost
   debug:
     var: groups
     verbosity: 3
-
-- name: Group hosts based on whether TLS flag is set in inventory
-  group_by:
-    key: "{{ 'tls' if tls | default(False) else 'no_tls' }}"

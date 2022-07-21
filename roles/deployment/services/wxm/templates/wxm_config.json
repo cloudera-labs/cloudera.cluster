@@ -1,0 +1,8 @@
+{
+    "items": [
+      {
+        "name": "telemetrypublisher_safety_valve",
+        "value": "telemetry.upload.job.logs=true\ntelemetry.altus.url={{ wxm_dbus_api_server_url }}"
+      }
+    ]
+  }

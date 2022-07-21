@@ -36,13 +36,15 @@
   when: not((ansible_virtualization_type == "docker" or ansible_virtualization_type == "container") and ansible_virtualization_role == "guest")
 
 - name: Populate service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: Disable unnecessary services
-  service:
+  register: __disable_services
+  ansible.builtin.service:
     name: "{{ item }}"
     state: stopped
     enabled: no
+  ignore_errors: yes  # fails sometimes with systemd on centos7 where ip6tables are not present
   when: "item + '.service' in ansible_facts.services"
   with_items: "{{ unnecessary_services }}"
 

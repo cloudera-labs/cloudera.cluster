@@ -1,0 +1,11 @@
+--- cert.py	2020-12-02 00:54:05.000000000 +0100
++++ cert.py_2	2021-02-18 09:09:38.095192730 +0100
+@@ -1949,7 +1949,7 @@
+       LOG.info("Could not find JKS truststore at location: %s. Converting "
+                "PEM truststore to JKS." % cluster_ca_jks)
+       generate_truststore(self.cfg.keytool, cluster_ca_jks, truststore_password,
+-                          cluster_ca_pem)
++                          cluster_ca_pem, self.cfg.keystore_type)
+ 
+     global_ca_pem = self.trust_files[GLOBAL_TLS_SET][PEM_TLS_TYPE]
+     copied_cluster_to_global = False

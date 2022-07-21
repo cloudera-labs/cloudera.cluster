@@ -13,7 +13,31 @@
 # limitations under the License.
 
 ---
-
 cloudera_manager_external_auth:
+  provider: "{{ 'FreeIPA' if free_ipa == true else omit }}"
   external_first: no
   external_only: no
+  external_set: "{{ 'yes' if free_ipa == true else 'no' }}"
+  role_mappings: "{{ default_free_ipa_role_mappings if free_ipa == true else omit }}"
+
+default_free_ipa_role_mappings:
+  - group: admins
+    roles: [ ROLE_ADMIN ]
+  - group: auditors
+    roles: [ ROLE_AUDITOR ]
+  - group: users
+    roles: [ ROLE_USER ]
+
+auth_providers:
+  FreeIPA:
+    type: LDAP
+    ldap_url: "{{ ipa_ldap_url }}"
+    ldap_base_dn:
+    ldap_bind_user_dn: "{{ ipa_ldap_user_bind_dn }}"
+    ldap_bind_password: "{{ ipa_ldap_user_bind_password }}"
+    ldap_search_base:
+      user: "{{ ipa_ldap_user_search_base }}"
+      group: "{{ ipa_ldap_group_search_base }}"
+    ldap_search_filter:
+      user: "{{ ipa_ldap_user_search_filter }}"
+      group: "{{ ipa_ldap_user_group_filter }}"

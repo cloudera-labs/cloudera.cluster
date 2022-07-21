@@ -1,0 +1,9 @@
+---
+
+- name: Set session timeout to 30 days
+  cloudera.cluster.cm_api:
+    endpoint: /cm/config
+    method: PUT
+    body: "{{ lookup('template', 'unlog.json') }}"
+  notify:
+    - restart cloudera-scm-server

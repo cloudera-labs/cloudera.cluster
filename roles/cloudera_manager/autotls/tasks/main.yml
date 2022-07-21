@@ -23,23 +23,48 @@
     msg: This playbook requires Cloudera Manager 7.1+
   when: response.json.version is version('7.1', '<')
 
+- name: Patch Cloudera Manager older than 7.3
+  include_tasks:
+    file: patch_old_cm
+  when: response.json.version is version('7.3.0', '<')
+
+- name: Check if password or key is used to connect to machines
+  set_fact:
+    use_password: "{{ true if node_password is defined and node_password|length > 0 else false }}"
+
+- name: DEBUG Auto-TLS using password
+  debug:
+    msg: "{{ lookup('template', 'auto-tls.json') }}"
+  when: use_password and debug | default(false)
+
 - name: Enable Auto-TLS
-  cloudera.cluster.cm_api:
-    endpoint: /cm/commands/generateCmca
+  cm_api:
+    endpoint: "/cm/commands/generateCmca"
     method: POST
-    body: "{{ lookup('template', 'request.j2', convert_data=False) }}"
+    body: "{{ lookup('template', 'auto-tls.json') }}"
+    timeout: 360
+  ignore_errors: true
+  when: use_password
 
-- name: Restart Cloudera Manager Server
-  service:
-    name: cloudera-scm-server
-    state: restarted
+- name: Set node_key on one line
+  set_fact:
+    node_key_one_line: "{{ lookup('file', '~/node_key' ) | replace('\n', '\\n') | replace('\"', '\\\"' ) }}"
+  when: not use_password
+
+- name: DEBUG Auto-TLS using key
+  debug:
+    msg: "{{ lookup('template', 'auto-tls-key.json') }}"
+  when: not use_password
+
+- name: Enable Auto-TLS
+  cm_api:
+    endpoint: "/cm/commands/generateCmca"
+    method: POST
+    body: "{{ lookup('template', 'auto-tls-key.json') }}"
+  ignore_errors: true
+  when: not use_password
   notify:
-    - wait cloudera-scm-server
+    - restart cloudera-scm-server
+    - restart cloudera management service
+    - restart cloudera-scm-agent
 
-- name: Wait for Cloudera Manager Server to come back up
-  meta: flush_handlers
-
-- name: Restart Cloudera Management Service
-  cloudera.cluster.cm_api:
-    endpoint: /cm/service/commands/restart
-    method: POST

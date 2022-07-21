@@ -1,0 +1,21 @@
+---
+- name: Get truststore content into a file
+  cloudera.cluster.cm_api:
+    endpoint: "/certs/truststore?type=pem"
+    body_format: json
+    dest: "/tmp/wxm_truststore.pem"
+
+- name: Get Base truststore password
+  cloudera.cluster.cm_api:
+    endpoint: "/certs/truststorePassword"
+  register: cloudera_manager_truststore_password_api
+  no_log: True
+
+# Import CA from WXM cluster and import it into base truststore
+- name: Import truststore into Base truststore
+  shell: "echo 'yes' | keytool -import -alias wxm_truststore -keystore /var/lib/cloudera-scm-agent/agent-cert/cm-auto-global_truststore.jks -file /tmp/wxm_truststore.pem -storepass {{ cloudera_manager_truststore_password_api.content }}"
+  ignore_errors: true
+
+- name: Import truststore into Base truststore
+  shell: "echo 'yes' | keytool -import -alias wxm_truststore -keystore /var/lib/cloudera-scm-agent/agent-cert/cm-auto-in_cluster_truststore.jks -file /tmp/wxm_truststore.pem -storepass {{ cloudera_manager_truststore_password_api.content }}"
+  ignore_errors: true

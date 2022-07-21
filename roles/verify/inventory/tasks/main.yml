@@ -44,6 +44,7 @@
       assert:
         that: >-
           {{ groups.tls | difference(cluster_hosts) | length == 0 }}
+        fail_msg: "The following hosts are different between tls hosts and cluster hosts: {{ groups.tls | difference(cluster_hosts) }}"
   when:
     - krb5_kdc_type == "Red Hat IPA"
     - not (skip_ipa_signing | default(false))

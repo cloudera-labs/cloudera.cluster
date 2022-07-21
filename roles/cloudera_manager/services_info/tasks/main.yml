@@ -1,0 +1,323 @@
+---
+
+- name: Get All services from CM
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services"
+  register: cloudera_manager_all_services
+  no_log: yes  # overly verbose
+
+- name: Get All Mgmt Roles from CM
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/service/roles"
+  register: cloudera_manager_mgmt_roles
+  no_log: yes  # overly verbose
+
+- name: Get CM Hosts info
+  cloudera.cluster.cm_api:
+    endpoint: "/hosts"
+  register: hosts_details
+  no_log: yes  # overly verbose
+
+- name: Get CM deployment of services
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/deployment"
+  register: cm_deployment_services
+  no_log: yes  # overly verbose
+
+- name: Get cluster parcel details
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ cluster_name | urlencode() }}/parcels
+  register: parcels_response
+
+- name: Extract active parcels
+  set_fact:
+    active_parcels: >
+      {{ parcels_response.json |
+      json_query('items[?stage==`ACTIVATED`].{product: product, version: version}') }}
+
+- name: Extract version of active runtime parcel
+  set_fact:
+    runtime_parcel_version: >
+      {{ active_parcels |
+      json_query('[?product==`CDH`].version') | first }}
+
+- name: Use KeyTrustee-based KMS services for CDH 5.x or 6.x
+  set_fact:
+    kms_service_type: KEYTRUSTEE
+  when:
+    - runtime_parcel_version is version('5.0.0', '>=')
+    - runtime_parcel_version is version('7.0.0', '<')
+
+- name: Use Ranger-based KMS services for CDP Private Cloud Base 7.x
+  set_fact:
+    kms_service_type: RANGER_KMS_KTS
+  when: runtime_parcel_version is version('7.0.0', '>=')
+
+# These are written out long hand to make future maintenance easier
+# This could be rewritten into a module as a good option
+
+- name: Set service names
+  ansible.builtin.set_fact:
+    solr_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(solr_query) }}"
+    hue_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(hue_query) }}"
+    knox_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(knox_query) }}"
+    ranger_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(ranger_query) }}"
+    oozie_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(oozie_query) }}"
+    hive_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(hive_query) }}"
+    hive_on_tez_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(hive_on_tez_query) }}"
+    spark_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(spark_query) }}"
+    impala_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(impala_query) }}"
+    wxm_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(wxm_query) }}"
+    tp_base_name: "{{ cloudera_manager_mgmt_roles | community.general.json_query(tp_base_query) }}"
+    tp_mgmt_name: "{{ cloudera_manager_mgmt_roles | community.general.json_query(tp_mgmt_query) }}"
+    kms_kts_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(kms_kts_query) }}"
+    kms_service_name: "{{ cloudera_manager_all_services.json | community.general.json_query(kms_query) }}"
+  vars:
+    solr_query: "items[?type == 'SOLR'].name | [0]"
+    hue_query: "items[?type == 'HUE'].name | [0]"
+    knox_query: "items[?type == 'KNOX'].name | [0]"
+    ranger_query: "items[?type == 'RANGER'].name | [0]"
+    oozie_query: "items[?type == 'OOZIE'].name | [0]"
+    hive_query: "items[?type == 'HIVE'].name | [0]"
+    hive_on_tez_query: "items[?type == 'HIVE_ON_TEZ'].name | [0]"
+    spark_query: "items[?type == 'SPARK_ON_YARN'].name | [0]"
+    impala_query: "items[?type == 'IMPALA'].name | [0]"
+    kms_kts_query: "items[?type == 'RANGER_KMS_KTS'].name | [0]"
+    kms_query: "items[?type == '{{ kms_service_type }}'].name | [0]"
+    wxm_query: "items[?type == 'WXM'].name | [0]"
+    tp_base_query: "items[?type == 'TELEMETRYPUBLISHER'].name | [0]"
+    tp_mgmt_query: "items[?roleType == 'TELEMETRYPUBLISHER'].name | [0]"
+
+- name: Set Service Existence booleans
+  ansible.builtin.set_fact:
+    solr_service_exists: "{{ true if solr_service_name != '' else false }}"
+    hue_service_exists: "{{ true if hue_service_name != '' else false }}"
+    knox_service_exists: "{{ true if knox_service_name != '' else false }}"
+    ranger_service_exists: "{{ true if ranger_service_name != '' else false }}"
+    oozie_service_exists: "{{ true if oozie_service_name != '' else false }}"
+    hive_service_exists: "{{ true if hive_service_name != '' else false }}"
+    hive_on_tez_service_exists: "{{ true if hive_on_tez_service_name != '' else false }}"
+    spark_service_exists: "{{ true if spark_service_name != '' else false }}"
+    impala_service_exists: "{{ true if impala_service_name != '' else false }}"
+    kms_kts_service_exists: "{{ true if kms_kts_service_name != '' else false }}"
+    kms_service_exists: "{{ true if kms_service_name != '' else false }}"
+    wxm_service_exists: "{{ true if wxm_service_name != '' else false }}"
+    tp_exists: "{{ false if tp_base_name == '' else true }}"
+
+# WXM Start
+
+- name: Get details on WXM Service
+  when: wxm_service_exists
+  block:
+    - name: Get detailed service WXM from CM
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ wxm_service_name | lower }}/roles"
+      register: cloudera_manager_wxm_all_roles
+      no_log: yes  # overly verbose
+
+    - set_fact:
+        wxm_api_server: "{{ cloudera_manager_wxm_all_roles.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?type == 'DBUS_API_SERVICE'].hostRef.hostname | [0]"
+
+    - name: Get detailed config WXM from CM
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ wxm_service_name | lower }}/roleConfigGroups/{{ wxm_service_name | lower }}-THUNDERHEAD_SIGMA_CONSOLE-BASE/config?view=full"
+      register: cloudera_manager_wxm_all_rcgs
+      no_log: yes  # overly verbose
+
+    - set_fact:
+        wxm_ssl_enabled: "{{ cloudera_manager_wxm_all_roles.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ssl_enabled'].value | [0]"
+
+    - set_fact:
+        wxm_ssl_enabled: "{{ cloudera_manager_wxm_all_roles.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ssl_enabled'].default | [0]"
+      when: wxm_ssl_enabled == ''
+
+    - name: Set WXM Databus API server URL
+      set_fact:
+        wxm_dbus_api_server_url: "https://{{ wxm_api_server }}:{{ wxm_api_port }}/"
+      when: wxm_ssl_enabled
+
+    - name: Set WXM Databus API server URL
+      set_fact:
+        wxm_dbus_api_server_url: "http://{{ wxm_api_server }}:{{ wxm_api_port }}/"
+      when: not wxm_ssl_enabled
+
+# WXM End
+
+# Ranger Info
+- name: Get Ranger Service info
+  when: ranger_service_exists
+  block:
+    - set_fact:
+        ranger_server: "{{ cm_deployment_services.json | community.general.json_query(query) }}"
+      vars:
+        query: "clusters[?name == '{{ cluster_name | urlencode() }}' ].services[].roles[?type == 'RANGER_ADMIN'][].hostRef.hostname | [0]"
+
+    - name: Get Ranger full config
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ ranger_service_name | lower }}/config?view=full"
+      register: full_ranger_config
+      no_log: yes  # overly verbose
+
+    - name: Get Ranger Admin full config
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ ranger_service_name | lower }}/roleConfigGroups/{{ ranger_service_name | lower }}-RANGER_ADMIN-BASE/config?view=full"
+      register: full_ranger_admin_config
+      no_log: yes  # overly verbose
+
+    - set_fact:
+        ranger_ssl: "{{ full_ranger_admin_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ssl_enabled'].value | [0]"
+
+    - set_fact:
+        ranger_ssl: "{{ full_ranger_admin_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ssl_enabled'].default | [0]"
+      when: ranger_ssl == ""
+
+    - set_fact:
+        ranger_protocol: "{{ 'https' if ranger_ssl else 'http' }}"
+
+    - set_fact:
+        ranger_port: "{{ full_ranger_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ranger_service_https_port'].value | [0]"
+      when: ranger_ssl
+
+    - set_fact:
+        ranger_port: "{{ full_ranger_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ranger_service_https_port'].default | [0]"
+      when: ranger_ssl and ranger_port == ""
+
+    - set_fact:
+        ranger_port: "{{ full_ranger_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ranger_service_http_port'].value | [0]"
+      when: not ranger_ssl
+
+    - set_fact:
+        ranger_port: "{{ full_ranger_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'ranger_service_http_port'].default | [0]"
+      when: not ranger_ssl and ranger_port == ""
+
+    - set_fact:
+        ranger_url: "{{ ranger_protocol }}://{{ ranger_server }}:{{ ranger_port }}"
+
+# Solr info
+- name: Get Solr Service info
+  when: solr_service_exists
+  block:
+    - name: Get SolR roles
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/roles"
+      register: solr_roles
+      no_log: yes  # overly verbose
+
+    - set_fact:
+        solr_all_hosts: "{{ solr_roles.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?type == 'SOLR_SERVER'].hostRef.hostname"
+
+    - name: Get SolR full config
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/config?view=full"
+      register: solr_full_config
+      no_log: yes  # overly verbose
+
+    - name: Get SolR full config for SOLR_SERVER-BASE
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/roleConfigGroups/{{ solr_service_name | lower }}-SOLR_SERVER-BASE/config?view=full"
+      register: solr_full_config_base
+      no_log: yes  # overly verbose
+
+    # Additional solr configs
+    # Set SoLR protocol
+
+    - set_fact:
+        solr_ssl: "{{ solr_full_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'solr_use_ssl'].value | [0]"
+
+    - set_fact:
+        solr_ssl: "{{ solr_full_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'solr_use_ssl'].default | [0]"
+      when: solr_ssl == ""
+
+    - set_fact:
+        solr_protocol: "{{ 'https' if solr_ssl else 'http' }}"
+
+    # Set SolR port
+
+    - set_fact:
+        solr_port: "{{ solr_full_config_base.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'solr_https_port'].value | [0]"
+      when: solr_ssl
+
+    - set_fact:
+        solr_port: "{{ solr_full_config_base.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'solr_https_port'].default | [0]"
+      when: solr_ssl and solr_port == ''
+
+    - set_fact:
+        solr_port: "{{ solr_full_config_base.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'solr_http_port'].value | [0]"
+      when: not solr_ssl
+
+    - set_fact:
+        solr_port: "{{ solr_full_config_base.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'solr_http_port'].default | [0]"
+      when: not solr_ssl and solr_port == ''
+
+    # Set SolR Servers
+
+    - set_fact:
+        solr_hosts: "{{ solr_roles.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?type == 'SOLR_SERVER'].hostRef.hostname | [0]"
+
+    - set_fact:
+        solr_url: "{{ solr_protocol }}://{{ solr_hosts }}:{{ solr_port }}"
+
+- name: Get Knox Service info
+  when: knox_service_exists
+  block:
+    - name: Get Knox Gateway full config
+      cloudera.cluster.cm_api:
+        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ knox_service_name | lower }}/roleConfigGroups/{{ knox_service_name | lower }}-KNOX_GATEWAY-BASE/config?view=full"
+      register: knox_full_config
+      no_log: yes  # overly verbose
+
+    - set_fact:
+        gateway_descriptor_cdp_proxy: "{{ knox_full_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'gateway_descriptor_cdp_proxy'].value | [0]"
+
+    - set_fact:
+        gateway_descriptor_cdp_proxy: "{{ knox_full_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'gateway_descriptor_cdp_proxy'].default | [0]"
+      when: gateway_descriptor_cdp_proxy == ""
+
+    - set_fact:
+        gateway_descriptor_cdp_proxy_api: "{{ knox_full_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'gateway_descriptor_cdp_proxy_api'].value | [0]"
+
+    - set_fact:
+        gateway_descriptor_cdp_proxy_api: "{{ knox_full_config.json | community.general.json_query(query) }}"
+      vars:
+        query: "items[?name == 'gateway_descriptor_cdp_proxy_api'].default | [0]"
+      when: gateway_descriptor_cdp_proxy_api == ""

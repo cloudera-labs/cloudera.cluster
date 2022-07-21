@@ -1,0 +1,51 @@
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "vars/{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_version'] }}.yml"
+    - "vars/{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "vars/{{ ansible_facts['distribution'] }}.yml"
+    - "vars/{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_version'] }}.yml"
+    - "vars/{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "vars/{{ ansible_facts['os_family'] }}.yml"
+    - "vars/default.yml"
+
+- name: Ensure NSS is in latest version
+  package:
+    name: nss
+    state: latest
+
+- name: Install base ipa server packages
+  package:
+    name: "{{ ipaserver_packages }}"
+    state: present
+
+- name: Add a sleep before calling certmonger for Py27
+  lineinfile:
+    path: /usr/lib/python2.7/site-packages/ipaserver/install/dogtaginstance.py
+    insertbefore: '.*find_ca_by_nickname.*'
+    line: '            time.sleep(20)'
+    state: present
+  ignore_errors: true
+
+- name: Raise timeout for CA wait for Py27
+  lineinfile:
+    path: /usr/lib/python2.7/site-packages/ipalib/constants.py
+    regexp: '^CA_DBUS_TIMEOUT'
+    line: CA_DBUS_TIMEOUT = 360
+  ignore_errors: true
+
+- name: Add a sleep before calling certmonger for Py36
+  lineinfile:
+    path: /usr/lib/python3.6/site-packages/ipaserver/install/dogtaginstance.py
+    insertbefore: '.*find_ca_by_nickname.*'
+    line: '            time.sleep(20)'
+    state: present
+  ignore_errors: true
+
+- name: Raise timeout for CA wait for Py36
+  lineinfile:
+    path: /usr/lib/python3.6/site-packages/ipalib/constants.py
+    regexp: '^CA_DBUS_TIMEOUT'
+    line: CA_DBUS_TIMEOUT = 360
+  ignore_errors: true

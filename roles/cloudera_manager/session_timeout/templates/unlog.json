@@ -1,0 +1,8 @@
+{
+    "items": [
+      {
+        "name": "session_timeout",
+        "value": "{{ cloudera_manager_session_timeout }}"
+      }
+    ]
+  }

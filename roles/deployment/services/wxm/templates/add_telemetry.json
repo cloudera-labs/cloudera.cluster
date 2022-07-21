@@ -1,0 +1,12 @@
+{
+    "items" : [ 
+    {
+      "name" : "mgmt-TELEMETRYPUBLISHER",
+      "type" : "TELEMETRYPUBLISHER",
+      "hostRef" : {
+        "hostId" : "{{ tp_host_id }}",
+        "hostname" : "{{ tp_host }}"
+      }
+    }
+    ]
+}

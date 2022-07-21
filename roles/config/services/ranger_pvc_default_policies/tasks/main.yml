@@ -1,0 +1,20 @@
+---
+
+- name: Post Ranger policies declared in policies directory
+  register: __ranger_pol_response
+  uri: 
+    url: "{{ ranger_url }}/service/public/v2/api/policy"
+    method: POST
+    user: "{{ ranger_user }}"
+    password: "{{ ranger_password }}"
+    return_content: yes
+    body: "{{ lookup('template', '{{ item.src }}' ) }}"
+    body_format: json
+    status_code: 200
+    validate_certs: no
+    force_basic_auth: yes
+  no_log: True
+  with_filetree: "{{ role_path }}/policies"
+  failed_when:
+    - __ranger_pol_response is failed
+    - "'Another policy already exists for this name' not in __ranger_pol_response.json.msgDesc"

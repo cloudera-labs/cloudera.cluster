@@ -1,0 +1,56 @@
+---
+
+# Add access key for Altus to base CM
+
+- name: Set Altus private Key into one line
+  set_fact:
+    altus_private_key_one_line: "{{ lookup('file', altus_private_key ) | replace('\n', '\\n') | replace('\"', '\\\"' ) }}"
+
+- name: DEBUG - altus_private_key_one_line
+  debug:
+    msg: "{{ altus_private_key_one_line }}"
+  when: debug | default(false)
+
+- name: Delete Altus account if it already exists
+  cloudera.cluster.cm_api:
+    endpoint: "/externalAccounts/delete/altus-key-for-wxm"
+    method: DELETE
+  ignore_errors: true
+
+- name: Create Altus Account
+  cloudera.cluster.cm_api:
+    endpoint: "/externalAccounts/create"
+    method: POST
+    body: "{{ lookup('template', 'add_altus_key.json') }}"
+
+
+# Get host Id of this host as it is required to add it as the TP host
+- set_fact:
+    tp_host_id: "{{ hosts_details.json | community.general.json_query(query) }}"
+  vars:
+    query: "items[?hostname == '{{ inventory_hostname }}'].hostId | [0]"
+  when: not tp_exists
+
+- name: Add Telemetry Publisher to CM
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/service/roles"
+    method: POST
+    body: "{{ lookup('template', 'add_telemetry.json') }}"
+    timeout: 120
+  when: not tp_exists
+
+- name: Refresh CM Services Info
+  include_role: cloudera.cluster.cloudera_manager.services_info
+
+- name: Set WXM reference for telemetry publisher
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/service/roleConfigGroups/{{ tp_mgmt_name }}/config"
+    method: PUT
+    body: "{{ lookup('template', 'wxm_config.json') }}"
+
+# Reference access key to telemetry publisher
+- name: Set Altus account reference to Telemetry
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/config"
+    method: PUT
+    body: "{{ lookup('template', 'altus_key_config.json') }}"

@@ -26,6 +26,9 @@
     endpoint: /cm/commands/importAdminCredentials?username={{ krb5_kdc_admin_user | urlencode }}&password={{ krb5_kdc_admin_password | urlencode }}
     method: POST
   register: result
+  failed_when:
+    - result is failed
+    - "'already exists' not in result.content"
   until: result is not failed
   retries: 3
   delay: 10
