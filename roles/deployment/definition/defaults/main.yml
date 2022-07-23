@@ -18,7 +18,7 @@ database_host: "{{ groups['db_server'][0] | default('cloudera_manager[0]') }}"
 
 database_default_password: changeme
 database_tls: false
-
+database_type: postgresql
 database_version: "{{ default_database_versions[database_type][ansible_distribution_major_version] }}"
 default_database_versions:
   postgresql:
