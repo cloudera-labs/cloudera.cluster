@@ -25,7 +25,6 @@
     services: "{{ cluster.ecs_databases | default(ecs_databases) }}"
 
 # Add PVC parcel repo - assume that this has been set via REMOTE_PARCEL_REPO_URLS in the cm config. We can add this in later if needed
-
 - name: Create ECS cluster
   cloudera.cluster.cm_api:
     endpoint: /clusters
@@ -118,9 +117,19 @@
   retries: "{{ parcel_poll_max_retries | default(30) }}"
   delay: "{{ parcel_poll_duration | default(60) }}"
 
+- name: Determine database mode for ECS
+  ansible.builtin.set_fact:
+    ecs_cluster_config: "{{ clusters | selectattr('type', 'search', 'ecs') | first }}"
+
 - name: Generate custom values
+  when: ecs_cluster_config.controlplane_config.Database.Mode != 'embedded'
   set_fact:
     custom_values: "{{ lookup('template', 'cluster_template/ecs/controlPlaneValues.j2') | from_yaml | combine(cluster.controlplane_config, recursive=True) }}"
+
+- name: Generate custom values - Embedded
+  when: ecs_cluster_config.controlplane_config.Database.Mode == 'embedded'
+  set_fact:
+    custom_values: "{{ lookup('template', 'cluster_template/ecs/controlPlaneValuesEmbedded.j2') | from_yaml | combine(cluster.controlplane_config, recursive=True) }}"
 
 - name: Show custom values
   debug:
