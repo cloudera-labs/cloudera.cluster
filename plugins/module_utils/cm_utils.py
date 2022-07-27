@@ -31,7 +31,7 @@ from urllib.parse import urljoin
 from ansible.module_utils.basic import AnsibleModule
 
 from cm_client import ApiClient, Configuration
-from cm_client.rest import RESTClientObject
+from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
 
 
@@ -54,10 +54,12 @@ class ClouderaManagerModule(object):
                     self.log_out = self._get_log()
                     self.log_lines.append(self.log_out.splitlines())
                 return result
+            except ApiException as ae:
+                self.module.fail_json(msg="API error: " + str(ae.reason), status_code=ae.status)
             except MaxRetryError as maxe:
-                self.module.fail_json(msg=maxe.reason)
+                self.module.fail_json(msg="Request error: " + str(maxe.reason))
             except HTTPError as he:
-                self.module.fail_json(msg="Error executing HTTP request: " + str(he))
+                self.module.fail_json(msg="HTTP request: " + str(he))
         return _impl
     
     """A base Cloudera Manager (CM) module class"""
@@ -138,13 +140,18 @@ class ClouderaManagerModule(object):
         # Create and set the API Client
         self.api_client = ApiClient()
     
-    def _discover_endpoint(self, config):
-        """Discovers the scheme and version of a potential Cloudara Manager host"""
-        # Get the authentication header
+    def get_auth_headers(self, config):
+        """Constructs a Basic Auth header dictionary from the Configuration.
+        This dictionary can be used directly with the API client's REST client."""
         headers = dict()
         auth = config.auth_settings().get('basic')
         headers[auth['key']] = auth['value']
-        
+        return headers
+    
+    def _discover_endpoint(self, config):
+        """Discovers the scheme and version of a potential Cloudara Manager host"""
+        # Get the authentication headers and REST client
+        headers = self.get_auth_headers(config)
         rest = RESTClientObject()
 
         # Resolve redirects to establish HTTP scheme and port

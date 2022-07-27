@@ -17,8 +17,6 @@
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerModule
 
-from cm_client import ClouderaManagerResourceApi
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
