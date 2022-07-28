@@ -20,6 +20,7 @@ A common Ansible Module for shared functions for Cloudera Manager
 """
 
 import io
+import json
 import logging
 
 from functools import wraps
@@ -55,7 +56,11 @@ class ClouderaManagerModule(object):
                     self.log_lines.append(self.log_out.splitlines())
                 return result
             except ApiException as ae:
-                self.module.fail_json(msg="API error: " + str(ae.reason), status_code=ae.status)
+                body = ae.body.decode('utf-8')
+                if body != "":
+                    body = json.loads(body)
+                self.module.fail_json(msg="API error: " + str(ae.reason), 
+                                      status_code=ae.status, body=body)
             except MaxRetryError as maxe:
                 self.module.fail_json(msg="Request error: " + str(maxe.reason))
             except HTTPError as he:
@@ -174,6 +179,26 @@ class ClouderaManagerModule(object):
             api_instance = ClouderaManagerResourceApi(self.api_client)
             api_instance.get_version()
         self.api_client.cookie = self.api_client.last_response.getheader('Set-Cookie')
+
+    def call_api(self, path, method, query=None, field='items', body=None):
+        """Wrapper to call a CM API endpoint path directly."""
+        path_params = []
+        header_params = {}
+        header_params['Accept'] = self.api_client.select_header_accept(['application/json'])
+        header_params['Content-Type'] = self.api_client.select_header_content_type(['application/json'])
+        
+        results =self.api_client.call_api(path, method, path_params, query, 
+                                          header_params, body, auth_settings=['basic'],
+                                          _preload_content=False)
+        
+        if 200 >= results[1] <= 299:
+            data = json.loads(results[0].data.decode('utf-8'))
+            if field in data:
+                data = data[field]
+            return data if type(data) is list else [data]
+        else:
+            self.module.fail_json(msg="Error interacting with CM resource", status_code=results[1])
+
 
     @staticmethod
     def ansible_module_discovery(argument_spec={}, required_together=[], **kwargs):
