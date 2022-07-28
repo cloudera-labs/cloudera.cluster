@@ -26,9 +26,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: cm_resource_info
-short_description: Retrieve details from the Cloudera Manager API endpoint
+short_description: Retrieve resources from the Cloudera Manager API endpoint
 description:
-  - Retrieve ad-hoc information from the Cloudera Manager API endpoint, i.e. unimplemented API calls.
+  - Retrieve resources from ad-hoc Cloudera Manager API endpoint paths, i.e. unimplemented API calls.
   - This module only supports the C(GET) HTTP method.
   - To interact with ad-hoc/unimplemented API endpoints, use the M(cloudera.cluster.cm_resource) module.
   - The module supports C(check_mode).
@@ -39,24 +39,27 @@ requirements:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.cm_resource
 '''
 
 EXAMPLES = r'''
 ---
-# 
-- name: Gather details using auto-discovery
-  cloudera.cluster.cm_endpoint_info:
+- name: Gather details about all Cloudera Manager users
+  cloudera.cluster.cm_resource_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-  register: cm_endpoint
+    path: "/users"
 '''
 
 RETURN = r'''
 ---
-endpoint:
-    description: The discovered Cloudera Manager API endpoint
-    type: str
+resources:
+    description:
+        - The results from the Cloudera Manager API endpoint call.
+        - If the I(field) is found on the response object, its contents will be returned.
+    type: list
+    elements: complex
     returned: always
 '''
 
@@ -77,35 +80,14 @@ class ClouderaResourceInfo(ClouderaManagerModule):
     
     @ClouderaManagerModule.handle_process
     def process(self):
-        path_params = self.query
-        query_params = []
-        header_params = {}
-        header_params['Accept'] = self.api_client.select_header_accept(['application/json'])
-        results =self.api_client.call_api(self.path, 
-                                          'GET',
-                                          path_params,
-                                          query_params,
-                                          header_params,
-                                          auth_settings=['basic'],
-                                          _preload_content=False)
-        if results[1] == 200:
-            data = json.loads(results[0].data.decode('utf-8'))
-            if self.field in data:
-                data = data[self.field]
-            if type(data) is list:
-                self.resources = data
-            else:
-                self.resources = [data]
-        else:
-            self.module.fail_json(msg="Error querying CM resource", status_code=results[1])
+        self.resources = self.call_api(self.path, 'GET', self.query, self.field)
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             path=dict(required=True, type='str'),
             query=dict(required=False, type='dict', aliases=['query_parameters', 'parameters']),
-            #headers=dict
-            #params=dict
             field=dict(required=False, type='str', default='items', aliases=['return_field'])
         ),
         supports_check_mode=True

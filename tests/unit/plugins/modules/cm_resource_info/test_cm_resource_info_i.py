@@ -96,13 +96,17 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
             "host": os.getenv('CM_HOST'),
             "verify_tls": "no",
             "debug": "yes",
-            "path": "/cm/authService/commands"
+            "path": "/tools/echo",
+            "query": {
+                "message": "foobarbaz"
+            },
+            "field": "message"
         })
         
-        with pytest.raises(AnsibleFailJson) as e:
+        with pytest.raises(AnsibleExitJson) as e:
             cm_resource_info.main()
             
-        self.assertRegexpMatches(e.value.args[0]['msg'], "^API error: Not Found$")
+        self.assertRegexpMatches(e.value.args[0]['resources'][0], "^foobarbaz$")
         
 
 
