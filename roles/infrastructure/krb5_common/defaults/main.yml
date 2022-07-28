@@ -14,12 +14,12 @@
 
 krb5_realm: CLOUDERA.LOCAL
 krb5_domain: "{{ krb5_realm | lower }}"
-krb5_kdc_admin_user: "{% if free_ipa == false %}cloudera-scm/{% endif %}admin@{{ krb5_realm }}"
+krb5_kdc_admin_user: "{% if freeipa_activated == false %}cloudera-scm/{% endif %}admin@{{ krb5_realm }}"
 krb5_kdc_admin_password: "{{ cloudera_manager_admin_password }}"
-krb5_kdc_type: "{{ 'MIT KDC' if (free_ipa | default(false)) == false else 'Red Hat IPA' }}"
+krb5_kdc_type: "{{ 'MIT KDC' if (freeipa_activated | default(false)) == false else 'Red Hat IPA' }}"
 krb5_enc_types: "aes256-cts aes128-cts"
 
-skip_krb5_conf_distribution: "{{ free_ipa | default(False) }}"
+skip_krb5_conf_distribution: "{{ freeipa_activated | default(False) }}"
 ipa_ldap_url: "ldaps://{{ groups['krb5_server'][0] | default('localhost') }}:636"
 
 ipa_directory_manager: "cn=Directory Manager"

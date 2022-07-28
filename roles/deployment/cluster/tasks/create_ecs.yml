@@ -117,17 +117,13 @@
   retries: "{{ parcel_poll_max_retries | default(30) }}"
   delay: "{{ parcel_poll_duration | default(60) }}"
 
-- name: Determine database mode for ECS
-  ansible.builtin.set_fact:
-    ecs_cluster_config: "{{ clusters | selectattr('type', 'search', 'ecs') | first }}"
-
 - name: Generate custom values
-  when: ecs_cluster_config.controlplane_config.Database.Mode != 'embedded'
+  when: cluster.controlplane_config.Database.Mode != 'embedded'
   set_fact:
     custom_values: "{{ lookup('template', 'cluster_template/ecs/controlPlaneValues.j2') | from_yaml | combine(cluster.controlplane_config, recursive=True) }}"
 
 - name: Generate custom values - Embedded
-  when: ecs_cluster_config.controlplane_config.Database.Mode == 'embedded'
+  when: cluster.controlplane_config.Database.Mode == 'embedded'
   set_fact:
     custom_values: "{{ lookup('template', 'cluster_template/ecs/controlPlaneValuesEmbedded.j2') | from_yaml | combine(cluster.controlplane_config, recursive=True) }}"
 
@@ -135,7 +131,7 @@
   debug:
     var: custom_values
 
-- name: Install ECS cluster
+- name: Install ECS Embedded Control Plane
   cloudera.cluster.cm_api:
     endpoint: /controlPlanes/commands/installEmbeddedControlPlane
     method: POST

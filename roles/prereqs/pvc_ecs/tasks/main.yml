@@ -15,8 +15,12 @@
 ---
 - name: Install necessary additional packages
   ansible.builtin.package:
-    name: nfs-utils
+    name: "{{ __package_item }}"
     state: latest
+  loop:
+    - nfs-utils
+  loop_control:
+    loop_var: __package_item
 
 - name: Setup iptables on rhel7
   when: ansible_distribution_major_version | int == 7
@@ -43,16 +47,33 @@
 - name: Setup nftables on rhel8
   when: ansible_distribution_major_version | int >= 8
   block:
-    - name: Install nftables for rhel8
+    - name: Install iptables for rhel8
       ansible.builtin.package:
         lock_timeout: 180
-        name: nftables
+        name: "{{ __iptables_install_item }}"
         update_cache: yes
         state: present
+      loop:
+        - iptables-services
+      loop_control:
+        loop_var: __iptables_install_item
 
     - name: start nftables on rhel8
       systemd:
-        name: nftables
+        name: iptables
         enabled: yes
         state: started
         daemon-reload: yes
+
+- name: Flush IPTables
+  ansible.builtin.iptables:
+    flush: yes
+    table: "{{ __iptables_flush_item }}"
+  loop:
+    - filter
+    - nat
+    - mangle
+    - raw
+    - security
+  loop_control:
+    loop_var: __iptables_flush_item

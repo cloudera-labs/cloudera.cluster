@@ -14,11 +14,11 @@
 
 ---
 cloudera_manager_external_auth:
-  provider: "{{ 'FreeIPA' if free_ipa == true else omit }}"
+  provider: "{{ 'FreeIPA' if freeipa_activated == true else omit }}"
   external_first: no
   external_only: no
-  external_set: "{{ 'yes' if free_ipa == true else 'no' }}"
-  role_mappings: "{{ default_free_ipa_role_mappings if free_ipa == true else omit }}"
+  external_set: "{{ 'yes' if freeipa_activated == true else 'no' }}"
+  role_mappings: "{{ default_free_ipa_role_mappings if freeipa_activated == true else omit }}"
 
 default_free_ipa_role_mappings:
   - group: admins

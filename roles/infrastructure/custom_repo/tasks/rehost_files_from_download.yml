@@ -31,7 +31,7 @@
   poll: 0
   ansible.builtin.get_url:
     url: "{{ __parcel_download_item }}"
-    dest: "/var/www/html/{{ __parcel_download_item | urlsplit('path') }}"
+    dest: "/var/www/html{{ __parcel_download_item | urlsplit('path') }}"
 
 - name: Track async downloads to completion  [ This may take a while if your files are very large or far away ]
   loop: "{{ __infra_download_parcels_results.results }}"
@@ -72,7 +72,7 @@
     cloudera_archive_base_url: "http://{{ groups['custom_repo'] | first }}"
   delegate_to: "{{ __play_host }}"
   delegate_facts: true
-  loop: "{{ groups.cloudera_manager + groups.cluster }}"
+  loop: "{{ groups.cloudera_manager + groups.cluster + groups.ecs_nodes }}"
   loop_control:
     loop_var: __play_host
     label: __play_host

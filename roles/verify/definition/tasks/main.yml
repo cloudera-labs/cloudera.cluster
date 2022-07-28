@@ -148,7 +148,7 @@
       when:
         - "'krb5_server' in groups"
         - "'custom_repo' in groups"
-        - free_ipa == True
+        - freeipa_activated == True
 
 # Service specific
 

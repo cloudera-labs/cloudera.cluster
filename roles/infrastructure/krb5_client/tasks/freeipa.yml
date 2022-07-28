@@ -18,6 +18,10 @@
   when:
     - ansible_os_family == 'RedHat'
 
+- name: Set hosts to point to FreeIPA DNS when requested
+  when: freeipa_autodns | default(false)
+  include_tasks: freeipa_autodns.yml
+
 - name: Setup FreeIPA Client
   ansible.builtin.include_role:
     name: freeipa.ansible_freeipa.ipaclient
