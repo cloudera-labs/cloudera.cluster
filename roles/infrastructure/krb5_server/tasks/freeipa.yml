@@ -58,7 +58,12 @@
         ipa_host: "{{ groups.krb5_server | first }}"
         ipa_pass: "{{ ipaadmin_password }}"
         state: present
-        zone_name: "apps.{{ krb5_realm | lower }}"
+        zone_name: "{{ __dns_record_item }}"
         record_name: "*"
         record_type: A
         record_value: "{{ ecs_server_ip }}"
+      loop:
+        - "apps.{{ krb5_realm | lower }}"
+        - "{{ krb5_realm | lower }}"
+      loop_control:
+        loop_var: __dns_record_item
