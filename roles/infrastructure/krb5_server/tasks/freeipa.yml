@@ -13,11 +13,57 @@
 # limitations under the License.
 
 ---
+- name: Run FreeIPA Collection fix before IPA Server deployment
+  include_tasks:
+    file: fix_freeipa_collection.yml
+
 - name: Setup FreeIPA Server
   ansible.builtin.include_role:
     name: freeipa.ansible_freeipa.ipaserver
   vars:
     state: present
-    ipaserver_realm: "{{ krb5_realm }}"
-    ipaserver_domain: "{{ krb5_domain }}"
+    ipaserver_realm: "{{ krb5_realm | upper }}"
+    ipaserver_domain: "{{ krb5_domain | default(krb5_realm | lower) }}"
     ipaserver_setup_firewalld: "no"
+    ipaserver_setup_dns: "{{ freeipa_autodns | default(omit) }}"
+    ipaserver_auto_forwarders: "{{ freeipa_autodns | default(omit) }}"
+
+- name: Create FreeIPA DNS records for PVC ECS
+  when:
+    - pvc_type == 'ECS' | default(false)
+    - freeipa_autodns | default(false)
+  block:
+    - name: Gather facts from ECS Server
+      ansible.builtin.setup:
+        gather_subset:
+          - 'default_ipv4'
+      delegate_to: "{{ ecs_ip_collect_item }}"
+      delegate_facts: true
+      loop: "{{ groups['ecs_ecs_server'] }}"
+      loop_control:
+        loop_var: ecs_ip_collect_item
+
+    - set_fact:
+        ecs_server_ip: "{{ hostvars[groups.ecs_ecs_server | first].ansible_facts.default_ipv4.address }}"
+
+    - name: Ensure apps zone is present for PvC ECS
+      community.general.ipa_dnszone:
+        ipa_host: "{{ groups.krb5_server | first }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        state: present
+        zone_name: "apps.{{ krb5_realm | lower }}"
+
+    - name: Ensure wildcard record is prepared for PvC ECS
+      community.general.ipa_dnsrecord:
+        ipa_host: "{{ groups.krb5_server | first }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        state: present
+        zone_name: "{{ __dns_record_item }}"
+        record_name: "*"
+        record_type: A
+        record_value: "{{ ecs_server_ip }}"
+      loop:
+        - "apps.{{ krb5_realm | lower }}"
+        - "{{ krb5_realm | lower }}"
+      loop_control:
+        loop_var: __dns_record_item

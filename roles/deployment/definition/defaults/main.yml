@@ -13,17 +13,27 @@
 # limitations under the License.
 
 ---
-database_host: "{{ groups['db_server'][0] | default('localhost') }}"
-database_type: postgresql
-database_default_password: changeme
-database_version: "{{ 10 if database_type == 'postgresql' else 10.2 }}"
-database_tls: false
+database_host: "{{ groups['db_server'][0] | default('cloudera_manager[0]') }}"
 
-krb5_realm: CLOUDERA.LOCAL
-krb5_kdc_admin_user: "cloudera-scm/admin@{{ krb5_realm }}"
-krb5_kdc_admin_password: changeme
-krb5_kdc_type: MIT KDC
-krb5_enc_types: "aes256-cts aes128-cts"
+
+database_default_password: changeme
+database_tls: false
+database_type: postgresql
+database_version: "{{ default_database_versions[database_type][ansible_distribution_major_version] }}"
+default_database_versions:
+  postgresql:
+    '7': 10
+    '8': 12
+  mariadb:
+    '7': 10.2
+    '8': 10.2
+
+# Located in cloudera.cluster.infrastructure.krb5_common
+#krb5_realm: CLOUDERA.LOCAL
+#krb5_kdc_admin_user: "cloudera-scm/admin@{{ krb5_realm }}"
+#krb5_kdc_admin_password: "{{ admin_password }}"
+#krb5_kdc_type: MIT KDC
+#krb5_enc_types: "aes256-cts aes128-cts"
 
 manual_tls_cert_distribution: false
 local_temp_dir: '/tmp'

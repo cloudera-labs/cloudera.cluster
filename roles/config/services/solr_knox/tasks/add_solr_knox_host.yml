@@ -1,0 +1,19 @@
+---
+- set_fact:
+    new_gateway_descriptor_cdp_proxy: "{{ gateway_descriptor_cdp_proxy }}#SOLR:url={{ solr_protocol }}://{{ solr_host }}:{{ solr_port }}/solr/"
+
+- set_fact:
+    new_gateway_descriptor_cdp_proxy_api: "{{ gateway_descriptor_cdp_proxy_api }}#SOLR:url={{ solr_protocol }}://{{ solr_host }}:{{ solr_port }}/solr/"
+
+- name: Push new Knox config
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ knox_service_name | lower }}/roleConfigGroups/{{ knox_service_name | lower }}-KNOX_GATEWAY-BASE/config"
+    method: PUT
+    body: "{{ lookup('template', 'solr_knox_url.json' ) }}"
+
+- name: Push new Knox API config
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ knox_service_name | lower }}/roleConfigGroups/{{ knox_service_name | lower }}-KNOX_GATEWAY-BASE/config"
+    method: PUT
+    body: "{{ lookup('template', 'solr_knox_url_api.json' ) }}"
+  register: __add_solr_knox

@@ -1,0 +1,12 @@
+{
+    "items": [
+      {
+        "name": "ssl_client_truststore_location",
+        "value": "{{CM_AUTO_TLS}}"
+      },
+      {
+        "name": "ssl_client_truststore_password",
+        "value": "{{CM_AUTO_TLS}}"
+      }
+    ]
+  }

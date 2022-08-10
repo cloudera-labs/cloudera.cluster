@@ -1,0 +1,8 @@
+{
+    "items": [
+      {
+        "name": "gateway_descriptor_cdp_proxy_api",
+        "value": "{{ new_gateway_descriptor_cdp_proxy_api }}"
+      }
+    ]
+  }

@@ -13,15 +13,39 @@
 # limitations under the License.
 
 ---
+- name: Fix FreeIPA Dbus configuration
+  include_tasks: freeipa_dbus_patch.yml
+  when:
+    - ansible_os_family == 'RedHat'
+
+- name: Set hosts to point to FreeIPA DNS when requested
+  when: freeipa_autodns | default(false)
+  include_tasks: freeipa_autodns.yml
+
 - name: Setup FreeIPA Client
   ansible.builtin.include_role:
     name: freeipa.ansible_freeipa.ipaclient
   vars:
     state: present
     ipaserver_realm: "{{ krb5_realm }}"
-    ipaserver_domain: "{{ krb5_domain }}"
+    ipaserver_domain: "{{ krb5_domain | default(krb5_realm | lower) }}"
     ipaclient_servers: "{{ groups['krb5_server'] }}"
-  when: "krb5_kdc_type == 'Red Hat IPA' and 'krb5_server' in groups"
+
+- name: Include Private Cloud config changes
+  ansible.builtin.include_tasks: pvc_configs.yml
+  when:
+    - pvc_type is defined
+    - pvc_type == 'OC' or pvc_type == 'ECS'
+
+- name: Set sssd to enumerate users and groups
+  when: use_sssd_for_enumeration is defined and use_sssd_for_enurmeration == True
+  lineinfile:
+    path: /etc/sssd/sssd.conf
+    insertafter: "^\\[domain/.+\\]"
+    regexp: "^enumerate"
+    line: "enumerate = True"
+  notify:
+    - restart sssd
 
 - name: Set up renew_lifetime in krb5.conf
   lineinfile:
@@ -29,7 +53,7 @@
     insertafter: "^\\[libdefaults\\]"
     regexp: "^  renew_lifetime"
     line: "  renew_lifetime = 7d"
-  when: 
+  when:
     - krb5_kdc_type == 'Red Hat IPA'
     - "'cluster' in group_names or 'cloudera_manager' in group_names"
 
@@ -38,6 +62,6 @@
     path: /etc/krb5.conf
     regexp: "^  default_ccache_name"
     state: absent
-  when: 
+  when:
     - krb5_kdc_type == 'Red Hat IPA'
     - "'cluster' in group_names or 'cloudera_manager' in group_names"

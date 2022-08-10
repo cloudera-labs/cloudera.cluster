@@ -1,0 +1,25 @@
+---
+- name: Create in Ranger the SolR service
+  register: __ranger_solr_plugin
+  uri:
+    url: "{{ ranger_url }}/service/public/v2/api/service"
+    method: POST
+    user: "{{ ranger_user }}"
+    password: "{{ ranger_password }}"
+    return_content: yes
+    body: "{{ lookup('template', 'solr_plugin.json' ) }}"
+    body_format: json
+    status_code: 200
+    validate_certs: no
+    force_basic_auth: yes
+  no_log: yes
+  failed_when:
+    - __ranger_solr_plugin is failed
+    - "'Duplicate service name' not in __ranger_solr_plugin.json.msgDesc"
+
+# Restart SolR
+
+- name: Restart SolR
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/commands/restart"
+  when: __ranger_solr_plugin.changed

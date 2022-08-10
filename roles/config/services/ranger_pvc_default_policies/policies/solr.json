@@ -1,0 +1,85 @@
+{
+    "id": 1,
+    "guid": "...",
+    "isEnabled": true,
+    "version": 1,
+    "service": "cm_solr",
+    "name": "SolR all collections",
+    "policyType": 0,
+    "policyPriority": 0,
+    "description": "Policy for admin users on collections",
+    "isAuditEnabled": true,
+    "resources": {
+      "collection": {
+        "values": [
+          "*",
+          "tmp_*"
+        ],
+        "isExcludes": false,
+        "isRecursive": false
+      }
+    },
+    "policyItems": [
+      {
+        "accesses": [
+          {
+            "type": "query",
+            "isAllowed": true
+          },
+          {
+            "type": "update",
+            "isAllowed": true
+          },
+          {
+            "type": "others",
+            "isAllowed": true
+          },
+          {
+            "type": "solr_admin",
+            "isAllowed": true
+          }
+        ],
+        "users": [
+          "solr",
+          "hue"
+        ],
+        "groups": [
+          
+        ],
+        "roles": [
+          
+        ],
+        "conditions": [
+          
+        ],
+        "delegateAdmin": true
+      }
+    ],
+    "denyPolicyItems": [
+      
+    ],
+    "allowExceptions": [
+      
+    ],
+    "denyExceptions": [
+      
+    ],
+    "dataMaskPolicyItems": [
+      
+    ],
+    "rowFilterPolicyItems": [
+      
+    ],
+    "serviceType": "solr",
+    "options": {
+      
+    },
+    "validitySchedules": [
+      
+    ],
+    "policyLabels": [
+      
+    ],
+    "zoneName": "",
+    "isDenyAllElse": false
+  }

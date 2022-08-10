@@ -19,7 +19,7 @@
         {%- for (template_service, roles) in role_mapping.items() -%}
           {%- if template_service == service -%}
             {%- for role in roles -%}
-              {%- for host in groups[template_name] -%}
+              {%- for host in groups["host_template_" + template_name] -%}
                 {{ role_sep() }}
                 {
                   "type": "{{ role }}",

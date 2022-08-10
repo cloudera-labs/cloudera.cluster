@@ -35,3 +35,16 @@
     src: "{{ local_temp_dir }}/postgresql-connector-java.jar"
     dest: /usr/share/java/postgresql-connector-java.jar
     mode: 0644
+
+# SSB will need the python3-psycopg2 connector
+
+- name: Create python3-psycopg2 directory
+  file:
+      path: "/usr/share/python3"
+      state: directory
+      mode: '777'
+  when: install_py3_psycopg2 == true
+
+- name: Install python3-psycopg2
+  shell: "pip3 install psycopg2-binary==2.8.5 -t /usr/share/python3"
+  when: install_py3_psycopg2 == true
