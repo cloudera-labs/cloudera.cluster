@@ -28,7 +28,6 @@ HIVE:
 {% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
-    spark_on_yarn_service: spark_on_yarn
     zookeeper_service: zookeeper
 
 HIVE_ON_TEZ:
