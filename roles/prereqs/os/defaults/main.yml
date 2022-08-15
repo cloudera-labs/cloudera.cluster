@@ -29,5 +29,7 @@ unnecessary_services:
   - postfix
   - tuned
   - firewalld  # Added for ECS deployments on RedHat
+  - nm-cloud-setup.timer  # Added for ECS deployments on RedHat
+  - nm-cloud-setup  # Added for ECS deployments on RedHat
 
 selinux_state: permissive

@@ -29,6 +29,11 @@
           The user module error may not identify the root cause.
       run_once: true
 
+    # If host is part of ecs_nodes, then set to an empty list, see task user_accounts_ecs
+    - set_fact:
+        local_accounts: [] 
+      when : "'ecs_nodes' in group_names" 
+
     - set_fact:
         local_accounts: "{{ local_accounts | union(postgres_accounts) }}"
       when: '"db_server" in group_names and database_type == "postgresql"'
