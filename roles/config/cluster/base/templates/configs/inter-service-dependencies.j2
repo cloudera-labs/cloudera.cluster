@@ -170,9 +170,6 @@ SPARK3_ON_YARN:
 {% if 'HBASE' in cluster.services %}
     hbase_service: hbase
 {% endif %}
-{% if 'HIVE' in cluster.services %}
-    hive_service: hive
-{% endif %}
 
 TEZ:
   SERVICEWIDE:
