@@ -46,7 +46,7 @@ custom_config_templates:
   - template: configs/kerberos-6.x-7.x.j2
     condition: "{{ cluster.security.kerberos | default(False) and cloudera_manager_version is version('6.0.0','>=') }}"
   - template: configs/kerberos-7.x.j2
-    condition: "{{ cluster.security.kerberos | default(False) and cloudera_runtime_version is version('7.1.0','>=') }}"
+    condition: "{{ cluster.security.kerberos | default(False) and cloudera_runtime_version is version('7.1.0','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) }}"
   - template: configs/trusted-realms.j2
     condition: "{{ cluster.security.kerberos | default(False) and auth_providers | default({}) | dict2items | json_query('[?value.type == `KERBEROS`]') | length > 0 }}"
 # Custom configurations for TLS
