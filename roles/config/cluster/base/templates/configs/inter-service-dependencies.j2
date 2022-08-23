@@ -170,6 +170,13 @@ SPARK3_ON_YARN:
     hbase_service: hbase
 {% endif %}
 
+{% if 'LIVY_FOR_SPARK3' in cluster.services %}
+LIVY_FOR_SPARK3:
+  SERVICEWIDE:
+    yarn_service: yarn
+    spark3_on_yarn_service: spark3_on_yarn
+{% endif %}
+
 TEZ:
   SERVICEWIDE:
     yarn_service: yarn
