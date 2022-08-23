@@ -87,6 +87,7 @@ cluster_services_ordered:
   - SPARK3_ON_YARN
   - SPARK_ON_YARN
   - LIVY
+  - LIVY_FOR_SPARK3
   - FLUME
   - KS_INDEXER
   - LUNA_KMS
