@@ -43,7 +43,7 @@
       -keystore {{ tls_keystore_path }}
       -keysize 2048
       -dname "{{ keytool_subject }}"
-      -ext san=dns:{{ inventory_hostname }}
+      -ext "san=dns:{{ inventory_hostname }}{% if subject_alternative_names | default([]) %},dns:{{ subject_alternative_names | join(',dns:') }}{% endif %}"
       -storetype JKS
       -storepass {{ tls_keystore_password }}
       -keypass {{ tls_keystore_password }}

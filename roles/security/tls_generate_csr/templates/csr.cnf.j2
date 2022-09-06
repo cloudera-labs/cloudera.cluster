@@ -19,5 +19,5 @@ subjectAltName = @alt_names
 [alt_names]
 DNS.1 = {{ inventory_hostname }}
 {% for san in subject_alternative_names | default([]) %}
-DNS.{{ loop.index + 1 }} =  {{ san }}
+DNS.{{ loop.index + 1 }} = {{ san }}
 {% endfor %}
