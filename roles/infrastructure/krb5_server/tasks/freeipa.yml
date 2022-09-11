@@ -17,6 +17,14 @@
   include_tasks:
     file: fix_freeipa_collection.yml
 
+- name: Disable SELinux to allow FreeIPA server setup on Rhel8
+  when:
+    - ansible_distribution_major_version | int >= 8
+  selinux:
+    policy: targeted
+    state: permissive
+  ignore_errors: yes
+
 - name: Setup FreeIPA Server
   ansible.builtin.include_role:
     name: freeipa.ansible_freeipa.ipaserver
@@ -30,6 +38,7 @@
 
 - name: Create FreeIPA DNS records for PVC ECS
   when:
+    - pvc_type is defined and freeipa_autodns is defined
     - pvc_type == 'ECS' | default(false)
     - freeipa_autodns | default(false)
   block:
