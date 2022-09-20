@@ -215,4 +215,10 @@ database_defaults:
     user: db-ums
     password: "{{ database_default_password }}"
     mode: "{{ cluster.ecs_database_mode | default('existing') }}"
-
+  QUERY_PROCESSOR:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: queryprocessor
+    user: queryprocessor
+    password: "{{ database_default_password }}"
