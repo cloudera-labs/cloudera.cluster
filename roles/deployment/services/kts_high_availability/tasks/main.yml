@@ -33,12 +33,18 @@
     state: directory
     mode: 0777
 
+# GnuPG 2.1+ uses .kbx for keyring, and retired secring / random_seed
+- name: Determine gnupg version
+  delegate_to: "{{ groups.kts_active | first }}"
+  register: __gnupg_version
+  shell: "gpg2 --version | head -n 1 | rev | cut -d ' ' -f1 | rev"
+
 - name: Fetch GPG keys and configs from active Key Trustee Server
   delegate_to: "{{ groups.kts_active | first }}"
   fetch:
     src: "{{ keytrustee_server_conf_dir }}/{{ item }}"
     dest: "{{ local_temp_dir }}/kts"
-  loop: "{{ keytrustee_server_key_files }}"
+  loop: "{{ keytrustee_server_key_files + (keytrustee_server_kbx_files if __gnupg_version.stdout is version('2.1', '>=') else keytrustee_server_gpg_files) }}"
 
 - name: Copy to passive Key Trustee Server
   delegate_to: "{{ groups.kts_passive | first }}"
