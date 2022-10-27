@@ -15,6 +15,7 @@
 ---
 
 - name: Get existing configs
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   cloudera.cluster.cm_api:
     endpoint: "{{ api_config_endpoint }}"
   register: response
@@ -31,6 +32,7 @@
   when: message is defined and "message" not in api_config_endpoint
 
 - name: Update configuration (via Cloudera Manager API)
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   cloudera.cluster.cm_api:
     endpoint: "{{ api_config_endpoint }}"
     body: "{{ lookup('template', 'config.j2', convert_data=False) }}"
