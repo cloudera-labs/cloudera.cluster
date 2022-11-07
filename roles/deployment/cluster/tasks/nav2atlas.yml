@@ -49,7 +49,7 @@
   ansible.builtin.file:
     state: directory
     path: "{{ nav2atlas_dir }}"
-    mode: 700
+    mode: 0700
     owner: atlas
     group: atlas
   delegate_to: "{{ groups.atlas_atlas_server | first }}"
