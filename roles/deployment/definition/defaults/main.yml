@@ -31,7 +31,7 @@ local_temp_dir: '/tmp'
 database_defaults:
   ACTIVITYMONITOR:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: amon
     user: amon
@@ -70,7 +70,7 @@ database_defaults:
     mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   DAS:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: das
     user: das
@@ -101,14 +101,14 @@ database_defaults:
     mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   HIVE:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: metastore
     user: hive
     password: "{{ database_default_password }}"
   HUE:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: hue
     user: hue
@@ -123,14 +123,14 @@ database_defaults:
     mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   NAVIGATOR:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: nav
     user: nav
     password: "{{ database_default_password }}"
   NAVIGATORMETASERVER:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: navms
     user: navms
@@ -145,21 +145,21 @@ database_defaults:
     mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   OOZIE:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: oozie
     user: oozie
     password: "{{ database_default_password }}"
   RANGER:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: ranger
     user: rangeradmin
     password: "{{ database_default_password }}"
   REPORTSMANAGER:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: rman
     user: rman
@@ -174,7 +174,7 @@ database_defaults:
     mode: "{{ cluster.ecs_database_mode | default('existing') }}"
   SCHEMAREGISTRY:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: schemaregistry
     user: schemaregistry
@@ -195,14 +195,14 @@ database_defaults:
     password: "{{ database_default_password }}"
   STREAMS_MESSAGING_MANAGER:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: streamsmsgmgr
     user: streamsmsgmgr
     password: "{{ database_default_password }}"
   SENTRY:
     host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    port: "{{ database_port | cloudera.cluster.default_database_port }}"
     type: "{{ database_type }}"
     name: sentry
     user: sentry

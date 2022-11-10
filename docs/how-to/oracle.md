@@ -46,7 +46,7 @@ e.g. For Hive:
 ```
 HIVE:
   host: "{{ database_host }}"
-  port: "{{ database_type | default_database_port }}"
+  port: "{{ database_port | default_database_port }}"
   type: "{{ database_type }}"
   name: "{{ database_name }}"
   user: hive
@@ -65,14 +65,14 @@ clusters:
     databases:
       HIVE:
         host: "{{ database_host }}"
-        port: "{{ database_type | default_database_port }}"
+        port: "{{ database_port | default_database_port }}"
         type: "{{ database_type }}"
         name: "{{ database_name }}"
         user: hive
         password: "{{ database_default_password }}"
       OOZIE:
         host: "{{ database_host }}"
-        port: "{{ database_type | default_database_port }}"
+        port: "{{ database_port | default_database_port }}"
         type: "{{ database_type }}"
         name: "{{ database_name }}"
         user: oozie
@@ -104,7 +104,7 @@ mgmt:
   databases:
     REPORTSMANAGER:
       host: "{{ database_host }}"
-      port: "{{ database_type | default_database_port }}"
+      port: "{{ database_port | default_database_port }}"
       type: "{{ database_type }}"
       name: "{{ database_name }}"
       user: rman
