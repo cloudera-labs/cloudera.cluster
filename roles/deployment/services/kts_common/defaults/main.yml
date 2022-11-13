@@ -22,15 +22,8 @@ keytrustee_server_key_files:
   - gpg.conf
   - keytrustee.conf
   - logging.conf
-  - trustdb.gpg
-
-# GnuPG 2.1+ uses .kbx for keyring, and retired secring / random_seed
-keytrustee_server_gpg_files:
-  - secring.gpg
   - pubring.gpg
   - pubring.gpg~
   - random_seed
-
-keytrustee_server_kbx_files:
-  - pubring.kbx
-  - pubring.kbx~
+  - secring.gpg
+  - trustdb.gpg

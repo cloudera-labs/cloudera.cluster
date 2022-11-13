@@ -65,3 +65,14 @@
     src: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') }}"
     dest: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') | regex_replace('^(.+)repo.+-(.+)\\.tar\\.gz$', '\\1\\2' + '/yum/') }}"
     keep_newer: "{{ keep_newer }}"
+
+- name: Set Cloudera Manager Base Repo if included in rehosting list
+  when: "{{ custom_repo_rehost_files | select('search', 'tar.gz') | list | select('search', '/cm') | list }} | length > 0"
+  ansible.builtin.set_fact:
+    cloudera_archive_base_url: "http://{{ groups['custom_repo'] | first }}"
+  delegate_to: "{{ __play_host }}"
+  delegate_facts: true
+  loop: "{{ groups.cloudera_manager + groups.cluster + groups.ecs_nodes }}"
+  loop_control:
+    loop_var: __play_host
+    label: __play_host
