@@ -30,7 +30,6 @@
 
 - name: Create FreeIPA DNS records for PVC ECS
   when:
-    - pvc_type is defined
     - pvc_type == 'ECS' | default(false)
     - freeipa_autodns | default(false)
   block:

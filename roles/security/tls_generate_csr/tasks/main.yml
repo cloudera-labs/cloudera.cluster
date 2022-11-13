@@ -117,11 +117,6 @@
 
 - name: Set file permissions
   include_tasks: acls.yml
-  when: "'ecs_nodes' not in group_names"
-    
-- name: Set file permissions for hosts in ecs
-  include_tasks: acls_ecs.yml
-  when: "'ecs_nodes' in group_names"
 
 - name: Create openssl.cnf for CSR generation
   template:
