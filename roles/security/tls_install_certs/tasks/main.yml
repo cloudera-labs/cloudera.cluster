@@ -14,12 +14,14 @@
 
 ---
 
-- set_fact:
+- name: Set fact for signed TLS certificates directory
+  ansible.builtin.set_fact:
     tls_signed_certs_dir: "{{ local_certs_dir }}"
   when: tls_signed_certs_dir is not defined
 
 # remote certificates for ca_server ca
-- set_fact:
+- name: Define remote certificates for embedded CA server
+  ansible.builtin.set_fact:
     tls_ca_certs:
       - alias: cluster_rootca
         path: "{{ ca_server_root_cert_path }}"
@@ -30,12 +32,22 @@
   when: tls_ca_certs is not defined and 'ca_server' in groups
 
 # remote certificates for freeipa ca
-- set_fact:
+- name: Define remote certificates for embedded FreeIPA server
+  ansible.builtin.set_fact:
     tls_ca_certs:
       - alias: cluster_ca
         path: "/etc/ipa/ca.crt"
-        remote_host: "{{ groups.krb5_server | first | default(omit) }}"
-  when: tls_ca_certs is not defined and krb5_kdc_type | default(None) == 'Red Hat IPA'
+        remote_host: "{{ groups.krb5_server | first }}"
+  when: tls_ca_certs is not defined and 'krb5_server' in groups and krb5_kdc_type | default(None) == 'Red Hat IPA'
+
+# remote certificates for freeipa ca
+- name: Define remote certificates for sidecar FreeIPA server
+  ansible.builtin.set_fact:
+    tls_ca_certs:
+      - alias: cluster_ca
+        path: "/etc/ipa/ca.crt"
+        remote_host: "{{ remote_ipa_server }}"
+  when: tls_ca_certs is not defined and remote_ipa_server is defined and krb5_kdc_type | default(None) == 'Red Hat IPA'
 
 - name: Fetch the remote CA certs
   fetch:
