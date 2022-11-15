@@ -24,6 +24,7 @@
 
 # https://github.com/ansible/ansible/issues/34989
 - name: Check the default Cloudera Manager admin password
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   uri:
     url: "{{ cloudera_manager_protocol }}://{{ cloudera_manager_host }}:{{ cloudera_manager_port }}/api/v2/tools/echo"
     validate_certs: "{{ cloudera_manager_tls_validate_certs }}"

@@ -1,4 +1,7 @@
-# Copyright 2021 Cloudera, Inc.
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2022 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
-
-- name: Get the host identifiers and names from Cloudera Manager
-  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
-  cloudera.cluster.cm_api:
-    endpoint: /hosts
-    method: GET
-  register: api_hosts_response
-  when: cloudera_manager_api_hosts is not defined
-
-- name: Extract the host identifiers and names into facts
-  set_fact:
-    cloudera_manager_api_hosts: "{{ lookup('template', 'host_list.j2') }}"
-  when: cloudera_manager_api_hosts is not defined
+class ModuleDocFragment(object):
+    DOCUMENTATION = r'''
+    options:
+        url:
+            description:
+                - The CM API endpoint URL and should include scheme, host, port, and API root path.
+                - Mutually exclusive with I(host).
+            type: str
+            required: False
+            aliases:
+                - endpoint
+                - cm_endpoint_url
+    '''
