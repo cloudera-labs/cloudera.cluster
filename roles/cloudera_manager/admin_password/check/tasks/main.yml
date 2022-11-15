@@ -22,8 +22,13 @@
     connect_timeout: 180
     sleep: 5
 
+# If LDAP is configured, repeat failed password checks can lock an account
+# Only check the password if the vars are currently set to the default 'admin'
+# I.e. Stop checking the password if it is no longer set to its default value
+
 # https://github.com/ansible/ansible/issues/34989
 - name: Check the default Cloudera Manager admin password
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   uri:
     url: "{{ cloudera_manager_protocol }}://{{ cloudera_manager_host }}:{{ cloudera_manager_port }}/api/v2/tools/echo"
     validate_certs: "{{ cloudera_manager_tls_validate_certs }}"
@@ -37,16 +42,24 @@
     - default_admin_password_check.status is defined
     - default_admin_password_check.status != -1
   run_once: True
-  when: cloudera_manager_admin_password is defined
-
-- set_fact:
-    cloudera_manager_api_password: "admin"
-  run_once: True
+  when:
+    - cloudera_manager_admin_password is defined
+    - cloudera_manager_api_password == 'admin'
 
 - name: Set the playbook to use the non-default Cloudera Manager admin password
+  delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   set_fact:
     cloudera_manager_api_password: "{{ cloudera_manager_admin_password }}"
   run_once: True
   when:
     - cloudera_manager_admin_password is defined
+    - cloudera_manager_api_password == 'admin'
     - default_admin_password_check.status == 401
+
+# The check may have been run on a subset of the hosts previously
+# This set_fact ensures that hosts missing from the initial run get a copy of the password
+
+- delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
+  set_fact:
+    cloudera_manager_api_password: "{{ cloudera_manager_api_password }}"
+  run_once: True
