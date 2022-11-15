@@ -187,6 +187,13 @@ SQL_STREAM_BUILDER:
     knox_service: knox
 {% endif %}
 
+{% if 'LIVY_FOR_SPARK3' in cluster.services %}
+LIVY_FOR_SPARK3:
+  SERVICEWIDE:
+    yarn_service: yarn
+    spark3_on_yarn_service: spark3_on_yarn
+{% endif %}
+
 TEZ:
   SERVICEWIDE:
     yarn_service: yarn
