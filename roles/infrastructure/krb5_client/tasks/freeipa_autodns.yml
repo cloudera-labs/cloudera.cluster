@@ -13,9 +13,9 @@
 # limitations under the License.
 
 ---
-- name: Configure autodns on FreeIPA for el7
+- name: Configure autodns on FreeIPA for el7 or el8
   when:
-    - ansible_distribution_major_version | int == 7
+    - ansible_distribution_major_version | int > 6
     - ansible_os_family == 'RedHat'
   block:
     - name: Gather facts from KRB5 Server
@@ -50,5 +50,24 @@
           dns=none
         dest: /etc/NetworkManager/conf.d/disable-resolve.conf-managing.conf
         backup: yes
+        
+    - name: Disable nm-cloud-setup if present
+      when:
+        - ansible_distribution_major_version | int > 7
+        - ansible_os_family == 'RedHat'
+      block:
+        - name: Disable nm-cloud-setup if present
+          ignore_errors: yes
+          loop_control:
+            loop_var: __nm_cloud_setup_disable_item
+          loop:
+            - systemctl disable nm-cloud-setup.service nm-cloud-setup.timer
+            - systemctl stop nm-cloud-setup.service nm-cloud-setup.timer
+            - ip rule del prio 30400
+            - rm -rf /etc/systemd/system/nm-cloud-setup.service.d
+          ansible.builtin.command: "{{ __nm_cloud_setup_disable_item }}"
 
-# TODO: Implement and test for el8
+    - name: Ensure NetworkManager is running to maintain DHCP
+      ansible.builtin.service:
+        name: NetworkManager
+        state: restarted
