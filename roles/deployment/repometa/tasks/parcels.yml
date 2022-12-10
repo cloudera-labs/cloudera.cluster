@@ -19,6 +19,7 @@
   uri:
     url: "{{ repository | regex_replace('/?$','') + '/manifest.json' }}"
     status_code: 200
+    body: ''
     body_format: json
     return_content: yes
     url_username: "{{ parcel_repo_username | default(omit) }}"
