@@ -17,3 +17,4 @@
 dependencies:
   - role: cloudera.cluster.cloudera_manager.api_client
   - role: cloudera.cluster.infrastructure.krb5_common
+  - role: cloudera.cluster.cloudera_manager.repo

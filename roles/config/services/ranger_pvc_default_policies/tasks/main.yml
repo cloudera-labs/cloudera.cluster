@@ -1,20 +1,29 @@
 ---
+- name: Set policies to apply
+  ansible.builtin.set_fact:
+    __ranger_pol_files:
+      - "{{ role_path }}/policies/hdfs_hadoop.json"
+      - "{{ role_path }}/policies/hdfs_user.json"
+      - "{{ role_path }}/policies/{{'solr_717.json' if runtime_parcel_version is version('7.1.8', '<') else 'solr_718.json'}}"
 
 - name: Post Ranger policies declared in policies directory
   register: __ranger_pol_response
-  uri: 
+  ansible.builtin.uri:
     url: "{{ ranger_url }}/service/public/v2/api/policy"
     method: POST
     user: "{{ ranger_user }}"
     password: "{{ ranger_password }}"
     return_content: yes
-    body: "{{ lookup('template', '{{ item.src }}' ) }}"
+    body: "{{ lookup('template', '{{ __ranger_pol_item }}' ) }}"
     body_format: json
     status_code: 200
     validate_certs: no
     force_basic_auth: yes
-  no_log: True
-  with_filetree: "{{ role_path }}/policies"
+  no_log: no
+  loop: "{{ __ranger_pol_files }}"
+  loop_control:
+    loop_var: __ranger_pol_item
   failed_when:
     - __ranger_pol_response is failed
     - "'Another policy already exists for this name' not in __ranger_pol_response.json.msgDesc"
+    - "'duplicate key' not in __ranger_pol_response.json.msgDesc"

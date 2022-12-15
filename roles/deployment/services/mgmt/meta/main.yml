@@ -16,3 +16,4 @@
 
 dependencies:
   - role: cloudera.cluster.cloudera_manager.api_hosts
+  - role: cloudera.cluster.cloudera_manager.repo
