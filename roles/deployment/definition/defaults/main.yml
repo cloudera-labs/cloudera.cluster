@@ -39,13 +39,6 @@ manual_tls_cert_distribution: false
 local_temp_dir: '/tmp'
 
 database_defaults:
-  ACTIVITYMONITOR:
-    host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
-    type: "{{ database_type }}"
-    name: amon
-    user: amon
-    password: "{{ database_default_password }}"
   DAS:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -67,20 +60,6 @@ database_defaults:
     name: hue
     user: hue
     password: "{{ database_default_password }}"
-  NAVIGATOR:
-    host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
-    type: "{{ database_type }}"
-    name: nav
-    user: nav
-    password: "{{ database_default_password }}"
-  NAVIGATORMETASERVER:
-    host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
-    type: "{{ database_type }}"
-    name: navms
-    user: navms
-    password: "{{ database_default_password }}"
   OOZIE:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -94,13 +73,6 @@ database_defaults:
     type: "{{ database_type }}"
     name: ranger
     user: rangeradmin
-    password: "{{ database_default_password }}"
-  REPORTSMANAGER:
-    host: "{{ database_host }}"
-    port: "{{ database_type | cloudera.cluster.default_database_port }}"
-    type: "{{ database_type }}"
-    name: rman
-    user: rman
     password: "{{ database_default_password }}"
   SCHEMAREGISTRY:
     host: "{{ database_host }}"
@@ -138,6 +110,35 @@ database_defaults:
     user: sentry
     password: "{{ database_default_password }}"
 
+database_defaults_cms:
+  ACTIVITYMONITOR:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: amon
+    user: amon
+    password: "{{ database_default_password }}"
+  REPORTSMANAGER:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: rman
+    user: rman
+    password: "{{ database_default_password }}"
+  NAVIGATOR:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: nav
+    user: nav
+    password: "{{ database_default_password }}"
+  NAVIGATORMETASERVER:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: "{{ database_type }}"
+    name: navms
+    user: navms
+    password: "{{ database_default_password }}"
 
 database_defaults_ecs:
   ALERTS:
