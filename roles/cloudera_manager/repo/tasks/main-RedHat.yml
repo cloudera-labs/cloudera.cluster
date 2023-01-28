@@ -14,6 +14,7 @@
 
 ---
 
+## When "use_secure_cldr_repo" is True (default), we are using Cloudera's rpm repo and must include a username & password in the repo file
 - name: Add Cloudera Manager yum repository
   yum_repository:
     name: cloudera-manager
@@ -24,6 +25,19 @@
     enabled: yes
     username: "{{ cloudera_manager_repo_username | default('') }}"
     password: "{{ cloudera_manager_repo_password | default('') }}"
+  when: use_secure_cldr_repo |bool
+
+## When "use_secure_cldr_repo" is False, we arent going to Cloudera's rpm repo and do not want to include a username & password in the repo file
+- name: Add Cloudera Manager yum repository
+  yum_repository:
+    name: cloudera-manager
+    description: Cloudera Manager
+    baseurl: "{{ cloudera_manager_repo_url }}"
+    gpgkey: "{{ cloudera_manager_repo_key }}"
+    gpgcheck: "{{ cloudera_manager_repo_gpgcheck | default((cloudera_manager_version.split('.')[0] == '5' ) | ternary('no', 'yes')) }}"
+    enabled: yes
+  when: not (use_secure_cldr_repo |bool)
+
 
 - name: yum-clean-metadata
   command: yum clean metadata

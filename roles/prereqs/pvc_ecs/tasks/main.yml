@@ -44,7 +44,7 @@
         state: started
         daemon-reload: yes
 
-- name: Setup nftables on rhel8
+- name: Setup iptables on rhel8
   when: ansible_distribution_major_version | int >= 8
   block:
     - name: Install iptables for rhel8
@@ -58,7 +58,7 @@
       loop_control:
         loop_var: __iptables_install_item
 
-    - name: start nftables on rhel8
+    - name: start iptables on rhel8
       systemd:
         name: iptables
         enabled: yes
