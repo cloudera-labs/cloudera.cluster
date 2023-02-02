@@ -14,7 +14,3 @@
 
 # ansible.posix.patch
 patch [platform:rpm]
-
-# community.general.ipa_user
-hashlib [platform:rpm]
-base64 [platform:rpm]
