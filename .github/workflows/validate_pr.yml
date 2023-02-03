@@ -40,6 +40,7 @@ jobs:
           sudo update-alternatives --install /usr/bin/python python $(which python3) 1
           pip install --upgrade pip
           pip install ansible-core==2.12 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
+          mkdir -p /usr/share/ansible/collections /usr/share/ansible/roles
           ansible-galaxy collection install -r builder/requirements.yml -p /usr/share/ansible/collections
           ansible-galaxy role install -r builder/requirements.yml -p /usr/share/ansible/roles
 
@@ -51,11 +52,9 @@ jobs:
       
       - name: Set up Ansible collection dependencies
         run: |
-          ansible-builder introspect \
-            --write-pip final_python.txt --write-bindep final_bindep.txt \
-            /usr/share/ansible/collections
-          pip install -r final_python.txt
-          bindep --file final_bindep.txt
+          ansible-builder introspect --write-pip final_python.txt --write-bindep final_bindep.txt /usr/share/ansible/collections
+          [[ -f final_python.txt ]] && pip install -r final_python.txt || echo "No Python dependencies found."
+          [[ -f final_bindep.txt ]] && bindep --file final_bindep.txt || echo "No system dependencies found."
       
       - name: Report installed Python dependencies
         run: pip freeze
