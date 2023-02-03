@@ -35,10 +35,11 @@ jobs:
           python-version: '3.9'
           cache: 'pip'
       
-      - name: Set up Ansible collections
+      - name: Set up Ansible and Ansible collections and roles
         run: |
           sudo update-alternatives --install /usr/bin/python python $(which python3) 1
-          pip install ansible-core==2.12 ansible-builder pycodestyle voluptuous pylint pyyaml ansible-lint
+          pip install --upgrade pip
+          pip install ansible-core==2.12 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
           ansible-galaxy collection install -r builder/requirements.yml -p /usr/share/ansible/collections
           ansible-galaxy role install -r builder/requirements.yml -p /usr/share/ansible/roles
 
@@ -54,7 +55,7 @@ jobs:
             --write-pip final_python.txt --write-bindep final_bindep.txt \
             /usr/share/ansible/collections
           pip install -r final_python.txt
-          sudo apt-get -y install $(cat final_bindep.txt)
+          bindep --file final_bindep.txt
       
       - name: Report installed Python dependencies
         run: pip freeze
