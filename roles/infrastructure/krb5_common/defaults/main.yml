@@ -28,6 +28,8 @@ ipadm_password: "{{ cloudera_manager_admin_password }}"
 ipa_admin_user: admin
 ipaadmin_password: "{{ cloudera_manager_admin_password }}"
 
+ipa_admins_group: admins
+
 ipa_ldap_dc_suffix: "{% for i in krb5_realm.split('.') %}dc={{ i | lower }}{% if not loop.last %},{% endif %}{% endfor %}"
 ipa_ldap_user_bind_dn: "uid=admin,cn=users,cn=accounts,{{ ipa_ldap_dc_suffix }}"
 ipa_ldap_user_bind_password: "{{ cloudera_manager_admin_password }}"
