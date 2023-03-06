@@ -13,4 +13,4 @@
 # limitations under the License.
 
 ---
-krb5_kdc_master_password: changeme
+krb5_kdc_master_password: "{{ cloudera_manager_admin_password }}"

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright 2021 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
 
-class FilterModule(object):
-
-  def filters(self):
-    return {
-      'filter_null_configs': self.filter_null_configs
-    }
-
-  def filter_null_configs(self, configs, existing_configs):
-    filtered_configs = dict(configs)
-    for item, value in configs.items():
-      if item not in existing_configs and not value:
-        del filtered_configs[item]
-    return filtered_configs
+dependencies:
+  - role: cloudera.cluster.cloudera_manager.services_info

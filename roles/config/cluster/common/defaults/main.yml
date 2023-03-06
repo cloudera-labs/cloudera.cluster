@@ -19,6 +19,8 @@ tls: False
 
 default_cluster_type: base
 
+pvc_type: ""
+
 kms_services: [KEYTRUSTEE, RANGER_KMS, RANGER_KMS_KTS]
 sdx_services: [ATLAS, HDFS, HIVE, RANGER, SENTRY]
 

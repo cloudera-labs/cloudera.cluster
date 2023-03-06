@@ -18,7 +18,7 @@
   ansible.builtin.set_fact:
     _host_template_cluster_map: "{{ lookup('template', './template_cluster_map.j2') | from_yaml }}"
   vars:
-    clusters: "{{ clusters | default([]) }}"
+    clusters: "{{ definition.clusters | default([]) }}"
 
 - name: Generate definition canonical structure from supplied Definition details
   ansible.builtin.set_fact:

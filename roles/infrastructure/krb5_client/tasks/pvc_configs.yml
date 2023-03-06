@@ -1,0 +1,40 @@
+---
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Add Renewable ticket lifetime
+  blockinfile:
+    dest: "/etc/krb5.conf"
+    insertafter: 'ticket_lifetime = 24h'
+    block: |
+      renew_lifetime = 7d
+      max_life = 365d
+      max_renewable_life = 365d
+  ignore_errors: true
+
+- name: Comment default_ccache_name in krb5.conf
+  replace:
+    dest: /etc/krb5.conf
+    regexp: 'default_ccache_name = KEYRING:persistent:%{uid}'
+    replace: '#default_ccache_name = KEYRING:persistent:%{uid}'
+  ignore_errors: true
+
+- name: Adding enctypes for Hue
+  blockinfile:
+    dest: "/etc/krb5.conf"
+    insertafter: 'ticket_lifetime = 24h'
+    block: |
+      default_tgs_enctypes= des3-cbc-sha1 aes256-cts-hmac-sha1-96 arcfour-hmac aes128-cts-hmac-sha1-96 des-cbc-md5
+      default_tkt_enctypes = des3-cbc-sha1 aes256-cts-hmac-sha1-96 arcfour-hmac aes128-cts-hmac-sha1-96 des-cbc-md5
+  ignore_errors: true
