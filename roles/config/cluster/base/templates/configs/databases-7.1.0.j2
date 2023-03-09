@@ -51,3 +51,11 @@ STREAMS_MESSAGING_MANAGER:
     smm_database_name: {{ databases.STREAMS_MESSAGING_MANAGER.name }}
     smm_database_user: {{ databases.STREAMS_MESSAGING_MANAGER.user }}
     smm_database_password: {{ databases.STREAMS_MESSAGING_MANAGER.password }}
+QUERY_PROCESSOR:
+  SERVICEWIDE:
+    query_processor_database_host: {{ databases.QUERY_PROCESSOR.host }}
+    query_processor_database_port: {{ databases.QUERY_PROCESSOR.port }}
+    query_processor_database_type: {{ databases.QUERY_PROCESSOR.type | cloudera.cluster.format_database_type }}
+    query_processor_database_name: {{ databases.QUERY_PROCESSOR.name }}
+    query_processor_database_username: {{ databases.QUERY_PROCESSOR.user }}
+    query_processor_database_password: {{ databases.QUERY_PROCESSOR.password }}
