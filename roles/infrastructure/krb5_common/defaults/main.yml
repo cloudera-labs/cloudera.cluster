@@ -14,7 +14,26 @@
 
 krb5_realm: CLOUDERA.LOCAL
 krb5_domain: "{{ krb5_realm | lower }}"
-krb5_kdc_admin_user: "cloudera-scm/admin@{{ krb5_realm }}"
-krb5_kdc_admin_password: changeme
-krb5_kdc_type: MIT KDC
+krb5_kdc_admin_user: "{% if freeipa_activated == false %}cloudera-scm/{% endif %}admin@{{ krb5_realm }}"
+krb5_kdc_admin_password: "{{ cloudera_manager_admin_password }}"
+krb5_kdc_type: "{{ 'MIT KDC' if (freeipa_activated | default(false)) == false else 'Red Hat IPA' }}"
 krb5_enc_types: "aes256-cts aes128-cts"
+
+skip_krb5_conf_distribution: "{{ freeipa_activated | default(False) }}"
+ipa_ldap_url: "ldaps://{{ groups['krb5_server'][0] | default('localhost') }}:636"
+
+ipa_directory_manager: "cn=Directory Manager"
+ipadm_password: "{{ cloudera_manager_admin_password }}"
+
+ipa_admin_user: admin
+ipaadmin_password: "{{ cloudera_manager_admin_password }}"
+
+ipa_admins_group: admins
+
+ipa_ldap_dc_suffix: "{% for i in krb5_realm.split('.') %}dc={{ i | lower }}{% if not loop.last %},{% endif %}{% endfor %}"
+ipa_ldap_user_bind_dn: "uid=admin,cn=users,cn=accounts,{{ ipa_ldap_dc_suffix }}"
+ipa_ldap_user_bind_password: "{{ cloudera_manager_admin_password }}"
+ipa_ldap_user_search_base: "cn=users,cn=accounts,{{ ipa_ldap_dc_suffix }}"
+ipa_ldap_user_search_filter: "(&(uid={0})(objectClass=person))"
+ipa_ldap_group_search_base: "cn=groups,cn=accounts,{{ ipa_ldap_dc_suffix }}"
+ipa_ldap_user_group_filter: "(&(member={1})(objectClass=posixgroup))"

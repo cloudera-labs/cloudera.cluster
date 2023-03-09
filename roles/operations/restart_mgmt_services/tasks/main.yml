@@ -1,0 +1,7 @@
+---
+- name: Restart Cloudera Manager Management Services
+  cloudera.cluster.cm_api:
+    endpoint: "/cm/service/roleCommands/restart"
+    method: POST
+    body:
+      items: "{{ services_to_restart }}"

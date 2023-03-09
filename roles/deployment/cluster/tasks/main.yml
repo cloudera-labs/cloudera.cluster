@@ -105,6 +105,7 @@
     - cluster.type | default(default_cluster_type) == 'compute'
     - cluster.name not in existing_clusters
 
+# This process is not idempotent, as the whole ECS setup process must succeed or it will skip on subsequent runs
 - name: Create ECS clusters
   include_tasks: create_ecs.yml
   loop: "{{ definition.clusters }}"
@@ -115,7 +116,6 @@
   when:
     - cluster.type | default(default_cluster_type) == 'ecs'
     - cluster.name not in existing_clusters
-
 
 - name: Restart Cloudera Management Service
   cloudera.cluster.cm_api:

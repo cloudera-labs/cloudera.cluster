@@ -49,3 +49,32 @@
     dest: /usr/share/java/mysql-connector-java.jar
     remote_src: yes
     mode: 0644
+
+# MySql on rhel8 fix
+- name: Fix MySQL on RHEL8
+  when:
+    - ansible_distribution == "RedHat"
+    - ansible_distribution_major_version == "8"
+  block:
+    - name: Remove mariadb packages if needed
+      package:
+        name: mariadb-devel
+        state: absent
+
+    - name: Install mysql-devel package
+      package:
+        name: mysql-devel
+        state: installed
+
+    - name: Send my_config.h for RHEL 8
+      template:
+        src: my_config.h
+        dest: /usr/include/mysql/my_config.h
+
+    - name: Install Mysql packages for python
+      shell: pip install MySQL-python --force-reinstall --ignore-installed
+      ignore_errors: true
+
+    - name: Chmod on mysql python files
+      shell: chmod -R 755 /usr/lib64/python2.7/site-packages/MySQLdb /usr/lib64/python2.7/site-packages/MySQL_python* /usr/lib64/python2.7/site-packages/_mysql*
+      ignore_errors: true

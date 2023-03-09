@@ -1,0 +1,3 @@
+---
+dependencies:
+  - role: cloudera.cluster.cloudera_manager.api_client

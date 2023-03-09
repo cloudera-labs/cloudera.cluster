@@ -14,6 +14,10 @@
 
 ---
 cloudera_archive_base_url: https://archive.cloudera.com
-cloudera_manager_version: 7.4.4
+cloudera_manager_version: 7.6.1
+cloudera_manager_distro_name: "{{ ansible_os_family | lower }}"
+cloudera_manager_distro_version: "{{ ansible_distribution_major_version }}"
 
 install_repo_on_host: yes
+
+set_custom_repo_as_archive_base_url: "{{ use_custom_repo_as_archive_base_url | default(True) }}"

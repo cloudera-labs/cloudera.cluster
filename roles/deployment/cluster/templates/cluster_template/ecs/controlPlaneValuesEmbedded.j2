@@ -1,0 +1,82 @@
+Services:
+  thunderheadenvironment:
+    Config:
+      database:
+        name: "db-env"
+  clusterproxy:
+    Config:
+      database:
+        name: "db-clusterproxy"
+  classicclusters:
+    Config:
+      database:
+        name: "db-classicclusters"
+  mlxcontrolplaneapp:
+    Config:
+      database:
+        name: "db-mlx"
+  cpxliftie:
+    Config:
+      database:
+        name: "db-liftie"
+  monitoringapp:
+    Config:
+      database:
+        name: "db-alerts"
+  dwx:
+    Config:
+      database:
+        name: "db-dwx"
+  dex:
+    Config:
+      database:
+        name: "db-dex"
+  resourcepoolmanager:
+    Config:
+      database:
+        name: "db-resourcepoolmanager"
+  clusteraccessmanager:
+    Config:
+      database:
+        name: "db-clusteraccessmanager"
+  thunderheadusermanagementprivate:
+    Config:
+      database:
+        name: "db-ums"
+      replicaCount: 2
+
+  thunderheadiamconsole:
+    Config:
+      replicaCount: 2
+
+  thunderheadiamapi:
+    Config:
+      replicaCount: 2
+
+ContainerInfo:
+  Mode: embedded
+  CopyDocker: true
+
+Database:
+  Mode: embedded
+  EmbeddedDbStorage: 50
+
+Vault:
+  Mode: embedded
+  EmbeddedStorage: 2
+
+OptionalCerts:
+  MiscCaCerts: ""
+
+Other:
+  cmLicense:
+    uuid: {{ cloudera_manager_repo_username }}
+    owner: "{{ cloudera_manager_license | regex_replace('(.|\n)*\"name\"\\s*:\\s*\"([^\"]*)\"(.|\n)*', '\\2') }}"
+
+Platform:
+  Name: standard
+
+ApplicationDomain: "{{ cluster.application_domain }}"
+
+SecurityContext:
+  Enabled: true

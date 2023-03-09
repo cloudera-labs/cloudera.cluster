@@ -1,0 +1,16 @@
+---
+- name: Copy patch to machines
+  copy:
+    src: "{{ role_path}}/files/cert.py_patch"
+    dest: /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py_patch
+    owner: cloudera-scm
+    group: cloudera-scm
+    mode: '0644'
+
+- name: Backup cert.py
+  shell: cp /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py.backup
+
+- name: Fix cert.py
+  ansible.posix.patch:
+    src: "{{ role_path}}/patch/cert.py_patch"
+    dest: /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py

@@ -31,7 +31,7 @@
   poll: 0
   ansible.builtin.get_url:
     url: "{{ __parcel_download_item }}"
-    dest: "/var/www/html/{{ __parcel_download_item | urlsplit('path') }}"
+    dest: "/var/www/html{{ __parcel_download_item | urlsplit('path') }}"
 
 - name: Track async downloads to completion  [ This may take a while if your files are very large or far away ]
   loop: "{{ __infra_download_parcels_results.results }}"
@@ -65,14 +65,3 @@
     src: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') }}"
     dest: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') | regex_replace('^(.+)repo.+-(.+)\\.tar\\.gz$', '\\1\\2' + '/yum/') }}"
     keep_newer: "{{ keep_newer }}"
-
-- name: Set Cloudera Manager Base Repo if included in rehosting list
-  when: "{{ custom_repo_rehost_files | select('search', 'tar.gz') | list | select('search', '/cm') | list }} | length > 0"
-  ansible.builtin.set_fact:
-    cloudera_archive_base_url: "http://{{ groups['custom_repo'] | first }}"
-  delegate_to: "{{ __play_host }}"
-  delegate_facts: true
-  loop: "{{ groups.cloudera_manager + groups.cluster }}"
-  loop_control:
-    loop_var: __play_host
-    label: __play_host

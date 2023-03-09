@@ -1,0 +1,40 @@
+---
+# From:  https://docs.cloudera.com/cdp-private-cloud-base/7.1.7/configuring-oozie/topics/oozie-enabling-the-oozie-web-console-on-managed-clusters.html 
+
+- name: Download ext-2.2 file
+  get_url:
+    url: http://tiny.cloudera.com/oozie-ext-2.2
+    dest: /tmp/ext-2.2.zip
+
+- name: Remove /var/lib/oozie/
+  file: 
+    path: /var/lib/oozie/
+    state: absent
+  ignore_errors: true
+
+- name: Mkdir /var/lib/oozie/ if it does not exists
+  file: 
+    path: /var/lib/oozie/
+    owner: oozie
+    group: oozie
+    state: directory
+    mode: '0755'
+  ignore_errors: true
+
+- name: Install unzip
+  package:
+    name: unzip
+    state: latest
+
+- name: Unzip ext-2.2 file
+  shell: rm -rf /var/lib/oozie/*
+  ignore_errors: true
+
+- name: Unzip ext-2.2 file
+  shell: unzip /tmp/ext-2.2.zip -d /var/lib/oozie/
+  ignore_errors: true
+
+- name: Chown ext-2.2
+  shell: chown -R oozie:oozie /var/lib/oozie/ext-2.2
+  ignore_errors: true
+

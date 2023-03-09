@@ -1,0 +1,19 @@
+{
+    "typeName":"ALTUS_ACCESS_KEY_AUTH",
+    "displayName":"altus-key-for-wxm",
+    "name":"altus-key-for-wxm",
+    "accountConfigs":
+    {
+        "items":
+        [
+            {
+                "name":"access_key_id",
+                "value":"{{ altus_key_id }}"
+            },
+            {
+                "name":"private_key",
+                "value":"{{ altus_private_key_one_line }}"
+            }
+        ]
+    }
+}

@@ -1,0 +1,33 @@
+---
+
+- assert:
+    that:
+      - altus_private_key | length > 0
+      - altus_key_id | length > 0
+    quiet: True
+    fail_msg: >-
+      Altus key id and private key must be provided to configure Telemetry service for WXM
+
+- name: Configure Telemetry
+  ansible.builtin.include_tasks: configure_telemetry.yml
+
+- name: Configure Truststore in Agent for base
+  ansible.builtin.include_tasks: truststore_to_base.yml
+
+- name: Restart Telemetry Publisher
+  include_role:
+    name: cloudera.cluster.operations.restart_mgmt_services
+  vars:
+    services_to_restart:
+      - mgmt-TELEMETRYPUBLISHER
+
+- name: Restart Base Cluster Services
+  include_role:
+    name: cloudera.cluster.operations.restart_cluster_services
+  vars:
+    services_to_restart:
+      - HIVE
+      - HIVE_ON_TEZ
+      - SPARK_ON_YARN
+      - IMPALA
+      - WXM

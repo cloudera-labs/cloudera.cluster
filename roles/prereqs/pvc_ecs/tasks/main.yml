@@ -1,0 +1,79 @@
+# Copyright 2021 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Install necessary additional packages
+  ansible.builtin.package:
+    name: "{{ __package_item }}"
+    state: latest
+  loop:
+    - nfs-utils
+  loop_control:
+    loop_var: __package_item
+
+- name: Setup iptables on rhel7
+  when: ansible_distribution_major_version | int == 7
+  block:
+    - name: Install iptables for rhel7
+      ansible.builtin.package:
+        lock_timeout: 180
+        name: "{{ __iptables_item }}"
+        update_cache: yes
+        state: present
+      loop:
+        - iptables
+        - iptables-services
+      loop_control:
+        loop_var: __iptables_item
+
+    - name: start iptables on rhel7
+      systemd:
+        name: iptables
+        enabled: yes
+        state: started
+        daemon-reload: yes
+
+- name: Setup nftables on rhel8
+  when: ansible_distribution_major_version | int >= 8
+  block:
+    - name: Install iptables for rhel8
+      ansible.builtin.package:
+        lock_timeout: 180
+        name: "{{ __iptables_install_item }}"
+        update_cache: yes
+        state: present
+      loop:
+        - iptables-services
+      loop_control:
+        loop_var: __iptables_install_item
+
+    - name: start nftables on rhel8
+      systemd:
+        name: iptables
+        enabled: yes
+        state: started
+        daemon-reload: yes
+
+- name: Flush IPTables
+  ansible.builtin.iptables:
+    flush: yes
+    table: "{{ __iptables_flush_item }}"
+  loop:
+    - filter
+    - nat
+    - mangle
+    - raw
+    - security
+  loop_control:
+    loop_var: __iptables_flush_item

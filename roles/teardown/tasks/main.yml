@@ -207,7 +207,7 @@
     - "'kts_active' in group_names or 'kts_passive' in group_names"
     - cluster.type | default('base') == 'kts'
 
-# refactor once the KMS locactions are properly configured as overlays
+# refactor once the KMS locactions are properly configured as overlays
 # see teardown_cms.yml for reference and re-purpose teardown_cms_*.yml
 # https://docs.cloudera.com/cloudera-manager/7.2.0/reference/topics/cm_props_cdh710_keytrusteekms.html
 - name: Teardown KMS

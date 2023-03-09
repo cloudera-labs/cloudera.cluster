@@ -13,11 +13,94 @@
 # limitations under the License.
 
 ---
+- name: Run FreeIPA Collection fix before IPA Server deployment
+  include_tasks:
+    file: fix_freeipa_collection.yml
+
+- name: Disable SELinux to allow FreeIPA server setup on Rhel8
+  when:
+    - ansible_distribution_major_version | int >= 8
+  selinux:
+    policy: targeted
+    state: permissive
+  ignore_errors: yes
+
 - name: Setup FreeIPA Server
   ansible.builtin.include_role:
     name: freeipa.ansible_freeipa.ipaserver
   vars:
     state: present
-    ipaserver_realm: "{{ krb5_realm }}"
-    ipaserver_domain: "{{ krb5_domain }}"
+    ipaserver_realm: "{{ krb5_realm | upper }}"
+    ipaserver_domain: "{{ krb5_domain | default(krb5_realm | lower) }}"
     ipaserver_setup_firewalld: "no"
+    ipaserver_setup_dns: "{{ freeipa_autodns | default(omit) }}"
+    ipaserver_auto_forwarders: "{{ freeipa_autodns | default(omit) }}"
+
+- name: Ensure FreeIPA Superuser if required
+  when:
+    - freeipa_superuser is defined
+    - freeipa_superuser | length > 0
+  block:
+    - name: Create Superuser if not present
+      community.general.ipa_user:
+        name: "{{ freeipa_superuser }}"
+        givenname: "{{ freeipa_superuser_gn | default('Cloudera') }}"
+        sn: "{{ freeipa_superuser_sn | default('Labs') }}"
+        password: "{{ freeipa_superuser_pw | default(cloudera_manager_admin_password) }}"
+        update_password: on_create
+        ipa_host: "{{ groups.krb5_server | first }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        ipa_user: "{{ ipa_admin_user }}"
+
+    - name: Ensure Superuser is added to admins group
+      community.general.ipa_group:
+        name: "{{ ipa_admins_group }}"
+        user:
+          - "{{ freeipa_superuser }}"
+        append: true
+        ipa_host: "{{ groups.krb5_server | first }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        ipa_user: "{{ ipa_admin_user }}"
+
+- name: Create FreeIPA DNS records for PVC ECS
+  when:
+    - pvc_type is defined and freeipa_autodns is defined
+    - pvc_type == 'ECS' | default(false)
+    - freeipa_autodns | default(false)
+  block:
+    - name: Gather facts from ECS Server
+      ansible.builtin.setup:
+        gather_subset:
+          - 'default_ipv4'
+      delegate_to: "{{ ecs_ip_collect_item }}"
+      delegate_facts: true
+      loop: "{{ groups['ecs_ecs_server'] }}"
+      loop_control:
+        loop_var: ecs_ip_collect_item
+
+    - set_fact:
+        ecs_server_ip: "{{ hostvars[groups.ecs_ecs_server | first].ansible_facts.default_ipv4.address }}"
+
+    - name: Ensure apps zone is present for PvC ECS
+      community.general.ipa_dnszone:
+        ipa_host: "{{ groups.krb5_server | first }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        ipa_user: "{{ ipa_admin_user }}"
+        state: present
+        zone_name: "apps.{{ krb5_realm | lower }}"
+
+    - name: Ensure wildcard record is prepared for PvC ECS
+      community.general.ipa_dnsrecord:
+        ipa_host: "{{ groups.krb5_server | first }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        ipa_user: "{{ ipa_admin_user }}"
+        state: present
+        zone_name: "{{ __dns_record_item }}"
+        record_name: "*"
+        record_type: A
+        record_value: "{{ ecs_server_ip }}"
+      loop:
+        - "apps.{{ krb5_realm | lower }}"
+        - "{{ krb5_realm | lower }}"
+      loop_control:
+        loop_var: __dns_record_item

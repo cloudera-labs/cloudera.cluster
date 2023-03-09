@@ -1,0 +1,15 @@
+---
+- name: Get Specific Service Name
+  set_fact:
+    restart_service_name: "{{ cloudera_manager_all_services | community.general.json_query(query) }}"
+  vars:
+    query: "items[?type == '{{ __service_restart_item }}'].name | [0]"
+
+- name: Restart Cluster Service
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ cluster_base_name | urlencode() }}/services/{{ restart_service_name | lower }}/commands/restart"
+    method: POST
+
+- name: Wait for restart to acknowledge
+  wait_for:
+    timeout: 15
