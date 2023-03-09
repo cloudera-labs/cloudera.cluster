@@ -115,8 +115,12 @@
     - { src: "{{ tls_key_path }}", dest: "{{ tls_key_path_generic }}" }
     - { src: "{{ tls_key_path_plaintext }}", dest: "{{ tls_key_path_plaintext_generic }}" }
 
+
 - name: Set file permissions
   include_tasks: acls.yml
+  vars: 
+    acl_accounts: "{{ ('ecs_nodes' in group_names) | ternary(ecs_local_accounts, local_accounts, omit) }}"  
+
 
 - name: Create openssl.cnf for CSR generation
   template:

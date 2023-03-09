@@ -16,3 +16,12 @@
 
 keytool_path: /usr/bin/keytool
 openssl_path: /usr/bin/openssl
+
+ecs_local_accounts:
+  - user: cloudera-scm
+    home: /var/lib/cloudera-scm-server
+    comment: Cloudera Manager
+    mode: '770'
+    keystore_acl: True
+    key_acl: True
+    key_password_acl: True

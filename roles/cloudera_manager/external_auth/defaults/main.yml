@@ -40,4 +40,4 @@ auth_providers:
       group: "{{ ipa_ldap_group_search_base }}"
     ldap_search_filter:
       user: "{{ ipa_ldap_user_search_filter }}"
-      group: "{{ ipa_ldap_user_group_filter }}"
+      group: "{{ ipa_ldap_user_group_search_filter }}"
