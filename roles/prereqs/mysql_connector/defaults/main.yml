@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 
 ---
 
-mysql_connector_url: https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.48.zip
+mysql_connector_url: https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.49.zip
 mysql_connector_checksum: md5:5da24facd99964f296ecde32abcd2384
 mysql_connector_download_dir: "{{ local_temp_dir }}"
 mysql_connector_extract_dir: "{{ local_temp_dir }}"
-mysql_connector_local_path: "{{ mysql_connector_extract_dir }}/mysql-connector-java-5.1.48/mysql-connector-java-5.1.48-bin.jar"
+mysql_connector_local_path: "{{ mysql_connector_extract_dir }}/mysql-connector-java-5.1.49/mysql-connector-java-5.1.49-bin.jar"
