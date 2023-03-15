@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
 # limitations under the License.
 
 ---
+
+- name: Fail Fast if ECS OS is not RH family
+  fail: 
+    msg: ECS is not supported on this OS, should be Centos or RHEL
+  when: ansible_os_family != 'RedHat'
+
 - name: Install necessary additional packages
   ansible.builtin.package:
     name: "{{ __package_item }}"
     state: latest
   loop:
     - nfs-utils
+    - iscsi-initiator-utils
   loop_control:
     loop_var: __package_item
 
@@ -33,38 +40,14 @@
         state: present
       loop:
         - iptables
-        - iptables-services
       loop_control:
         loop_var: __iptables_item
 
-    - name: start iptables on rhel7
-      systemd:
-        name: iptables
-        enabled: yes
-        state: started
-        daemon-reload: yes
-
-- name: Setup nftables on rhel8
+- name: Setup iptables on rhel8, including setopt 
   when: ansible_distribution_major_version | int >= 8
-  block:
-    - name: Install iptables for rhel8
-      ansible.builtin.package:
-        lock_timeout: 180
-        name: "{{ __iptables_install_item }}"
-        update_cache: yes
-        state: present
-      loop:
-        - iptables-services
-      loop_control:
-        loop_var: __iptables_install_item
-
-    - name: start nftables on rhel8
-      systemd:
-        name: iptables
-        enabled: yes
-        state: started
-        daemon-reload: yes
-
+  command: dnf install -y iptables --setopt=tsflags=noscripts
+ 
+ 
 - name: Flush IPTables
   ansible.builtin.iptables:
     flush: yes
