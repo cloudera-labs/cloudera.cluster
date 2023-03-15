@@ -1,10 +1,13 @@
 [mysqld]
 log_bin_trust_function_creators = 1
-{% if database_tls and database_version is version('10.2','>=') %}
+{% if database_tls and database_version is version('8.0','>=') %}
 # SSL configuration
 ssl_ca = {{ tls_chain_path }}
 ssl_cert = {{ tls_cert_path_generic }}
 ssl_key = {{ tls_key_path_plaintext_generic }}
+{% if database_version is version('8.0','>=') %}
+require_secure_transport = {{ mysql_require_secure_transport | default('OFF') }}
+{% endif %}
 {% if database_version is version('10.5.2','>=') %}
 require_secure_transport = {{ mysql_require_secure_transport | default('OFF') }}
 {% endif %}
