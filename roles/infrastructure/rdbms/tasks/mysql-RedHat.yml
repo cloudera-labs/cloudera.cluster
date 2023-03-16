@@ -14,29 +14,31 @@
 
 ---
 
-- name: Install MySQL repository
-  yum_repository:
-    name: MySQL
-    description: MySQL {{ database_version }} repository for RHEL/Centos 7
-    baseurl: https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm
-    gpgkey: https://dev.mysql.com/RPM-GPG-KEY-MySQLDB
-  when: 
-    - not (skip_rdbms_repo_setup | default(False))
-    - ansible_distribution_major_version | int = 7
+- name: Import GPG Key
+  rpm_key:
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+    state: present
 
-
-
-- name: Install MySQL repository
-  yum_repository:
-    name: MySQL
-    description: MySQL {{ database_version }} repository for RHEL 8
-    baseurl: https://dev.mysql.com/get/mysql80-community-release-el8-4.noarch.rpm
-    gpgkey: https://dev.mysql.com/RPM-GPG-KEY-MySQLDB
+- name: Install MySQL repository el8
+  yum:
+    name: https://repo.mysql.com/mysql80-community-release-el8.rpm
+    update_cache: true
+    lock_timeout: 180
+    state: present 
   when: 
     - not (skip_rdbms_repo_setup | default(False))
     - ansible_distribution_major_version | int >= 8
-    
 
+- name: Install MySQL repository el7
+  yum:
+    name: https://repo.mysql.com/mysql80-community-release-el7.rpm
+    update_cache: true
+    lock_timeout: 180
+    state: present 
+  when: 
+    - not (skip_rdbms_repo_setup | default(False))
+    - ansible_distribution_major_version | int == 7
+    
 
 - name: Install MySQL
   include_role:
