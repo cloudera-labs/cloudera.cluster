@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,6 +54,10 @@
     - _rke2_killall.failed
     - "'No such file or directory' not in _rke2_killall.stderr"
 
+#TODO emove all remaing kubelet or k3s mounts, address global ro mounts left over from nfs
+- name: Remove all remaing kubelet or k3s mounts
+  shell: mount | awk '/on \/var\/lib\/(kubelet|k3s)/{print \$3}' | xargs -r sudo umount -l"
+
 - name: Run rke2 Uninstall
   register: _rke2_uninstall
   shell: /opt/cloudera/parcels/ECS/bin/rke2-uninstall.sh;
@@ -63,11 +67,12 @@
 
 - name: Delete misc
   shell: |
-    rm -rf /ecs/docker/docker-store/
-    rm -rf /ecs/local/*
-    rm -rf /ecs/longhorn/*
+    rm -rf /mnt/docker/*
+    rm -rf /mnt/ecs/local-storage/*
+    rm -rf /mnt2/ecs/longhorn-storage/*
     rm -rf /var/lib/docker_server
     rm -rf /etc/docker/certs.d
+    rm -rf /var/lib/ecs
     systemctl stop iscsid
     yum -y erase iscsi-initiator-utils
     rm -rf /var/lib/iscsi
