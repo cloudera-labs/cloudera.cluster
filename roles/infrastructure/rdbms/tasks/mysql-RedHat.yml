@@ -18,28 +18,19 @@
   rpm_key:
     key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
     state: present
+  when: 
+    - not (skip_rdbms_repo_setup | default(False))
 
-- name: Install MySQL repository el8
+- name: Install MySQL Community repository
   yum:
-    name: https://repo.mysql.com/mysql80-community-release-el8.rpm
+    name: https://repo.mysql.com/mysql{{ database_version | replace('.','') }}-community-release-el{{ ansible_distribution_major_version }}.rpm
     update_cache: true
     lock_timeout: 180
     state: present 
   when: 
     - not (skip_rdbms_repo_setup | default(False))
-    - ansible_distribution_major_version | int >= 8
-
-- name: Install MySQL repository el7
-  yum:
-    name: https://repo.mysql.com/mysql80-community-release-el7.rpm
-    update_cache: true
-    lock_timeout: 180
-    state: present 
-  when: 
-    - not (skip_rdbms_repo_setup | default(False))
-    - ansible_distribution_major_version | int == 7
     
-
+    
 - name: Install MySQL
   include_role:
     name: ansible-role-mysql
