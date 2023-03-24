@@ -1,0 +1,44 @@
+# Copyright 2023 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Create databases
+  mysql_db:
+    name: "{{ databases[service].name }}"
+    encoding: "{{ service | cloudera.cluster.get_database_encoding_mysql }}"
+    collation: "{{ service | cloudera.cluster.get_database_collation_mysql }}"
+  become: yes
+  loop: "{{ databases }}"
+  loop_control:
+    loop_var: service
+  delegate_to: "{{ databases[service].host }}"
+  connection: ssh
+  when: databases[service].host in groups.db_server
+
+- name: Create database users
+  mysql_user:
+    name: "{{ databases[service].user }}"
+    password: "{{ databases[service].password }}"
+    update_password: always
+    host: '%'
+    priv: "{{ databases[service].name }}.*:ALL"
+  no_log: yes
+  become: yes
+  loop: "{{ databases }}"
+  loop_control:
+    loop_var: service
+  delegate_to: "{{ databases[service].host }}"
+  connection: ssh
+  when: databases[service].host in groups.db_server
