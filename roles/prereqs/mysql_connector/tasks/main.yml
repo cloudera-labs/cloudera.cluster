@@ -71,8 +71,9 @@
         src: my_config.h
         dest: /usr/include/mysql/my_config.h
 
-    - name: Install Mysql packages for python
-      shell: /usr/local/bin/pip install mysql-connector-python --force-reinstall --ignore-installed
+## TODO Fix for RHEL8
+    - name: Install Mysql packages for python - PyMySQL
+      shell: /usr/local/bin/pip install PyMySQL --force-reinstall --ignore-installed
       ignore_errors: true
 
   
