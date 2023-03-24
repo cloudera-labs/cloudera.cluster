@@ -43,12 +43,14 @@
       loop_control:
         loop_var: __iptables_item
 
-- name: Setup iptables on rhel8, including setopt 
+- name: Setup iptables on rhel8
   when: ansible_distribution_major_version | int >= 8
-  command: dnf install -y iptables --setopt=tsflags=noscripts
- 
- 
-- name: Flush IPTables
+  block:
+    - name: Install iptables for rhel8, using rpm option tsflags=noscripts
+      command: dnf install -y iptables --setopt=tsflags=noscripts
+
+
+- name: Flush iptables
   ansible.builtin.iptables:
     flush: yes
     table: "{{ __iptables_flush_item }}"
@@ -60,3 +62,25 @@
     - security
   loop_control:
     loop_var: __iptables_flush_item
+    
+  ## see https://docs.rke2.io/known_issues
+- name: Set NetworkManager to ignore any ECS calico & flannel interfaces
+  template:
+    src: networkmanager-conf.j2
+    dest: /etc/NetworkManager/conf.d/rke2-canal.config 
+    owner: root
+    group: root
+    mode: 0644
+  when: 
+    - ansible_distribution_major_version|int >= 7 
+    - ansible_facts.services['NetworkManager.service'] is defined
+  
+- name: Reload NetworkManager daemon
+  systemd:
+    state: restarted
+    daemon_reload: true
+    name: NetworkManager.service  
+  when: 
+    - ansible_distribution_major_version|int >= 7 
+    - ansible_facts.services['NetworkManager.service'] is defined
+
