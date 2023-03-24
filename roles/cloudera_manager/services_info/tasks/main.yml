@@ -2,7 +2,7 @@
 
 - name: Get All services from CM
   cloudera.cluster.cm_api:
-    endpoint: "/clusters/{{ cluster_name | urlencode() }}/services"
+    endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services"
   register: cloudera_manager_all_services
   no_log: yes  # overly verbose
 
@@ -26,7 +26,7 @@
 
 - name: Get cluster parcel details
   cloudera.cluster.cm_api:
-    endpoint: /clusters/{{ cluster_name | urlencode() }}/parcels
+    endpoint: /clusters/{{ cluster_name_external | urlencode() }}/parcels
   register: parcels_response
 
 - name: Extract active parcels
@@ -111,7 +111,7 @@
   block:
     - name: Get detailed service WXM from CM
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ wxm_service_name | lower }}/roles"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ wxm_service_name | lower }}/roles"
       register: cloudera_manager_wxm_all_roles
       no_log: yes  # overly verbose
 
@@ -122,7 +122,7 @@
 
     - name: Get detailed config WXM from CM
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ wxm_service_name | lower }}/roleConfigGroups/{{ wxm_service_name | lower }}-THUNDERHEAD_SIGMA_CONSOLE-BASE/config?view=full"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ wxm_service_name | lower }}/roleConfigGroups/{{ wxm_service_name | lower }}-THUNDERHEAD_SIGMA_CONSOLE-BASE/config?view=full"
       register: cloudera_manager_wxm_all_rcgs
       no_log: yes  # overly verbose
 
@@ -156,17 +156,17 @@
     - set_fact:
         ranger_server: "{{ cm_deployment_services.json | community.general.json_query(query) }}"
       vars:
-        query: "clusters[?name == '{{ cluster_name | urlencode() }}' ].services[].roles[?type == 'RANGER_ADMIN'][].hostRef.hostname | [0]"
+        query: "clusters[?name == '{{ cluster_name_external | urlencode() }}' ].services[].roles[?type == 'RANGER_ADMIN'][].hostRef.hostname | [0]"
 
     - name: Get Ranger full config
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ ranger_service_name | lower }}/config?view=full"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ ranger_service_name | lower }}/config?view=full"
       register: full_ranger_config
       no_log: yes  # overly verbose
 
     - name: Get Ranger Admin full config
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ ranger_service_name | lower }}/roleConfigGroups/{{ ranger_service_name | lower }}-RANGER_ADMIN-BASE/config?view=full"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ ranger_service_name | lower }}/roleConfigGroups/{{ ranger_service_name | lower }}-RANGER_ADMIN-BASE/config?view=full"
       register: full_ranger_admin_config
       no_log: yes  # overly verbose
 
@@ -217,7 +217,7 @@
   block:
     - name: Get SolR roles
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/roles"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ solr_service_name | lower }}/roles"
       register: solr_roles
       no_log: yes  # overly verbose
 
@@ -228,13 +228,13 @@
 
     - name: Get SolR full config
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/config?view=full"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ solr_service_name | lower }}/config?view=full"
       register: solr_full_config
       no_log: yes  # overly verbose
 
     - name: Get SolR full config for SOLR_SERVER-BASE
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/roleConfigGroups/{{ solr_service_name | lower }}-SOLR_SERVER-BASE/config?view=full"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ solr_service_name | lower }}/roleConfigGroups/{{ solr_service_name | lower }}-SOLR_SERVER-BASE/config?view=full"
       register: solr_full_config_base
       no_log: yes  # overly verbose
 
@@ -296,7 +296,7 @@
   block:
     - name: Get Knox Gateway full config
       cloudera.cluster.cm_api:
-        endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ knox_service_name | lower }}/roleConfigGroups/{{ knox_service_name | lower }}-KNOX_GATEWAY-BASE/config?view=full"
+        endpoint: "/clusters/{{ cluster_name_external | urlencode() }}/services/{{ knox_service_name | lower }}/roleConfigGroups/{{ knox_service_name | lower }}-KNOX_GATEWAY-BASE/config?view=full"
       register: knox_full_config
       no_log: yes  # overly verbose
 
