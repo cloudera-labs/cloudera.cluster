@@ -72,9 +72,7 @@
         dest: /usr/include/mysql/my_config.h
 
     - name: Install Mysql packages for python
-      shell: pip install MySQL-python --force-reinstall --ignore-installed
+      shell: /usr/local/bin/pip install mysql-connector-python --force-reinstall --ignore-installed
       ignore_errors: true
 
-    - name: Chmod on mysql python files
-      shell: chmod -R 755 /usr/lib64/python2.7/site-packages/MySQLdb /usr/lib64/python2.7/site-packages/MySQL_python* /usr/lib64/python2.7/site-packages/_mysql*
-      ignore_errors: true
+  
