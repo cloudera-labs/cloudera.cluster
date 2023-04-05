@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,10 +71,9 @@
         src: my_config.h
         dest: /usr/include/mysql/my_config.h
 
-    - name: Install Mysql packages for python
-      shell: pip install MySQL-python --force-reinstall --ignore-installed
+## TODO Fix for RHEL8
+    - name: Install Mysql packages for python - PyMySQL
+      shell: /usr/local/bin/pip install PyMySQL --force-reinstall --ignore-installed
       ignore_errors: true
 
-    - name: Chmod on mysql python files
-      shell: chmod -R 755 /usr/lib64/python2.7/site-packages/MySQLdb /usr/lib64/python2.7/site-packages/MySQL_python* /usr/lib64/python2.7/site-packages/_mysql*
-      ignore_errors: true
+  

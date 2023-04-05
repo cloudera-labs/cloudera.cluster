@@ -13,9 +13,11 @@
 # limitations under the License.
 
 ---
-
-mysql_connector_url: https://cdn.mysql.com//Downloads/Connector-J/mysql-connector-java-5.1.49.zip
-mysql_connector_checksum: md5:5ecd588e13f14de07faa5c67f5caf3f1
-mysql_connector_download_dir: "{{ local_temp_dir }}"
-mysql_connector_extract_dir: "{{ local_temp_dir }}"
-mysql_connector_local_path: "{{ mysql_connector_extract_dir }}/mysql-connector-java-5.1.49/mysql-connector-java-5.1.49-bin.jar"
+mysql_daemon: mysqld
+mysql_log_error: /var/log/mysql.log
+mysql_syslog_tag: mysql
+mysql_pid_file: /var/run/mysql/mysql.pid
+mysql_innodb_large_prefix: 0
+mysql_config_include_files:
+  - src: "cloudera.cnf"
+    force: true

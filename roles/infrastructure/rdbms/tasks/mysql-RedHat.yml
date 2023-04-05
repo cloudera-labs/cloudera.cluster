@@ -14,8 +14,23 @@
 
 ---
 
-mysql_connector_url: https://cdn.mysql.com//Downloads/Connector-J/mysql-connector-java-5.1.49.zip
-mysql_connector_checksum: md5:5ecd588e13f14de07faa5c67f5caf3f1
-mysql_connector_download_dir: "{{ local_temp_dir }}"
-mysql_connector_extract_dir: "{{ local_temp_dir }}"
-mysql_connector_local_path: "{{ mysql_connector_extract_dir }}/mysql-connector-java-5.1.49/mysql-connector-java-5.1.49-bin.jar"
+- name: Import GPG Key
+  rpm_key:
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+    state: present
+  when: 
+    - not (skip_rdbms_repo_setup | default(False))
+
+- name: Install MySQL Community repository
+  yum:
+    name: https://repo.mysql.com/mysql{{ database_version | replace('.','') }}-community-release-el{{ ansible_distribution_major_version }}.rpm
+    update_cache: true
+    lock_timeout: 180
+    state: present 
+  when: 
+    - not (skip_rdbms_repo_setup | default(False))
+    
+    
+- name: Install MySQL
+  include_role:
+    name: ansible-role-mysql
