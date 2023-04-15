@@ -117,11 +117,11 @@
 
 - name: Set file permissions
   include_tasks: acls.yml
-  when: inventory_hostname not in groups['ecs_nodes'] 
+  when: inventory_hostname not in groups['ecs_nodes'] | default([])
   
 - name: Set file permissions for ECS
   include_tasks: acls-ecs.yml
-  when: inventory_hostname in groups['ecs_nodes'] 
+  when: inventory_hostname in groups['ecs_nodes'] | default([])
 
 - name: Create openssl.cnf for CSR generation
   template:
