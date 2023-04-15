@@ -14,6 +14,11 @@
 
 ---
 
+- name: Initialize for IPA
+  include_role:
+    name: initialize_for_ipa
+  when: freeipa_activated
+
 - name: Select external auth provider details
   set_fact:
     auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
