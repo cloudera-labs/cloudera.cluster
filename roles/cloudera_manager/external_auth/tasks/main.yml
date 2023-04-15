@@ -17,7 +17,10 @@
 - name: Initialize for IPA
   include_role:
     name: initialize_for_ipa
-  when: freeipa_activated
+  when: 
+    - freeipa_activated
+    - cloudera_manager_external_auth is undefined
+    - cloudera_manager_version is version('6.0.0','>=')
 
 - name: Select external auth provider details
   set_fact:
