@@ -4,7 +4,6 @@
     "sshPort" : 22,
     {% if freeipa_activated %}"trustedCaCerts" : "/etc/ipa/ca.crt",{% endif %}
     "userName" : "{{ sudoerUser|default("root") }}",
-    "privateKey": "{{ node_key_one_line }}"
+    "privateKey": "{{ node_key_one_line|default('~/node_key') }}"
     "passphrase": "{{ passphrase|default("") }}"
 } 
-    
