@@ -16,4 +16,4 @@
 
 host_ssh_username: root
 host_ssh_password: cloudera
-private_key_path: '~/node_key'
+sudoerUser: centos
