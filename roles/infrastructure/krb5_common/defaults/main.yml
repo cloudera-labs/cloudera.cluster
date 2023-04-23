@@ -34,6 +34,6 @@ ipa_ldap_dc_suffix: "{% for i in krb5_realm.split('.') %}dc={{ i | lower }}{% if
 ipa_ldap_user_bind_dn: "uid=admin,cn=users,cn=accounts,{{ ipa_ldap_dc_suffix }}"
 ipa_ldap_user_bind_password: "{{ cloudera_manager_admin_password }}"
 ipa_ldap_user_search_base: "cn=users,cn=accounts,{{ ipa_ldap_dc_suffix }}"
-ipa_ldap_user_search_filter: "(&(uid={0})(objectClass=person))"
+ipa_ldap_user_search_filter: "(uid={0})"
 ipa_ldap_group_search_base: "cn=groups,cn=accounts,{{ ipa_ldap_dc_suffix }}"
-ipa_ldap_user_group_filter: "(&(member={1})(objectClass=posixgroup))"
+ipa_ldap_user_group_filter: "(&(member={0})(objectClass=posixgroup)(!(cn=admin)))"
