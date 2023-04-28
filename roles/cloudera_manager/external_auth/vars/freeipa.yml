@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,22 +14,6 @@
 
 ---
 
-auth_role_display_names:
-  ROLE_ADMIN: Full Administrator
-  ROLE_AUDITOR: Auditor
-  ROLE_BDR_ADMIN: Replication Administrator
-  ROLE_CLUSTER_ADMIN: Cluster Administrator
-  ROLE_CLUSTER_CREATOR: Cluster Creator
-  ROLE_CONFIGURATOR: Configurator
-  ROLE_DASHBOARD_USER: Dashboard User
-  ROLE_KEY_ADMIN: Key Administrator
-  ROLE_LIMITED: Limited Operator
-  ROLE_LIMITED_CLUSTER_ADMIN: Limited Cluster Administrator
-  ROLE_NAVIGATOR_ADMIN: Navigator Administrator
-  ROLE_OPERATOR: Operator
-  ROLE_USER: Read-Only
-  ROLE_USER_ADMIN: User Administrator
-  
 default_free_ipa_role_mappings:
   - group: admins
     roles: [ ROLE_ADMIN ]
@@ -37,10 +21,6 @@ default_free_ipa_role_mappings:
     roles: [ ROLE_AUDITOR ]
   - group: users
     roles: [ ROLE_USER ]
-when: 
-  - freeipa_activated
-  - cloudera_manager_external_auth is undefined
-  - cloudera_manager_version is version('6.0.0','>=')
 
 cloudera_manager_external_auth:
   provider: "FreeIPA"
@@ -48,10 +28,6 @@ cloudera_manager_external_auth:
   external_only: no
   external_set: yes
   role_mappings: "{{ default_free_ipa_role_mappings }}"
-when: 
-  - freeipa_activated
-  - cloudera_manager_external_auth is undefined
-  - cloudera_manager_version is version('6.0.0','>=')
 
 auth_providers:
   FreeIPA:
@@ -66,7 +42,3 @@ auth_providers:
     ldap_search_filter:
       user: "{{ ipa_ldap_user_search_filter }}"
       group: "{{ ipa_ldap_user_group_filter }}"
-when: 
-  - freeipa_activated
-  - cloudera_manager_external_auth is undefined
-  - cloudera_manager_version is version('6.0.0','>=')

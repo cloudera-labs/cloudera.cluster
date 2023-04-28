@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +13,23 @@
 # limitations under the License.
 
 ---
+
+- name: Fail Fast if ECS OS is not RH family
+  fail: 
+    msg: ECS is not supported on this OS, should be Centos or RHEL
+  when: ansible_os_family != 'RedHat'
+
 - name: Install necessary additional packages
   ansible.builtin.package:
     name: "{{ __package_item }}"
     state: latest
   loop:
     - nfs-utils
+    - iscsi-initiator-utils
   loop_control:
     loop_var: __package_item
 
-- name: Setup iptables on rhel7
+- name: Setup iptables for rhel7
   when: ansible_distribution_major_version | int == 7
   block:
     - name: Install iptables for rhel7
@@ -33,39 +40,17 @@
         state: present
       loop:
         - iptables
-        - iptables-services
       loop_control:
         loop_var: __iptables_item
 
-    - name: start iptables on rhel7
-      systemd:
-        name: iptables
-        enabled: yes
-        state: started
-        daemon-reload: yes
-
-- name: Setup nftables on rhel8
+- name: Setup iptables for rhel8
   when: ansible_distribution_major_version | int >= 8
   block:
-    - name: Install iptables for rhel8
-      ansible.builtin.package:
-        lock_timeout: 180
-        name: "{{ __iptables_install_item }}"
-        update_cache: yes
-        state: present
-      loop:
-        - iptables-services
-      loop_control:
-        loop_var: __iptables_install_item
+    - name: Install iptables for rhel8, using rpm option tsflags=noscripts
+      command: dnf install -y iptables --setopt=tsflags=noscripts
 
-    - name: start nftables on rhel8
-      systemd:
-        name: iptables
-        enabled: yes
-        state: started
-        daemon-reload: yes
 
-- name: Flush IPTables
+- name: Flush iptables
   ansible.builtin.iptables:
     flush: yes
     table: "{{ __iptables_flush_item }}"
@@ -77,3 +62,25 @@
     - security
   loop_control:
     loop_var: __iptables_flush_item
+    
+  ## see https://docs.rke2.io/known_issues
+- name: Set NetworkManager to ignore any ECS calico & flannel interfaces
+  copy:
+    src: networkmanager.conf
+    dest: /etc/NetworkManager/conf.d/rke2-canal.config 
+    owner: root
+    group: root
+    mode: 0644
+  when: 
+    - ansible_distribution_major_version|int >= 7 
+    - ansible_facts.services['NetworkManager.service'] is defined
+  
+- name: Reload NetworkManager daemon
+  systemd:
+    state: restarted
+    daemon_reload: true
+    name: NetworkManager.service  
+  when: 
+    - ansible_distribution_major_version|int >= 7 
+    - ansible_facts.services['NetworkManager.service'] is defined
+

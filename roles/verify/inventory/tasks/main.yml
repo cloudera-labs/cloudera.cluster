@@ -35,9 +35,15 @@
 
 - block:
     - set_fact:
-          cluster_hosts: >-
+        cluster_hosts: >-
             {{ groups.cluster | default([])
-               | union(groups.cloudera_manager | default([]))
+               | union(
+                 (groups.cloudera_manager | default([]) 
+                   | union( 
+                     groups.ecs_nodes | default([])
+                     )
+                   )
+                )
             }}
 
     - name: Ensure that all hosts requiring TLS certificates have a FreeIPA client

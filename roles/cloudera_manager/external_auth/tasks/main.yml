@@ -1,4 +1,4 @@
-# Copyright 2021 Cloudera, Inc.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,15 @@
 # limitations under the License.
 
 ---
+
+- name: Conditionally load in variables for initializing IPA
+  ansible.builtin.include_vars:
+    file: freeipa.yml
+  when: 
+  - freeipa_activated
+  - cloudera_manager_external_auth is undefined
+  - cloudera_manager_version is version('6.0.0','>=')
+
 
 - name: Select external auth provider details
   set_fact:

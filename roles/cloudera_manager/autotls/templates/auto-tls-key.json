@@ -3,7 +3,7 @@
     "configureAllServices" : "true",
     "sshPort" : 22,
     {% if freeipa_activated %}"trustedCaCerts" : "/etc/ipa/ca.crt",{% endif %}
-    "userName" : "root",
-    "privateKey": "{{ node_key_one_line }}"
+    "userName" : "{{ sudoerUser|default("root") }}",
+    "privateKey": "{{ node_key_one_line|default('~/node_key') }}"
+    "passphrase": "{{ passphrase|default("") }}"
 } 
-    
