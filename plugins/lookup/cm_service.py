@@ -16,72 +16,87 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    lookup: datalake_service
+    lookup: cm_service
     author: Webster Mudge (@wmudge) <wmudge@cloudera.com>
-    short_description: Get the URL for a CDP Public Cloud Datalake service
+    short_description: Get the details for a service on a CDP Datahub cluster
     description:
-        - Allows you to retrieve the URL for a given CDP Public Cloud Datalake service.
-        - If no service name (or optionally Knox service name) is found on the specified Datalake, the lookup returns the value of I(default).
+        - Allows you to retrieve the name or full details for a given service on a CDP Datahub cluster.
+        - If no service name is found on the specified cluster, the lookup returns the value of I(default).
         - Otherwise, the lookup entry will be an empty list.
-        - If the Datalake is not found or is ambigious, the lookup will return an error.
+        - If the cluster is not found or is ambigious, the lookup will return an error.
+        - If the Cloudera Manager endpoint is not found or is not available, the lookup will return an error.
     options:
         _terms:
             description:
-                - An endpoint C(serviceName) or list of them to lookup within the Datalake.
-                - If I(knox_service=True), then these values will lookup against the endpoint C(knoxService).
+                - A C(service) or list of services to lookup within the CDP Datahub cluster.
             required: True
             sample:
-                - CM-API
-                - CM-UI
-                - ATLAS_SERVER
-                - RANGER_ADMIN
-        endpoint:
-            description: API endpoint of Cloudera Manager
-            type: string
-            required: True
+                - KUDU
         cluster:
-            description: Name of the Datahub Cluster to query
+            description: Name of the Datahub cluster to query.
             type: string
             required: True
         detailed:
+            description: Whether to return the full details of the service or just the name.
             type: boolean
             default: False
         username:
+            description: Username for accessing the Cloudera Manager API.
             type: string
             required: True
         password:
+            description: Password for accessing the Cloudera Manager API.
             type: string
             required: True
             no_log: True
+        endpoint:
+            description: API endpoint of Cloudera Manager.
+            type: string
+            required: False
         force_tls:
+            description:
+                - Whether to force the HTTPS scheme when discovering the Cloudera Manager API endpoint.
+                - Ignored if C(endpoint) is defined.
             type: boolean
             default: True
         host:
+            description:
+                - Hostname when discovering the Cloudera Manager API endpoint.
+                - Ignored if C(endpoint) is defined.
             type: string
         port:
+            description:
+                - Port when discovering the Cloudera Manager API endpoint.
+                - Ignored if C(endpoint) is defined.
             type: integer
+            default: 7183
         verify_tls:
+            description: Whether to verify the TLS credentials of the Cloudera Manager API endpoint.
             type: boolean
-            default: False
+            default: True
         debug:
+            description: Whether to log the I(urllib) connection details.
             type: boolean
             default: False
         default:
+            description: Value to return if no service is found on the cluster.
             type: any
+        version:
+            description: Version number of the Cloudera Manager API.
+            type: string
+            default: v40
         agent_header:
+            description: Header string to identify the connection.
             type: string
             default: cm_service     
     notes:
         - Requires C(cm_client).
 '''
 
-from ansible.module_utils.common.text.converters import to_native
-
 from ansible_collections.cloudera.cluster.plugins.lookup.cm_api import ClouderaManagerLookupBase
 
 from ansible.utils.display import Display
 
-from pprint import pp
 display = Display()
 
 class LookupModule(ClouderaManagerLookupBase):
@@ -89,7 +104,7 @@ class LookupModule(ClouderaManagerLookupBase):
         self.set_options(var_options=variables, direct=kwargs)
         
         self.initialize_client()
-        all_services = {service['type']:service for service in self.get("v40/clusters/%s/services" % self.get_option('cluster'))}
+        all_services = {service['type']:service for service in self.get("%s/clusters/%s/services" % (self.get_option('version'), self.get_option('cluster')))}
         
         results = []
         for term in LookupModule._flatten(terms):
