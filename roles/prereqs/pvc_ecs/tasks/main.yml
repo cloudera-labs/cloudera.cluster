@@ -1,3 +1,5 @@
+---
+
 # Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
-
 - name: Fail Fast if ECS OS is not RH family
-  fail: 
+  ansible.builtin.fail: 
     msg: ECS is not supported on this OS, should be Centos or RHEL
   when: ansible_os_family != 'RedHat'
+
+- name: Populate service facts
+  ansible.builtin.service_facts:
 
 - name: Install necessary additional packages
   ansible.builtin.package:
@@ -47,8 +50,7 @@
   when: ansible_distribution_major_version | int >= 8
   block:
     - name: Install iptables for rhel8, using rpm option tsflags=noscripts
-      command: dnf install -y iptables --setopt=tsflags=noscripts
-
+      ansible.builtin.command: dnf install -y iptables --setopt=tsflags=noscripts
 
 - name: Flush iptables
   ansible.builtin.iptables:
@@ -65,22 +67,21 @@
     
   ## see https://docs.rke2.io/known_issues
 - name: Set NetworkManager to ignore any ECS calico & flannel interfaces
-  copy:
+  ansible.builtin.copy:
     src: networkmanager.conf
     dest: /etc/NetworkManager/conf.d/rke2-canal.config 
     owner: root
     group: root
     mode: 0644
   when: 
-    - ansible_distribution_major_version|int >= 7 
-    - ansible_facts.services['NetworkManager.service'] is defined
+    - ansible_distribution_major_version|int >= 7
+    - ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
   
 - name: Reload NetworkManager daemon
-  systemd:
+  ansible.builtin.service:
     state: restarted
     daemon_reload: true
     name: NetworkManager.service  
   when: 
-    - ansible_distribution_major_version|int >= 7 
-    - ansible_facts.services['NetworkManager.service'] is defined
-
+    - ansible_distribution_major_version|int >= 7
+    - ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
