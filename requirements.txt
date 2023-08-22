@@ -14,3 +14,6 @@
 
 # For community.general.json_query filter
 jmespath
+
+# For cm_service lookup
+cm_client
