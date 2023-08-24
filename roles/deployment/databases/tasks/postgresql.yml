@@ -14,14 +14,6 @@
 
 ---
 
-- name: Ensure psycopg2 is installed
-  package:
-    name: "{{ ((hostvars[item]['ansible_os_family'] == 'RedHat') and (hostvars[item]['ansible_distribution_major_version'] == '7')) | ternary('python-psycopg2', 'python3-psycopg2') }}"
-  with_items: "{{ databases | json_query('*.host') | unique }}"
-  delegate_to: "{{ item }}"
-  connection: ssh
-  when: item in groups.db_server
-
 - name: Create database roles
   postgresql_user:
     name: "{{ databases[item].user }}"
