@@ -14,6 +14,8 @@
 
 ---
 postgresql_global_config_options:
+  - option: log_directory
+    value: 'log'
   - option: listen_addresses
     value: '*'
   - option: max_connections
