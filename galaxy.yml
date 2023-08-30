@@ -1,3 +1,5 @@
+---
+
 # Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +16,7 @@
 
 namespace: cloudera
 name: cluster
-version: 3.4.2
+version: 4.0.0-rc1
 
 authors: []
 readme: README.md
@@ -26,9 +28,6 @@ dependencies:
   'ansible.posix': '1.3.0'
   'community.crypto': '2.2.1'
   'community.general': '4.5.0'
-  'community.mysql': '3.1.0'
-  'community.postgresql': '1.6.1'
-  'freeipa.ansible_freeipa': '1.6.2'
 
 repository: https://github.com/cloudera-labs/cloudera.cluster
 documentation: https://github.com/cloudera-labs/cloudera.cluster

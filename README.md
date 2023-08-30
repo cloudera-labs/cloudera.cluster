@@ -1,10 +1,28 @@
-# Ansible Collection for Cloudera Private Cloud
+# Ansible Collection for Cloudera (CDP) Private Cloud
 
 ## Requirements
 
 - Python 2.x or 3.x
 - [Ansible](http://docs.ansible.com/ansible/intro_installation.html)
 - [JMESPath](https://jmespath.org/)
+
+### Dependencies
+
+| Name | Type | Version |
+| `ansible.posix` | collection | `1.3.0` |
+| `community.crypto` | collection | `2.2.1` |
+| `community.general` | collection | `4.5.0` |
+
+### Optional Dependencies
+
+| Name | Type | Version |
+| `community.mysql` | collection | `3.1.0` |
+| `community.postgresql` | collection | `1.6.1` |
+| `freeipa.ansible_freeipa` | collection | `1.6.2` |
+| `geerlingguy.postgresql` | role | `2.2.0` |
+| `geerlingguy.mysql` (patched) | role | `master` |
+
+All dependencies, required and optional, are found in `requirements.yml`. Only the required dependencies are in `galaxy.yml` and thus installed by `ansible-builder` when creating an Environment Execution container.
 
 **Do not use Ansible 2.9.0**. This version has an [issue with templating](https://github.com/ansible/ansible/issues/64745) which causes the playbook execution to fail. Instead, use any 2.8.x version or a later 2.9.x version as these are not affected.
 
