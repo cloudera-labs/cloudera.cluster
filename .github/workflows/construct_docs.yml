@@ -1,0 +1,75 @@
+---
+
+name: Construct documentation
+
+on:
+  workflow_call:
+    inputs:
+      directory-upload:
+        description: |
+          If 'true', the collection documentation will be uploaded in a directory artifact.
+        required: false
+        type: boolean
+        default: false
+      pages-upload:
+        description: |
+          If 'true', the collection documentation will be uploaded as a Github Pages artifact.
+        required: false
+        type: boolean
+        default: false
+      antsibull-log-upload:
+        description: |
+          If 'true', the antsibull-doc log will be uploaded as an artifact.
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-ansible-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v3
+
+      - name: Initialize antsibull-docs
+        uses: ansible-community/github-docs-build/ansible-docs-build-init@main
+        with:
+          skip-init: true
+          antsibull-docs-repository: cloudera-labs/antsibull-docs
+          antsibull-docs-version: cldr-docsite
+
+      - name: Build documentation
+        id: build
+        uses: ansible-community/github-docs-build/ansible-docs-build-html@main
+        with:
+          # build-script
+          # build-html
+          artifact-upload: ${{ inputs.directory-upload }}
+
+      - name: List constructed documentation files
+        run: ls -laR ${{ steps.build.outputs.build-html }}
+
+      - name: Upload antsibull-doc log artifact
+        if: inputs.antsibull-log-upload
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ runner.temp }}/docsbuild/antsibull.log
+          name: antsibull-${{ github.sha }}.log
+          retention-days: 7
+
+      - name: Fix permissions for Github Pages
+        if: inputs.pages-upload
+        run: |
+          chmod -c -R +rX "${{ steps.build.outputs.build-html }}" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
+
+      - name: Upload Github Pages artifact
+        if: inputs.pages-upload
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ${{ steps.build.outputs.build-html }}
+          name: github-pages
+          retention-days: 1
