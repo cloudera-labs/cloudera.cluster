@@ -16,4 +16,5 @@ jobs:
     uses: wmudge/cloudera.cloud/.github/workflows/lint_docs.yml@update/antsibull-docs
     with:
       antsibull-log-upload: true
-      
+      collection-namespace: cloudera
+      collection-name: cluster
