@@ -69,7 +69,7 @@ jobs:
         run: ls -laR ${{ steps.build.outputs.build-html }}
 
       - name: Upload antsibull-doc log artifact
-        if: inputs.antsibull-log-upload
+        if: always() && inputs.antsibull-log-upload
         uses: actions/upload-artifact@v3
         with:
           path: ${{ steps.vars.outputs.checkout-path }}/docsbuild/antsibull.log
