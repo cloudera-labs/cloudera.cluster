@@ -30,12 +30,29 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Configure environment
+        id: vars
+        uses: actions/github-script@v6
+        with:
+          script: |
+            name = process.env.GITHUB_REPOSITORY.split('/')[1]
+            path = name.replace('.', '/')
+
+            core.exportVariable('ANSIBLE_COLLECTIONS_PATHS', process.env.GITHUB_WORKSPACE)
+
+            const checkoutPath = `ansible_collections/${path}`
+            core.setOutput('checkout-path', checkoutPath)
+
       - name: Checkout project
         uses: actions/checkout@v3
+        with:
+          path: ${{ steps.vars.outputs.checkout-path }}
 
       - name: Initialize antsibull-docs
+        id: init
         uses: ansible-community/github-docs-build/actions/ansible-docs-build-init@main
         with:
+          dest-dir: ${{ steps.vars.outputs.checkout-path }}/docsbuild
           skip-init: true
           antsibull-docs-repository: cloudera-labs/antsibull-docs
           antsibull-docs-version: cldr-docsite
@@ -44,8 +61,8 @@ jobs:
         id: build
         uses: ansible-community/github-docs-build/actions/ansible-docs-build-html@main
         with:
-          # build-script
-          # build-html
+          build-script: ${{ steps.init.outputs.build-script }}
+          build-html: ${{ steps.init.outputs.build-html }}
           artifact-upload: ${{ inputs.directory-upload }}
 
       - name: List constructed documentation files
@@ -55,7 +72,7 @@ jobs:
         if: inputs.antsibull-log-upload
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ runner.temp }}/docsbuild/antsibull.log
+          path: ${{ steps.vars.outputs.checkout-path }}/docsbuild/antsibull.log
           name: antsibull-${{ github.sha }}.log
           retention-days: 7
 
