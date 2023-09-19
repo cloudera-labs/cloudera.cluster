@@ -12,7 +12,7 @@ on:
 jobs:
   build-ansible-docs:
     name: Build Ansible Docs
-    uses: ./.github/workflows/construct_docs.yml
+    uses: cloudera-labs/github-actions/.github/workflows/construct-ansible-docs.yml@v1
     with:
       pages-upload: true
       directory-upload: true
