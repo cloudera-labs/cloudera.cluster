@@ -2,6 +2,6 @@
 # Created with antsibull-docs 2.3.1.post0
 
 #antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs.git@cldr-docsite
-ansible-pygments
+#ansible-pygments
 #sphinx
 #sphinx-ansible-theme >= 0.9.0
