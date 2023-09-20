@@ -30,9 +30,13 @@ custom_config_templates:
   - template: configs/logdirs-6.x.j2
     condition: "{{ cloudera_runtime_version is version('6.0.0','>=') and cloudera_runtime_version is version('7.0.0','<') }}"
   - template: configs/logdirs-7.1.0.j2
-    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') }}"
+    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and cloudera_runtime_version is version('7.1.9','<') }}"
+  - template: configs/logdirs-7.1.9.j2
+    condition: "{{ cloudera_runtime_version is version('7.1.9','>=') }}"
   - template: configs/logdirs-ranger-spooldirs.j2
-    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and  (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) }}"
+    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) and cloudera_runtime_version is version('7.1.9','<') }}"
+  - template: configs/logdirs-ranger-spooldirs-7.1.9.j2
+    condition: "{{ cloudera_runtime_version is version('7.1.9','>=') }}"
 # Custom configurations for out-of-memory behaviour, heap dumps etc
   - template: configs/oom.j2
     condition: "{{ cluster.oom is defined }}"
