@@ -1,0 +1,8 @@
+DOCUMENTATION:
+  name: to_ldap_type_enum
+  short_description: to_ldap_type_enum
+  description: to_ldap_type_enum
+
+EXAMPLES:
+
+RETURN:
