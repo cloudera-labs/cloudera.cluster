@@ -51,7 +51,11 @@ html_theme_options = {
     'vcs_pageview_mode': 'edit',
     'documentation_home_url': 'https://github.com/cloudera-labs/',
     'topbar_links': {
-        'Cloudera Docs': 'https://docs.cloudera.com/',
+        'Cloudera Data Platform (CDP)': 'https://www.cloudera.com/products/cloudera-data-platform.html',
+        'Documentation': 'https://docs.cloudera.com/',
+        'Downloads': 'https://www.cloudera.com/downloads.html',
+        'Training': 'https://www.cloudera.com/about/training.html',
+        'Certification': 'https://www.cloudera.com/about/training/certification.html',
     },
 }
 
