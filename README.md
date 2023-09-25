@@ -77,7 +77,7 @@ See [Building the Collection](#building-the-collection) for details on creating 
 
 `cloudera.cluster` expects `ansible-core>=2.10,<2.13`.
 
-> *WARNING:* The current `import_template` functionality does not yet work with Ansible version `2.13` and later.
+> **WARNING:** The current `import_template` functionality does not yet work with Ansible version `2.13` and later.
 
 The collection has the following _required_ dependencies:
 
@@ -97,7 +97,7 @@ There are a number of _optional_ dependencies for the collection:
 | `geerlingguy.postgresql` | role | `2.2.0` |
 | `geerlingguy.mysql` (patched) | role | `master` |
 
-The collection also requires the following Python libraries install to operate 
+The collection also requires the following Python libraries to operate 
 its modules:
 
   * [jmespath](https://jmespath.org/)
@@ -105,13 +105,13 @@ its modules:
 
 All dependencies, required and optional, can be found in `requirements.yml`; only the _required_ dependencies are in `galaxy.yml`.  
 
-`ansible-galaxy` will install only the _required_ dependencies automatically. `ansible-builder` will install all dependencies - _required_ and _optional_ - and the Python dependencies if you wish to use that application to construct your environment. (This behavior supports *Execution Environment* creation. See [`cloudera-labs/cldr-runner`](https://github.com/cloudera-labs/cldr-runner) as an example.)
+`ansible-galaxy` will install only the _required_ dependencies automatically. `ansible-builder` will install the Python dependencies if you wish to use that application to construct your environment. For either, you may wish to use a _virtual environment_.
 
-For either, you may wish to use a _virtual environment_. 
+See the `base` *Execution Environment* configuration in [`cloudera-labs/cldr-runner`](https://github.com/cloudera-labs/cldr-runner) as an example of how you can install the optional dependencies to suit your specific needs.
 
 ## Using the Collection
 
-This Ansible Collection is designed to work hand-in-hand with the [`cloudera-deploy`](https://github.com/cloudera-labs/cloudera-deploy) application, which uses reference playbooks from [`cloudera.exe`](https://github.com/cloudera-labs/cloudera.exe) and example definitions. Coming releases will decouple these collections further while maintaining backwards compatibility.
+This collection is designed to work hand-in-hand with the [`cloudera-deploy` application](https://github.com/cloudera-labs/cloudera-deploy), which uses reference playbooks from the [`cloudera.exe` collection](https://github.com/cloudera-labs/cloudera.exe) and example definitions. Coming releases will decouple these collections further while maintaining backwards compatibility.
 
 Once installed, reference the collection in your playbooks and roles.
 
