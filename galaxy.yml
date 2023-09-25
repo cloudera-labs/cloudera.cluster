@@ -28,6 +28,8 @@ license_file: LICENSE
 tags:
 - cloudera
 - cdp
+- private cloud
+- data services
 - cloudera manager
 - cm
 
