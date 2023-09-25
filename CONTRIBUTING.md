@@ -8,7 +8,7 @@ You can start work on issues that are not yet part of a [Milestone](https://gith
 
 Before you start working, please announce that you want to do so by commenting on the issue. _([Create an issue](https://github.com/cloudera-labs/cloudera.cluster/issues/new?labels=enhancement) if there isn't one yet, and you can also check out our [Discussions](https://github.com/cloudera-labs/cloudera.cluster/discussions) for ideas.)_ We try to ensure that all active work is assigned to a Milestone in order to keep our backlog accurate.
 
-**When your work is ready for review, branch from the `devel` branch using and submit a pull request against the same while referencing an issue.**
+**When your work is ready for review, create a branch in your own forked repository from the `devel` branch and submit a pull request against `devel`, referencing your the issue.**
 
 As a _best practice_, you can prefix your branches with:
 
@@ -18,7 +18,7 @@ As a _best practice_, you can prefix your branches with:
 |`fix/`|A non-urgent bug fix|`fix/refactor-module-output-params`|
 |`hotfix/`|An urgent bug fix|`hotfix/patch-insecure-module`|
 
-> :fire_extinguisher: **NOTE:** a **hotfix** should branch from `main`. It will then be committed to both the `main` and `devel` branches.
+:fire_extinguisher: **NOTE:** a **hotfix** should branch from `main`. It will then be committed to both the `main` and `devel` branches.
 
 ## Signing your commits
 
