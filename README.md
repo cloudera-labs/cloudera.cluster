@@ -97,15 +97,18 @@ There are a number of _optional_ dependencies for the collection:
 | `geerlingguy.postgresql` | role | `2.2.0` |
 | `geerlingguy.mysql` (patched) | role | `master` |
 
-The collection also requires the following Python libraries to operate 
-its modules:
+The collection also requires the following Python libraries to operate its modules:
 
   * [jmespath](https://jmespath.org/)
   * [cm_client](https://cloudera.github.io/cm_api/docs/python-client-swagger/)
 
-All dependencies, required and optional, can be found in `requirements.yml`; only the _required_ dependencies are in `galaxy.yml`.  
+The collection's Python dependencies alone, _not_ the required Python libraries of its collection dependencies, are in `requirements.txt`.
 
-`ansible-galaxy` will install only the _required_ dependencies automatically. `ansible-builder` will install the Python dependencies if you wish to use that application to construct your environment. For either, you may wish to use a _virtual environment_.
+All collection dependencies, required and optional, can be found in `requirements.yml`; only the _required_ dependencies are in `galaxy.yml`. `ansible-galaxy` will install only the _required_ collection dependencies; you will need to add the _optional_ collection dependencies as needed (see above). 
+
+`ansible-builder` can discover and install all Python dependencies - current collection and dependencies - if you wish to use that application to construct your environment. Otherwise, you will need to read each collection and role dependency and follow its installation instructions.
+
+You may wish to use a _virtual environment_ to manage the Python dependencies.
 
 See the `base` *Execution Environment* configuration in [`cloudera-labs/cldr-runner`](https://github.com/cloudera-labs/cldr-runner) as an example of how you can install the optional dependencies to suit your specific needs.
 
