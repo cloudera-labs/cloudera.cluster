@@ -18,7 +18,8 @@ As a _best practice_, you can prefix your branches with:
 |`fix/`|A non-urgent bug fix|`fix/refactor-module-output-params`|
 |`hotfix/`|An urgent bug fix|`hotfix/patch-insecure-module`|
 
-:fire_extinguisher: **NOTE:** a **hotfix** should branch from `main`. It will then be committed to both the `main` and `devel` branches.
+> [!NOTE]
+> :fire_extinguisher: A **hotfix** should branch from `main`. It will then be committed to both the `main` and `devel` branches.
 
 ## Signing your commits
 
@@ -73,7 +74,8 @@ To agree, make sure to add line at the end of every git commit message, like thi
 Signed-off-by: John Doe <jdoe@example.com>
 ```
 
-:rocket: TIP! Add the sign-off automatically when creating the commit via the `-s` flag, e.g. `git commit -s`.
+> [!NOTE]
+> :rocket: Add the sign-off automatically when creating the commit via the `-s` flag, e.g. `git commit -s`.
 
 ## Still have questions? Opinions? Comments?
 

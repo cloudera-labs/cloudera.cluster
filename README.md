@@ -77,7 +77,8 @@ See [Building the Collection](#building-the-collection) for details on creating 
 
 `cloudera.cluster` expects `ansible-core>=2.10,<2.13`.
 
-> **WARNING:** The current `import_template` functionality does not yet work with Ansible version `2.13` and later.
+> [!WARNING]
+> The current `import_template` functionality does not yet work with Ansible version `2.13` and later.
 
 The collection has the following _required_ dependencies:
 
@@ -107,6 +108,8 @@ The collection's Python dependencies alone, _not_ the required Python libraries 
 All collection dependencies, required and optional, can be found in `requirements.yml`; only the _required_ dependencies are in `galaxy.yml`. `ansible-galaxy` will install only the _required_ collection dependencies; you will need to add the _optional_ collection dependencies as needed (see above). 
 
 `ansible-builder` can discover and install all Python dependencies - current collection and dependencies - if you wish to use that application to construct your environment. Otherwise, you will need to read each collection and role dependency and follow its installation instructions.
+
+See the [Collection Metadata](https://ansible.readthedocs.io/projects/builder/en/latest/collection_metadata/) section for further details on how to install (and manage) collection dependencies.
 
 You may wish to use a _virtual environment_ to manage the Python dependencies.
 
@@ -179,6 +182,9 @@ Your local documentation will be found at `docsbuild/build/html`.
 
 Active development is focused on **CDP Private Cloud** deployments and their respective platform compatibility matrices.
 
+> [!NOTE]
+> While the collection's plugins and roles can be used to deploy CDH 5.x and CDH 6.x environments, it is only possible to install a subset of their supported platform components (i.e JDK and database versions) using this tooling.
+
 ### Cloudera Distributions
 
 - Cloudera Manager / CDP Private Cloud Base 7.1.x
@@ -193,11 +199,10 @@ Active development is focused on **CDP Private Cloud** deployments and their res
 - Ubuntu 18.04 LTS (Bionic Beaver)
 - Ubuntu 20.04 LTS (Focal Fossa)
 
-> While the collection's plugins and roles can be used to deploy CDH 5.x and CDH 6.x environments, it is only possible to install a subset of their supported platform components (i.e JDK and database versions) using this tooling.
-
 ## Operational Features
 
-> **NOTE:** These operational features are deprecated as of version 4.x. If you want to use or build similar features and functions, head over to the [Discussions](https://github.com/cloudera-labs/cloudera.cluster/discussions) to learn more about using the collection to achieve your platform operations needs.
+> [!WARNING]
+> These operational features are deprecated as of version 4.x. If you want to use or build similar features and functions, head over to the [Discussions](https://github.com/cloudera-labs/cloudera.cluster/discussions) to learn more about using the collection to achieve your platform operations needs.
 
 This collection includes support for:
 
