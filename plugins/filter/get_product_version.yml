@@ -1,0 +1,8 @@
+DOCUMENTATION:
+  name: get_product_version
+  short_description: get_product_version
+  description: get_product_version
+
+EXAMPLES:
+
+RETURN:

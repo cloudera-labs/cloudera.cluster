@@ -30,8 +30,6 @@ DOCUMENTATION = '''
             description:
                 - A C(service) or list of services to lookup within the CDP Datahub cluster.
             required: True
-            sample:
-                - KUDU
         cluster:
             description: Name of the Datahub cluster to query.
             type: string
@@ -44,11 +42,14 @@ DOCUMENTATION = '''
             description: Username for accessing the Cloudera Manager API.
             type: string
             required: True
+            env:
+                - name: CM_USERNAME
         password:
             description: Password for accessing the Cloudera Manager API.
             type: string
             required: True
-            no_log: True
+            env:
+                - name: CM_PASSWORD
         endpoint:
             description: API endpoint of Cloudera Manager.
             type: string
@@ -93,11 +94,7 @@ DOCUMENTATION = '''
         - Requires C(cm_client).
 '''
 
-from ansible_collections.cloudera.cluster.plugins.lookup.cm_api import ClouderaManagerLookupBase
-
-from ansible.utils.display import Display
-
-display = Display()
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerLookupBase
 
 class LookupModule(ClouderaManagerLookupBase):
     def run(self, terms, variables=None, **kwargs):

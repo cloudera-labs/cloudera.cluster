@@ -55,8 +55,6 @@ class ModuleDocFragment(object):
             type: bool
             required: False
             default: True
-            aliases:
-                - tls
         username:
             description:
                 - Username for access to the CM API endpoint.

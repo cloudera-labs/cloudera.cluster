@@ -1,0 +1,8 @@
+DOCUMENTATION:
+  name: extract_custom_role_groups
+  short_description: extract_custom_role_groups
+  description: extract_custom_role_groups
+
+EXAMPLES:
+
+RETURN:

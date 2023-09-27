@@ -14,22 +14,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-namespace: cloudera
-name: cluster
-version: 4.0.0-rc1
+namespace:  cloudera
+name:       cluster
+version:    4.0.0-rc1
+readme:     README.md
+authors:    []
 
-authors: []
-readme: README.md
-description: Cloudera assets for managing Cloudera clusters
-license_file: 'LICENSE'
-tags: []
+description: >
+  A set of roles, modules, and other plugins for interacting with the services
+  and endpoints provided by the Cloudera Data Platform (CDP) for Private Cloud
+  and Cloudera Manager (CM).
+license_file: LICENSE
+tags:
+- cloudera
+- cdp
+- private cloud
+- data services
+- cloudera manager
+- cm
 
 dependencies:
-  'ansible.posix': '1.3.0'
-  'community.crypto': '2.2.1'
-  'community.general': '4.5.0'
+  'ansible.posix':      '1.3.0'
+  'community.crypto':   '2.2.1'
+  'community.general':  '4.5.0'
 
-repository: https://github.com/cloudera-labs/cloudera.cluster
-documentation: https://github.com/cloudera-labs/cloudera.cluster
-homepage: https://github.com/cloudera-labs/cloudera.cluster
-issues: https://github.com/cloudera-labs/cloudera.cluster/issues
+repository:     https://github.com/cloudera-labs/cloudera.cluster
+homepage:       https://github.com/cloudera-labs/cloudera.cluster
+issues:         https://github.com/cloudera-labs/cloudera.cluster/issues
+documentation:  https://cloudera-labs.github.io/cloudera.cluster
+
+build_ignore:
+- '.*'
+- docs
+- docsrc
+- site

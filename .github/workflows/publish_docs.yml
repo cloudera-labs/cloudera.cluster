@@ -1,0 +1,36 @@
+---
+
+name: Publish documentation
+
+on:
+  push:
+    branches:
+      - 'main' 
+  
+  workflow_dispatch:
+
+jobs:
+  build-ansible-docs:
+    name: Build Ansible Docs
+    uses: cloudera-labs/github-actions/.github/workflows/construct-ansible-docs.yml@v1
+    with:
+      pages-upload: true
+      directory-upload: true
+      antsibull-log-upload: true
+
+  publish-ansible-docs:
+    name: Publish Ansible Docs
+    needs: build-ansible-docs
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Github Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+        with:
+          artifact_name: github-pages

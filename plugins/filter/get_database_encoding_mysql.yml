@@ -1,0 +1,8 @@
+DOCUMENTATION:
+  name: get_database_encoding_mysql
+  short_description: get_database_encoding_mysql
+  description: get_database_encoding_mysql
+
+EXAMPLES:
+
+RETURN:
