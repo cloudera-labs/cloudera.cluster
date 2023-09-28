@@ -30,9 +30,9 @@ You must also set `krb5_kdc_type: "Red Hat IPA"`.
 
 ### Existing FreeIPA
 
-This case is simple:
+Set `krb5_kdc_host` to your FreeIPA server hostname. The role `infrastructure/krb5_client` will then install the FreeIPA client and enroll it with the designated server.
 
-Please set `krb5_kdc_host` to you FreeIPA server hostname.
+If you wish to suppress the enrollment, say you have already established enrollment outside of the automation, you can set the `freeipa_enroll` parameter to `false`.
 
 ### Playbook-provisioned
 
