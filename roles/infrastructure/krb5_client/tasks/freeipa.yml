@@ -1,4 +1,6 @@
-# Copyright 2021 Cloudera, Inc.
+---
+
+# Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
 - name: Fix FreeIPA Dbus configuration
   include_tasks: freeipa_dbus_patch.yml
   when:
@@ -30,7 +31,7 @@
     ipaserver_realm: "{{ krb5_realm }}"
     ipaserver_domain: "{{ krb5_domain | default(krb5_realm | lower) }}"
     ipaclient_servers: "{{ groups['krb5_server'] }}"
-  when: "krb5_kdc_type == 'Red Hat IPA' and 'krb5_server' in groups"
+  when: freeipa_enroll or 'krb5_server' in groups
 
 - name: Include Private Cloud config changes
   ansible.builtin.include_tasks: pvc_configs.yml
