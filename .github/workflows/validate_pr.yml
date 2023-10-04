@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo update-alternatives --install /usr/bin/python python $(which python3) 1
           pip install --upgrade pip
-          pip install ansible-core==2.12 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
+          pip install ansible-core~=2.12.0 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
           mkdir -p /usr/share/ansible/collections /usr/share/ansible/roles
           ansible-galaxy collection install -r builder/requirements.yml -p /usr/share/ansible/collections
           ansible-galaxy role install -r builder/requirements.yml -p /usr/share/ansible/roles
