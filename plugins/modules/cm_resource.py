@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerModule
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
