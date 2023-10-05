@@ -94,7 +94,7 @@ There are a number of _optional_ dependencies for the collection:
 |------|------|---------|
 | `community.mysql` | collection | `3.1.0` |
 | `community.postgresql` | collection | `1.6.1` |
-| `freeipa.ansible_freeipa` | collection | `1.6.2` |
+| `freeipa.ansible_freeipa` | collection | `1.11.1` |
 | `geerlingguy.postgresql` | role | `2.2.0` |
 | `geerlingguy.mysql` (patched) | role | `master` |
 
