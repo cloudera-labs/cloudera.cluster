@@ -94,7 +94,8 @@ DOCUMENTATION = '''
         - Requires C(cm_client).
 '''
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerLookupBase
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_controller_utils import ClouderaManagerLookupBase
+
 
 class LookupModule(ClouderaManagerLookupBase):
     def run(self, terms, variables=None, **kwargs):
