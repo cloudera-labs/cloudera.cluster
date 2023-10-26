@@ -121,6 +121,16 @@ database_defaults:
     user: queryprocessor
     password: "{{ database_default_password }}"
 
+#New in 7.1.9, postgresql only until CHF2
+  QUEUE_MANAGER:
+    host: "{{ database_host }}"
+    port: "{{ database_type | cloudera.cluster.default_database_port }}"
+    type: postgresql
+    name: queuemanager
+    user: queuemanager
+    password: "{{ database_default_password }}"
+
+
 databases_cm_svcs:
   ACTIVITYMONITOR:
     host: "{{ database_host }}"
