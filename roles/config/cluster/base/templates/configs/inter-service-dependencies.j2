@@ -28,7 +28,9 @@ HIVE:
 {% if 'ATLAS' in cluster.services and not (cdh_cdp_upgrade|default(false)|bool) %}
     atlas_service: atlas
 {% endif %}
+{% if cloudera_runtime_version is version('7.0.0','<=') %}
     spark_on_yarn_service: spark_on_yarn
+{% endif %}
     zookeeper_service: zookeeper
 
 HIVE_ON_TEZ:
