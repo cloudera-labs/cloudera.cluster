@@ -48,6 +48,6 @@ mkdir fs2cs
 cp ${FAIR_SCHEDULER} fs2cs/fair-scheduler.xml
 cp ${CORE_SITE} fs2cs/core-site.xml
 
-/opt/cloudera/parcels/CDH-{{ new_parcel_version }}/bin/yarn fs2cs ${RESOURCE_OPTS}  --no-terminal-rule-check --yarnsiteconfig ${YARN_SITE}  --fsconfig fs2cs/fair-scheduler.xml --output-directory {{ fs2cs_temp_dir }}
+/opt/cloudera/parcels/CDH-{{ new_parcel_version }}/bin/yarn fs2cs ${RESOURCE_OPTS}  --no-terminal-rule-check --yarnsiteconfig ${YARN_SITE} --fsconfig $(realpath fs2cs/fair-scheduler.xml) --output-directory {{ fs2cs_temp_dir }}
 
 exit $?
