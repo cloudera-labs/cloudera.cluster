@@ -16,7 +16,7 @@
 
 namespace:  cloudera
 name:       cluster
-version:    4.0.1
+version:    4.1.0
 readme:     README.md
 authors:    []
 
