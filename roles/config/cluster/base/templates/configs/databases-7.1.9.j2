@@ -61,9 +61,9 @@ QUERY_PROCESSOR:
     query_processor_database_password: {{ databases.QUERY_PROCESSOR.password }}
 QUEUEMANAGER:
   SERVICEWIDE:
-    queue_manager_database_host: {{ databases.QUEUE_MANAGER.host }}
-    queue_manager_database_port: {{ databases.QUEUE_MANAGER.port }}
-    queue_manager_database_type: {{ databases.QUEUE_MANAGER.type | cloudera.cluster.format_database_type }}
-    queue_manager_database_name: {{ databases.QUEUE_MANAGER.name }}
-    queue_manager_database_username: {{ databases.QUEUE_MANAGER.user }}
-    queue_manager_database_password: {{ databases.QUEUE_MANAGER.password }}
+    queuemanager_database_host: {{ databases.QUEUEMANAGER.host }}
+    queuemanager_database_port: {{ databases.QUEUEMANAGER.port }}
+    queuemanager_database_type: {{ databases.QUEUEMANAGER.type | cloudera.cluster.format_database_type }}
+    queuemanager_database_name: {{ databases.QUEUEMANAGER.name }}
+    queuemanager_database_user: {{ databases.QUEUEMANAGER.user }}
+    queuemanager_database_password: {{ databases.QUEUEMANAGER.password }}
