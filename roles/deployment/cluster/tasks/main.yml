@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,16 @@
     name: cloudera.cluster.config.cluster.common
     public: yes
 
+## Nico
+- name: Apply "all hosts" configs
+  include_role:
+    name: cloudera.cluster.cloudera_manager.config
+  vars:
+    api_config_keys_uppercase: False
+    api_config_endpoint: cm/allHosts/config
+    api_configs: "{{ definition.hosts.configs }}"
+  when: definition.hosts.configs is defined
+
 - name: Detect Cloudera Manager version
   cloudera.cluster.cm_api:
     endpoint: /cm/version
@@ -35,6 +45,7 @@
     existing_clusters: "{{ clusters_response.json | json_query('items[*].name') }}"
 
 # If you get failures here check in CM to ensure you don't have empty clusters or other oddities
+# Add deploy_only="base" to select base from several clusters in clusters.yml 
 - name: Create base clusters
   include_tasks: create_base.yml
   loop: "{{ definition.clusters }}"
@@ -45,7 +56,9 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name not in existing_clusters
-
+    - (deploy_only is defined and 'base' in deploy_only) or deploy_only is not defined
+    
+# Add deploy_only="base" to select base from several clusters in clusters.yml    
 - name: Update base clusters
   include_tasks: update_base.yml
   loop: "{{ definition.clusters }}"
@@ -57,7 +70,9 @@
     - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name in existing_clusters
     - (cdh_cdp_upgrade|default(false)|bool) or (update_services|default(false)|bool) or (upgrade_runtime|default(false)|bool)
+    - (deploy_only is defined and 'base' in deploy_only) or deploy_only is not defined
 
+# Add deploy_only="base" to select base from several clusters in clusters.yml   
 - name: Create base cluster data contexts (SDX)
   include_tasks: create_data_context.yml
   loop: "{{ definition.clusters }}"
@@ -68,7 +83,9 @@
   when:
     - cluster.type | default(default_cluster_type) == 'base'
     - cloudera_manager_version is version('6.2.0','>=')
+    - (deploy_only is defined and 'base' in deploy_only) or deploy_only is not defined
 
+# Add deploy_only="encryption" to select kts from several clusters in clusters.yml
 - name: Create Key Trustee server cluster
   include_tasks: create_kts.yml
   loop: "{{ definition.clusters }}"
@@ -80,7 +97,10 @@
     - cluster.type | default(default_cluster_type) == 'kts'
     - cluster.name not in existing_clusters
     - '"kts_active" in groups'
+    - (deploy_only is defined and 'encryption' in deploy_only) or deploy_only is not defined
+    
 
+# Add deploy_only="encryption" to select kts from several clusters in clusters.yml    
 - name: Upgrade Key Trustee server cluster
   include_tasks: upgrade_kts.yml
   loop: "{{ definition.clusters }}"
@@ -93,7 +113,9 @@
     - cluster.name in existing_clusters
     - '"kts_active" in groups'
     - upgrade_kts_cluster | default(false)
-
+    - (deploy_only is defined and 'encryption' in deploy_only) or deploy_only is not defined
+    
+# Add deploy_only="compute" to select compute clust from several clusters in clusters.yml        
 - name: Create compute clusters
   include_tasks: create_base.yml
   loop: "{{ definition.clusters }}"
@@ -104,8 +126,10 @@
   when:
     - cluster.type | default(default_cluster_type) == 'compute'
     - cluster.name not in existing_clusters
+    - (deploy_only is defined and 'compute' in deploy_only) or deploy_only is not defined
 
 # This process is not idempotent, as the whole ECS setup process must succeed or it will skip on subsequent runs
+# Add deploy_only="ecs" to select ecs from several clusters in clusters.yml
 - name: Create ECS clusters
   include_tasks: create_ecs.yml
   loop: "{{ definition.clusters }}"
@@ -116,6 +140,7 @@
   when:
     - cluster.type | default(default_cluster_type) == 'ecs'
     - cluster.name not in existing_clusters
+    - (deploy_only is defined and 'ecs' in deploy_only) or deploy_only is not defined
 
 - name: Restart Cloudera Management Service
   cloudera.cluster.cm_api:
