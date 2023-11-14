@@ -69,7 +69,7 @@
         invalid_services: >-
           {{
           cluster.services
-          | default({})
+          | reject('eq', 'AWS_S3')
           | difference(host_template_services)
           }}
     - name: Ensure that all the services are included in host templates

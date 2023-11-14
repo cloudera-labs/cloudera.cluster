@@ -18,11 +18,14 @@
     - set_fact:
         invalid_roles: >-
           {{ config.roles
-          | flatten
-          | map('regex_replace','/.+','')
-          | difference(['SERVICEWIDE'])
-          | difference(role_mappings[config.service] | list)
+            | flatten
+            | map('regex_replace', '/.+', '')
+            | difference(['SERVICEWIDE'])
+            | difference(role_service_mapping)
+            | list
           }}
+      vars:
+        role_service_mapping: "{{ role_mappings[config.service] | default([]) }}"
     - name: Ensure all configured roles are valid
       assert:
         that: "{{ invalid_roles | length == 0 }}"
