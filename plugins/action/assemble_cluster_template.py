@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -189,7 +186,12 @@ class ActionModule(ActionBase):
             # Compile the regexp
             compiled = None
             if regexp is not None:
-                compiled = re.compile(regexp)
+                try:
+                    compiled = re.compile(regexp)
+                except re.error as e:
+                    raise AnsibleActionFail(
+                        message=f"Regular expression, {regexp}, is invalid: {to_native(e)}"
+                    )
 
             # Assemble the src files into output file
             with tempfile.NamedTemporaryFile(
@@ -231,7 +233,7 @@ class ActionModule(ActionBase):
 
                 if assembled_checksum != dest_stat["checksum"]:
                     diff = {}
-                    
+
                     if self._task.diff:
                         diff = self._get_diff_data(dest, assembled.name, task_vars)
 
@@ -239,7 +241,7 @@ class ActionModule(ActionBase):
                     remote_path = self._connection._shell.join_path(
                         self._connection._shell.tmpdir, "assembled_cluster_template"
                     )
-                    
+
                     # Transfer the file to the remote path
                     transfered = self._transfer_file(assembled.name, remote_path)
 
@@ -262,7 +264,7 @@ class ActionModule(ActionBase):
 
                     if diff:
                         copy.update(diff=diff)
-                    
+
                     result.update(copy)
                 else:
                     # Gather details on the existing file
@@ -271,7 +273,7 @@ class ActionModule(ActionBase):
                         module_args=submodule_args,
                         task_vars=task_vars,
                     )
-                    
+
                     result.update(file)
         except AnsibleAction as e:
             result.update(e.result)
