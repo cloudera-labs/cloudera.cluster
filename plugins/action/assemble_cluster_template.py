@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import re
 import tempfile
@@ -35,16 +36,72 @@ from ansible.utils.hashing import checksum_s
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
-    def process_fragment(self, fh) -> bytes:
-        updated = bytearray(fh.read())
-        updated.extend("\n-------\n".encode())
-        return updated
+    MERGED = {}
+    IDEMPOTENT_IDS = ["refName", "name", "clusterName", "hostName", "product"]
+    UNIQUE_IDS = ["repositories"]
 
-    def complete_assembly(self, assembled_file):
-        pass
+    def update_object(self, base, template, breadcrumbs=""):
+        if isinstance(base, dict) and isinstance(template, dict):
+            self.update_dict(base, template, breadcrumbs)
+            return True
+        elif isinstance(base, list) and isinstance(template, list):
+            self.update_list(base, template, breadcrumbs)
+            return True
+        return False
+
+    def update_dict(self, base, template, breadcrumbs=""):
+        for key, value in template.items():
+            crumb = breadcrumbs + "/" + key
+
+            if key in self.IDEMPOTENT_IDS:
+                if base[key] != value:
+                    self._display.error(
+                        "Objects with distinct IDs should not be merged: " + crumb
+                    )
+                continue
+
+            if key not in base:
+                base[key] = value
+            elif not self.update_object(base[key], value, crumb) and base[key] != value:
+                self._display.warning(
+                    f"Value being overwritten for key [{crumb}]], Old: [{base[key]}], New: [{value}]"
+                )
+                base[key] = value
+
+            if key in self.UNIQUE_IDS:
+                base[key] = list(set(base[key]))
+
+    def update_list(self, base, template, breadcrumbs=""):
+        for item in template:
+            if isinstance(item, dict):
+                for attr in self.IDEMPOTENT_IDS:
+                    if attr in item:
+                        idempotent_id = attr
+                        break
+                else:
+                    idempotent_id = None
+                if idempotent_id:
+                    namesake = [
+                        i for i in base if i[idempotent_id] == item[idempotent_id]
+                    ]
+                    if namesake:
+                        # LOG.warn("List item being replaced, Old: [%s], New: [%s]", namesake[0], item)
+                        self.update_dict(
+                            namesake[0],
+                            item,
+                            breadcrumbs
+                            + "/["
+                            + idempotent_id
+                            + "="
+                            + item[idempotent_id]
+                            + "]",
+                        )
+                        continue
+            base.append(item)
+        base.sort(key=lambda x: json.dumps(x, sort_keys=True))
 
     def _assemble_fragments(
-        self, assembled_file, src_path, regex=None, ignore_hidden=True
+        self, assembled_file, src_path, regex=None, ignore_hidden=True, decrypt=True
     ):
         # By file name sort order
         for f in (
@@ -62,15 +119,20 @@ class ActionModule(ActionBase):
             ):
                 continue
 
-            with open(self._loader.get_real_file(fragment), "rb") as fragment_file:
-                content = self.process_fragment(fragment_file)
+            with open(
+                self._loader.get_real_file(fragment, decrypt=decrypt),
+                "r",
+                encoding="utf-8",
+            ) as fragment_file:
+                try:
+                    self.update_object(self.MERGED, json.loads(fragment_file.read()))
+                except json.JSONDecodeError as e:
+                    raise AnsibleActionFail(
+                        message=f"{to_text(e.msg)}", obj=to_native(e)
+                    )
 
-            # Write the resulting bytes
-            if content is not None:
-                assembled_file.write(content)
-
-        # Finalize any remaining assembly
-        self.complete_assembly(assembled_file)
+        # Write out the final assembly
+        json.dump(self.MERGED, assembled_file, indent=2, sort_keys=False)
 
         # Close the assembled file handle
         assembled_file.close()
@@ -89,7 +151,8 @@ class ActionModule(ActionBase):
         remote_src = self._task.args.get("remote_src", False)
         regexp = self._task.args.get("regexp", None)
         follow = self._task.args.get("follow", False)
-        ignore_hidden = self._task.args.get("ignore_hidden", True)
+        ignore_hidden = boolean(self._task.args.get("ignore_hidden", True))
+        decrypt = self._task.args.pop("decrypt", True)
 
         try:
             if src is None or dest is None:
@@ -117,10 +180,14 @@ class ActionModule(ActionBase):
                 compiled = re.compile(regexp)
 
             with tempfile.NamedTemporaryFile(
-                dir=C.DEFAULT_LOCAL_TMP, delete=False
+                mode="w", encoding="utf-8", dir=C.DEFAULT_LOCAL_TMP, delete=False
             ) as assembled:
                 self._assemble_fragments(
-                    assembled, src, regex=compiled, ignore_hidden=ignore_hidden
+                    assembled,
+                    src,
+                    regex=compiled,
+                    ignore_hidden=ignore_hidden,
+                    decrypt=decrypt,
                 )
 
             assembled_checksum = checksum_s(assembled.name)
@@ -132,7 +199,7 @@ class ActionModule(ActionBase):
             new_module_args = self._task.args.copy()
 
             # Purge cloudera.cluster.assemble_cluster_template-specific options
-            for o in ["remote_src", "regexp", "ignore_hidden"]:
+            for o in ["remote_src", "regexp", "filter", "ignore_hidden", "decrypt", ]:
                 new_module_args.pop(o, None)
 
             new_module_args.update(dest=dest)
