@@ -26,42 +26,107 @@ DOCUMENTATION = r"""
 module: assemble_cluster_template
 short_description: Merge Cloudera Manager cluster template fragments
 description:
-  - Merge Cloudera Manager cluster template fragment files into a single JSON file.
-  - The module supports C(check_mode).
+  - Merge multiple Cloudera Manager cluster template files into a single cluster template file.
+  - Often a cluster template file is composed of several services, host templates,
+    and other parameters from multiple sources and/or configurations. 
+    M(cloudera.cluster.assemble_cluster_template) will take a directory of 
+    cluster template configuration files that can be local or have already been
+    transferred to the system and merge them together to produce a single,
+    composite cluster template configuration file.
+  - Files are merged in string sorting order.
+version_added: "4.2.0"
 author:
   - "Webster Mudge (@wmudge)"
   - "Ronald Suplina (@rsuplina)"
   - "Jim Enright (@jenright)"
   - "Andre Araujo (@asdaraujo)"
 options:
-  method:
+  src:
     description:
-      - HTTP method for the CM API endpoint path.
-    type: str
+      - An already existing directory of cluster template files.
+    type: path
     required: True
-    choices:
-        - DELETE
-        - POST
-        - PUT
-  body:
+    aliases:
+      - cluster_template_src
+  dest:
     description:
-      - HTTP body for the CM API endpoint call.
-    type: dict
+      - A file to create using the merger of all of the cluster template files.
+    type: path
+    required: True
+    aliases:
+      - cluster_template
+  backup:
+    description:
+      - Create a backup file if V(true).
+      - The backup file name includes a timestamp.
+    type: bool
+    default: False
+  remote_src:
+    description:
+      - Flag to control the location of the cluster template configuration source files.
+      - If V(false), search for I(src) on the controller.
+      - If V(true), search for I(src) on the remote/target.
+    type: bool
+    default: False
+  regexp:
+    description:
+      - Merge files only if the given regular expression matches the filename.
+      - If not set, all files within C(src) are merged.
+      - Every V(\\) (backslash) must be escaped as V(\\\\) to conform to YAML syntax.
+      - See L(Python regular expressions,https://docs.python.org/3/library/re.html).
+    type: str
+    aliases:
+      - filter
+  ignore_hidden:
+    description:
+      - Flag whether to include files that begin with a '.'.
+    type: bool
+    default: True
+attributes:
+  action:
+    support: full
+  async:
+    support: none
+  bypass_host_loop:
+    support: none
+  check_mode:
+    support: none
+  diff_mode:
+    support: full
+  platform:
+    platforms: posix
+  safe_file_operations:
+    support: full
+  vault:
+    support: full
+seealso:
+  - module: ansible.builtin.assemble
+  - module: ansible.builtin.copy
+  - module: ansible.builtin.template
+  - module: ansible.windows.win_copy
 extends_documentation_fragment:
-    - action_common_attributes
-    - action_common_attributes.flow
-    - action_common_attributes.files
-    - decrypt
-    - files
+  - action_common_attributes
+  - action_common_attributes.flow
+  - action_common_attributes.files
+  - decrypt
+  - files
 """
 
 EXAMPLES = r"""
 ---
+- name: Assemble a cluster template from files (on the controller)
+  cloudera.cluster.assemble_cluster_template:
+    src: examples
+    dest: /opt/cloudera/cluster-template.json
+    
+- name: Assemble a cluster template from selected files (on the controller)
+  cloudera.cluster.assemble_cluster_template:
+    src: examples
+    dest: /opt/cloudera/cluster-template.json
+    regexp: "base|nifi"
 """
 
-RETURN = r"""
----
-"""
+RETURN = r"""#"""
 
 import os
 import re
@@ -199,15 +264,15 @@ class AssembleClusterTemplate(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True, type="path"),
-            dest=dict(required=True, type="path"),
+            src=dict(required=True, type="path", aliases=["cluster_template_src"]),
+            dest=dict(required=True, type="path", aliases=["cluster_template"]),
             backup=dict(type="bool", default=False),
             remote_src=dict(type="bool", default=False),
             regexp=dict(type="str", aliases=["filter"]),
             ignore_hidden=dict(type="bool", default=True),
         ),
         add_file_common_args=True,
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     result = AssembleClusterTemplate(module)
