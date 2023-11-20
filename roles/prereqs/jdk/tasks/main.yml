@@ -56,10 +56,12 @@
 - name: Capture installed Java provider
   shell: /usr/bin/java -version 2>&1 | egrep -o 'Java\(TM\)|OpenJDK' | sed 's/Java(TM)/Oracle/' | tr '[A-Z]' '[a-z]' | head -1
   register: provider
+  check_mode: false
 
 - name: Capture installed Java version
   shell: /usr/bin/java -version 2>&1 | grep version | tr -d '"' | tr "_" " " | awk '{print $3"\n"$4}'
   register: version
+  check_mode: false
 
 - set_fact:
     installed_jdk_provider: "{{ provider.stdout_lines[0] }}"
