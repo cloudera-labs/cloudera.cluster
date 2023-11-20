@@ -35,6 +35,7 @@
     src: "{{ local_temp_dir }}/postgresql-connector-java.jar"
     dest: /usr/share/java/postgresql-connector-java.jar
     mode: 0644
+  ignore_errors: "{{ ansible_check_mode }}"
 
 # SSB will need the python3-psycopg2 connector
 
