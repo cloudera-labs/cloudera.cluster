@@ -22,6 +22,7 @@
     - cloudera_manager_license_file
     - "'cloudera_manager' in groups"
     - inventory_hostname in groups['cloudera_manager']
+  check_mode: false
 
 - name: Set license type to Enterprise if license is presented
   ansible.builtin.set_fact:
