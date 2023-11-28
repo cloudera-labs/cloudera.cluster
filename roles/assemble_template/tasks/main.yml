@@ -40,9 +40,9 @@
 - name: Create cluster template
   cloudera.cluster.assemble_cluster_template:
     src: "{{ fragments_temp_directory.path }}"
-    dest: "{{ fragments_temp_directory.path }}/cluster-template.json"
+    dest: "{{ cluster_template_destination_directory | mandatory  }}"
 
-- name: Set fact for cluster template path
-  ansible.builtin.set_fact:
-    cluster_template_path: "{{ fragments_temp_directory.path }}/cluster-template.json"
-
+- name: Remove temporary directory
+  ansible.builtin.file:
+    path: "{{ fragments_temp_directory.path }}"
+    state: absent
