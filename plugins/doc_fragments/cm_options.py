@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
     options:
         host:
             description:
@@ -55,6 +56,14 @@ class ModuleDocFragment(object):
             type: bool
             required: False
             default: True
+        ssl_ca_cert:
+            description:
+                - Path to SSL CA certificate to use for validation.
+            type: path
+            required: False
+            aliases:
+                - tls_cert
+                - ssl_cert
         username:
             description:
                 - Username for access to the CM API endpoint.
@@ -80,4 +89,4 @@ class ModuleDocFragment(object):
             type: str
             required: False
             default: ClouderaFoundry
-    '''
+    """
