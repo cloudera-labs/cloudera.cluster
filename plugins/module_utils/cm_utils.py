@@ -115,19 +115,20 @@ class ClouderaManagerModule(object):
         )
 
         # Configure the urllib3 logger
-        self.logger = logging.getLogger("urllib3")
+        self.logger = logging.getLogger("cloudera.cluster")
 
         if self.debug:
-            self.logger.setLevel(logging.DEBUG)
+            root_logger = logging.getLogger()
+            root_logger.setLevel(logging.DEBUG)
+            root_logger.propagate = True
 
             self.log_capture = io.StringIO()
             handler = logging.StreamHandler(self.log_capture)
-            handler.setLevel(logging.DEBUG)
 
             formatter = logging.Formatter(log_format)
             handler.setFormatter(formatter)
 
-            self.logger.addHandler(handler)
+            root_logger.addHandler(handler)
 
         self.logger.debug("CM API agent: %s", self.agent_header)
 
@@ -180,7 +181,15 @@ class ClouderaManagerModule(object):
         rendered = rest.pool_manager.request(
             "GET", pre_rendered.url, headers=headers.copy()
         )
-        rendered_url = rendered.geturl()
+
+        # Normalize to handle redirects
+        try:
+            rendered_url = rendered.url
+        except Exception:
+            rendered_url = rendered.geturl()
+
+        if rendered_url == "/":
+            rendered_url = pre_rendered.url
 
         # Discover API version if not set
         if not self.version:
