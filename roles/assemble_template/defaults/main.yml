@@ -14,4 +14,6 @@
 
 ---
 
-assemble_template_json_regex_pattren : '.*\.json$'
+# cluster_template_fragments_regex: '.*\.json$'
+cluster_template_fragments_directory: "{{ mandatory }}"
+cluster_template_file: "{{ mandatory }}"

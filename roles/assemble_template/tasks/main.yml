@@ -16,8 +16,8 @@
 
 - name: Discover fragment files
   ansible.builtin.find:
-    paths: "{{ cluster_template_fragments_directory | mandatory  }}"
-    patterns: "{{ assemble_template_json_regex_pattren | default(omit) }}"
+    paths: "{{ cluster_template_fragments_directory }}"
+    patterns: "{{ cluster_template_fragments_regex | default(omit) }}"
     use_regex: yes
     recurse: yes
   register: fragments
@@ -40,7 +40,7 @@
 - name: Create cluster template
   cloudera.cluster.assemble_cluster_template:
     src: "{{ fragments_temp_directory.path }}"
-    dest: "{{ cluster_template_destination_directory | mandatory  }}"
+    dest: "{{ cluster_template_file }}"
 
 - name: Remove temporary directory
   ansible.builtin.file:

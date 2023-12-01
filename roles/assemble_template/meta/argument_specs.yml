@@ -16,25 +16,22 @@
 
 argument_specs:
   main:
-    short_description: "Discover fragment files, template them, and create a cluster template"
-    description:
-      - "This role performs the following tasks:"
-      - " Discovers fragment files in a specified directory, creates a temporary directory, loops through fragment files, templates them, and places them in the temporary directory,"
-      - " assembles a cluster template from the templated files and then it removes the temporary directory"
-
-    author: "Ronald Suplina"
+    short_description: "Discover and render files into a cluster template"
+    description: |
+        Discovers fragment files in a specified directory, loops through fragment files
+        rendering them through M(ansible.builtin.template), places them in a temporary directory,
+        and then assembles a single, final cluster template.
+    author: "Ronald Suplina <rsuplina@cloudera.com>"
     options:
       cluster_template_fragments_directory:
         description: "Path to the directory containing fragment files for the cluster template"
-        type: "str"
+        type: "path"
         required: true
-
-      cluster_template_destination_directory:
-        description: "Destination directory for the assembled cluster template"
-        type: "str"
+      cluster_template_file:
+        description: "Destination of the assembled cluster template"
+        type: "path"
         required: true
-
-      assemble_template_json_regex_pattern:
+      cluster_template_fragments_regex:
         description: "Regex pattern for filtering fragment files (optional)"
         type: "str"
         required: false
