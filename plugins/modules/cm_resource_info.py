@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerModule
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: cm_resource_info
 short_description: Retrieve resources from the Cloudera Manager API endpoint
@@ -40,19 +39,28 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.cm_resource
-'''
+"""
 
-EXAMPLES = r'''
----
+EXAMPLES = r"""
 - name: Gather details about all Cloudera Manager users
   cloudera.cluster.cm_resource_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     path: "/users"
-'''
+  register: cm_users
+    
+- name: Retrieve details for all running commands on a cluster using a custom SSL certificate
+  cloudera.cluster.cm_resource_info:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    ssl_ca_cert: "/path/to/ssl_ca.crt"
+    path: "/cluster/example_cluster/commands"
+  register: running_commands
+"""
 
-RETURN = r'''
+RETURN = r"""
 ---
 resources:
     description:
@@ -61,36 +69,41 @@ resources:
     type: list
     elements: complex
     returned: always
-'''
+"""
+
 
 class ClouderaResourceInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaResourceInfo, self).__init__(module)
-        
+
         # Set parameters
-        self.path = self._get_param('path')
-        self.query = self._get_param('query', dict())
-        self.field = self._get_param('field')
-        
+        self.path = self.get_param("path")
+        self.query = self.get_param("query", dict())
+        self.field = self.get_param("field")
+
         # Initialize the return values
         self.resources = []
-        
+
         # Execute the logic
         self.process()
-    
+
     @ClouderaManagerModule.handle_process
     def process(self):
-        self.resources = self.call_api(self.path, 'GET', self.query, self.field)
+        self.resources = self.call_api(self.path, "GET", self.query, self.field)
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            path=dict(required=True, type='str'),
-            query=dict(required=False, type='dict', aliases=['query_parameters', 'parameters']),
-            field=dict(required=False, type='str', default='items', aliases=['return_field'])
+            path=dict(required=True, type="str"),
+            query=dict(
+                required=False, type="dict", aliases=["query_parameters", "parameters"]
+            ),
+            field=dict(
+                required=False, type="str", default="items", aliases=["return_field"]
+            ),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     result = ClouderaResourceInfo(module)
@@ -101,13 +114,11 @@ def main():
     )
 
     if result.debug:
-        output.update(
-            sdk_out=result.log_out,
-            sdk_out_lines=result.log_lines
-        )
+        log = result.log_capture.getvalue()
+        output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerModule
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
 
 from cm_client import ClouderaManagerResourceApi
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: cm_version_info
 short_description: Gather information about Cloudera Manager
@@ -37,9 +38,9 @@ requirements:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 ---
 - name: Gather details using an endpoint URL
   cloudera.cluster.cm_version:
@@ -56,16 +57,16 @@ EXAMPLES = r'''
     username: "jane_smith"
     password: "S&peR4Ec*re"
   register: cm_discovery
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ---
-version:
+cloudera_manager:
     description: Details for the Cloudera Manager instance
     type: dict
     contains:
         version:
-            description: The CM version.
+            description: The Cloudera Manager version.
             type: str
             returned: optional
         snapshot:
@@ -84,44 +85,41 @@ version:
             description: Source control management hash.
             type: str
             returned: optional
-'''
+"""
+
 
 class ClouderaManagerVersionInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaManagerVersionInfo, self).__init__(module)
-        
+
         # Initialize the return values
-        self.cm = dict()
-        
+        self.version = dict()
+
         # Execute the logic
         self.process()
-    
+
     @ClouderaManagerModule.handle_process
     def process(self):
         api_instance = ClouderaManagerResourceApi(self.api_client)
-        self.cm=api_instance.get_version().to_dict()
+        self.version = api_instance.get_version().to_dict()
 
 
 def main():
-    module = ClouderaManagerModule.ansible_module(
-        supports_check_mode=True
-    )
+    module = ClouderaManagerModule.ansible_module(supports_check_mode=True)
 
     result = ClouderaManagerVersionInfo(module)
 
     output = dict(
         changed=False,
-        cm=result.cm,
+        cloudera_manager=result.version,
     )
 
     if result.debug:
-        output.update(
-            sdk_out=result.log_out,
-            sdk_out_lines=result.log_lines
-        )
+        log = result.log_capture.getvalue()
+        output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
