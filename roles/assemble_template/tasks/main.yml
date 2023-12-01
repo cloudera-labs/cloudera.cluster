@@ -17,7 +17,7 @@
 - name: Discover fragment files
   ansible.builtin.find:
     paths: "{{ cluster_template_fragments_directory | mandatory  }}"
-    patterns: "{{ json_regex_pattren | default(omit) }}"
+    patterns: "{{ assemble_template_json_regex_pattren | default(omit) }}"
     use_regex: yes
     recurse: yes
   register: fragments

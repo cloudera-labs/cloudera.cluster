@@ -14,4 +14,4 @@
 
 ---
 
-json_regex_pattren : '.*\.json$'
+assemble_template_json_regex_pattren : '.*\.json$'
