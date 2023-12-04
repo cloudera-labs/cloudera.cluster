@@ -16,7 +16,7 @@ LDAP_DN_PATTERN: {{ auth_provider.ldap_dn_pattern | default(None) }}
 LDAP_GROUP_SEARCH_BASE: {{ auth_provider.ldap_search_base.group | default(None) }}
 {% if auth_provider.ldap_search_filter.group is defined %}
 LDAP_GROUP_SEARCH_FILTER: "({{ auth_provider.ldap_search_filter.group }}"
-{% else % }
+{% else %}
 LDAP_GROUP_SEARCH_FILTER: "({{ auth_provider.ldap_attribute.member | default('member') }}={0})"
 {% endif %}
 LDAP_TYPE: {{ auth_provider.type | cloudera.cluster.to_ldap_type_enum | default(None) }}
