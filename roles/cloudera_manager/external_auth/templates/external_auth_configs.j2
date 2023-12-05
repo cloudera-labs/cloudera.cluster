@@ -15,7 +15,7 @@ LDAP_BIND_PW: {{ auth_provider.ldap_bind_password | default(None) }}
 LDAP_DN_PATTERN: {{ auth_provider.ldap_dn_pattern | default(None) }}
 LDAP_GROUP_SEARCH_BASE: {{ auth_provider.ldap_search_base.group | default(None) }}
 {% if auth_provider.ldap_search_filter.group is defined %}
-LDAP_GROUP_SEARCH_FILTER: "({{ auth_provider.ldap_search_filter.group }}"
+LDAP_GROUP_SEARCH_FILTER: "{{ auth_provider.ldap_search_filter.group }}"
 {% else %}
 LDAP_GROUP_SEARCH_FILTER: "({{ auth_provider.ldap_attribute.member | default('member') }}={0})"
 {% endif %}
