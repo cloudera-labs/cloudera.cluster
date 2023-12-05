@@ -21,11 +21,13 @@
     use_regex: yes
     recurse: yes
   register: fragments
+  delegate_to: localhost
 
 - name: Create a temporary directory
   ansible.builtin.tempfile:
     state: directory
   register: fragments_temp_directory
+  delegate_to: localhost
 
 - name: Loop through fragment files and template them
   ansible.builtin.template:
@@ -36,6 +38,7 @@
     loop_var: __fragment
     label: "{{ __fragment.path | basename }}"
   when: fragments.matched > 0
+  delegate_to: localhost
 
 - name: Create cluster template
   cloudera.cluster.assemble_cluster_template:
