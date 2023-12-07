@@ -24,7 +24,7 @@ LDAP_URL: {{ auth_provider.ldap_url | default(None) }}
 LDAP_USER_SEARCH_BASE: {{ auth_provider.ldap_search_base.user | default(None) }}
 {% if auth_provider.ldap_search_filter.user is defined %}
 LDAP_USER_SEARCH_FILTER: "{{ auth_provider.ldap_search_filter.user }}"
-{% else % }
+{% else %}
 LDAP_USER_SEARCH_FILTER: "({{ auth_provider.ldap_attribute.user | default('sAMAccountName') }}={0})"
 {% endif %}
 NT_DOMAIN: {{ auth_provider.domain | default(None) }}
