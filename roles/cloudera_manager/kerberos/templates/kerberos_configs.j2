@@ -4,7 +4,25 @@ KRB_ENC_TYPES:     {{ krb5_enc_types }}
 SECURITY_REALM:    {{ krb5_realm }}
 AD_ACCOUNT_PREFIX: {{ krb5_kdc_active_directory_prefix | default(None) }}
 AD_KDC_DOMAIN:     {{ krb5_kdc_active_directory_suffix | default(None) }}
-AD_DELETE_ON_REGENERATE: {{ krb5_kdc_active_directory_delete_on_regenerate | default('true') }}
+AD_DELETE_ON_REGENERATE: {{ krb5_kdc_active_directory_delete_on_regenerate | default('false') }}
 KDC_ACCOUNT_CREATION_HOST_OVERRIDE: {{ krb5_kdc_account_creation_host_override | default(None) }}
 AD_SET_ENCRYPTION_TYPES: {{ krb5_kdc_active_directory_set_encryption_types | default('false') }}
 GEN_KEYTAB_SCRIPT:  {{ krb5_keytab_retrieval_script | default(None) }}
+AD_PASSWORD_PROPERTIES: {{ krb5_ad_password_properties | default(None) }}
+AD_ACCOUNT_PROPERTIES: {{ krb5_ad_account_properties | default(None)  }}
+KDC_ADMIN_HOST: {{ krb5_kdc_admin_host | default(None) }}
+AD_LDAP_PORT: {{ krb5_ad_ldap_port | default(389) }}
+AD_LDAPS_PORT: {{ krb5_ad_ldaps_port | default(636) }}
+KRB_KRB5_CONF_PATH: {{ krb_krb5_conf_path | default('/etc/krb5.conf') }}
+KRB_MANAGE_KRB5_CONF: {{ krb_manage_krb5_conf | default('false') }}
+KRB_TICKET_LIFETIME: {{ krb_ticket_lifetime | default('86400') }}
+KRB_RENEW_LIFETIME: {{ krb_renew_lifetime | default('604800') }}
+KRB_DNS_LOOKUP_KDC: {{ krb_dns_lookup_kdc | default('false') }}
+KRB_FORWARDABLE: {{ krb_forwardable | default('true') }}
+KRB_KDC_TIMEOUT: {{ krb_kdc_timeout | default('3000') }}
+MAX_RENEW_LIFE: {{ krb_max_renew_life | default('604800') }}
+KRB_DOMAIN: {{ krb_domain | default(None) }}
+TRUSTED_REALMS: {{ krb_trusted_realms | default(None) }}
+KRB_LIBDEFAULTS_SAFETY_VALVE: {{ krb_libdefaults_safety_valve | default(None) }}
+KRB_REALMS_SAFETY_VALVE: {{ krb_realms_safety_valve | default(None) }}
+KRB_OTHER_SAFETY_VALVE: {{ krb_other_safety_valve | default(None) }}
