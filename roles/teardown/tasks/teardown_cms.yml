@@ -25,6 +25,7 @@
     loop_var: database
   run_once: true
   when:
+    - teardown_database | default(true)
     - definition.mgmt.services is defined
     - database.key in definition.mgmt.services
 

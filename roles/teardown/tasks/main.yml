@@ -237,7 +237,9 @@
         password: "{{ cloudera_manager_database_password }}"
         type: "{{ cloudera_manager_database_type }}"
         port: "{{ cloudera_manager_database_port }}"
-  when: teardown_everything | default(false)
+  when: 
+  - teardown_everything | default(false)
+  - teardown_database | default(true)
 
 - name: Stop Haproxy
   service:
