@@ -21,7 +21,8 @@
     status_code: 200,404
   register: license_response
 
-- set_fact:
+- name: Set installed Cloudera license flag
+  ansible.builtin.set_fact:
     license_not_installed: >-
       {{ license_response.json.message | default('') in [
       'This installation is currently running Cloudera Express.',
@@ -46,15 +47,13 @@
     quiet: yes
 
 - name: Post license file to Cloudera Manager API
-  shell: >
+  ansible.builtin.shell: >
     curl
     --user {{ cloudera_manager_api_user }}:{{ cloudera_manager_api_password }}
     --request POST
     --header 'Content-Type:multipart/form-data'
     --form license=@{{ license_local_tmp_path }}
     {{ license_response.url }}
-  args:
-    warn: False
   register: response
   failed_when: "'owner' not in response.stdout"
   when: license_not_installed
