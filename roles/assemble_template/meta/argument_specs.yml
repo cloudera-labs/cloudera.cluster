@@ -17,13 +17,12 @@
 argument_specs:
   main:
     short_description: "Discover and render files into a cluster template"
-    description: |
-        Discovers fragment files in a specified directory, loops through fragment files
-        rendering them through M(ansible.builtin.template), places them in a temporary directory,
-        and then assembles a single, final cluster template.
-        Fragment files must be located on the Ansible controller since M(ansible.builtin.template) only executes on the controller.
-        This ensures that the template processing occurs on the Ansible controller machine.
-    author: "Ronald Suplina <rsuplina@cloudera.com>"
+    description:
+      - Discovers fragment files in a specified directory, loops through fragment files rendering them through M(ansible.builtin.template), places them in a temporary directory, and then assembles a single, final cluster template.
+      - Fragment files must be located on the Ansible controller since M(ansible.builtin.template) only executes on the controller.
+      - This ensures that the template processing occurs on the Ansible controller machine.
+    author:
+      - "Ronald Suplina <rsuplina@cloudera.com>"
     options:
       cluster_template_fragments_directory:
         description: "Path to the directory containing fragment files for the cluster template"

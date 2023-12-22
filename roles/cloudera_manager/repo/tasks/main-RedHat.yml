@@ -15,7 +15,7 @@
 ---
 
 - name: Add Cloudera Manager yum repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: cloudera-manager
     description: Cloudera Manager
     baseurl: "{{ cloudera_manager_repo_url }}"
@@ -26,6 +26,4 @@
     password: "{{ cloudera_manager_repo_password | default('') }}"
 
 - name: yum-clean-metadata
-  command: yum clean metadata
-  args:
-    warn: no
+  ansible.builtin.command: yum clean metadata
