@@ -1,0 +1,38 @@
+# Copyright 2023 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+argument_specs:
+  main:
+    short_description: "Discover and render files into a cluster template"
+    description:
+      - Discovers fragment files in a specified directory, loops through fragment files rendering them through M(ansible.builtin.template), places them in a temporary directory, and then assembles a single, final cluster template.
+      - Fragment files must be located on the Ansible controller since M(ansible.builtin.template) only executes on the controller.
+      - This ensures that the template processing occurs on the Ansible controller machine.
+    author:
+      - "Ronald Suplina <rsuplina@cloudera.com>"
+    options:
+      cluster_template_fragments_directory:
+        description: "Path to the directory containing fragment files for the cluster template"
+        type: "path"
+        required: true
+      cluster_template_file:
+        description: "Destination of the assembled cluster template"
+        type: "path"
+        required: true
+      cluster_template_fragments_regex:
+        description: "Regex pattern for filtering fragment files (optional)"
+        type: "str"
+        required: false
