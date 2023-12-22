@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerModule
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: cm_endpoint_info
 short_description: Discover the Cloudera Manager API endpoint
@@ -34,9 +35,9 @@ requirements:
   - cm_client
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 ---
 # This will first try 'http://example.cloudera.com:7180' and will
 # follow any redirects 
@@ -46,35 +47,34 @@ EXAMPLES = r'''
     username: "jane_smith"
     password: "S&peR4Ec*re"
   register: cm_endpoint
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ---
 endpoint:
     description: The discovered Cloudera Manager API endpoint
     type: str
     returned: always
-'''
+"""
+
 
 class ClouderaEndpointInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaEndpointInfo, self).__init__(module)
-        
+
         # Initialize the return values
         self.endpoint = ""
-        
+
         # Execute the logic
         self.process()
-    
+
     @ClouderaManagerModule.handle_process
     def process(self):
         self.endpoint = self.api_client.host
 
 
 def main():
-    module = ClouderaManagerModule.ansible_module_discovery(
-        supports_check_mode=True
-    )
+    module = ClouderaManagerModule.ansible_module_internal(supports_check_mode=True)
 
     result = ClouderaEndpointInfo(module)
 
@@ -84,13 +84,11 @@ def main():
     )
 
     if result.debug:
-        output.update(
-            sdk_out=result.log_out,
-            sdk_out_lines=result.log_lines
-        )
+        log = result.log_capture.getvalue()
+        output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

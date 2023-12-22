@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClouderaManagerModule
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: cm_resource
 short_description: Create, update, and delete resources from the Cloudera Manager API endpoint
@@ -52,9 +53,9 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.cm_resource
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 ---
 - name: Create a new local Cloudera Manager user
   cloudera.cluster.cm_resource:
@@ -79,15 +80,16 @@ EXAMPLES = r'''
       authRoles:
         - name: "ROLE_LIMITED"
         
-- name: Delete a Cloudera Manager user
+- name: Delete a Cloudera Manager user using a custom SSL certificate
   host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     path: "/user/existing_user"
+    ssl_ca_cert: "/path/to/ssl_ca.crt"
     method: "DELETE"
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ---
 resources:
     description:
@@ -96,42 +98,48 @@ resources:
     type: list
     elements: complex
     returned: always
-'''
+"""
+
 
 class ClouderaResource(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaResource, self).__init__(module)
-        
+
         # Set parameters
-        self.method = self._get_param('method')
-        self.path = self._get_param('path')
-        self.query = self._get_param('query', dict())
-        self.field = self._get_param('field')
-        self.body = self._get_param('body')
-        
+        self.method = self.get_param("method")
+        self.path = self.get_param("path")
+        self.query = self.get_param("query", dict())
+        self.field = self.get_param("field")
+        self.body = self.get_param("body")
+
         # Initialize the return values
         self.resources = []
-        
+
         # Execute the logic
         self.process()
-    
+
     @ClouderaManagerModule.handle_process
     def process(self):
         if not self.module.check_mode:
-            self.resources = self.call_api(self.path, self.method, self.query, 
-                                           self.field, self.body)
-            
-            
+            self.resources = self.call_api(
+                self.path, self.method, self.query, self.field, self.body
+            )
+
+
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            method=dict(required=True, type='str', choices=['POST', 'PUT', 'DELETE']),
-            path=dict(required=True, type='str'),
-            query=dict(required=False, type='dict', aliases=['query_parameters', 'parameters']),
-            body=dict(required=False, type='dict'),
-            field=dict(required=False, type='str', default='items', aliases=['return_field'])
+            method=dict(required=True, type="str", choices=["POST", "PUT", "DELETE"]),
+            path=dict(required=True, type="str"),
+            query=dict(
+                required=False, type="dict", aliases=["query_parameters", "parameters"]
+            ),
+            body=dict(required=False, type="dict"),
+            field=dict(
+                required=False, type="str", default="items", aliases=["return_field"]
+            ),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     result = ClouderaResource(module)
@@ -142,13 +150,11 @@ def main():
     )
 
     if result.debug:
-        output.update(
-            sdk_out=result.log_out,
-            sdk_out_lines=result.log_lines
-        )
+        log = result.log_capture.getvalue()
+        output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

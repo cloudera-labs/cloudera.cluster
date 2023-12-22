@@ -1,0 +1,51 @@
+# Copyright 2023 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Discover fragment files
+  ansible.builtin.find:
+    paths: "{{ cluster_template_fragments_directory }}"
+    patterns: "{{ cluster_template_fragments_regex | default(omit) }}"
+    use_regex: yes
+    recurse: yes
+  register: fragments
+  delegate_to: localhost
+
+- name: Create a temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+  register: fragments_temp_directory
+  delegate_to: localhost
+
+- name: Loop through fragment files and template them
+  ansible.builtin.template:
+    src: "{{ __fragment.path }}"
+    dest: "{{ fragments_temp_directory.path }}/{{ __fragment.path | basename }}"
+  loop: "{{ fragments.files }}"
+  loop_control: 
+    loop_var: __fragment
+    label: "{{ __fragment.path | basename }}"
+  when: fragments.matched > 0
+  delegate_to: localhost
+
+- name: Create cluster template
+  cloudera.cluster.assemble_cluster_template:
+    src: "{{ fragments_temp_directory.path }}"
+    dest: "{{ cluster_template_file }}"
+
+- name: Remove temporary directory
+  ansible.builtin.file:
+    path: "{{ fragments_temp_directory.path }}"
+    state: absent
