@@ -1,0 +1,14 @@
+{%- set host_joiner = joiner(",") -%}
+{%- set new_nodes_json_query = '[?cluster_name == `' ~ _cluster ~ '`].hosts[]' -%}
+{%- set new_nodes = nodes_addition_hosts | json_query(new_nodes_json_query) -%}
+{
+  "items": [
+    {%- for host in groups['host_template_' ~ _host_template_name] | intersect(new_nodes) -%}
+    {{ host_joiner() }}
+    {
+    "hostId": "{{ cloudera_manager_api_hosts[host]['id'] }}",
+    "hostname": "{{ cloudera_manager_api_hosts[host]['hostname'] }}"
+    }
+    {% endfor %}
+  ]
+}
