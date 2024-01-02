@@ -41,7 +41,7 @@
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ _cluster.name | urlencode() }}/parcels
   register: parcels_response
-  until: parcels_response.json['items'] | rejectattr('stage', 'in', ["AVAILABLE_REMOTELY", "DOWNLOADED", "ACTIVATED"]) | list | length == 0
+  until: parcels_response.json['items'] | rejectattr('stage', 'in', ["AVAILABLE_REMOTELY", "DOWNLOADED", "ACTIVATED", "UNAVAILABLE"]) | list | length == 0
   retries: "{{ parcel_poll_max_retries | default(30) }}"
   delay: "{{ parcel_poll_duration | default(60) }}"
   loop: "{{ definition.clusters }}"
