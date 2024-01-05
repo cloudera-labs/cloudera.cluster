@@ -24,7 +24,7 @@
     url_password: "{{ parcel_repo_password | default(omit) }}"
   run_once: true
   register: manifests
-  loop: "{{ repositories }}"
+  loop: "{{ cluster.repositories }}"
   loop_control:
     loop_var: repository
   check_mode: no
