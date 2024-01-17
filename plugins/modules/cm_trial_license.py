@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cm_trial
+module: cm_trial_license
 short_description: Activate the trial license of Cloudera Manager
 description:
   - Checking if the trial license is already activated.
@@ -41,7 +41,7 @@ requirements:
 EXAMPLES = r"""
 ---
 - name: Activate the trial license of Cloudera Manager
-  cloudera.cluster.cm_trial:
+  cloudera.cluster.cm_trial_license:
     host: example.cloudera.com
     port: "7180"
     username: "jane_smith"
@@ -88,22 +88,22 @@ class ClouderaTrial(ClouderaManagerModule):
 
     @ClouderaManagerModule.handle_process
     def process(self):
+        if not self.module.check_mode:
+            api_instance = ClouderaManagerResourceApi(self.api_client)
 
-      api_instance = ClouderaManagerResourceApi(self.api_client)
+            try:
+                get_trial_state_request = api_instance.read_license().to_dict()
 
-      try:
-        get_trial_state_request = api_instance.read_license().to_dict()
-
-        if get_trial_state_request:
-            self.cm_trial_output = get_trial_state_request
-            self.changed = False
-            
-      except ApiException as e:
-          if e.status == 404:
-              api_instance.begin_trial()
-              get_trial_state_request = api_instance.read_license().to_dict()
-              self.cm_trial_output = get_trial_state_request
-              self.changed = True
+                if get_trial_state_request:
+                    self.cm_trial_output = get_trial_state_request
+                    self.changed = False
+                    
+            except ApiException as e:
+                if e.status == 404:
+                    api_instance.begin_trial()
+                    get_trial_state_request = api_instance.read_license().to_dict()
+                    self.cm_trial_output = get_trial_state_request
+                    self.changed = True
 
 def main():
     module = ClouderaManagerModule.ansible_module(

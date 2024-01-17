@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,25 +21,25 @@ import os
 import logging
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import cm_trial
+from ansible_collections.cloudera.cluster.plugins.modules import cm_trial_license
 from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
 
 LOG = logging.getLogger(__name__)
 
-def test_pytest_cm_trial(module_args):
+def test_pytest_cm_trial_license(module_args):
     module_args(
         {
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "port": os.getenv('CM_PORT'),
+            "port": "7180",
             "verify_tls": "no",
             "debug": "no",
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cm_trial.main()
+        cm_trial_license.main()
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
