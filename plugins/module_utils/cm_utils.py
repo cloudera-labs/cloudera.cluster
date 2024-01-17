@@ -216,6 +216,7 @@ class ClouderaManagerModule(object):
             if not state:
                 break
             sleep(polling_interval)
+        return True
 
     def call_api(self, path, method, query=None, field="items", body=None):
         """Wrapper to call a CM API endpoint path directly."""
