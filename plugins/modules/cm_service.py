@@ -32,19 +32,56 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: cm_service
-short_description: Interact with Cloudera Manager service roles  
+short_description: Manage Cloudera Manager service roles  
 description:
   - Create or remove one or more Cloudera Manager service roles.
   - Start, stop or restart one or more Cloudera Manager service roles.
 author:
   - "Ronald Suplina (@rsuplina)"
+options:
+  role:
+    description:
+      - A list of one or more service roles to be configured.
+    type: list
+    elements: str
+    required: True
+  purge:
+    description:
+      - Delete all current roles and setup only the roles provided
+    type: bool
+    required: False
+    default: False
+  state:
+    description:
+      - The desired state of roles
+    type: str
+    default: 'started'
+    choices:
+      - 'started'
+      - 'stopped'
+      - 'absent'
+      - 'present'
+      - 'restarted'
+    required: False
+
 requirements:
   - cm_client
 """
 
 EXAMPLES = r"""
 ---
-- name: Create and start Cloudera Manager service roles
+- name: Start Cloudera Manager service roles
+  cloudera.cluster.cm_version:
+    host: "10.10.10.10"
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    port: "7180"
+    purge: False
+    state: "started"
+    role: [ "SERVICEMONITOR" , "HOSTMONITOR", "EVENTSERVER", "ALERTPUBLISHER" ]
+  register: cm_output
+
+- name: Purge all roles then create and start new roles 
   cloudera.cluster.cm_version:
     host: "10.10.10.10"
     username: "jane_smith"
@@ -65,6 +102,16 @@ EXAMPLES = r"""
     role: [ "EVENTSERVER", "ALERTPUBLISHER" ]
   register: cm_output
  
+- name: Remove Cloudera Manager service role
+  cloudera.cluster.cm_version:
+    host: "10.10.10.10"
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    port: "7180"
+    purge: False
+    state: "absent"
+    role: [ "ALERTPUBLISHER" ]
+  register: cm_output
 """
 
 RETURN = r"""
@@ -329,7 +376,7 @@ def main():
             state=dict(type='str', default='started', choices=['started', 'stopped','absent','present','restarted']),
                           ),
           
-          supports_check_mode=True
+          supports_check_mode=False
           )
 
     result = ClouderaService(module)
