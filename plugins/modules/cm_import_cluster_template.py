@@ -37,6 +37,19 @@ description:
   - This module ensures that the cluster is created according to the specified template.
 author:
   - "Ronald Suplina (@rsuplina)"
+options:
+  template:
+    description:
+      - Path to template file which defines the cluster
+    type: path
+    elements: str
+    required: True
+  add_repositories:
+    description:
+      - Install parcel repositories in parcel directory
+    type: bool
+    required: False
+    default: False
 requirements:
   - cm_client
 """
@@ -50,6 +63,15 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     port: "7180"
     template: "./files/cluster-template.json"
+
+- name: Create a cluster and install the repositories defined in template
+  cloudera.cluster.cm_import_cluster_template:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    port: "7180"
+    template: "./files/cluster-template.json"
+    add_repositories: "True"
 """
 
 RETURN = r"""
@@ -99,7 +121,7 @@ cloudera_manager:
             type: list
             returned: optional
         uuid:
-            description: Unique ID of created cluster.
+            description: Unique ID of created cluster
             type: bool
             returned: optional
 """
@@ -109,6 +131,7 @@ class ClusterTemplate(ClouderaManagerModule):
     def __init__(self, module):
         super(ClusterTemplate, self).__init__(module)
         self.template = self.get_param("template")
+        self.add_repositories = self.get_param("add_repositories")
         self.process()
 
     @ClouderaManagerModule.handle_process
@@ -120,8 +143,11 @@ class ClusterTemplate(ClouderaManagerModule):
 
             with open(self.template, 'r') as file:
                 template_json = json.load(file)
+            if self.add_repositories:
+                import_template_request = api_instance.import_cluster_template(add_repositories=True,body=template_json).to_dict()
+            else:
+                import_template_request = api_instance.import_cluster_template(body=template_json).to_dict()
 
-            import_template_request = api_instance.import_cluster_template(body=template_json).to_dict()
             command_id = import_template_request['id']
 
             self.wait_for_command_state(command_id=command_id,polling_interval=60)
@@ -144,6 +170,7 @@ def main():
         
         argument_spec=dict(
             template=dict(required=True, type="path"),
+            add_repositories=dict(required=False, type="bool", default=False),
         ),
           supports_check_mode=False
           )

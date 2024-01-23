@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ def test_pytest_cm_import_cluster_template(module_args):
             "verify_tls": "no",
             "debug": "no",
             "template": "./files/cluster-template.json",
+            "add_repositories": "True"
         }
     )
 
