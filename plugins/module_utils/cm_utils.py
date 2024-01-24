@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,13 +25,14 @@ from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning, MaxRetryError, HTTPError
 from urllib3.util import Url
 from urllib.parse import urljoin
-
+from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_text
 
 from cm_client import ApiClient, Configuration
 from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
+from cm_client.apis.commands_resource_api import CommandsResourceApi
 
 
 __credits__ = ["frisch@cloudera.com"]
@@ -206,6 +207,16 @@ class ClouderaManagerModule(object):
             api_instance = ClouderaManagerResourceApi(self.api_client)
             api_instance.get_version()
         self.api_client.cookie = self.api_client.last_response.getheader("Set-Cookie")
+
+    def wait_for_command_state(self,command_id, polling_interval):
+        command_api_instance = CommandsResourceApi(self.api_client)
+        while True:
+            get_command_state = command_api_instance.read_command_with_http_info(command_id=command_id)
+            state = get_command_state[0].active
+            if not state:
+                break
+            sleep(polling_interval)
+        return True
 
     def call_api(self, path, method, query=None, field="items", body=None):
         """Wrapper to call a CM API endpoint path directly."""
