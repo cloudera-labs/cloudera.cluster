@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cm_import_cluster_template
+module: cm_cluster
 short_description: Create a cluster based on the provided cluster template
 description:
   - Searches for a template file.
@@ -50,6 +50,12 @@ options:
     type: bool
     required: False
     default: False
+  clusterName:
+    description:
+      - Name of Cloudera Manager Cluster
+    type: str
+    required: False
+    default: False
 requirements:
   - cm_client
 """
@@ -57,15 +63,16 @@ requirements:
 EXAMPLES = r"""
 ---
 - name: Create a cluster on Cloudera Manager host
-  cloudera.cluster.cm_import_cluster_template:
+  cloudera.cluster.cm_cluster:
     host: example.cloudera.com
     username: "jane_smith"
+    clusterName: "OneNodeCluster"
     password: "S&peR4Ec*re"
     port: "7180"
     template: "./files/cluster-template.json"
 
 - name: Create a cluster and install the repositories defined in template
-  cloudera.cluster.cm_import_cluster_template:
+  cloudera.cluster.cm_cluster:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -127,11 +134,12 @@ cloudera_manager:
 """
 
 
-class ClusterTemplate(ClouderaManagerModule):
+class Cluster(ClouderaManagerModule):
     def __init__(self, module):
-        super(ClusterTemplate, self).__init__(module)
+        super(Cluster, self).__init__(module)
         self.template = self.get_param("template")
         self.add_repositories = self.get_param("add_repositories")
+        self.clusterName = self.get_param("clusterName")
         self.process()
 
     @ClouderaManagerModule.handle_process
@@ -143,42 +151,46 @@ class ClusterTemplate(ClouderaManagerModule):
 
             with open(self.template, 'r') as file:
                 template_json = json.load(file)
-            if self.add_repositories:
-                import_template_request = api_instance.import_cluster_template(add_repositories=True,body=template_json).to_dict()
-            else:
-                import_template_request = api_instance.import_cluster_template(body=template_json).to_dict()
+                
+            if not self.module.check_mode:
+                if self.add_repositories:
+                    import_template_request = api_instance.import_cluster_template(add_repositories=True,body=template_json).to_dict()
+                else:
+                    import_template_request = api_instance.import_cluster_template(body=template_json).to_dict()
 
-            command_id = import_template_request['id']
+                command_id = import_template_request['id']
+                self.wait_for_command_state(command_id=command_id,polling_interval=60)
 
-            self.wait_for_command_state(command_id=command_id,polling_interval=60)
-            
-            self.cm_cluster_template_output = cluster_api_instance.read_clusters().to_dict()
-            self.changed = True
-            self.file_not_found = False
+                if self.clusterName:
+                    self.cm_cluster_template_output = cluster_api_instance.read_cluster(cluster_name=self.clusterName).to_dict()
+                    self.changed = True
+                else:
+                    self.cm_cluster_template_output = cluster_api_instance.read_clusters().to_dict()
+                    self.changed = True
 
         except ApiException as e:
+            # If cluster already exsists it will reply with 400 Error
             if e.status == 400:
                 self.cm_cluster_template_output = json.loads(e.body)
                 self.changed = False
-                self.file_not_found = False
 
         except FileNotFoundError:
             self.cm_cluster_template_output = (f"Error: File '{self.template}' not found.")
-            self.file_not_found = True 
+            self.module.fail_json(msg=str(self.cm_cluster_template_output)) 
+
 def main():
     module = ClouderaManagerModule.ansible_module(
         
         argument_spec=dict(
             template=dict(required=True, type="path"),
             add_repositories=dict(required=False, type="bool", default=False),
+            clusterName=dict(required=False, type="str"),
         ),
           supports_check_mode=False
           )
 
-    result = ClusterTemplate(module) 
+    result = Cluster(module) 
     
-    if result.file_not_found:
-        module.fail_json(msg=str(result.cm_cluster_template_output))
 
     changed = result.changed
 
