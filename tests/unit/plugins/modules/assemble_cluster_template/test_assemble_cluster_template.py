@@ -292,6 +292,72 @@ def test_merge_list_idempotent(module_args, tmp_path):
     
     assert len(output["test"]) == 3
     assert output["test"] == expected_list([{"name": "Test"}, "two", "three"])
+
+def test_merge_list_idempotent_multiple_elements(module_args, tmp_path):
+    root_dir = tmp_path / "list_idempotent_multiple_elements"
+    root_dir.mkdir()
+    
+    content = dict()
+    content["test"] = [{"name": "Test"}, {"product": "Product"}, "two"]
+
+    fragment_dir = root_dir / "fragments"
+    fragment_dir.mkdir()
+
+    base = fragment_dir / "base.json"
+    base.write_text(
+        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+
+    content["test"] = [{"name": "Test"}, {"product": "Product"}, "three"]
+    overlay = fragment_dir / "overlay.json"
+    overlay.write_text(
+        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+    
+    results = root_dir / "results.json"
+
+    module_args({"dest": str(results), "src": str(fragment_dir)})
+
+    with pytest.raises(AnsibleExitJson):
+        assemble_cluster_template.main()
+        
+    output = json.load(results.open())
+    
+    assert len(output["test"]) == 4
+    assert output["test"] == expected_list([{"name": "Test"}, {"product": "Product"}, "two", "three"])
+
+def test_merge_list_idempotent_multiple_keys(module_args, tmp_path):
+    root_dir = tmp_path / "list_idempotent_multiple_keys"
+    root_dir.mkdir()
+    
+    content = dict()
+    content["test"] = [{"name": "Test", "product": "Product"}, "two"]
+
+    fragment_dir = root_dir / "fragments"
+    fragment_dir.mkdir()
+
+    base = fragment_dir / "base.json"
+    base.write_text(
+        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+
+    content["test"] = [{"name": "Test", "product": "Product"}, "three"]
+    overlay = fragment_dir / "overlay.json"
+    overlay.write_text(
+        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+    
+    results = root_dir / "results.json"
+
+    module_args({"dest": str(results), "src": str(fragment_dir)})
+
+    with pytest.raises(AnsibleExitJson):
+        assemble_cluster_template.main()
+        
+    output = json.load(results.open())
+    
+    assert len(output["test"]) == 3
+    assert output["test"] == expected_list([{"name": "Test", "product": "Product"}, "two", "three"])
     
 def test_merge_list_idempotent_conflict(module_args, tmp_path):
     root_dir = tmp_path / "list_idempotent_conflict"
