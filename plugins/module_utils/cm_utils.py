@@ -38,6 +38,74 @@ __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
 
 
+class ClusterTemplate(object):
+    
+    IDEMPOTENT_IDS = ["refName", "name", "clusterName", "hostName", "product"]
+    UNIQUE_IDS = ["repositories"]
+
+    def __init__(self, warn_fn, error_fn) -> None:
+        self._warn = warn_fn
+        self._error = error_fn
+
+    def update_object(self, base, template, breadcrumbs="") -> bool:
+        if isinstance(base, dict) and isinstance(template, dict):
+            self.update_dict(base, template, breadcrumbs)
+            return True
+        elif isinstance(base, list) and isinstance(template, list):
+            self.update_list(base, template, breadcrumbs)
+            return True
+        return False
+
+    def update_dict(self, base, template, breadcrumbs="") -> None:
+        for key, value in template.items():
+            crumb = breadcrumbs + "/" + key
+
+            if key in self.IDEMPOTENT_IDS:
+                if key in base and base[key] != value:
+                    self._error(
+                        "Objects with distinct IDs should not be merged: " + crumb
+                    )
+
+            if key not in base:
+                base[key] = value
+            elif not self.update_object(base[key], value, crumb) and base[key] != value:
+                self._warn(
+                    f"Value being overwritten for key [{crumb}]], Old: [{base[key]}], New: [{value}]"
+                )
+                base[key] = value
+
+            if key in self.UNIQUE_IDS:
+                base[key] = list(set(base[key]))
+
+    def update_list(self, base, template, breadcrumbs="") -> None:
+        for item in template:
+            if isinstance(item, dict):
+                for attr in self.IDEMPOTENT_IDS:
+                    if attr in item:
+                        idempotent_id = attr
+                        break
+                else:
+                    idempotent_id = None
+                if idempotent_id:
+                    namesake = [
+                        i for i in base if i[idempotent_id] == item[idempotent_id]
+                    ]
+                    if namesake:
+                        self.update_dict(
+                            namesake[0],
+                            item,
+                            breadcrumbs
+                            + "/["
+                            + idempotent_id
+                            + "="
+                            + item[idempotent_id]
+                            + "]",
+                        )
+                        continue
+            base.append(item)
+        base.sort(key=lambda x: json.dumps(x, sort_keys=True))
+
+
 class ClouderaManagerModule(object):
     """Base Ansible Module for API access to Cloudera Manager."""
 
@@ -60,13 +128,12 @@ class ClouderaManagerModule(object):
                 err = dict(
                     msg="API error: " + to_text(ae.reason),
                     status_code=ae.status,
-                    body=ae.body.decode("utf-8"),
                 )
-                if err["body"] != "":
+                if ae.body:
                     try:
-                        err.update(body=json.loads(err["body"]))
-                    except Exception as te:
-                        pass
+                        err.update(body=json.loads(ae.body))
+                    except Exception:
+                        err.update(body=ae.body.decode("utf-8")),
 
                 self.module.fail_json(**_add_log(err))
             except MaxRetryError as maxe:

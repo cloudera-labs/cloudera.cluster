@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
+import json
 import sys
 import pytest
+
+from ansible.module_utils import basic
+from ansible.module_utils.common.text.converters import to_bytes
+
+from ansible_collections.cloudera.cluster.tests.unit import (
+    AnsibleFailJson,
+    AnsibleExitJson,
+)
+
 
 @pytest.fixture(autouse=True)
 def skip_python():
     if sys.version_info < (3, 6):
-        pytest.skip('Skipping on Python %s. cloudera.cloud supports Python 3.6 and higher.' % sys.version)
+        pytest.skip(
+            "Skipping on Python %s. cloudera.cloud supports Python 3.6 and higher."
+            % sys.version
+        )
+
+
+@pytest.fixture(autouse=True)
+def patch_module(monkeypatch):
+    """Patch AnsibleModule to raise exceptions on success and failure"""
+
+    def exit_json(*args, **kwargs):
+        if "changed" not in kwargs:
+            kwargs["changed"] = False
+        raise AnsibleExitJson(kwargs)
+
+    def fail_json(*args, **kwargs):
+        kwargs["failed"] = True
+        raise AnsibleFailJson(kwargs)
+
+    monkeypatch.setattr(basic.AnsibleModule, "exit_json", exit_json)
+    monkeypatch.setattr(basic.AnsibleModule, "fail_json", fail_json)
+
+
+@pytest.fixture
+def module_args():
+    """Prepare module arguments"""
+
+    def prep_args(args=dict()):
+        args = json.dumps({"ANSIBLE_MODULE_ARGS": args})
+        basic._ANSIBLE_ARGS = to_bytes(args)
+
+    return prep_args

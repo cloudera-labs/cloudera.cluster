@@ -138,13 +138,13 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.text.converters import to_native, to_text
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClusterTemplate
 
 
 class AssembleClusterTemplate(object):
     MERGED = {}
-    IDEMPOTENT_IDS = ["refName", "name", "clusterName", "hostName", "product"]
-    UNIQUE_IDS = ["repositories"]
 
     def __init__(self, module):
         self.module = module
@@ -166,68 +166,13 @@ class AssembleClusterTemplate(object):
 
         # Initialize internal values
         self.compiled = None
+        self.template = ClusterTemplate(
+          warn_fn=self.module.warn, 
+          error_fn=self.module.fail_json
+        )
 
         # Execute the logic
         self.process()
-
-    def update_object(self, base, template, breadcrumbs=""):
-        if isinstance(base, dict) and isinstance(template, dict):
-            self.update_dict(base, template, breadcrumbs)
-            return True
-        elif isinstance(base, list) and isinstance(template, list):
-            self.update_list(base, template, breadcrumbs)
-            return True
-        return False
-
-    def update_dict(self, base, template, breadcrumbs=""):
-        for key, value in template.items():
-            crumb = breadcrumbs + "/" + key
-
-            if key in self.IDEMPOTENT_IDS:
-                if base[key] != value:
-                    self.module.warn(
-                        f"Objects with distinct IDs should not be merged: {crumb}"
-                    )
-                continue
-
-            if key not in base:
-                base[key] = value
-            elif not self.update_object(base[key], value, crumb) and base[key] != value:
-                self.module.warn(
-                    f"Value being overwritten for key [{crumb}]; Old: [{base[key]}], New: [{value}]"
-                )
-                base[key] = value
-
-            if key in self.UNIQUE_IDS:
-                base[key] = list(set(base[key]))
-
-    def update_list(self, base, template, breadcrumbs=""):
-        for item in template:
-            if isinstance(item, dict):
-                for attr in self.IDEMPOTENT_IDS:
-                    if attr in item:
-                        idempotent_id = attr
-                        break
-                else:
-                    idempotent_id = None
-                if idempotent_id:
-                    namesake = [
-                        i for i in base if i[idempotent_id] == item[idempotent_id]
-                    ]
-                    if namesake:
-                        self.update_dict(
-                            namesake[0],
-                            item,
-                            breadcrumbs
-                            + "/["
-                            + idempotent_id
-                            + "="
-                            + item[idempotent_id]
-                            + "]",
-                        )
-                        continue
-            base.append(item)
-        base.sort(key=lambda x: json.dumps(x, sort_keys=True))
 
     def assemble_fragments(self, assembled_file):
         # By file name sort order
@@ -245,10 +190,10 @@ class AssembleClusterTemplate(object):
 
             with open(fragment, "r", encoding="utf-8") as fragment_file:
                 try:
-                    self.update_object(self.MERGED, json.loads(fragment_file.read()))
+                    self.template.update_object(self.MERGED, json.loads(fragment_file.read()))
                 except json.JSONDecodeError as e:
                     self.module.fail_json(
-                        msg=f"JSON parsing error: {to_text(e.msg)}", error=to_native(e)
+                        msg=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}", error=to_native(e)
                     )
 
         # Write out the final assembly

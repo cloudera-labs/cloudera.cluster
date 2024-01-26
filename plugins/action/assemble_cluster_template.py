@@ -29,72 +29,16 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClusterTemplate
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     MERGED = {}
-    IDEMPOTENT_IDS = ["refName", "name", "clusterName", "hostName", "product"]
-    UNIQUE_IDS = ["repositories"]
-
-    def update_object(self, base, template, breadcrumbs=""):
-        if isinstance(base, dict) and isinstance(template, dict):
-            self.update_dict(base, template, breadcrumbs)
-            return True
-        elif isinstance(base, list) and isinstance(template, list):
-            self.update_list(base, template, breadcrumbs)
-            return True
-        return False
-
-    def update_dict(self, base, template, breadcrumbs=""):
-        for key, value in template.items():
-            crumb = breadcrumbs + "/" + key
-
-            if key in self.IDEMPOTENT_IDS:
-                if base[key] != value:
-                    self._display.error(
-                        "Objects with distinct IDs should not be merged: " + crumb
-                    )
-                continue
-
-            if key not in base:
-                base[key] = value
-            elif not self.update_object(base[key], value, crumb) and base[key] != value:
-                self._display.warning(
-                    f"Value being overwritten for key [{crumb}]], Old: [{base[key]}], New: [{value}]"
-                )
-                base[key] = value
-
-            if key in self.UNIQUE_IDS:
-                base[key] = list(set(base[key]))
-
-    def update_list(self, base, template, breadcrumbs=""):
-        for item in template:
-            if isinstance(item, dict):
-                for attr in self.IDEMPOTENT_IDS:
-                    if attr in item:
-                        idempotent_id = attr
-                        break
-                else:
-                    idempotent_id = None
-                if idempotent_id:
-                    namesake = [
-                        i for i in base if i[idempotent_id] == item[idempotent_id]
-                    ]
-                    if namesake:
-                        self.update_dict(
-                            namesake[0],
-                            item,
-                            breadcrumbs
-                            + "/["
-                            + idempotent_id
-                            + "="
-                            + item[idempotent_id]
-                            + "]",
-                        )
-                        continue
-            base.append(item)
-        base.sort(key=lambda x: json.dumps(x, sort_keys=True))
+    
+    def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
+        super().__init__(task, connection, play_context, loader, templar, shared_loader_obj)
+        self.TEMPLATE = ClusterTemplate(warn_fn=self._display.warning, error_fn=self._display.error)
 
     def assemble_fragments(
         self, assembled_file, src_path, regex=None, ignore_hidden=True, decrypt=True
@@ -121,7 +65,7 @@ class ActionModule(ActionBase):
                 encoding="utf-8",
             ) as fragment_file:
                 try:
-                    self.update_object(self.MERGED, json.loads(fragment_file.read()))
+                    self.TEMPLATE.update_object(self.MERGED, json.loads(fragment_file.read()))
                 except json.JSONDecodeError as e:
                     raise AnsibleActionFail(
                         message=f"JSON parsing error: {to_text(e.msg)}",
