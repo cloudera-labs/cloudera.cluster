@@ -140,12 +140,12 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native, to_text
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClusterTemplate
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClusterTemplate,
+)
 
 
 class AssembleClusterTemplate(object):
-    MERGED = {}
-
     def __init__(self, module):
         self.module = module
 
@@ -167,9 +167,10 @@ class AssembleClusterTemplate(object):
         # Initialize internal values
         self.compiled = None
         self.template = ClusterTemplate(
-          warn_fn=self.module.warn, 
-          error_fn=self.module.fail_json
+            warn_fn=self.module.warn,
+            error_fn=lambda msg: self.module.fail_json(msg=msg),
         )
+        self.merged = dict()
 
         # Execute the logic
         self.process()
@@ -190,14 +191,17 @@ class AssembleClusterTemplate(object):
 
             with open(fragment, "r", encoding="utf-8") as fragment_file:
                 try:
-                    self.template.update_object(self.MERGED, json.loads(fragment_file.read()))
+                    self.template.update_object(
+                        self.merged, json.loads(fragment_file.read())
+                    )
                 except json.JSONDecodeError as e:
                     self.module.fail_json(
-                        msg=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}", error=to_native(e)
+                        msg=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}",
+                        error=to_native(e),
                     )
 
         # Write out the final assembly
-        json.dump(self.MERGED, assembled_file, indent=2, sort_keys=False)
+        json.dump(self.merged, assembled_file, indent=2, sort_keys=False)
 
         # Close the assembled file handle; will not delete for atomic_move
         assembled_file.close()
