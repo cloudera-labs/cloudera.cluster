@@ -39,7 +39,6 @@ __maintainer__ = ["wmudge@cloudera.com"]
 
 
 class ClusterTemplate(object):
-    
     IDEMPOTENT_IDS = ["refName", "name", "clusterName", "hostName", "product"]
     UNIQUE_IDS = ["repositories"]
 
@@ -76,6 +75,7 @@ class ClusterTemplate(object):
 
             if key in self.UNIQUE_IDS:
                 base[key] = list(set(base[key]))
+                base[key].sort(key=lambda x: json.dumps(x, sort_keys=True))
 
     def update_list(self, base, template, breadcrumbs="") -> None:
         for item in template:
@@ -84,15 +84,18 @@ class ClusterTemplate(object):
                     if attr in item:
                         idempotent_id = attr
                         break
-                else:
-                    idempotent_id = None
+                    else:
+                        idempotent_id = None
+
                 if idempotent_id:
                     namesake = [
-                        i for i in base if i[idempotent_id] == item[idempotent_id]
+                        i
+                        for i in base
+                        if idempotent_id in i
                     ]
-                    if namesake:
+                    for n in namesake:
                         self.update_dict(
-                            namesake[0],
+                            n,
                             item,
                             breadcrumbs
                             + "/["
@@ -101,7 +104,7 @@ class ClusterTemplate(object):
                             + item[idempotent_id]
                             + "]",
                         )
-                        continue
+                    continue
             base.append(item)
         base.sort(key=lambda x: json.dumps(x, sort_keys=True))
 
@@ -341,7 +344,7 @@ class ClouderaManagerModule(object):
         mutually_exclusive=[],
         required_one_of=[],
         required_together=[],
-        **kwargs
+        **kwargs,
     ):
         """
         Creates the base Ansible module argument spec and dependencies,
