@@ -17,6 +17,7 @@
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
+
 import os
 import logging
 import pytest
@@ -26,23 +27,44 @@ from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, Ans
 
 LOG = logging.getLogger(__name__)
 
-def test_pytest_cm_cluster(module_args):
-    module_args(
-        {
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
-            "port": "7180",
-            "verify_tls": "no",
-            "clusterName": "OneNodeCluster",
-            "debug": "no",
-            "template": "./files/cluster-template.json",
-            "add_repositories": "True"
-        }
-    )
+
+@pytest.fixture()
+def conn():
+    return {
+        "username": os.getenv('CM_USERNAME'),
+        "password": os.getenv('CM_PASSWORD'),
+        "host": os.getenv('CM_HOST'),
+        "port": "7180",
+        "verify_tls": "no",
+        "debug": "yes",
+    }
+
+def test_missing_name_or_template(conn, module_args):
+    module_args(conn)
+
+    with pytest.raises(AnsibleFailJson, match="name, template") as e:
+        cm_cluster.main()
+
+def test_missing_cdh_version(conn, module_args):
+    module_args({
+        **conn, 
+        "name": "Test" 
+    })
+
+    with pytest.raises(AnsibleFailJson, match="Bad Request") as e:
+        cm_cluster.main()
+
+    assert "CDH version" in e.value.body['message']
+
+def test_absent_not_existing(conn, module_args):
+    module_args({
+        **conn,
+        "name": "Test",
+        "state": "absent"
+    })
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_cluster.main()
-
-    # LOG.info(str(e.value))
-    LOG.info(str(e.value.cloudera_manager))
+        
+    assert e.value.changed == False
+    

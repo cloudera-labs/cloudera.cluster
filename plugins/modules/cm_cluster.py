@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ansible.module_utils.common.text.converters import to_text, to_native
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
+    ClouderaManagerModule, ClusterTemplate
 )
 from cm_client.rest import ApiException
 from cm_client import ClouderaManagerResourceApi
@@ -134,69 +136,111 @@ cloudera_manager:
 """
 
 
-class Cluster(ClouderaManagerModule):
+class ClusterModule(ClouderaManagerModule):
     def __init__(self, module):
-        super(Cluster, self).__init__(module)
+        super(ClusterModule, self).__init__(module)
+        
         self.template = self.get_param("template")
         self.add_repositories = self.get_param("add_repositories")
-        self.clusterName = self.get_param("clusterName")
+        self.cluster_name = self.get_param("name")
+        self.state = self.get_param("state")
+        
+        self.changed = False
+        self.output = dict()
+        
         self.process()
 
     @ClouderaManagerModule.handle_process
     def process(self):
         
-        try:
-            api_instance = ClouderaManagerResourceApi(self.api_client)
-            cluster_api_instance = ClustersResourceApi(self.api_client)
+        api_instance = ClouderaManagerResourceApi(self.api_client)
+        cluster_api_instance = ClustersResourceApi(self.api_client)
+    
+        template_contents = dict()
+    
+        if self.template:
+            try:                
+                with open(self.template, 'r') as file:
+                    template_contents = json.load(file)
+            except OSError as oe:
+                self.module.fail_json(msg=f"Error reading file '{to_text(self.template)}'", err=to_native(oe)) 
+            # Need to catch malformed JSON, etc.
 
-            with open(self.template, 'r') as file:
-                template_json = json.load(file)
+        if not self.cluster_name:
+            if template_contents:
+                self.cluster_name = template_contents['instantiator']['clusterName']
+            else:
+                self.module.fail_json(msg="No cluster name found in template.")
+    
+        try:
+            self.existing = cluster_api_instance.read_cluster(cluster_name=self.cluster_name).to_dict()
+        except ApiException:
+            self.existing = dict()
+
+        if self.state == "present":
+            if self.existing:
+                pass
+                # Reconcile the existing vs. the incoming values into a set of diffs
+                # then process via the PUT /clusters/{clusterName} endpoint
+            else:
+                payload = dict()
+                    
+                # Construct import template payload from the template and/or explicit parameters
+                explicit_params = dict()
                 
-            if not self.module.check_mode:
-                if self.add_repositories:
-                    import_template_request = api_instance.import_cluster_template(add_repositories=True,body=template_json).to_dict()
+                # Set up 'instantiator' parameters
+                explicit_params.update(instantiator=dict(
+                    clusterName=self.cluster_name
+                ))
+                
+                if template_contents:
+                    TEMPLATE = ClusterTemplate(warn_fn=self.module.warn, error_fn=self.module.fail_json)
+                    TEMPLATE.update_object(template_contents, explicit_params)
+                    payload.update(body=template_contents)
                 else:
-                    import_template_request = api_instance.import_cluster_template(body=template_json).to_dict()
+                    payload.update(body=explicit_params)
+                        
+                # Update to include repositories
+                if self.add_repositories:
+                    payload.update(add_repositories=True)              
+                
+                # Execute the import
+                if not self.module.check_mode:
+                    self.changed = True
+                    import_template_request = api_instance.import_cluster_template(**payload).to_dict()
 
                 command_id = import_template_request['id']
                 self.wait_for_command_state(command_id=command_id,polling_interval=60)
+                
+                # Retrieve the newly-minted cluster
+                self.output = cluster_api_instance.read_cluster(cluster_name=self.cluster_name).to_dict()
+        elif self.state == "absent":
+            if self.existing:
+                pass
+                # Delete the cluster via DELETE /clusters/{clusterName}
+        else:
+            self.module.fail_json(msg=f"Invalid state, ${self.state}")
 
-                if self.clusterName:
-                    self.cm_cluster_template_output = cluster_api_instance.read_cluster(cluster_name=self.clusterName).to_dict()
-                    self.changed = True
-                else:
-                    self.cm_cluster_template_output = cluster_api_instance.read_clusters().to_dict()
-                    self.changed = True
-
-        except ApiException as e:
-            # If cluster already exsists it will reply with 400 Error
-            if e.status == 400:
-                self.cm_cluster_template_output = json.loads(e.body)
-                self.changed = False
-
-        except FileNotFoundError:
-            self.cm_cluster_template_output = (f"Error: File '{self.template}' not found.")
-            self.module.fail_json(msg=str(self.cm_cluster_template_output)) 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-        
         argument_spec=dict(
-            template=dict(required=True, type="path"),
-            add_repositories=dict(required=False, type="bool", default=False),
-            clusterName=dict(required=False, type="str"),
+            template=dict(type="path", aliases=["cluster_template"]),
+            add_repositories=dict(type="bool", default=False),
+            name=dict(aliases=["cluster_name"]),
+            state=dict(default="present", choices=["present", "absent"])
         ),
-          supports_check_mode=False
-          )
+        required_one_of=[
+            ["name", "template"]
+        ],
+        supports_check_mode=True
+    )
 
-    result = Cluster(module) 
-    
-
-    changed = result.changed
+    result = ClusterModule(module) 
 
     output = dict(
-        changed=changed,
-        cloudera_manager=result.cm_cluster_template_output,
+        changed=result.changed,
+        cloudera_manager=result.existing,
     )
 
     if result.debug:
