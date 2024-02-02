@@ -62,17 +62,79 @@ def test_missing_src(module_args):
         assemble_cluster_template.main()
 
 
-def test_src_not_directory(module_args):
+def test_src_not_directory(module_args, tmp_path):
+    root_dir = tmp_path / "not_directory"
+    root_dir.mkdir()
+    
+    invalid_src = root_dir / "invalid_src.json"
+    invalid_src.touch()
+    
     module_args(
         {
             "dest": "foo.json",
-            "src": os.path.join(TEST_DIR, "invalid_src.json"),
+            "src": str(invalid_src),
         }
     )
 
     with pytest.raises(AnsibleFailJson, match="not a directory"):
         assemble_cluster_template.main()
 
+def test_src_invalid_file(module_args, tmp_path):
+    root_dir = tmp_path / "not_valid"
+    root_dir.mkdir()
+    
+    invalid_file = root_dir / "invalid_file.txt"
+    invalid_file.touch()
+    
+    module_args(
+        {
+            "dest": "foo.json",
+            "src": str(root_dir),
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="JSON parsing error"):
+        assemble_cluster_template.main()
+        
+def test_src_filtered(module_args, tmp_path):
+    root_dir = tmp_path / "filtered"
+    root_dir.mkdir()
+    
+    content = dict()
+    content["test"] = "Test"
+    
+    base = root_dir / "base.json"
+    base.write_text(
+        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+    
+    overlay = dict()
+    overlay["error"] = True
+    
+    filtered = root_dir / "filtered.json"
+    filtered.write_text(
+        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+    
+    results = root_dir / "results.json"
+    
+    module_args(
+        {
+            "dest": str(results),
+            "src": str(root_dir),
+            "regexp": "^filtered" 
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson):
+        assemble_cluster_template.main()
+        
+    output = json.load(results.open())
+    
+    assert "error" not in output
+    assert len(output) == 1
+    assert "test" in output
+    assert output["test"] == "Test"
 
 @pytest.mark.parametrize("key", ClusterTemplate.IDEMPOTENT_IDS)
 def test_merge_idempotent_key(module_args, tmp_path, key):
@@ -384,7 +446,7 @@ def test_merge_list_idempotent_conflict(module_args, tmp_path):
 
     module_args({"dest": str(results), "src": str(fragment_dir)})
 
-    with pytest.raises(AnsibleFailJson, match="\/test\/\[name=Conflict\]\/name"):
+    with pytest.raises(AnsibleFailJson, match="/test/\[name=Conflict\]/name"):
         assemble_cluster_template.main()
 
 def test_merge_dict(module_args, tmp_path):
