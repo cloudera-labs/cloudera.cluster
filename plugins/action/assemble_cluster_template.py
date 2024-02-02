@@ -33,12 +33,11 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import C
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
-
-    MERGED = {}
     
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         super().__init__(task, connection, play_context, loader, templar, shared_loader_obj)
         self.TEMPLATE = ClusterTemplate(warn_fn=self._display.warning, error_fn=self._display.error)
+        self.MERGED = {}
 
     def assemble_fragments(
         self, assembled_file, src_path, regex=None, ignore_hidden=True, decrypt=True
@@ -65,7 +64,10 @@ class ActionModule(ActionBase):
                 encoding="utf-8",
             ) as fragment_file:
                 try:
-                    self.TEMPLATE.update_object(self.MERGED, json.loads(fragment_file.read()))
+                    if not self.MERGED:
+                        self.MERGED = json.loads(fragment_file.read())
+                    else:
+                        self.TEMPLATE.update_object(self.MERGED, json.loads(fragment_file.read()))
                 except json.JSONDecodeError as e:
                     raise AnsibleActionFail(
                         message=f"JSON parsing error: {to_text(e.msg)}",
@@ -99,6 +101,8 @@ class ActionModule(ActionBase):
         regexp = self._task.args.get("regexp", None)
         if regexp is None:
             regexp = self._task.args.get("filter", None)
+        if regexp is None:
+            regexp = self._task.args.get("regex", None)
 
         remote_src = boolean(self._task.args.get("remote_src", False))
         follow = boolean(self._task.args.get("follow", False))
