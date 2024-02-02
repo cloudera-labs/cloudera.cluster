@@ -25,11 +25,16 @@ import pytest
 from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
 
+# Required for pytest discovery in VSCode, reasons unknown...
+try:
+    from ansible.plugins.action import ActionBase
+except ModuleNotFoundError:
+    pass
+
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
     AnsibleExitJson,
 )
-
 
 @pytest.fixture(autouse=True)
 def skip_python():
