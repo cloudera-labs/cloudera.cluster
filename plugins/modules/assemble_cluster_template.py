@@ -40,15 +40,15 @@ author:
 options:
   src:
     description:
-      - An already existing directory of cluster template files.
-      - TODO Local or remote
+      - A directory of cluster template files, i.e. fragments.
+      - Each file must be a valid JSON file.
     type: path
     required: True
     aliases:
       - cluster_template_src
   dest:
     description:
-      - A file to create using the merger of all of the cluster template files.
+      - A file created from the merger of the cluster template files.
     type: path
     required: True
     aliases:
@@ -61,7 +61,7 @@ options:
     default: False
   remote_src:
     description:
-      - Flag to control the location of the cluster template configuration source files.
+      - Flag for the location of the cluster template fragment files.
       - If V(false), search for I(src) on the controller.
       - If V(true), search for I(src) on the remote/target.
     type: bool
@@ -75,6 +75,7 @@ options:
     type: str
     aliases:
       - filter
+      - regex
   ignore_hidden:
     description:
       - Flag whether to include files that begin with a '.'.
@@ -191,9 +192,12 @@ class AssembleClusterTemplate(object):
 
             with open(fragment, "r", encoding="utf-8") as fragment_file:
                 try:
-                    self.template.update_object(
-                        self.merged, json.loads(fragment_file.read())
-                    )
+                    if not self.merged:
+                      self.merged = json.loads(fragment_file.read())
+                    else:
+                      self.template.update_object(
+                          self.merged, json.loads(fragment_file.read())
+                      )
                 except json.JSONDecodeError as e:
                     self.module.fail_json(
                         msg=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}",
@@ -271,7 +275,7 @@ def main():
             dest=dict(required=True, type="path", aliases=["cluster_template"]),
             backup=dict(type="bool", default=False),
             remote_src=dict(type="bool", default=False),
-            regexp=dict(type="str", aliases=["filter"]),
+            regexp=dict(type="str", aliases=["filter", "regex"]),
             ignore_hidden=dict(type="bool", default=True),
         ),
         add_file_common_args=True,
