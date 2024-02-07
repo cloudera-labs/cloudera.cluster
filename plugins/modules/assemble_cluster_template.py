@@ -195,7 +195,7 @@ class AssembleClusterTemplate(object):
                     if not self.merged:
                       self.merged = json.loads(fragment_file.read())
                     else:
-                      self.template.update_object(
+                      self.template.merge(
                           self.merged, json.loads(fragment_file.read())
                       )
                 except json.JSONDecodeError as e:

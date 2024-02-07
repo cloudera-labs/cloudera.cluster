@@ -195,7 +195,7 @@ class ClusterModule(ClouderaManagerModule):
                 
                 if template_contents:
                     TEMPLATE = ClusterTemplate(warn_fn=self.module.warn, error_fn=self.module.fail_json)
-                    TEMPLATE.update_object(template_contents, explicit_params)
+                    TEMPLATE.merge(template_contents, explicit_params)
                     payload.update(body=template_contents)
                 else:
                     payload.update(body=explicit_params)

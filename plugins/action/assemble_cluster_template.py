@@ -67,7 +67,7 @@ class ActionModule(ActionBase):
                     if not self.MERGED:
                         self.MERGED = json.loads(fragment_file.read())
                     else:
-                        self.TEMPLATE.update_object(self.MERGED, json.loads(fragment_file.read()))
+                        self.TEMPLATE.merge(self.MERGED, json.loads(fragment_file.read()))
                 except json.JSONDecodeError as e:
                     raise AnsibleActionFail(
                         message=f"JSON parsing error: {to_text(e.msg)}",
