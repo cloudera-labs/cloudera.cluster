@@ -21,6 +21,7 @@ import json
 import logging
 
 from functools import wraps
+from typing import Union
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning, MaxRetryError, HTTPError
 from urllib3.util import Url
@@ -36,6 +37,101 @@ from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResource
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
+
+
+class ClusterTemplate(object):
+    IDEMPOTENT_IDS = frozenset(
+        ["refName", "name", "clusterName", "hostName", "product"]
+    )
+    UNIQUE_IDS = frozenset(["repositories"])
+
+    def __init__(self, warn_fn, error_fn) -> None:
+        self._warn = warn_fn
+        self._error = error_fn
+
+    def merge(self, base: Union[dict, list], fragment: Union[dict, list]) -> bool:
+        if isinstance(base, dict) and isinstance(fragment, dict):
+            self._update_dict(base, fragment)
+        elif isinstance(base, list) and isinstance(fragment, list):
+            self._update_list(base, fragment)
+        else:
+            raise TypeError(
+                f"Base and fragment arguments must be the same type: base[{type(base)}], fragment[{type(fragment)}]"
+            )
+
+    def _update_dict(self, base, fragment, breadcrumbs="") -> None:
+        for key, value in fragment.items():
+            crumb = breadcrumbs + "/" + key
+
+            # If the key is idempotent, error that the values are different
+            if key in self.IDEMPOTENT_IDS:
+                if base[key] != value:
+                    self._error(f"Unable to override value for distinct key [{crumb}]")
+                continue
+
+            # If it's a new key, add to the bae
+            if key not in base:
+                base[key] = value
+            # If the value is a dictionary, merge
+            elif isinstance(value, dict):
+                self._update_dict(base[key], value, crumb)
+            # If the value is a list, merge
+            elif isinstance(value, list):
+                self._update_list(base[key], value, crumb)
+            # Else the value is a scalar
+            else:
+                # If the value is different, override
+                if base[key] != value:
+                    self._warn(
+                        f"Overriding value for key [{crumb}]], Old: [{base[key]}], New: [{value}]"
+                    )
+                    base[key] = value
+
+            if key in self.UNIQUE_IDS:
+                base[key] = list(set(base[key]))
+                base[key].sort(key=lambda x: json.dumps(x, sort_keys=True))
+
+    def _update_list(self, base, fragment, breadcrumbs="") -> None:
+        for entry in fragment:
+            if isinstance(entry, dict):
+                # Discover if the incoming dict has an idempotent key
+                idempotent_key = next(
+                    iter(
+                        [
+                            id
+                            for id in set(entry.keys()).intersection(
+                                self.IDEMPOTENT_IDS
+                            )
+                        ]
+                    ),
+                    None,
+                )
+
+                # Merge the idemponent key's dictionary rather than appending as a new entry
+                if idempotent_key:
+                    existing_entry = next(
+                        iter(
+                            [
+                                i
+                                for i in base
+                                if isinstance(i, dict)
+                                and idempotent_key in i
+                                and i[idempotent_key] == entry[idempotent_key]
+                            ]
+                        ),
+                        None,
+                    )
+                    if existing_entry:
+                        self._update_dict(
+                            existing_entry,
+                            entry,
+                            f"{breadcrumbs}/[{idempotent_key}={entry[idempotent_key]}]",
+                        )
+                        continue
+                # Else, drop to appending the entry as net new
+            base.append(entry)
+
+        base.sort(key=lambda x: json.dumps(x, sort_keys=True))
 
 
 class ClouderaManagerModule(object):
@@ -60,13 +156,12 @@ class ClouderaManagerModule(object):
                 err = dict(
                     msg="API error: " + to_text(ae.reason),
                     status_code=ae.status,
-                    body=ae.body.decode("utf-8"),
                 )
-                if err["body"] != "":
+                if ae.body:
                     try:
-                        err.update(body=json.loads(err["body"]))
-                    except Exception as te:
-                        pass
+                        err.update(body=json.loads(ae.body))
+                    except Exception:
+                        err.update(body=ae.body.decode("utf-8")),
 
                 self.module.fail_json(**_add_log(err))
             except MaxRetryError as maxe:
@@ -274,7 +369,7 @@ class ClouderaManagerModule(object):
         mutually_exclusive=[],
         required_one_of=[],
         required_together=[],
-        **kwargs
+        **kwargs,
     ):
         """
         Creates the base Ansible module argument spec and dependencies,
