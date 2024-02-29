@@ -1,0 +1,32 @@
+{
+  "hostTemplates": [
+    {
+      "refName": "ExampleHostTemplate",
+      "roleConfigGroupsRefNames": [
+        "livy-GATEWAY-BASE",
+        "livy-LIVY_SERVER-BASE"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "refName": "livy",
+      "serviceType": "LIVY",
+      "displayName": "Livy",
+      "roleConfigGroups": [
+        {
+          "refName": "livy-GATEWAY-BASE",
+          "roleType": "GATEWAY",
+          "base": true,
+          "configs": []
+        },
+        {
+          "refName": "livy-LIVY_SERVER-BASE",
+          "roleType": "LIVY_SERVER",
+          "base": true,
+          "configs": []
+        }
+      ]
+    }
+  ]
+}

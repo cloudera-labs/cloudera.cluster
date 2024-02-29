@@ -1,0 +1,43 @@
+{
+  "hostTemplates": [
+    {
+      "refName": "ExampleHostTemplate",
+      "roleConfigGroupsRefNames": [
+        "schemaregistry-SCHEMA_REGISTRY_SERVER-BASE"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "refName": "schemaregistry",
+      "serviceType": "SCHEMAREGISTRY",
+      "displayName": "Schema Registry",
+      "serviceConfigs": [
+        {
+          "name": "database_host",
+          "value": "host.example.com"
+        }
+      ],
+      "roleConfigGroups": [
+        {
+          "refName": "schemaregistry-SCHEMA_REGISTRY_SERVER-BASE",
+          "roleType": "SCHEMA_REGISTRY_SERVER",
+          "base": true,
+          "configs": [
+            {
+              "name": "schema.registry.port",
+              "value": "7788"
+            },
+            {
+              "name": "schema.registry.ssl.port",
+              "value": "7790"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "repositories": [
+    "https://archive.cloudera.com/schemaregistry"
+  ]
+}

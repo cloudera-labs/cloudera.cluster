@@ -1,0 +1,51 @@
+{
+  "hostTemplates": [
+    {
+      "refName": "AnotherExampleHostTemplate",
+      "roleConfigGroupsRefNames": [
+        "atlas-ATLAS_SERVER-BASE",
+        "atlas-GATEWAY-BASE"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "refName": "atlas",
+      "serviceType": "ATLAS",
+      "displayName": "Atlas",
+      "serviceConfigs": [],
+      "roleConfigGroups": [
+        {
+          "refName": "atlas-ATLAS_SERVER-BASE",
+          "roleType": "ATLAS_SERVER",
+          "base": true,
+          "configs": [
+            {
+              "name": "atlas_server_http_port",
+              "value": "31000"
+            },
+            {
+              "name": "atlas_server_https_port",
+              "value": "31443"
+            }
+          ]
+        },
+        {
+          "refName": "atlas-GATEWAY-BASE",
+          "roleType": "GATEWAY",
+          "base": true,
+          "configs": []
+        }
+      ]
+    }
+  ],
+  "products": [
+    {
+      "product": "FOO",
+      "version": "9.8.7"
+    }
+  ],
+  "repositories": [
+    "https://archive.cloudera.com/atlas"
+  ]
+}
