@@ -33,9 +33,10 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
 options:
-  cluster_name:
+  name:
     description:
-      - Name of the Cloudera Manager cluster
+      - Name of Cloudera Manager cluster.
+      - This parameter specifies the name of the cluster from which data will be gathered.
     type: str
     required: True
 requirements:
@@ -48,7 +49,7 @@ EXAMPLES = r"""
   cloudera.cluster.cm_cluster_info:
     host: example.cloudera.com
     username: "jane_smith"
-    cluster_name: "OneNodeCluster"
+    name: "OneNodeCluster"
     password: "S&peR4Ec*re"
     port: "7180"
 
@@ -63,72 +64,72 @@ cloudera_manager:
         cluster_type:
             description: The type of Cloudera Manager cluster.
             type: str
-            returned: optional
+            returned: always
         cluster_url:
             description: Url of Cloudera Manager cluster.
             type: str
-            returned: optional
+            returned: always
         display_name:
             description: The name of the cluster displayed on the site.
             type: str
-            returned: optional
+            returned: always
         entity_status:
             description: Health status of the cluster.
             type: str
-            returned: optional
+            returned: always
         full_version:
             description: Version of the cluster installed.
             type: str
-            returned: optional
+            returned: always
         hosts_url:
             description: Url of all the hosts on which cluster is installed.
             type: str
-            returned: optional
+            returned: always
         maintenance_mode:
             description: Maintance mode of Cloudera Manager Cluster.
             type: bool
-            returned: optional
+            returned: always
         maintenance_owners:
             description: List of Maintance owners for Cloudera Manager Cluster.
             type: list
-            returned: optional
+            returned: always
         name:
-            description: The name of the cluster created.
+            description: The name of the cluster.
             type: str
-            returned: optional
+            returned: always
         tags:
             description: List of tags for Cloudera Manager Cluster.
             type: list
-            returned: optional
+            returned: always
         uuid:
-            description: Unique ID of created cluster
+            description: Unique ID of the cluster
             type: bool
-            returned: optional
+            returned: always
 """
 
 
 class ClusterInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClusterInfo, self).__init__(module)
-        self.cluster_name = self.get_param("cluster_name")
+        self.name = self.get_param("name")
         self.process()
 
     @ClouderaManagerModule.handle_process
     def process(self):
         try:
             cluster_api_instance = ClustersResourceApi(self.api_client)
-            self.cm_cluster_info = cluster_api_instance.read_cluster(cluster_name=self.cluster_name).to_dict()
+            self.cm_cluster_info = cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()
 
         except ApiException as e:
             if e.status == 404:
-                self.cm_cluster_info = (f"Error: Cluster '{self.cluster_name}' not found.")
+                self.cm_cluster_info = (f"Error: Cluster '{self.name}' not found.")
                 self.module.fail_json(msg=str(self.cm_cluster_info)) 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         
         argument_spec=dict(
-            cluster_name=dict(required=True, type="str"),
+            name=dict(required=True, type="str", aliases=["cluster_name","cluster"]),
         ),
           supports_check_mode=False
           )
