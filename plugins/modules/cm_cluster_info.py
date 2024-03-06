@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ansible.module_utils.basic import to_native
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
@@ -27,9 +28,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: cm_cluster_info
-short_description: Retrieve information about a cluster based on the provided cluster name
+short_description: Retrieve details about one or more clusters
 description:
-  - Module checks the existence of a cluster with the specified name and retrieves detailed information about the cluster.
+  - Retrieves details about one or more clusters managed by Cloudera Manager
 author:
   - "Ronald Suplina (@rsuplina)"
 options:
@@ -38,7 +39,7 @@ options:
       - Name of Cloudera Manager cluster.
       - This parameter specifies the name of the cluster from which data will be gathered.
     type: str
-    required: True
+    required: False
 requirements:
   - cm_client
 """
@@ -52,14 +53,22 @@ EXAMPLES = r"""
     name: "OneNodeCluster"
     password: "S&peR4Ec*re"
     port: "7180"
+    
+- name: Get information about all clusters
+  cloudera.cluster.cm_cluster_info:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    port: "7180"
 
 """
 
 RETURN = r"""
 ---
-cloudera_manager:
+clusters:
     description: Details about Cloudera Manager Cluster
-    type: dict
+    type: list
+    elements: dict
     contains:
         cluster_type:
             description: The type of Cloudera Manager cluster.
@@ -112,35 +121,41 @@ class ClusterInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClusterInfo, self).__init__(module)
         self.name = self.get_param("name")
+        self.output = []
         self.process()
 
     @ClouderaManagerModule.handle_process
     def process(self):
         try:
             cluster_api_instance = ClustersResourceApi(self.api_client)
-            self.cm_cluster_info = cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()
-
+            if self.name:
+                self.output = [cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()]
+            else:
+                self.output = cluster_api_instance.read_clusters().to_dict()['items']
+                
         except ApiException as e:
             if e.status == 404:
-                self.cm_cluster_info = (f"Error: Cluster '{self.name}' not found.")
-                self.module.fail_json(msg=str(self.cm_cluster_info)) 
+                pass
+            else:
+                raise e
+        except KeyError as ke:
+            self.module.fail_json(msg='Invalid result object from Cloudera Manager API', error=to_native(ke))
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         
         argument_spec=dict(
-            name=dict(required=True, type="str", aliases=["cluster_name","cluster"]),
+            name=dict(aliases=["cluster_name","cluster"]),
         ),
-          supports_check_mode=False
+          supports_check_mode=True
           )
 
     result = ClusterInfo(module) 
     
-
-
     output = dict(
         changed=False,
-        cloudera_manager=result.cm_cluster_info,
+        clusters=result.output,
     )
 
     if result.debug:
