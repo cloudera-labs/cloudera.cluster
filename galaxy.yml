@@ -16,7 +16,7 @@
 
 namespace:  cloudera
 name:       cluster
-version:    4.3.0
+version:    4.3.0-dev
 readme:     README.md
 authors:    []
 
@@ -35,7 +35,7 @@ tags:
 
 dependencies:
   'ansible.posix':      '1.3.0'
-  'community.crypto':   '2.2.1'
+  'community.crypto':   '2.17.1'
   'community.general':  '4.5.0'
 
 repository:     https://github.com/cloudera-labs/cloudera.cluster

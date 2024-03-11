@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc.
+# Copyright 2024 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,15 @@ default_database_versions:
   postgresql:
     '7': 10
     '8': 12
+    '9': 14
   mariadb:
     '7': 10.2
-    '8': 10.2
+    '8': 10.6
+    '9': 10.6
   mysql:
     '7': 5.7
-    '8': 8.0  
+    '8': 8.0 
+    '9': 8.0 
 
 # Located in cloudera.cluster.infrastructure.krb5_common
 #krb5_realm: CLOUDERA.LOCAL
@@ -125,7 +128,7 @@ database_defaults:
   QUEUEMANAGER:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
-    type: postgresql
+    type: "{{ database_type }}"
     name: queuemanager
     user: queuemanager
     password: "{{ database_default_password }}"
