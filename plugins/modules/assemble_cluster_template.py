@@ -40,15 +40,15 @@ author:
 options:
   src:
     description:
-      - An already existing directory of cluster template files.
-      - TODO Local or remote
+      - A directory of cluster template files, i.e. fragments.
+      - Each file must be a valid JSON file.
     type: path
     required: True
     aliases:
       - cluster_template_src
   dest:
     description:
-      - A file to create using the merger of all of the cluster template files.
+      - A file created from the merger of the cluster template files.
     type: path
     required: True
     aliases:
@@ -61,7 +61,7 @@ options:
     default: False
   remote_src:
     description:
-      - Flag to control the location of the cluster template configuration source files.
+      - Flag for the location of the cluster template fragment files.
       - If V(false), search for I(src) on the controller.
       - If V(true), search for I(src) on the remote/target.
     type: bool
@@ -75,6 +75,7 @@ options:
     type: str
     aliases:
       - filter
+      - regex
   ignore_hidden:
     description:
       - Flag whether to include files that begin with a '.'.
@@ -138,14 +139,14 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.text.converters import to_native, to_text
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClusterTemplate,
+)
 
 
 class AssembleClusterTemplate(object):
-    MERGED = {}
-    IDEMPOTENT_IDS = ["refName", "name", "clusterName", "hostName", "product"]
-    UNIQUE_IDS = ["repositories"]
-
     def __init__(self, module):
         self.module = module
 
@@ -166,68 +167,14 @@ class AssembleClusterTemplate(object):
 
         # Initialize internal values
         self.compiled = None
+        self.template = ClusterTemplate(
+            warn_fn=self.module.warn,
+            error_fn=lambda msg: self.module.fail_json(msg=msg),
+        )
+        self.merged = dict()
 
         # Execute the logic
         self.process()
-
-    def update_object(self, base, template, breadcrumbs=""):
-        if isinstance(base, dict) and isinstance(template, dict):
-            self.update_dict(base, template, breadcrumbs)
-            return True
-        elif isinstance(base, list) and isinstance(template, list):
-            self.update_list(base, template, breadcrumbs)
-            return True
-        return False
-
-    def update_dict(self, base, template, breadcrumbs=""):
-        for key, value in template.items():
-            crumb = breadcrumbs + "/" + key
-
-            if key in self.IDEMPOTENT_IDS:
-                if base[key] != value:
-                    self.module.warn(
-                        f"Objects with distinct IDs should not be merged: {crumb}"
-                    )
-                continue
-
-            if key not in base:
-                base[key] = value
-            elif not self.update_object(base[key], value, crumb) and base[key] != value:
-                self.module.warn(
-                    f"Value being overwritten for key [{crumb}]; Old: [{base[key]}], New: [{value}]"
-                )
-                base[key] = value
-
-            if key in self.UNIQUE_IDS:
-                base[key] = list(set(base[key]))
-
-    def update_list(self, base, template, breadcrumbs=""):
-        for item in template:
-            if isinstance(item, dict):
-                for attr in self.IDEMPOTENT_IDS:
-                    if attr in item:
-                        idempotent_id = attr
-                        break
-                else:
-                    idempotent_id = None
-                if idempotent_id:
-                    namesake = [
-                        i for i in base if i[idempotent_id] == item[idempotent_id]
-                    ]
-                    if namesake:
-                        self.update_dict(
-                            namesake[0],
-                            item,
-                            breadcrumbs
-                            + "/["
-                            + idempotent_id
-                            + "="
-                            + item[idempotent_id]
-                            + "]",
-                        )
-                        continue
-            base.append(item)
-        base.sort(key=lambda x: json.dumps(x, sort_keys=True))
 
     def assemble_fragments(self, assembled_file):
         # By file name sort order
@@ -245,14 +192,20 @@ class AssembleClusterTemplate(object):
 
             with open(fragment, "r", encoding="utf-8") as fragment_file:
                 try:
-                    self.update_object(self.MERGED, json.loads(fragment_file.read()))
+                    if not self.merged:
+                      self.merged = json.loads(fragment_file.read())
+                    else:
+                      self.template.merge(
+                          self.merged, json.loads(fragment_file.read())
+                      )
                 except json.JSONDecodeError as e:
                     self.module.fail_json(
-                        msg=f"JSON parsing error: {to_text(e.msg)}", error=to_native(e)
+                        msg=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}",
+                        error=to_native(e),
                     )
 
         # Write out the final assembly
-        json.dump(self.MERGED, assembled_file, indent=2, sort_keys=False)
+        json.dump(self.merged, assembled_file, indent=2, sort_keys=False)
 
         # Close the assembled file handle; will not delete for atomic_move
         assembled_file.close()
@@ -322,7 +275,7 @@ def main():
             dest=dict(required=True, type="path", aliases=["cluster_template"]),
             backup=dict(type="bool", default=False),
             remote_src=dict(type="bool", default=False),
-            regexp=dict(type="str", aliases=["filter"]),
+            regexp=dict(type="str", aliases=["filter", "regex"]),
             ignore_hidden=dict(type="bool", default=True),
         ),
         add_file_common_args=True,

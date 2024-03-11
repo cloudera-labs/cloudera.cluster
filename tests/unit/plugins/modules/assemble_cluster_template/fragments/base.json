@@ -1,0 +1,31 @@
+{
+  "cdhVersion": "1.2.3",
+  "cmVersion": "4.5.6",
+  "displayName": "ExampleClusterTemplate",
+  "hostTemplates": [
+    {
+      "cardinality": 1,
+      "refName": "ExampleHostTemplate",
+      "roleConfigGroupsRefNames": []
+    }
+  ],
+  "instantiator": {
+    "clusterName": "ExampleCluster",
+    "hosts": [
+      {
+        "hostName": "host.example.com",
+        "hostTemplateRefName": "ExampleHostTemplate"
+      }
+    ]
+  },
+  "products": [
+    {
+      "product": "CDH",
+      "version": "1.2.3"
+    }
+  ],
+  "repositories": [
+    "https://archive.cloudera.com/"
+  ],
+  "services": []
+}
