@@ -30,7 +30,7 @@ from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_text
 from time import sleep
-from cm_client import ApiClient, Configuration
+from cm_client import ApiClient, ApiConfigList, Configuration
 from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
 from cm_client.apis.commands_resource_api import CommandsResourceApi
@@ -339,6 +339,9 @@ class ClouderaManagerModule(object):
         if field in data:
             data = data[field]
         return data if type(data) is list else [data]
+
+    def get_cm_config(self, scope: str = "summary") -> ApiConfigList:
+        return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
 
     @staticmethod
     def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):
