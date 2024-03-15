@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import cm_client
+
+from ansible.module_utils.common.dict_transformations import recursive_diff
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
+    ClouderaManagerMutableModule,
 )
 
 ANSIBLE_METADATA = {
@@ -25,51 +29,58 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: cm_config
-short_description: Set the Cloudera Manager configuration
+short_description: Manage the configuration of Cloudera Manager 
 description:
-  - Set the Cloudera Manager configuration settings.
-  - The module supports C(check_mode).
+  - Manage Cloudera Manager configuration settings.
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
   - cm_client
 options:
-  view:
+  parameters:
     description:
-      - The view to materialize, either C(summary) or C(full).
-    type: str
-    default: summary
-    choices:
-        - summary
-        - full
+      - The Cloudera Manager configuration to set.
+      - To unset a parameter, use C(None) as the value.
+    type: dict
+    required: yes
+    aliases:
+      - params
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
 """
 
 EXAMPLES = r"""
 ---
-- name: Retrieve the summary (default) settings
-  cloudera.cluster.cm_config_info
+- name: Update several Cloudera Manager parameters
+  cloudera.cluster.cm_config
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-  register: summary
+    parameters:
+      frontend_url: "schema://host:port"
+      custom_header_color: "PURPLE"
 
-- name: Retrieve the full settings
-  cloudera.cluster.cm_config_info
+- name: Reset or remove a Cloudera Manager parameter
+  cloudera.cluster.cm_config
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    view: full
-  register: full
+    parameters:
+      custom_header_color: None
 """
 
 RETURN = r"""
 ---
 config:
   description:
-    - List of Cloudera Manager Server configurations.
+    - List of Cloudera Manager configurations.
+    - Returns the C(summary) view of the resulting configuration.
   type: list
   elements: dict
   returned: always
@@ -145,36 +156,69 @@ config:
 """
 
 
-class ClouderaManagerConfig(ClouderaManagerModule):
+class ClouderaManagerConfig(ClouderaManagerMutableModule):
     def __init__(self, module):
         super(ClouderaManagerConfig, self).__init__(module)
 
         # Set the parameters
-        #self.view = self.get_param("view")
+        self.params = self.get_param("parameters")
 
         # Initialize the return value
+        self.changed = False
+        self.diff = {}
         self.config = []
 
         # Execute the logic
         self.process()
 
-    @ClouderaManagerModule.handle_process
+    @ClouderaManagerMutableModule.handle_process
     def process(self):
-        self.config = [r.to_dict() for r in self.get_cm_config(self.view)]
+        existing = self.get_cm_config("full")
+
+        current = {r.name: r.value for r in existing}
+        incoming = {k.upper(): v for k, v in self.params.items()}
+
+        (_, add) = recursive_diff(current, incoming)
+
+        if add:
+            self.changed = True
+
+            if self.module._diff:
+                self.diff = dict(before={k: current[k] for k in add.keys()}, after=add)
+
+            if not self.module.check_mode:
+                body = cm_client.ApiConfigList(
+                    items=[cm_client.ApiConfig(name=k, value=v) for k, v in add.items()]
+                )
+                # Return 'summary'
+                self.config = [
+                    p.to_dict()
+                    for p in cm_client.ClouderaManagerResourceApi(self.api_client)
+                    .update_config(message=self.message, body=body)
+                    .items
+                ]
+        else:
+            # Return 'summary'
+            self.config = [p.to_dict() for p in self.get_cm_config()]
 
 
 def main():
-    module = ClouderaManagerModule.ansible_module(
-        argument_spec=dict(view=dict(default="summary", choices=["summary", "full"])),
+    module = ClouderaManagerMutableModule.ansible_module(
+        argument_spec=dict(
+            parameters=dict(type=dict, required=True, aliases=["params"]),
+        ),
         supports_check_mode=True,
     )
 
     result = ClouderaManagerConfig(module)
 
     output = dict(
-        changed=False,
+        changed=result.changed,
         config=result.config,
     )
+
+    if module._diff:
+        output.update(diff=result.diff)
 
     if result.debug:
         log = result.log_capture.getvalue()

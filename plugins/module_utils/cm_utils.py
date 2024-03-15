@@ -246,7 +246,7 @@ class ClouderaManagerModule(object):
 
         # If provided a CML endpoint URL, use it directly
         if self.url:
-            config.host = self.url
+            config.host = str(self.url).rstrip(" /")
         # Otherwise, run discovery on missing parts
         else:
             config.host = self.discover_endpoint(config)
@@ -361,7 +361,7 @@ class ClouderaManagerModule(object):
                     required=False, type="bool", default=True, aliases=["tls"]
                 ),
                 ssl_ca_cert=dict(type="path", aliases=["tls_cert", "ssl_cert"]),
-                username=dict(required=True, type="str"),
+                username=dict(required=True, type="str", aliases=["user"]),
                 password=dict(required=True, type="str", no_log=True),
                 debug=dict(
                     required=False,
@@ -398,4 +398,29 @@ class ClouderaManagerModule(object):
             required_one_of=required_one_of + [["url", "host"]],
             required_together=required_together,
             **kwargs,
+        )
+
+
+class ClouderaManagerMutableModule(ClouderaManagerModule):
+    def __init__(self, module):
+        super(ClouderaManagerMutableModule, self).__init__(module)
+        self.message = self.get_param("message")
+        
+    @staticmethod
+    def ansible_module(
+        argument_spec={},
+        mutually_exclusive=[],
+        required_one_of=[],
+        required_together=[],
+        **kwargs,
+    ):
+        return ClouderaManagerModule.ansible_module(
+            dict(
+                **argument_spec,
+                message=dict(default="Managed by Ansible", aliases=["msg"])
+            ),
+            mutually_exclusive,
+            required_one_of,
+            required_together,
+            **kwargs
         )
