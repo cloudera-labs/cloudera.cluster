@@ -58,7 +58,7 @@ attributes:
 EXAMPLES = r"""
 ---
 - name: Update several Cloudera Manager parameters
-  cloudera.cluster.cm_config
+  cloudera.cluster.cm_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -67,7 +67,7 @@ EXAMPLES = r"""
       custom_header_color: "PURPLE"
 
 - name: Reset or remove a Cloudera Manager parameter
-  cloudera.cluster.cm_config
+  cloudera.cluster.cm_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
