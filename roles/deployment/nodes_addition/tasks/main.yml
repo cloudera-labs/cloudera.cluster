@@ -1,0 +1,62 @@
+# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Add nodes to existing cluster
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ __cluster.cluster_name | urlencode() }}/hosts
+    method: POST
+    body: "{{ lookup('template', 'hosts.j2', convert_data=False) }}"
+  loop: "{{ nodes_addition_hosts }}"
+  loop_control:
+    loop_var: __cluster
+
+- name: Add host templates to existing cluster
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ _cluster.name | urlencode() }}/hostTemplates
+    method: POST
+    body: "{{ lookup('template', 'hostTemplates.j2', convert_data=False) }}"
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+  register: host_templates_created
+
+- name: Extract and Group Items
+  set_fact:
+    host_templates_created_list: "{{ host_templates_created.results | json_query('[].json.items[].name') }}"
+
+- name: Wait for parcels to become distributed to new hosts
+  cloudera.cluster.cm_api:
+    endpoint: /clusters/{{ _cluster.name | urlencode() }}/parcels
+  register: parcels_response
+  until: parcels_response.json['items'] | rejectattr('stage', 'in', ["AVAILABLE_REMOTELY", "DOWNLOADED", "ACTIVATED", "UNAVAILABLE"]) | list | length == 0
+  retries: "{{ parcel_poll_max_retries | default(30) }}"
+  delay: "{{ parcel_poll_duration | default(60) }}"
+  loop: "{{ definition.clusters }}"
+  loop_control:
+    loop_var: _cluster
+
+- name: Apply host template to new nodes
+  cloudera.cluster.cm_api:
+    endpoint: "/clusters/{{ _cluster | urlencode() }}/hostTemplates/{{ _host_template }}/commands/applyHostTemplate"
+    method: POST
+    body: "{{ lookup('template', 'hosts_apply_template.j2', convert_data=False) }}"
+  loop: "{{ host_templates_created_list }}"
+  loop_control:
+    loop_var: _host_template
+  vars:
+    _host_template_name: "{{ _host_template | split (nodes_addition_host_templates_prefix) | last }}"
+    _cluster: "{{ definition.host_template_cluster_map[_host_template_name] }}"
+

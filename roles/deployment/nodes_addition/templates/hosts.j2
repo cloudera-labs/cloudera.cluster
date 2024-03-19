@@ -1,0 +1,12 @@
+{%- set host_joiner = joiner(",") -%}
+{
+  "items": [
+    {%- for host in __cluster.hosts -%}
+    {{ host_joiner() }}
+    {
+    "hostId": "{{ cloudera_manager_api_hosts[host]['id'] }}",
+    "hostname": "{{ cloudera_manager_api_hosts[host]['hostname'] }}"
+    }
+    {% endfor %}
+  ]
+}
