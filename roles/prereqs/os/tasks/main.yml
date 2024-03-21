@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 - name: Include variables
   include_vars:
-    file: "{{ ansible_os_family }}.yml"
+    file: "{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
 
 - name: Apply OS-specific configurations
   include_tasks:

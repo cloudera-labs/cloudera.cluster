@@ -64,10 +64,12 @@ custom_config_templates:
     condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.0','>=') }}"
   - template: configs/tls-7.1.4.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.4','>=')) }}"
+  - template: configs/tls-7.1.7.j2
+    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.7','>=') }}"
   - template: configs/tls-7.3.1.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.3.1', '>=') }}"
   - template: configs/tls-cm-7.j2
-    condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.1.0','>=') }}"
+    condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.1.0','>=') }}"  
 # Custom configurations for Cloudera Streams Processing components on CDH 6.x
   - template: configs/schemaregistry.j2
     condition: >-

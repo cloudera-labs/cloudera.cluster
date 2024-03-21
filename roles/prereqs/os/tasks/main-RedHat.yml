@@ -36,7 +36,7 @@
 # leaving as separate group for when py2 is finally deprecated
 - name: Setup System python2 on Rhel8
   when:
-    - ansible_distribution_major_version | int >= 8
+    - needs_python2
   block:
     - name: Check if Python2 is installed so we don't end up with multiple versions
       shell: python2 --version
