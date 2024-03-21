@@ -42,7 +42,7 @@ class ModuleDocFragment(object):
             required: False
             default: True
             aliases:
-                - tls
+                - api_version
         force_tls:
             description:
                 - Flag to force TLS during CM API endpoint discovery.
@@ -69,6 +69,8 @@ class ModuleDocFragment(object):
                 - Username for access to the CM API endpoint.
             type: str
             required: True
+            aliases:
+                - user
         password:
             description:
                 - Password for access to the CM API endpoint.

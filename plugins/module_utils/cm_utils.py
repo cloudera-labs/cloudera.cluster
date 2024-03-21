@@ -30,7 +30,7 @@ from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_text
 from time import sleep
-from cm_client import ApiClient, Configuration
+from cm_client import ApiClient, ApiConfigList, Configuration
 from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
 from cm_client.apis.commands_resource_api import CommandsResourceApi
@@ -246,7 +246,7 @@ class ClouderaManagerModule(object):
 
         # If provided a CML endpoint URL, use it directly
         if self.url:
-            config.host = self.url
+            config.host = str(self.url).rstrip(" /")
         # Otherwise, run discovery on missing parts
         else:
             config.host = self.discover_endpoint(config)
@@ -340,6 +340,9 @@ class ClouderaManagerModule(object):
             data = data[field]
         return data if type(data) is list else [data]
 
+    def get_cm_config(self, scope: str = "summary") -> ApiConfigList:
+        return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
+
     @staticmethod
     def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):
         """
@@ -358,7 +361,7 @@ class ClouderaManagerModule(object):
                     required=False, type="bool", default=True, aliases=["tls"]
                 ),
                 ssl_ca_cert=dict(type="path", aliases=["tls_cert", "ssl_cert"]),
-                username=dict(required=True, type="str"),
+                username=dict(required=True, type="str", aliases=["user"]),
                 password=dict(required=True, type="str", no_log=True),
                 debug=dict(
                     required=False,
@@ -395,4 +398,29 @@ class ClouderaManagerModule(object):
             required_one_of=required_one_of + [["url", "host"]],
             required_together=required_together,
             **kwargs,
+        )
+
+
+class ClouderaManagerMutableModule(ClouderaManagerModule):
+    def __init__(self, module):
+        super(ClouderaManagerMutableModule, self).__init__(module)
+        self.message = self.get_param("message")
+        
+    @staticmethod
+    def ansible_module(
+        argument_spec={},
+        mutually_exclusive=[],
+        required_one_of=[],
+        required_together=[],
+        **kwargs,
+    ):
+        return ClouderaManagerModule.ansible_module(
+            dict(
+                **argument_spec,
+                message=dict(default="Managed by Ansible", aliases=["msg"])
+            ),
+            mutually_exclusive,
+            required_one_of,
+            required_together,
+            **kwargs
         )

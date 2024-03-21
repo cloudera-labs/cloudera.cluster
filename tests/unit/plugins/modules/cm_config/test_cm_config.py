@@ -14,40 +14,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import logging
+import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import cm_endpoint_info
+from ansible_collections.cloudera.cluster.plugins.modules import cm_config
 from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
 
-from cm_client.rest import RESTClientObject
-from urllib3.response import HTTPResponse
-
 LOG = logging.getLogger(__name__)
-    
-def test_host_discovery(module_args, monkeypatch):
-    spec = {
-        "username": "testuser",
-        "password": "testpassword",
-        "host": "test.cldr.info",
-        "port": "7180",
+
+
+@pytest.fixture()
+def conn():
+    return {
+        "username": os.getenv('CM_USERNAME'),
+        "password": os.getenv('CM_PASSWORD'),
+        "host": os.getenv('CM_HOST'),
         "verify_tls": "no",
         "debug": "yes"
     }
-    
-    def response():
-        return HTTPResponse()
-    
-    monkeypatch.setattr("urllib3.HTTPConnectionPool.urlopen", response)
-    
-    
-    module_args(spec)
-    
+
+def test_missing_parameters(conn, module_args):
+    module_args(conn)
+
+    with pytest.raises(AnsibleFailJson, match="params"):
+        cm_config.main()
+
+def test_set_config(conn, module_args):
+    module_args({
+        **conn,
+        "params": dict(custom_header_color="PURPLE") 
+    })
+
     with pytest.raises(AnsibleExitJson) as e:
-        cm_endpoint_info.main()
-        
-    assert e.value.endpoint == f"https://{spec['host']}:7183/api/v01"
-    
+        cm_config.main()
+
+    assert len(e.value.config) > 0
