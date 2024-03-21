@@ -35,6 +35,7 @@
     lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name: unzip
     state: present
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Extract MySQL Connector/J zip file
   unarchive:
@@ -42,6 +43,7 @@
     dest: "{{ mysql_connector_extract_dir }}"
     exclude:
       - src
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Copy MySQL Connector/J jar file to correct location
   copy:
@@ -49,6 +51,7 @@
     dest: /usr/share/java/mysql-connector-java.jar
     remote_src: yes
     mode: 0644
+  ignore_errors: "{{ ansible_check_mode }}"
 
 # MySql on rhel8 fix
 - name: Fix MySQL on RHEL8
@@ -70,6 +73,7 @@
       template:
         src: my_config.h
         dest: /usr/include/mysql/my_config.h
+      ignore_errors: "{{ ansible_check_mode }}"
 
 ## TODO Fix for RHEL8
     - name: Install Mysql packages for python - PyMySQL
