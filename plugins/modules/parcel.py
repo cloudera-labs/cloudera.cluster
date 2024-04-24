@@ -32,11 +32,39 @@ module: parcel
 short_description: Manage the state of parcels on a Cluster
 description:
   - Facilitates the management of parcels on a Cluster by downloading, distributing, and activating them according to the specified state.
-  - Supported states include 'download', 'distribute', and 'activate', each corresponding to specific actions performed on parcels.
 author:
   - "Ronald Suplina (@rsuplina)"
 requirements:
   - cm_client
+options:
+  cluster_name:
+    description:
+      - The name of the cluster
+    type: str
+    required: yes
+  product:
+    description:
+      - The name of the product, e.g. CDH, Impala
+    type: str
+    required: yes
+  version:
+    description:
+      - The version of the product, e.g. 1.1.0, 2.3.0.
+    type: str
+    required: yes
+  state:
+    description:
+      - State of the parcel.
+    type: str
+    default: 'activated'
+    choices:
+      - 'downloaded'
+      - 'distributed'
+      - 'activated'
+      - 'removed'
+      - 'undistributed'
+      - 'deactivated'
+    required: False
 """
 
 EXAMPLES = r"""
@@ -49,7 +77,7 @@ EXAMPLES = r"""
     cluster_name: "OneNodeECS"
     product: "ECS"
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
-    state: "activate"
+    state: "activated"
 
 - name: Downloand and distribute a parcel on a cluster 
   cloudera.cluster.parcel:
@@ -59,7 +87,27 @@ EXAMPLES = r"""
     cluster_name: "OneNodeECS"
     product: "ECS"
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
-    state: "distribute"
+    state: "distributed"
+
+- name: Remove the parcel on a specified cluster 
+  cloudera.cluster.parcel:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster_name: "OneNodeECS"
+    product: "ECS"
+    parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
+    state: "removed"
+
+- name: Undistribute the parcel on a specified cluster 
+  cloudera.cluster.parcel:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster_name: "OneNodeECS"
+    product: "ECS"
+    parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
+    state: "undistributed"
 
 """
 
@@ -108,23 +156,69 @@ class ClouderaParcel(ClouderaManagerModule):
         self.product = self.get_param("product")
         self.parcel_version = self.get_param("parcel_version")
         self.state = self.get_param("state")
-
+        self.polling_interval = self.get_param("polling_interval")
         self.process()
 
 
+    def deactivate_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval, timeout=600):
+        start_time = time.time()
+        parcel_api_instance.deactivate_command(cluster_name=cluster_name, product=product, version=parcel_version)
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                self.module.fail_json(msg="Timeout exceeded while waiting for parcel state to complete.")
+            parcel_status = parcel_api_instance.read_parcel(cluster_name=cluster_name, product=product, version=parcel_version)
+            if parcel_status.stage == 'ACTIVATED':
+                time.sleep(polling_interval)
+            elif parcel_status.stage == "DISTRIBUTED":
+                break
 
-    def download_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval):
+    def undistribute_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval, timeout=600):
+        start_time = time.time()
+        parcel_api_instance.start_removal_of_distribution_command(cluster_name=cluster_name, product=product, version=parcel_version)
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                self.module.fail_json(msg="Timeout exceeded while waiting for parcel state to complete.")
+            parcel_status = parcel_api_instance.read_parcel(cluster_name=cluster_name, product=product, version=parcel_version)
+            if parcel_status.stage == 'UNDISTRIBUTING':
+                time.sleep(polling_interval)
+            elif parcel_status.stage == "DOWNLOADED":
+                break
+
+    def remove_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval, timeout=600):
+        start_time = time.time()
+        parcel_api_instance.remove_download_command(cluster_name=cluster_name, product=product, version=parcel_version)
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                self.module.fail_json(msg="Timeout exceeded while waiting for parcel state to complete.")
+            parcel_status = parcel_api_instance.read_parcel(cluster_name=cluster_name, product=product, version=parcel_version)
+            if parcel_status.stage == 'DOWNLOADED':
+                time.sleep(polling_interval)
+            elif parcel_status.stage == "AVAILABLE_REMOTELY":
+                break
+
+    def download_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval, timeout=1200):
+        start_time = time.time()
         parcel_api_instance.start_download_command(cluster_name=cluster_name, product=product, version=parcel_version)
         while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                self.module.fail_json(msg="Timeout exceeded while waiting for parcel state to complete.")
             parcel_status = parcel_api_instance.read_parcel(cluster_name=cluster_name, product=product, version=parcel_version)
             if parcel_status.stage == 'DOWNLOADING':
                 time.sleep(polling_interval)
             elif parcel_status.stage == "DOWNLOADED":
                 break
-            
-    def distribute_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval):
+
+    def distribute_parcel(self, parcel_api_instance, cluster_name, product, parcel_version, polling_interval, timeout=1200):
+        start_time = time.time()
         parcel_api_instance.start_distribution_command(cluster_name=cluster_name, product=product, version=parcel_version)
         while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                self.module.fail_json(msg="Timeout exceeded while waiting for parcel state to complete.")
             parcel_status = parcel_api_instance.read_parcel(cluster_name=cluster_name, product=product, version=parcel_version)
             if parcel_status.stage == 'DISTRIBUTING':
                 time.sleep(polling_interval)
@@ -146,7 +240,6 @@ class ClouderaParcel(ClouderaManagerModule):
         parcel_api_instance = ParcelResourceApi(self.api_client)
         cluster_api_instance = ClustersResourceApi(self.api_client)
 
-        polling_interval = 10
         self.parcel_output  = {}
         self.changed = False
         parcel_actions = []
@@ -164,17 +257,17 @@ class ClouderaParcel(ClouderaManagerModule):
                     self.module.fail_json(msg=f" Parcel {self.parcel_version} {ex.reason}")
 
 
-        if self.state == "download":
+        if self.state == "downloaded":
             if existing_state == 'AVAILABLE_REMOTELY':
                 parcel_actions.append(self.download_parcel)
 
-        elif self.state == "distribute":
+        elif self.state == "distributed":
             if existing_state == 'AVAILABLE_REMOTELY':
                 parcel_actions.extend([self.download_parcel, self.distribute_parcel])
             elif existing_state == 'DOWNLOADED':
                 parcel_actions.append(self.distribute_parcel)
 
-        elif self.state == "activate":
+        elif self.state == "activated":
             if existing_state == 'AVAILABLE_REMOTELY':
                 parcel_actions.extend([self.download_parcel, self.distribute_parcel, self.activate_parcel])
             elif existing_state == 'DOWNLOADED':
@@ -182,13 +275,35 @@ class ClouderaParcel(ClouderaManagerModule):
             elif existing_state == 'DISTRIBUTED':
                 parcel_actions.append(self.activate_parcel)
 
+
+        if self.state == "removed":
+            if existing_state == 'DOWNLOADED':
+                parcel_actions.append(self.remove_parcel)
+            if existing_state == 'DISTRIBUTED':
+                parcel_actions.extend([self.undistribute_parcel, self.remove_parcel])
+            if existing_state == 'ACTIVATED':
+                parcel_actions.extend([self.deactivate_parcel, self.undistribute_parcel, self.remove_parcel])
+
+        if self.state == "undistributed":
+            if existing_state == 'DISTRIBUTED':
+                parcel_actions.extend([self.undistribute_parcel])
+            if existing_state == 'ACTIVATED':
+                parcel_actions.extend([self.deactivate_parcel, self.undistribute_parcel])
+
+        if self.state == "deactivated":
+            if existing_state == 'ACTIVATED':
+                parcel_actions.append(self.deactivate_parcel)
+
+
+
         if existing_state not in ['AVAILABLE_REMOTELY','DOWNLOADED','DISTRIBUTED','ACTIVATED']:
             error_msg = parcel_api_instance.read_parcel(cluster_name=self.cluster_name, product=self.product, version=self.parcel_version).state.errors[0]
             self.module.fail_json(msg=error_msg)
 
-        for action in parcel_actions:
-            action(parcel_api_instance, self.cluster_name, self.product, self.parcel_version, polling_interval)
-            self.changed = True
+        if not self.module.check_mode:
+            for action in parcel_actions:
+                action(parcel_api_instance, self.cluster_name, self.product, self.parcel_version, self.polling_interval)
+                self.changed = True
 
         self.parcel_output = parcel_api_instance.read_parcel(cluster_name=self.cluster_name, product=self.product, version=self.parcel_version).to_dict()
 
@@ -198,8 +313,9 @@ def main():
            argument_spec=dict(
             cluster_name=dict(required=True, type="str"),
             product=dict(required=True, type="str"),
+            polling_interval=dict(required=False, type="int",default=10),
             parcel_version=dict(required=True, type="str"),
-            state=dict(type='str', default='activate', choices=['download', 'distribute','activate']),
+            state=dict(type='str', default='activated', choices=['downloaded', 'distributed','activated','removed','undistributed','deactivated']),
                           ),
 
         supports_check_mode=True)

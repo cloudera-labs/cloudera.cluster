@@ -26,16 +26,18 @@ from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, Ans
 
 LOG = logging.getLogger(__name__)
 
-def test_pytest_activate_parcel(module_args):
+
+
+def test_pytest_download_parcel(module_args):
     module_args(
         {
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "ECS_Cluster",
+            "cluster_name": "Base_Edge2AI_Node",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
-            "state": "activate"
+            "state": "downloaded"
         }
     )
 
@@ -45,16 +47,93 @@ def test_pytest_activate_parcel(module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
-def test_pytest_download_parcel(module_args):
+def test_pytest_distribute_parcel(module_args):
     module_args(
         {
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "ECS_Cluster",
+            "cluster_name": "Base_Edge2AI_Node",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
-            "state": "download"
+            "state": "distributed"
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        parcel.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+def test_pytest_activate_parcel(module_args):
+    module_args(
+        {
+            "username": os.getenv('CM_USERNAME'),
+            "password": os.getenv('CM_PASSWORD'),
+            "host": os.getenv('CM_HOST'),
+            "cluster_name": "Base_Edge2AI_Node",
+            "product": "ECS",
+            "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
+            "state": "activated"
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        parcel.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+def test_pytest_remove_parcel(module_args):
+    module_args(
+        {
+            "username": os.getenv('CM_USERNAME'),
+            "password": os.getenv('CM_PASSWORD'),
+            "host": os.getenv('CM_HOST'),
+            "cluster_name": "Base_Edge2AI_Node",
+            "product": "ECS",
+            "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
+            "state": "removed"
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        parcel.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+def test_pytest_undistribute_parcel(module_args):
+    module_args(
+        {
+            "username": os.getenv('CM_USERNAME'),
+            "password": os.getenv('CM_PASSWORD'),
+            "host": os.getenv('CM_HOST'),
+            "cluster_name": "Base_Edge2AI_Node",
+            "product": "ECS",
+            "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
+            "state": "undistributed"
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        parcel.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+
+def test_pytest_deactivate_parcel(module_args):
+    module_args(
+        {
+            "username": os.getenv('CM_USERNAME'),
+            "password": os.getenv('CM_PASSWORD'),
+            "host": os.getenv('CM_HOST'),
+            "cluster_name": "Base_Edge2AI_Node",
+            "product": "ECS",
+            "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
+            "state": "deactivated"
         }
     )
 
