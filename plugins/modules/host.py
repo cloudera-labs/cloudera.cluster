@@ -43,8 +43,6 @@ options:
       - The name of the host.
     type: str
     required: yes
-    aliases:
-      - cluster_name
   host_ip:
     description:
       - The ip of the host.

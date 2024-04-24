@@ -35,17 +35,34 @@ author:
   - "Ronald Suplina (@rsuplina)"
 requirements:
   - cm_client
+options:
+  host_name:
+    description:
+      - The name of the host.
+    type: str
+    required: yes
+  host_id:
+    description:
+      - The ID of the host.
+    type: str
+    required: no
 """
 
 EXAMPLES = r"""
 ---
-- name: Get information about the host
+- name: Get information about the host with hostname
   cloudera.cluster.host:
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
     host_name: "Ecs_node_01"
-    state: "present"
+
+- name: Get information about the host with host id
+  cloudera.cluster.host:
+    host: "example.cloudera.host"
+    username: "will_jordan"
+    password: "S&peR4Ec*re"
+    host_name: "Ecs_node_01"
 """
 
 RETURN = r"""
@@ -139,6 +156,7 @@ class ClouderaHostInfo(ClouderaManagerModule):
 
         # Initialize the return values
         self.host_name = self.get_param("host_name")
+        self.host_id = self.get_param("host_id")
         # Execute the logic
         self.process()
 
@@ -152,11 +170,13 @@ class ClouderaHostInfo(ClouderaManagerModule):
         existing = None
 
         try:
-            hosts = host_api_instance.read_hosts().to_dict()
-            for host in hosts['items']:
+            host_list = host_api_instance.read_hosts().to_dict()
+            for host in host_list['items']:
                 if self.host_name == host['hostname']:
-                    host_id = host['host_id']
-                    existing = host_api_instance.read_host(host_id=host_id).to_dict()
+                    existing = host_api_instance.read_host(host_id=host['host_id']).to_dict()
+                    break
+                if self.host_id == host['host_id']:
+                    existing = host_api_instance.read_host(host_id=self.host_id).to_dict()
                     break
                 
         except ApiException as ex:
@@ -171,7 +191,8 @@ class ClouderaHostInfo(ClouderaManagerModule):
 def main():
     module = ClouderaManagerModule.ansible_module(
            argument_spec=dict(
-            host_name=dict(required=True, type="str")
+            host_name=dict(required=False, type="str"),
+            host_id=dict(required=False, type="str")
                           ),
         supports_check_mode=True)
 
