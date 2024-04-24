@@ -40,7 +40,7 @@ options:
     description:
       - The name of the host.
     type: str
-    required: yes
+    required: no
   host_id:
     description:
       - The ID of the host.
@@ -51,26 +51,45 @@ options:
 EXAMPLES = r"""
 ---
 - name: Get information about the host with hostname
-  cloudera.cluster.host:
+  cloudera.cluster.host_info:
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
     host_name: "Ecs_node_01"
 
 - name: Get information about the host with host id
-  cloudera.cluster.host:
+  cloudera.cluster.host_info:
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
     host_name: "Ecs_node_01"
+
+- name: Get information about all the hosts registered by Cloudera Manager
+  cloudera.cluster.host_info:
+    host: "example.cloudera.host"
+    username: "will_jordan"
+    password: "S&peR4Ec*re"
 """
 
 RETURN = r"""
 ---
 cloudera_manager:
     description: Details about Cloudera Manager Host
-    type: dict
+    type: list
+    elements: dict
     contains:
+        hostname:
+            description: The hostname. This field is not mutable after the initial creation.
+            type: str
+            returned: optional
+        host_id:
+            description: A unique host identifier. This is not the same as the hostname (FQDN). It is a distinct value that remains the same even if the hostname changes.
+            type: str
+            returned: optional
+        host_url:
+            description: A URL into the Cloudera Manager web UI for this specific host.
+            type: str
+            returned: optional
         clusterRef:
             description: A reference to the enclosing cluster.
             type: str
@@ -93,18 +112,6 @@ cloudera_manager:
             returned: optional
         health_summary:
             description: The summary status of health check.
-            type: str
-            returned: optional
-        host_id:
-            description: A unique host identifier. This is not the same as the hostname (FQDN). It is a distinct value that remains the same even if the hostname changes.
-            type: str
-            returned: optional
-        host_url:
-            description: A URL into the Cloudera Manager web UI for this specific host.
-            type: str
-            returned: optional
-        hostname:
-            description: The hostname. This field is not mutable after the initial creation.
             type: str
             returned: optional
         ip_address:
@@ -168,33 +175,32 @@ class ClouderaHostInfo(ClouderaManagerModule):
         self.host_output = {}
         self.changed = False
         existing = None
+        if self.host_name or self.host_id:
+            try:
+                host_list = host_api_instance.read_hosts().to_dict()
+                for host in host_list['items']:
+                    if self.host_name == host['hostname']:
+                        existing = host_api_instance.read_host(host_id=host['host_id']).to_dict()
+                        self.host_output = {"items": [existing]}
+                        break
+                    if self.host_id == host['host_id']:
+                        existing = host_api_instance.read_host(host_id=self.host_id).to_dict()
+                        self.host_output = {"items": [existing]}
+                        break
+            except ApiException as ex:
+                if ex.status != 404:
+                    raise ex
+        else:
+            self.host_output = host_api_instance.read_hosts().to_dict()
 
-        try:
-            host_list = host_api_instance.read_hosts().to_dict()
-            for host in host_list['items']:
-                if self.host_name == host['hostname']:
-                    existing = host_api_instance.read_host(host_id=host['host_id']).to_dict()
-                    break
-                if self.host_id == host['host_id']:
-                    existing = host_api_instance.read_host(host_id=self.host_id).to_dict()
-                    break
-                
-        except ApiException as ex:
-            if ex.status != 404:
-                raise ex
-            
-        if existing:
-            self.host_output = host_api_instance.read_host(host_id=existing['host_id']).to_dict()
-        
 
-  
 def main():
     module = ClouderaManagerModule.ansible_module(
            argument_spec=dict(
             host_name=dict(required=False, type="str"),
-            host_id=dict(required=False, type="str")
-                          ),
-        supports_check_mode=True)
+            host_id=dict(required=False, type="str")),
+        supports_check_mode=True,
+        )
 
     result = ClouderaHostInfo(module)
 
