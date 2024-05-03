@@ -35,7 +35,7 @@ def test_pytest_hostname_parameter(module_args):
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
-            "host_name": "cloudera.host.example",
+            "cluster_hostname": "cloudera.host.example",
         }
     )
 
@@ -55,7 +55,7 @@ def test_pytest_host_id_parameter(module_args):
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
-            "host_id": "cloudera.host.example",
+            "host_id": "cloudera.host.id.example",
         }
     )
 

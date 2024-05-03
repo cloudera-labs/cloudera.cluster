@@ -38,7 +38,7 @@ author:
 requirements:
   - cm_client
 options:
-  host_name:
+  cluster_hostname:
     description:
       - The name of the host.
     type: str
@@ -48,12 +48,14 @@ options:
       - The ip of the host.
     type: str
     required: no
+    aliases:
+        - cluster_host_ip
   rack_id:
     description:
       - The rack ID for this host.
     type: str
     required: no
-  cluster_name:
+  name:
     description:
       - The name of the CM Cluster.
     type: str
@@ -66,8 +68,8 @@ options:
     choices:
       - 'present'
       - 'absent'
-      - 'attach'
-      - 'detach'
+      - 'attached'
+      - 'detached'
     required: False
 attributes:
   check_mode:
@@ -82,7 +84,7 @@ EXAMPLES = r"""
     username: "will_jordan"
     password: "S&peR4Ec*re"
     rack_id: "/default"
-    host_name: "Ecs_node_01"
+    cluster_hostname: "Ecs_node_01"
     host_ip: "10.9.8.7"
     state: "present"
 
@@ -90,26 +92,26 @@ EXAMPLES = r"""
   cloudera.cluster.host:
     host: "example.cloudera.host"
     username: "will_jordan"
-    cluster_name: "Base_Edge2AI_Node"
+    name: "Base_Edge2AI_Node"
     password: "S&peR4Ec*re"
-    host_name: "Ecs_node_01"
-    state: "attach"
+    cluster_hostname: "Ecs_node_01"
+    state: "attached"
 
 - name: Detach a host to the Cluster
   cloudera.cluster.host:
     host: "example.cloudera.host"
     username: "will_jordan"
-    cluster_name: "Base_Edge2AI_Node"
+    name: "Base_Edge2AI_Node"
     password: "S&peR4Ec*re"
-    host_name: "Ecs_node_01"
-    state: "detach"
+    cluster_hostname: "Ecs_node_01"
+    state: "detached"
 
 - name: Remove a host 
   cloudera.cluster.host:
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
-    host_name: "Ecs_node_01"
+    cluster_hostname: "Ecs_node_01"
     state: "absent"
 
 
@@ -205,8 +207,8 @@ class ClouderaHost(ClouderaManagerModule):
         super(ClouderaHost, self).__init__(module)
 
         # Initialize the return values
-        self.host_name = self.get_param("host_name")
-        self.cluster_name = self.get_param("cluster_name")
+        self.cluster_hostname = self.get_param("cluster_hostname")
+        self.name = self.get_param("name")
         self.host_ip = self.get_param("host_ip")
         self.state = self.get_param("state")
         self.rack_id = self.get_param("rack_id")
@@ -223,16 +225,7 @@ class ClouderaHost(ClouderaManagerModule):
         existing = None
 
         try:
-            hosts = host_api_instance.read_hosts().to_dict()
-            for host in hosts['items']:
-                if self.host_name == host['hostname']:
-                    host_id = host['host_id']
-                    existing = host_api_instance.read_host(host_id=host_id).to_dict()
-                    break
-                elif self.host_ip == host['ip_address']:
-                    host_id = host['host_id']
-                    existing = host_api_instance.read_host(host_id=host_id).to_dict()
-                    break
+            existing = host_api_instance.read_host(host_id=self.cluster_hostname).to_dict()
         except ApiException as ex:
             if ex.status != 404:
                 raise ex  
@@ -242,15 +235,15 @@ class ClouderaHost(ClouderaManagerModule):
                 host_id = existing['host_id']
             else:
                 host_params = {
-                    "hostname": self.host_name,
+                    "hostname": self.cluster_hostname,
                     "ip_address": self.host_ip,
                 }
                 if self.rack_id:
                     host_params["rack_id"] = self.rack_id
                 if not self.module.check_mode:
                     host_list = ApiHostList(items=[ApiHost(**host_params)])
-                    create_host = host_api_instance.create_hosts(body=host_list).to_dict()
-                    host_id = create_host['items'][0]['host_id']
+                    create_host = host_api_instance.create_hosts(body=host_list)
+                    host_id = create_host.items[0].host_id
                     self.changed = True
             self.host_output = host_api_instance.read_host(host_id=host_id).to_dict()
 
@@ -260,20 +253,20 @@ class ClouderaHost(ClouderaManagerModule):
                     self.host_output = host_api_instance.delete_host(host_id=existing['host_id']).to_dict()
                     self.changed = True
 
-        elif self.state in ['attach','detach']:
+        elif self.state in ['attached','detached']:
 
             try:
-                cluster_api_instance.read_cluster(cluster_name=self.cluster_name).to_dict()
+                cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()
             except ApiException as ex:
                 if ex.status == 404:
-                    self.module.fail_json(msg=f"Cluster does not exist:  {self.cluster_name}")
+                    self.module.fail_json(msg=f"Cluster does not exist:  {self.name}")
 
-            if self.state == 'attach':
+            if self.state == 'attached':
                 if existing:
                     try:
                         if not self.module.check_mode:
-                            host_list = ApiHostList(items=[ApiHost(hostname=self.host_name, host_id=existing['host_id'])])
-                            cluster_api_instance.add_hosts(cluster_name=self.cluster_name,body=host_list).to_dict()
+                            host_list = ApiHostList(items=[ApiHost(hostname=self.cluster_hostname, host_id=existing['host_id'])])
+                            cluster_api_instance.add_hosts(cluster_name=self.name,body=host_list)
                             host_id=existing['host_id']
                             self.changed = True
                     except ApiException as ex:
@@ -281,44 +274,43 @@ class ClouderaHost(ClouderaManagerModule):
                             pass
                 else:
                     host_params = {
-                        "hostname": self.host_name,
+                        "hostname": self.cluster_hostname,
                         "ip_address": self.host_ip,
                     }
                     if self.rack_id:
                         host_params["rack_id"] = self.rack_id
                     if not self.module.check_mode:
                         new_host_param = ApiHostList(items=[ApiHost(**host_params)])
-                        create_host = host_api_instance.create_hosts(body=new_host_param).to_dict()
-                        host_list = ApiHostList(items=[ApiHost(hostname=self.host_name, host_id=create_host['items'][0]['host_id'])])
-                        add_host=cluster_api_instance.add_hosts(cluster_name=self.cluster_name,body=host_list).to_dict()
-                        host_id=add_host['items'][0]['host_id']
+                        create_host = host_api_instance.create_hosts(body=new_host_param)
+                        host_list = ApiHostList(items=[ApiHost(hostname=self.cluster_hostname, host_id=create_host.items[0].host_id)])
+                        add_host = cluster_api_instance.add_hosts(cluster_name=self.name,body=host_list)
+                        host_id = add_host.items[0].host_id
                         self.changed = True
 
-            elif self.state == 'detach':
+            elif self.state == 'detached':
                 if existing and existing.get('cluster_ref') and existing['cluster_ref'].get('cluster_name'):
                         if not self.module.check_mode:
-                            cluster_api_instance.remove_host(cluster_name=existing['cluster_ref']['cluster_name'],host_id=existing['host_id']).to_dict()
+                            cluster_api_instance.remove_host(cluster_name=existing['cluster_ref']['cluster_name'],host_id=existing['host_id'])
                             host_id=existing['host_id']
                             self.changed = True
 
-            self.host_output = host_api_instance.read_host(host_id=host_id).to_dict()
+            self.host_output = host_api_instance.read_host(host_id=self.cluster_hostname).to_dict()
   
 def main():
     module = ClouderaManagerModule.ansible_module(
            argument_spec=dict(
-            host_name=dict(required=False, type="str"),
-            cluster_name=dict(required=False, type="str"),
-            host_ip=dict(required=False, type="str"),
+            cluster_hostname=dict(required=True, type="str"),
+            name=dict(required=False, type="str"),
+            host_ip=dict(required=False, type="str",aliases=["cluster_host_ip"]),
             rack_id=dict(required=False, type="str"),
-            state=dict(type='str', default='present', choices=['present','absent','attach','detach']),
+            state=dict(type='str', default='present', choices=['present','absent','attached','detached']),
                           ),
         supports_check_mode=True,
 
     required_if=[
-        ('state', ('attach'), ('cluster_name',)),
-        ('state', ('detach'), ('cluster_name',)),
-        ('state', ('attach'), ('host_ip',)),
-        ('state', ('present'), ('host_ip',))
+        ('state', 'attached', ('name', 'host_ip'), False),
+        ('state', 'detached', ('name',), False),
+        ('state', 'present', ('host_ip',), False)
     ]
         )
 

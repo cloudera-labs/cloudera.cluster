@@ -36,7 +36,7 @@ author:
 requirements:
   - cm_client
 options:
-  host_name:
+  cluster_hostname:
     description:
       - The name of the host.
     type: str
@@ -55,14 +55,14 @@ EXAMPLES = r"""
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
-    host_name: "Ecs_node_01"
+    cluster_hostname: "Ecs_node_01"
 
 - name: Get information about the host with host id
   cloudera.cluster.host_info:
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
-    host_name: "Ecs_node_01"
+    cluster_hostname: "Ecs_node_01"
 
 - name: Get information about all the hosts registered by Cloudera Manager
   cloudera.cluster.host_info:
@@ -162,7 +162,7 @@ class ClouderaHostInfo(ClouderaManagerModule):
         super(ClouderaHostInfo, self).__init__(module)
 
         # Initialize the return values
-        self.host_name = self.get_param("host_name")
+        self.cluster_hostname = self.get_param("cluster_hostname")
         self.host_id = self.get_param("host_id")
         # Execute the logic
         self.process()
@@ -174,19 +174,12 @@ class ClouderaHostInfo(ClouderaManagerModule):
         host_api_instance = HostsResourceApi(self.api_client)
         self.host_output = {}
         self.changed = False
-        existing = None
-        if self.host_name or self.host_id:
+        if self.cluster_hostname or self.host_id:
             try:
-                host_list = host_api_instance.read_hosts().to_dict()
-                for host in host_list['items']:
-                    if self.host_name == host['hostname']:
-                        existing = host_api_instance.read_host(host_id=host['host_id']).to_dict()
-                        self.host_output = {"items": [existing]}
-                        break
-                    if self.host_id == host['host_id']:
-                        existing = host_api_instance.read_host(host_id=self.host_id).to_dict()
-                        self.host_output = {"items": [existing]}
-                        break
+                if self.cluster_hostname:
+                    self.host_output = host_api_instance.read_host(host_id=self.cluster_hostname).to_dict()
+                else:
+                    self.host_output = host_api_instance.read_host(host_id=self.host_id).to_dict()
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
@@ -197,7 +190,7 @@ class ClouderaHostInfo(ClouderaManagerModule):
 def main():
     module = ClouderaManagerModule.ansible_module(
            argument_spec=dict(
-            host_name=dict(required=False, type="str"),
+            cluster_hostname=dict(required=False, type="str"),
             host_id=dict(required=False, type="str")),
         supports_check_mode=True,
         )

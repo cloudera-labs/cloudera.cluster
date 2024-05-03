@@ -26,7 +26,7 @@ from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, Ans
 
 LOG = logging.getLogger(__name__)
 
-def test_pytest_host(module_args):
+def test_pytest_add_host_to_cloudera_manager(module_args):
     module_args(
         {
             "username": os.getenv('CM_USERNAME'),
@@ -35,9 +35,56 @@ def test_pytest_host(module_args):
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
-            "cluster_name": "Base_Edge2Ai_Node",
-            "host_name": "Ecs_Host_Test_Node",
-            "state": "attach"
+            "cluster_hostname": "cloudera.host.example",
+            "rack_id": "/defo",
+            "cluster_host_ip": "10.10.1.1",
+            "state": "present"
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        host.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+
+def test_pytest_attach_host_to_cluster(module_args):
+    module_args(
+        {
+            "username": os.getenv('CM_USERNAME'),
+            "password": os.getenv('CM_PASSWORD'),
+            "host": os.getenv('CM_HOST'),
+            "port": "7180",
+            "verify_tls": "no",
+            "debug": "no",
+            "cluster_hostname": "cloudera.host.example",
+            "name": "Cluster_Example",
+            "rack_id": "/defo",
+            "cluster_host_ip": "10.10.1.1",
+            "state": "attached"
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        host.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+
+def test_pytest_detach_host_from_cluster(module_args):
+    module_args(
+        {
+            "username": os.getenv('CM_USERNAME'),
+            "password": os.getenv('CM_PASSWORD'),
+            "host": os.getenv('CM_HOST'),
+            "port": "7180",
+            "verify_tls": "no",
+            "debug": "no",
+            "cluster_hostname": "cloudera.host.example",
+            "name": "Cluster_Example",
+            "state": "detached"
         }
     )
 
