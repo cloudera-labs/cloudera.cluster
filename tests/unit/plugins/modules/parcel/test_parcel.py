@@ -34,7 +34,7 @@ def test_pytest_download_parcel(module_args):
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "Base_Edge2AI_Node",
+            "cluster_name": "Example_cluster",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
             "state": "downloaded"
@@ -53,7 +53,7 @@ def test_pytest_distribute_parcel(module_args):
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "Base_Edge2AI_Node",
+            "cluster_name": "Example_cluster",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
             "state": "distributed"
@@ -72,7 +72,7 @@ def test_pytest_activate_parcel(module_args):
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "Base_Edge2AI_Node",
+            "cluster_name": "Example_cluster",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
             "state": "activated"
@@ -91,7 +91,7 @@ def test_pytest_remove_parcel(module_args):
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "Base_Edge2AI_Node",
+            "cluster_name": "Example_cluster",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
             "state": "removed"
@@ -110,7 +110,7 @@ def test_pytest_undistribute_parcel(module_args):
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "Base_Edge2AI_Node",
+            "cluster_name": "Example_cluster",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
             "state": "undistributed"
@@ -130,7 +130,7 @@ def test_pytest_deactivate_parcel(module_args):
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
             "host": os.getenv('CM_HOST'),
-            "cluster_name": "Base_Edge2AI_Node",
+            "cluster_name": "Example_cluster",
             "product": "ECS",
             "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
             "state": "deactivated"
