@@ -46,7 +46,7 @@ options:
       - The name of the product, e.g. CDH, Impala
     type: str
     required: no
-  version:
+  parcel_version:
     description:
       - The version of the product, e.g. 1.1.0, 2.3.0.
     type: str

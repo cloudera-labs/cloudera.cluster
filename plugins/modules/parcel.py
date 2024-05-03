@@ -121,7 +121,7 @@ cloudera_manager:
             product: The name of the product.
             type: str
             returned: optional
-        version:
+        parcel_version:
             description: The version of the product
             type: str
             returned: optional
