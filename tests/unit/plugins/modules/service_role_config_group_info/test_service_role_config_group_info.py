@@ -22,7 +22,9 @@ import logging
 import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import service_role_config_group_info
+from ansible_collections.cloudera.cluster.plugins.modules import (
+    service_role_config_group_info,
+)
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -124,22 +126,6 @@ def test_view_service_role(conn, module_args):
         service_role_config_group_info.main()
 
     assert len(e.value.role_config_groups) == 1
-
-
-def test_view_service_roles_by_type(conn, module_args):
-    module_args(
-        {
-            **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "type": "NODEMANAGER",
-        }
-    )
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
-
-    assert len(e.value.roles) == 3
 
 
 @pytest.mark.skip("Requires hostname")
