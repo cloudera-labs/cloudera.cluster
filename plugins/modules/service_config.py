@@ -54,6 +54,14 @@ options:
     required: yes
     aliases:
       - params
+  view:
+    description:
+      - The view to materialize.
+    type: str
+    default: summary
+    choices:
+        - summary
+        - full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -114,131 +122,81 @@ EXAMPLES = r"""
 
 RETURN = r"""
 ---
-service:
-  description: Details about the service.
-  type: dict
+config:
+  description: Service-wide configuration details about a cluster service.
+  type: list
+  elements: dict
   contains:
     name:
-      description: The cluster service name.
+      description: The canonical name that identifies this configuration parameter.
       type: str
       returned: always
-    type:
-      description: The cluster service type.
+    value:
+      description:
+        - The user-defined value. 
+        - When absent, the default value (if any) will be used.
+        - Can also be absent, when enumerating allowed configs.
       type: str
       returned: always
-      sample:
-        - HDFS
-        - HBASE
-        - ECS
-    cluster_ref:
-      description: The associated cluster reference.
-      type: dict
-      returned: always
-      contains:
-        cluster_name:
-          description: The name of the cluster, which uniquely identifies it in a Cloudera Manager installation.
-          type: str
-          returned: always
-        display_name:
-          description: The display name of the cluster.
-          type: str
-          returned: when supported
-    service_state:
-      description: State of the service.
-      type: str
-      returned: always
-      sample:
-        - HISTORY_NOT_AVAILABLE
-        - UNKNOWN
-        - STARTING
-        - STARTED
-        - STOPPING
-        - STOPPED
-        - NA
-    health_summary:
-      description: The high-level health status of the service.
-      type: str
-      returned: always
-      sample:
-        - DISABLED
-        - HISTORY_NOT_AVAILABLE
-        - NOT_AVAILABLE
-        - GOOD
-        - CONCERNING
-        - BAD
-    config_staleness_status:
-      description: Status of configuration staleness for the service.
-      type: str
-      returned: always
-      sample:
-        - FRESH
-        - STALE_REFRESHABLE
-        - STALE
-    client_config_staleness_status:
-      description: Status of the client configuration for the service.
-      type: str
-      returned: always
-      sample:
-        - FRESH
-        - STALE_REFRESHABLE
-        - STALE
-    health_checks:
-      description: Lists all available health checks for Cloudera Manager Service.
-      type: list
-      elements: dict
-      returned: when supported
-      contains:
-        name:
-          description: Unique name of this health check.
-          type: str
-          returned: always
-        summary:
-          description: The high-level health status of the health check.
-          type: str
-          returned: always
-          sample:
-            - DISABLED
-            - HISTORY_NOT_AVAILABLE
-            - NOT_AVAILABLE
-            - GOOD
-            - CONCERNING
-            - BAD
-        explanation:
-          description: The explanation of this health check.
-          type: str
-          returned: when supported
-        suppressed:
-          description:
-            - Whether this health check is suppressed.
-            - A suppressed health check is not considered when computing the service's overall health.
-          type: bool
-          returned: when supported
-    maintenance_mode:
-      description: Whether the service is in maintenance mode.
+    required:
+      description:
+        - Whether this configuration is required for the service. 
+        - If any required configuration is not set, operations on the service may not work.
+        - Available using I(view=full).
       type: bool
       returned: when supported
-    maintenance_owners:
-      description: The list of objects that trigger this service to be in maintenance mode.
-      type: list
-      elements: str
+    default:
+      description:
+        - The default value.
+        - Available using I(view=full).
+      type: str
+      returned: when supported
+    display_name:
+      description:
+        - A user-friendly name of the parameters, as would have been shown in the web UI.
+        - Available using I(view=full).
+      type: str
+      returned: when supported
+    description:
+      description:
+        - A textual description of the parameter.
+        - Available using I(view=full).
+      type: str
+      returned: when supported
+    related_name:
+      description:
+        - If applicable, contains the related configuration variable used by the source project.
+        - Available using I(view=full).
+      type: str
+      returned: when supported
+    sensitive:
+      description:
+        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller. 
+      type: bool
+      returned: when supported
+    validation_state:
+      description:
+        - State of the configuration parameter after validation.
+        - Available using I(view=full).
+      type: str
       returned: when supported
       sample:
-        - CLUSTER
-        - SERVICE
-        - ROLE
-        - HOST
-        - CONTROL_PLANE
-    display_name:
-      description: The display name for the service that is shown in the Cloudera Manager UI.
+        - OK
+        - WARNING
+        - ERROR
+    validation_message:
+      description:
+        - A message explaining the parameter's validation state.
+        - Available using I(view=full).
       type: str
       returned: when supported
-    tags:
-      description: The dictionary of tags for the service.
-      type: dict
-      returned: when supported
-    service_version:
-      description: Version of the service.
-      type: str
+    validation_warnings_suppressed:
+      description:
+        - Whether validation warnings associated with this parameter are suppressed. 
+        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI. 
+        - Configurations that do not produce warnings will not contain this field.
+        - Available using I(view=full).
+      type: bool
       returned: when supported
 """
 
@@ -252,6 +210,7 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
         self.service = self.get_param("service")
         self.params = self.get_param("parameters")
         self.purge = self.get_param("purge")
+        self.view = self.get_param("view")
 
         # Initialize the return value
         self.changed = False
@@ -304,7 +263,6 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
                     items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
                 )
 
-                refresh = False
                 self.config = [
                     p.to_dict()
                     for p in api_instance.update_service_config(
@@ -312,12 +270,14 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
                     ).items
                 ]
 
+                if self.view == "full":
+                    refresh = False
+
         if refresh:
-            # Return 'summary'
             self.config = [
                 p.to_dict()
                 for p in api_instance.read_service_config(
-                    self.cluster, self.service
+                    self.cluster, self.service, view=self.view
                 ).items
             ]
 
@@ -329,6 +289,10 @@ def main():
             service=dict(required=True, aliases=["service_name", "name"]),
             parameters=dict(type="dict", required=True, aliases=["params"]),
             purge=dict(type="bool", default=False),
+            view=dict(
+                default="summary",
+                choices=["summary", "full"],
+            ),
         ),
         supports_check_mode=True,
     )

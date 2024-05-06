@@ -259,44 +259,14 @@ role:
         - NAMENODE
         - DATANODE
         - TASKTRACKER
-    host_ref:
-      description: The associated cluster host running the cluster service role.
-      type: dict
+    host_id:
+      description: The unique ID of the cluster host.
+      type: str
       returned: always
-      contains:
-        host_id:
-          description: The unique ID of the cluster host.
-          type: str
-          returned: always
-        hostname:
-          description: The hostname of the cluster host.
-          type: str
-          returned: when supported
-    service_ref:
-      description: The associated service and cluster references.
-      type: dict
+    service_name:
+      description: The name of the cluster service, which uniquely identifies it in a cluster.
+      type: str
       returned: always
-      contains:
-        peer_name:
-          description: The name of the Cloudera Manager peer corresponding to the remote Cloudera Manager which manages the cluster service.
-          type: str
-          returned: when supported
-        cluster_name:
-          description: The name of the cluster, which uniquely identifies it in a Cloudera Manager installation.
-          type: str
-          returned: always
-        service_name:
-          description: The name of the cluster service, which uniquely identifies it in a cluster.
-          type: str
-          returned: always
-        service_display_name:
-          description: The display name of the cluster service.
-          type: str
-          returned: when supported
-        service_type:
-          description: The type of the cluster service.
-          type: str
-          returned: when supported
     role_state:
       description: State of the cluster service role.
       type: str
@@ -378,15 +348,10 @@ role:
         - ROLE
         - HOST
         - CONTROL_PLANE
-    role_config_group_ref:
-      description: The associated role configuration group for this cluster service role.
-      type: dict
+    role_config_group_name:
+      description: The name of the cluster service role config group, which uniquely identifies it in a Cloudera Manager installation.
+      type: str
       returned: when supported
-      contains:
-        role_config_group_name:
-          description: The name of the cluster service role config group, which uniquely identifies it in a Cloudera Manager installation.
-          type: str
-          returned: always
     tags:
       description: The dictionary of tags for the cluster service role.
       type: dict

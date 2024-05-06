@@ -92,7 +92,7 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 config:
-  description: Configuration details about a cluster service.
+  description: Service-wide configuration details about a cluster service.
   type: list
   elements: dict
   contains:

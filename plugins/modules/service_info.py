@@ -110,19 +110,10 @@ services:
         - HDFS
         - HBASE
         - ECS
-    cluster_ref:
-      description: The associated cluster reference.
-      type: dict
+    cluster_name:
+      description: The name of the cluster, which uniquely identifies it in a Cloudera Manager installation.
+      type: str
       returned: always
-      contains:
-        cluster_name:
-          description: The name of the cluster, which uniquely identifies it in a Cloudera Manager installation.
-          type: str
-          returned: always
-        display_name:
-          description: The display name of the cluster.
-          type: str
-          returned: when supported
     service_state:
       description: State of the service.
       type: str

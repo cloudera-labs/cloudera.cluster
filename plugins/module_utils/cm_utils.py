@@ -36,6 +36,7 @@ from cm_client import (
     ApiCommand,
     ApiConfigList,
     ApiRole,
+    ApiRoleConfigGroup,
     ApiService,
     Configuration,
 )
@@ -50,7 +51,7 @@ __maintainer__ = ["wmudge@cloudera.com"]
 
 SERVICE_OUTPUT = [
     "client_config_staleness_status",
-    "cluster_ref",
+    # "cluster_ref",
     "config_staleness_status",
     "display_name",
     "health_checks",
@@ -70,16 +71,24 @@ ROLE_OUTPUT = [
     "ha_status",
     "health_checks",
     "health_summary",
-    "host_ref",
+    # "host_ref",
     "maintenance_mode",
     "maintenance_owners",
     "name",
-    "role_config_group_ref",
+    # "role_config_group_ref",
     "role_state",
-    "service_ref",
+    # "service_ref",
     "tags",
     "type",
     "zoo_keeper_server_mode",
+]
+
+ROLE_CONFIG_GROUP = [
+    "name",
+    "role_type",
+    "base",
+    "display_name",
+    # "service_ref",
 ]
 
 
@@ -95,13 +104,28 @@ def _parse_output(entity: dict, filter: list) -> dict:
 
 
 def parse_service_result(service: ApiService) -> dict:
-    rendered = service.to_dict()
-    return _parse_output(rendered, SERVICE_OUTPUT)
+    # Retrieve only the cluster_name
+    output = dict(cluster_name=service.cluster_ref.cluster_name)
+    output.update(_parse_output(service.to_dict(), SERVICE_OUTPUT))
+    return output
 
 
 def parse_role_result(role: ApiRole) -> dict:
-    rendered = role.to_dict()
-    return _parse_output(rendered, ROLE_OUTPUT)
+    # Retrieve only the host_id, role_config_group, and service identifiers
+    output = dict(
+        host_id=role.host_ref.host_id,
+        role_config_group_name=role.role_config_group_ref.role_config_group_name,
+        service_name=role.service_ref.service_name,
+    )
+    output.update(_parse_output(role.to_dict(), ROLE_OUTPUT))
+    return output
+
+
+def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup):
+    # Retrieve only the service identifier
+    output = dict(service_name=role_config_group.service_ref.service_name)
+    output.update(_parse_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
+    return output
 
 
 def normalize_values(add: dict) -> dict:
@@ -149,7 +173,9 @@ def resolve_parameter_updates(
     return updates
 
 
-def resolve_tag_updates(current: dict, incoming: dict, purge: bool = False) -> tuple[dict, dict]:
+def resolve_tag_updates(
+    current: dict, incoming: dict, purge: bool = False
+) -> tuple[dict, dict]:
     incoming_tags = {
         k: str(v)
         for k, v in incoming.items()
@@ -168,10 +194,8 @@ def resolve_tag_updates(current: dict, incoming: dict, purge: bool = False) -> t
         if purge:
             delta_del = diff[1]
         else:
-            delta_del = {
-                k: v for k, v in diff[1].items() if k in diff[0]
-            }
-            
+            delta_del = {k: v for k, v in diff[1].items() if k in diff[0]}
+
     return (delta_add, delta_del)
 
 
