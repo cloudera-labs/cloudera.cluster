@@ -33,7 +33,8 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
         setup_module_args({
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            #"host": os.getenv('CM_HOST'),
+            "endpoint": os.getenv('CM_ENDPOINT'),
             "verify_tls": "no",
             "debug": "yes",
             "path": "/clusters"

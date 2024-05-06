@@ -28,11 +28,11 @@ from ansible_collections.cloudera.cluster.tests.unit.plugins.modules.utils impor
 @unittest.skipUnless(os.getenv('CM_USERNAME'), "Cloudera Manager access parameters not set")
 class TestCMResourceIntegration(ModuleTestCase):
     
-    def test_post(self):
+    def test_post(self):       
         create_module_args = {
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            "url": os.getenv('CM_ENDPOINT'),
             "verify_tls": "no",
             "debug": "yes",
             "method": "POST",
@@ -50,7 +50,8 @@ class TestCMResourceIntegration(ModuleTestCase):
         update_module_args = {
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            #"host": os.getenv('CM_HOST'),
+            "url": os.getenv('CM_ENDPOINT'),
             "verify_tls": "no",
             "debug": "yes",
             "method": "PUT",
@@ -63,13 +64,14 @@ class TestCMResourceIntegration(ModuleTestCase):
         delete_module_args = {
             "username": os.getenv('CM_USERNAME'),
             "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            #"host": os.getenv('CM_HOST'),
+            "url": os.getenv('CM_ENDPOINT'),
             "verify_tls": "no",
             "debug": "yes",
             "method": "DELETE",
             "path": "/users/unit_test"
         }
-        
+               
         # Create
         setup_module_args(create_module_args)
         with pytest.raises(AnsibleExitJson) as e:
