@@ -190,6 +190,7 @@ class ClouderaManagerModule(object):
         self.ssl_ca_cert = self.get_param("ssl_ca_cert")
         self.debug = self.get_param("debug")
         self.agent_header = self.get_param("agent_header")
+        self.proxy_server = self.get_param("proxy")
 
         # Initialize common return values
         self.changed = False
@@ -200,6 +201,10 @@ class ClouderaManagerModule(object):
         config.password = self.password
         config.verify_ssl = self.verify_tls
         config.debug = self.debug
+        
+        # Configure HTTP proxy server
+        if self.proxy_server:
+            config.proxy = self.proxy_server
 
         # Configure custom validation certificate
         if self.ssl_ca_cert:
@@ -253,6 +258,9 @@ class ClouderaManagerModule(object):
 
         # Create and set the API Client
         self.api_client = ApiClient()
+        
+        # Update the User Agent
+        self.api_client.user_agent = self.agent_header
 
     def get_auth_headers(self, config):
         """
@@ -303,10 +311,12 @@ class ClouderaManagerModule(object):
             api_instance.get_version()
         self.api_client.cookie = self.api_client.last_response.getheader("Set-Cookie")
 
-    def wait_for_command_state(self,command_id, polling_interval):
+    def wait_for_command_state(self, command_id, polling_interval):
         command_api_instance = CommandsResourceApi(self.api_client)
         while True:
-            get_command_state = command_api_instance.read_command_with_http_info(command_id=command_id)
+            get_command_state = command_api_instance.read_command_with_http_info(
+                command_id=command_id
+            )
             state = get_command_state[0].active
             if not state:
                 break
@@ -344,7 +354,8 @@ class ClouderaManagerModule(object):
         return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
 
     @staticmethod
-    def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):
+    def ansible_module_internal(
+        argument_spec={}, required_together=[], **kwargs):
         """
         INTERNAL: Creates the Ansible module argument spec and dependencies for
         CM API endpoint discovery. Typically, modules will use the
@@ -370,8 +381,11 @@ class ClouderaManagerModule(object):
                     aliases=["debug_endpoints"],
                 ),
                 agent_header=dict(
-                    required=False, type="str", default="ClouderaFoundry"
+                    required=False, type="str", default="ClouderaFoundry", aliases=["user_agent"]
                 ),
+                proxy_server=dict(
+                    required=False, type="str", aliases=["proxy", "http_proxy"]
+                )
             ),
             required_together=required_together + [["username", "password"]],
             **kwargs,
@@ -380,24 +394,34 @@ class ClouderaManagerModule(object):
     @staticmethod
     def ansible_module(
         argument_spec={},
+        bypass_checks=False,
+        no_log=False,
         mutually_exclusive=[],
-        required_one_of=[],
         required_together=[],
-        **kwargs,
+        required_one_of=[],
+        add_file_common_args=False,
+        supports_check_mode=False,
+        required_if=None,
+        required_by=None,
     ):
         """
         Creates the base Ansible module argument spec and dependencies,
         including discovery and direct endpoint URL support.
         """
         return ClouderaManagerModule.ansible_module_internal(
-            argument_spec=dict(
+            dict(
                 **argument_spec,
                 url=dict(type="str", aliases=["endpoint", "cm_endpoint_url"]),
             ),
+            required_together,
+            bypass_checks=bypass_checks,
+            no_log=no_log,
             mutually_exclusive=mutually_exclusive + [["url", "host"]],
             required_one_of=required_one_of + [["url", "host"]],
-            required_together=required_together,
-            **kwargs,
+            add_file_common_args=add_file_common_args,
+            supports_check_mode=supports_check_mode,
+            required_if=required_if,
+            required_by=required_by,
         )
 
 
@@ -405,22 +429,32 @@ class ClouderaManagerMutableModule(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaManagerMutableModule, self).__init__(module)
         self.message = self.get_param("message")
-        
+
     @staticmethod
     def ansible_module(
         argument_spec={},
+        bypass_checks=False,
+        no_log=False,
         mutually_exclusive=[],
-        required_one_of=[],
         required_together=[],
-        **kwargs,
+        required_one_of=[],
+        add_file_common_args=False,
+        supports_check_mode=False,
+        required_if=None,
+        required_by=None,
     ):
         return ClouderaManagerModule.ansible_module(
-            dict(
+            argument_spec=dict(
                 **argument_spec,
-                message=dict(default="Managed by Ansible", aliases=["msg"])
+                message=dict(default="Managed by Ansible", aliases=["msg"]),
             ),
-            mutually_exclusive,
-            required_one_of,
-            required_together,
-            **kwargs
+            bypass_checks=bypass_checks,
+            no_log=no_log,
+            mutually_exclusive=mutually_exclusive,
+            required_together=required_together,
+            required_one_of=required_one_of,
+            add_file_common_args=add_file_common_args,
+            supports_check_mode=supports_check_mode,
+            required_if=required_if,
+            required_by=required_by,
         )
