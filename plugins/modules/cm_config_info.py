@@ -78,7 +78,7 @@ config:
       description:
         - The canonical name that identifies this configuration parameter.
       type: str
-      returned: when supported
+      returned: always
     value:
       description:
         - The user-defined value.
@@ -119,12 +119,14 @@ config:
       returned: when supported
     sensitive:
       description:
-        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller.
+        - Whether this configuration is sensitive, i.e. contains information such as passwords.
+        - This parameter might affect how the value of this configuration might be shared by the caller.
       type: bool
       returned: when supported
     validate_state:
       description:
         - State of the configuration parameter after validation.
+        - For example, C(OK), C(WARNING), and C(ERROR).
         - Requires I(full) view.
       type: str
       returned: when supported
