@@ -508,7 +508,7 @@ class ClouderaManagerModule(object):
         data = json.loads(results[0].data.decode("utf-8"))
         if field in data:
             data = data[field]
-        return data if type(data) is list else [data]
+        return data if isinstance(data, list) else [data]
 
     def get_cm_config(self, scope: str = "summary") -> ApiConfigList:
         return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
