@@ -30,7 +30,7 @@ from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_text
 from time import sleep
-from cm_client import ApiClient, ApiConfigList, Configuration
+from cm_client import ApiClient, ApiCommand, ApiConfigList, ApiService, Configuration
 from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
 from cm_client.apis.commands_resource_api import CommandsResourceApi
@@ -38,6 +38,37 @@ from cm_client.apis.commands_resource_api import CommandsResourceApi
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
+
+
+SERVICE_OUTPUT = [
+    "client_config_staleness_status",
+    "cluster_ref",
+    "config_staleness_status",
+    "display_name",
+    "health_checks",
+    "health_summary",
+    "maintenance_mode",
+    "maintenance_owners",
+    "name",
+    "service_state",
+    "service_version",
+    "tags",
+    "type",
+]
+
+
+def parse_service_result(service: ApiService) -> dict:
+    rendered = service.to_dict()
+    output = {}
+    
+    for k in SERVICE_OUTPUT:
+        if k == "tags":
+            output[k] = { entry["name"]: entry["value"] for entry in rendered[k]}
+        else:
+            output[k] = rendered[k]
+            
+    return output
+    # return {k: rendered[k] for k in SERVICE_OUTPUT}
 
 
 class ClusterTemplate(object):
@@ -155,14 +186,15 @@ class ClouderaManagerModule(object):
                 return f(self, *args, **kwargs)
             except ApiException as ae:
                 err = dict(
-                    msg="API error: " + to_text(ae.reason),
                     status_code=ae.status,
                 )
                 if ae.body:
                     try:
-                        err.update(body=json.loads(ae.body))
+                        err.update(msg=json.loads(ae.body)["message"])
                     except Exception:
-                        err.update(body=ae.body.decode("utf-8")),
+                        err.update(msg="API error: " + to_text(ae.reason))
+                else:
+                    err.update(msg="API error: " + to_text(ae.reason))
 
                 self.module.fail_json(**_add_log(err))
             except MaxRetryError as maxe:
@@ -201,7 +233,7 @@ class ClouderaManagerModule(object):
         config.password = self.password
         config.verify_ssl = self.verify_tls
         config.debug = self.debug
-        
+
         # Configure HTTP proxy server
         if self.proxy_server:
             config.proxy = self.proxy_server
@@ -258,7 +290,7 @@ class ClouderaManagerModule(object):
 
         # Create and set the API Client
         self.api_client = ApiClient()
-        
+
         # Update the User Agent
         self.api_client.user_agent = self.agent_header
 
@@ -353,9 +385,19 @@ class ClouderaManagerModule(object):
     def get_cm_config(self, scope: str = "summary") -> ApiConfigList:
         return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
 
+    def wait_command(self, command: ApiCommand, polling: int = 10, delay: int = 5):
+        poll_count = 0
+        while (command.active):
+            if poll_count > polling:
+                self.module.fail_json(msg="Command timeout: " + command.id)
+            sleep(delay)
+            poll_count += 1
+            command = CommandsResourceApi(self.api_client).read_command(command.id)
+        if not command.success:
+            self.module.fail_json(msg=to_text(command.result_message), command_id=to_text(command.id))
+
     @staticmethod
-    def ansible_module_internal(
-        argument_spec={}, required_together=[], **kwargs):
+    def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):
         """
         INTERNAL: Creates the Ansible module argument spec and dependencies for
         CM API endpoint discovery. Typically, modules will use the
@@ -381,11 +423,14 @@ class ClouderaManagerModule(object):
                     aliases=["debug_endpoints"],
                 ),
                 agent_header=dict(
-                    required=False, type="str", default="ClouderaFoundry", aliases=["user_agent"]
+                    required=False,
+                    type="str",
+                    default="ClouderaFoundry",
+                    aliases=["user_agent"],
                 ),
                 proxy_server=dict(
                     required=False, type="str", aliases=["proxy", "http_proxy"]
-                )
+                ),
             ),
             required_together=required_together + [["username", "password"]],
             **kwargs,
