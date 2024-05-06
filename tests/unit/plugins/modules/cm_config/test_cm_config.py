@@ -58,9 +58,9 @@ def test_missing_parameters(conn, module_args):
 
 def test_set_config(conn, module_args):
     conn.update(
-        params=dict(custom_header_color="PURPLE"),
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        parameters=dict(custom_header_color="PURPLE"),
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
@@ -80,7 +80,7 @@ def test_set_config(conn, module_args):
 def test_unset_config(conn, module_args):
     module_args({
         **conn,
-        "params": dict(custom_header_color=None) 
+        "parameters": dict(custom_header_color=None) 
     })
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -100,8 +100,8 @@ def test_set_config_with_purge(conn, module_args):
     conn.update(
         params=dict(custom_header_color="PURPLE"),
         purge=True,
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
@@ -122,8 +122,8 @@ def test_purge_all_config(conn, module_args):
     conn.update(
         params=dict(),
         purge=True,
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
