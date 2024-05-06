@@ -85,6 +85,7 @@ def test_view_default(conn, module_args):
             **conn,
             "cluster": os.getenv("CM_CLUSTER"),
             "service": os.getenv("CM_SERVICE"),
+            "role": os.getenv("CM_ROLE"),
         }
     )
 
