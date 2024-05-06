@@ -22,7 +22,9 @@ import logging
 import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import service_role_config_group_config_info
+from ansible_collections.cloudera.cluster.plugins.modules import (
+    service_role_config_group_config_info,
+)
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -67,7 +69,7 @@ def test_missing_service(conn, module_args):
 
     with pytest.raises(AnsibleFailJson, match="cluster, role_config_group"):
         service_role_config_group_config_info.main()
-        
+
 
 def test_missing_cluster(conn, module_args):
     conn.update(cluster="example")
@@ -75,8 +77,8 @@ def test_missing_cluster(conn, module_args):
 
     with pytest.raises(AnsibleFailJson, match="role_config_group, service"):
         service_role_config_group_config_info.main()
-        
-    
+
+
 def test_missing_role_config_group(conn, module_args):
     conn.update(role_config_group="example")
     module_args(conn)
