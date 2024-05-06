@@ -22,22 +22,13 @@ import logging
 import os
 import pytest
 
-from ansible.module_utils.common.dict_transformations import recursive_diff
-
-from ansible_collections.cloudera.cluster.plugins.modules import cluster_service_config
+from ansible_collections.cloudera.cluster.plugins.modules import service_config
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
 )
 
 LOG = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def am_check_mode(am):
-    am.check_mode = True
-    yield am
-    am.check_mode = False
 
 
 @pytest.fixture
@@ -67,7 +58,7 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, parameters, service"):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_missing_service(conn, module_args):
@@ -75,7 +66,7 @@ def test_missing_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, parameters"):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_missing_cluster(conn, module_args):
@@ -83,7 +74,7 @@ def test_missing_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="parameters, service"):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_missing_parameters(conn, module_args):
@@ -91,7 +82,7 @@ def test_missing_parameters(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, service"):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_present_invalid_cluster(conn, module_args):
@@ -103,7 +94,7 @@ def test_present_invalid_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_present_invalid_service(conn, module_args):
@@ -115,7 +106,7 @@ def test_present_invalid_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Service 'example' not found"):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_present_invalid_parameter(conn, module_args):
@@ -129,7 +120,7 @@ def test_present_invalid_parameter(conn, module_args):
     with pytest.raises(
         AnsibleFailJson, match="Unknown configuration attribute 'example'"
     ):
-        cluster_service_config.main()
+        service_config.main()
 
 
 def test_set_parameters(conn, module_args):
@@ -143,7 +134,7 @@ def test_set_parameters(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == True
     assert {c["name"]: c["value"] for c in e.value.config}[
@@ -151,7 +142,7 @@ def test_set_parameters(conn, module_args):
     ] == "9"
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == False
     assert {c["name"]: c["value"] for c in e.value.config}[
@@ -168,14 +159,14 @@ def test_unset_parameters(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == True
     results = {c["name"]: c["value"] for c in e.value.config}
     assert "autopurgeSnapRetainCount" not in results
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == False
     results = {c["name"]: c["value"] for c in e.value.config}
@@ -194,7 +185,7 @@ def test_set_parameters_with_purge(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == True
     assert {c["name"]: c["value"] for c in e.value.config}[
@@ -202,7 +193,7 @@ def test_set_parameters_with_purge(conn, module_args):
     ] == "9"
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == False
     assert {c["name"]: c["value"] for c in e.value.config}[
@@ -222,13 +213,13 @@ def test_purge_all_parameters(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == True
     assert len(e.value.config) == 0
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_config.main()
+        service_config.main()
 
     assert e.value.changed == False
     assert len(e.value.config) == 0

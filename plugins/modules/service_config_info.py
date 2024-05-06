@@ -16,7 +16,10 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
 
-from cm_client import ServicesResourceApi
+from cm_client import (
+    ClustersResourceApi,
+    ServicesResourceApi,
+)
 from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
@@ -27,7 +30,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cluster_service_info
+module: service_config_info
 short_description: Retrieve information about the configuration for a cluster service
 description:
   - Gather configuration information about a service of a CDP cluster.
@@ -67,7 +70,7 @@ extends_documentation_fragment:
 EXAMPLES = r"""
 ---
 - name: Gather the configuration details for a cluster service
-  cloudera.cluster.cluster_service_config_info:
+  cloudera.cluster.service_config_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -75,7 +78,7 @@ EXAMPLES = r"""
     service: knox
   
 - name: Gather the configuration details in 'full' for a cluster service
-  cloudera.cluster.cluster_service_config_info:
+  cloudera.cluster.service_config_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -182,6 +185,14 @@ class ClusterServiceConfigInfo(ClouderaManagerModule):
 
     @ClouderaManagerModule.handle_process
     def process(self):
+        try:
+            ClustersResourceApi(self.api_client).read_cluster(self.cluster)
+        except ApiException as ex:
+            if ex.status == 404:
+                self.module.fail_json(msg="Cluster does not exist: " + self.cluster)
+            else:
+                raise ex
+
         api_instance = ServicesResourceApi(self.api_client)
 
         try:

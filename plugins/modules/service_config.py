@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cluster_service_config
+module: service_config
 short_description: Manage a service configuration in cluster 
 description:
   - Manage a service configuration (service-wide) in a cluster.
@@ -66,8 +66,8 @@ attributes:
 
 EXAMPLES = r"""
 ---
-- name: Update several service-wide parameters
-  cloudera.cluster.cluster_service_config:
+- name: Update (append) several service-wide parameters
+  cloudera.cluster.service_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -77,15 +77,37 @@ EXAMPLES = r"""
       a_configuration: "schema://host:port"
       another_configuration: 234
 
-- name: Reset or remove a service-wide parameter
-  cloudera.cluster.cm_config:
+- name: Reset a service-wide parameter
+  cloudera.cluster.service_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-service
     parameters:
-      more_configuration: None
+      some_conf: None
+
+- name: Update (purge) service-wide parameters
+  cloudera.cluster.service_config:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: example-service
+    parameters:
+      config_one: ValueOne
+      config_two: 4567
+    purge: yes
+    
+- name: Reset all service-wide parameters
+  cloudera.cluster.service_config:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: example-service
+    parameters: {}
+    purge: yes
 """
 
 RETURN = r"""

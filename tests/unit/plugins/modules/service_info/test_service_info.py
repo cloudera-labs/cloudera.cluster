@@ -22,7 +22,7 @@ import logging
 import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import cluster_service_info
+from ansible_collections.cloudera.cluster.plugins.modules import service_info
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -58,7 +58,7 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        cluster_service_info.main()
+        service_info.main()
 
 
 def test_missing_cluster(conn, module_args):
@@ -66,7 +66,7 @@ def test_missing_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        cluster_service_info.main()
+        service_info.main()
 
 
 def test_invalid_service(conn, module_args):
@@ -79,7 +79,7 @@ def test_invalid_service(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_info.main()
+        service_info.main()
 
     assert len(e.value.services) == 0
 
@@ -94,7 +94,7 @@ def test_invalid_cluster(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_info.main()
+        service_info.main()
 
     assert len(e.value.services) == 0
 
@@ -108,7 +108,7 @@ def test_view_all_services(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_info.main()
+        service_info.main()
 
     assert len(e.value.services) > 0
 
@@ -123,6 +123,6 @@ def test_view_single_service(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_info.main()
+        service_info.main()
 
     assert len(e.value.services) == 1

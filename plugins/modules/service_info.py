@@ -15,7 +15,8 @@
 # limitations under the License.
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule, parse_service_result
+    ClouderaManagerModule,
+    parse_service_result,
 )
 
 from cm_client import ServicesResourceApi
@@ -29,7 +30,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cluster_service_info
+module: service_info
 short_description: Retrieve information about the services of cluster
 description:
   - Gather information about services of a CDP cluster.
@@ -74,14 +75,14 @@ extends_documentation_fragment:
 EXAMPLES = r"""
 ---
 - name: Gather details of the services of a cluster
-  cloudera.cluster.cluster_service_info:
+  cloudera.cluster.service_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
   
 - name: Gather the details with additional healthcheck information for a service
-  cloudera.cluster.cluster_service_info:
+  cloudera.cluster.service_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
