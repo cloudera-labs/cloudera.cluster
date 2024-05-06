@@ -53,7 +53,6 @@ def conn():
         "debug": "no",
     }
 
-
 def test_missing_required(conn, module_args):
     module_args(conn)
 
@@ -73,7 +72,7 @@ def test_missing_cluster(conn, module_args):
     conn.update(cluster="example")
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="parameters, service"):
+    with pytest.raises(AnsibleFailJson, match="parameters, role, service"):
         service_role_config.main()
 
 
@@ -145,7 +144,7 @@ def test_set_parameters(conn, module_args):
         service=os.getenv("CM_SERVICE"),
         role=os.getenv("CM_ROLE"),
         parameters={os.getenv("CM_ROLE_PARAM"): "DEBUG"},
-        _ansible_diff=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
@@ -199,7 +198,7 @@ def test_set_parameters_with_purge(conn, module_args):
         role=os.getenv("CM_ROLE"),
         parameters={os.getenv("CM_ROLE_PARAM2"): False},
         purge=True,
-        _ansible_diff=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
@@ -227,10 +226,11 @@ def test_purge_all_parameters(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
         service=os.getenv("CM_SERVICE"),
+        role=os.getenv("CM_ROLE"),
         parameters=dict(),
         purge=True,
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
