@@ -15,10 +15,10 @@
 # limitations under the License.
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
+    ClouderaManagerModule, parse_service_result
 )
 
-from cm_client import ApiService, ServicesResourceApi
+from cm_client import ServicesResourceApi
 from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
@@ -114,11 +114,11 @@ services:
       type: dict
       returned: always
       contains:
-        clusterName:
+        cluster_name:
           description: The name of the cluster, which uniquely identifies it in a Cloudera Manager installation.
           type: str
           returned: always
-        displayName:
+        display_name:
           description: The display name of the cluster.
           type: str
           returned: when supported
@@ -212,36 +212,14 @@ services:
       type: str
       returned: when supported
     tags:
-      description: List of tags for the service.
-      type: list
-      elements: str
+      description: The dictionary of tags for the service.
+      type: dict
       returned: when supported
     service_version:
       description: Version of the service.
       type: str
       returned: when supported
 """
-
-SERVICE_OUTPUT = [
-    "client_config_staleness_status",
-    "cluster_ref",
-    "config_staleness_status",
-    "display_name",
-    "health_checks",
-    "health_summary",
-    "maintenance_mode",
-    "maintenance_owners",
-    "name",
-    "service_state",
-    "service_version",
-    "tags",
-    "type",
-]
-
-
-def parse_service_result(service: ApiService) -> dict:
-    rendered = service.to_dict()
-    return {k: rendered[k] for k in SERVICE_OUTPUT}
 
 
 class ClusterServiceInfo(ClouderaManagerModule):

@@ -30,13 +30,24 @@ LOG = logging.getLogger(__name__)
 
 @pytest.fixture()
 def conn():
+    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
+
+    if os.getenv("CM_HOST", None):
+        conn.update(host=os.getenv("CM_HOST"))
+
+    if os.getenv("CM_PORT", None):
+        conn.update(port=os.getenv("CM_PORT"))
+
+    if os.getenv("CM_ENDPOINT", None):
+        conn.update(url=os.getenv("CM_ENDPOINT"))
+
+    if os.getenv("CM_PROXY", None):
+        conn.update(proxy=os.getenv("CM_PROXY"))
+
     return {
-        "username": os.getenv('CM_USERNAME'),
-        "password": os.getenv('CM_PASSWORD'),
-        "host": os.getenv('CM_HOST'),
-        "port": os.getenv('CM_PORT'),
+        **conn,
         "verify_tls": "no",
-        "debug": "yes",
+        "debug": "no",
     }
 
 def test_missing_required(conn, module_args):
@@ -62,8 +73,8 @@ def test_missing_cluster(conn, module_args):
 def test_view_default(conn, module_args):
     module_args({
         **conn,
-        "cluster": "se-aw-mdl",
-        "service": "knox",
+        "cluster": os.getenv("CM_CLUSTER"),
+        "service": os.getenv("CM_SERVICE"),
     })
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -74,7 +85,7 @@ def test_view_default(conn, module_args):
 def test_invalid_service(conn, module_args):
     module_args({
         **conn,
-        "cluster": "se-aw-mdl",
+        "cluster": os.getenv("CM_CLUSTER"),
         "service": "BOOM",
     })
 
@@ -87,7 +98,7 @@ def test_invalid_cluster(conn, module_args):
     module_args({
         **conn,
         "cluster": "BOOM",
-        "service": "knox",
+        "service": os.getenv("CM_SERVICE"),
     })
 
     with pytest.raises(AnsibleExitJson) as e:
