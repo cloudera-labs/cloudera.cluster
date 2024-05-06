@@ -34,10 +34,10 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: service_role_config_group_info
-short_description: Retrieve information about a cluster service role config group or groups
+module: service_role_config_group_config_info
+short_description: Retrieve the configuration of a cluster service role config group.
 description:
-  - Gather details about a role config group or groups of a service in a CDP cluster.
+  - Gather the configuration details of role config group of a service in a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
@@ -59,14 +59,20 @@ options:
       - service_name
   role_config_group:
     description:
-      - The role config group to examine.
-      - If undefined, the module will return all role config groups for the service.
-      - If the role config group does not exist, the module will return an empty result.
+      - A role config group name to manage.
     type: str
-    required: yes
+    required: True
     aliases:
       - role_config_group
       - name
+  view:
+    description:
+      - The view to materialize.
+    type: str
+    default: summary
+    choices:
+        - summary
+        - full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -74,80 +80,118 @@ extends_documentation_fragment:
 
 EXAMPLES = r"""
 ---
-- name: Gather the configuration details for a cluster service role
-  cloudera.cluster.service_role_config_info:
+- name: Gather the configuration details for a cluster service role config group
+  cloudera.cluster.service_role_config_group_config_info:
     host: "example.cloudera.internal"
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
     service: knox
-    role: GATEWAY
+    role_config_group: hdfs-GATEWAY-base
   
-- name: Gather the configuration details in 'full' for a cluster service role
-  cloudera.cluster.service_role_config_info:
+- name: Gather the configuration details in 'full' for a cluster service role config group
+  cloudera.cluster.service_role_config_group_config_info:
     host: "example.cloudera.internal"
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
     service: ecs
-    role: ECS
+    role: hdfs-GATEWAY-base
     view: full
 """
 
 RETURN = r"""
 ---
-role_config_groups:
+config:
   description:
-    - List of service role config groups.
+    - List of configurations for a service role config group.
   type: list
   elements: dict
   returned: always
   contains:
     name:
       description:
-        - The unique name of this role config group.
-      type: str
-      returned: always
-    role_type:
-      description:
-        - The type of the roles in this group.
-      type: str
-      returned: always
-    base:
-      description:
-        - Flag indicating whether this is a base group.
-      type: bool
-      returned: always
-    display_name:
-      description:
-        - A user-friendly name of the role config group, as would have been shown in the web UI.
+        - The canonical name that identifies this configuration parameter.
       type: str
       returned: when supported
-    service_name:
+    value:
       description:
-        - The service name associated with this role config group.
+        - The user-defined value.
+        - When absent, the default value (if any) will be used.
+        - Can also be absent, when enumerating allowed configs.
       type: str
-      returned: always
-    role_names:
+      returned: when supported
+    required:
       description:
-        - List of role names associated with this role config group.
-      type: list
-      elements: str
+        - Whether this configuration is required for the object.
+        - If any required configuration is not set, operations on the object may not work.
+        - Requires I(full) view.
+      type: bool
+      returned: when supported
+    default:
+      description:
+        - The default value.
+        - Requires I(full) view.
+      type: str
+      returned: when supported
+    display_name:
+      description:
+        - A user-friendly name of the parameters, as would have been shown in the web UI.
+        - Requires I(full) view.
+      type: str
+      returned: when supported
+    description:
+      description:
+        - A textual description of the parameter.
+        - Requires I(full) view.
+      type: str
+      returned: when supported
+    related_name:
+      description:
+        - If applicable, contains the related configuration variable used by the source project.
+        - Requires I(full) view.
+      type: str
+      returned: when supported
+    sensitive:
+      description:
+        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller.
+      type: bool
+      returned: when supported
+    validate_state:
+      description:
+        - State of the configuration parameter after validation.
+        - Requires I(full) view.
+      type: str
+      returned: when supported
+    validation_message:
+      description:
+        - A message explaining the parameter's validation state.
+        - Requires I(full) view.
+      type: str
+      returned: when supported
+    validation_warnings_suppressed:
+      description:
+        - Whether validation warnings associated with this parameter are suppressed.
+        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI.
+        - Configurations that do not produce warnings will not contain this field.
+        - Requires I(full) view.
+      type: bool
       returned: when supported
 """
 
 
-class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
+class ClusterServiceRoleConfigGroupConfigInfo(ClouderaManagerModule):
     def __init__(self, module):
-        super(ClusterServiceRoleConfigGroupInfo, self).__init__(module)
+        super(ClusterServiceRoleConfigGroupConfigInfo, self).__init__(module)
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
         self.service = self.get_param("service")
         self.role_config_group = self.get_param("role_config_group")
+        self.view = self.get_param("view")
 
         # Initialize the return values
-        self.output = []
+        self.config = []
 
         # Execute the logic
         self.process()
@@ -174,39 +218,18 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
 
         api_instance = RoleConfigGroupsResourceApi(self.api_client)
 
-        results = []
-        if self.role_config_group:
-            try:
-                results = [
-                    api_instance.read_role_config_group(
-                        cluster_name=self.cluster,
-                        role_config_group_name=self.role_config_group,
-                        service_name=self.service,
-                    )
-                ]
-            except ApiException as e:
-                if e.status != 404:
-                    raise e
-        else:
-            results = api_instance.read_role_config_groups(
+        try:
+            results = api_instance.read_config(
                 cluster_name=self.cluster,
+                role_config_group_name=self.role_config_group,
                 service_name=self.service,
-            ).items
-
-        for r in results:
-            # Get role membership
-            roles = api_instance.read_roles(
-                cluster_name=self.cluster,
-                service_name=self.service,
-                role_config_group_name=r.name,
+                view=self.view,
             )
 
-            self.output.append(
-                {
-                    **parse_role_config_group_result(r),
-                    "role_names": [r.name for r in roles.items],
-                }
-            )
+            self.config = [s.to_dict() for s in results.items]
+        except ApiException as e:
+            if e.status != 404:
+                raise e
 
 
 def main():
@@ -214,16 +237,22 @@ def main():
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name"]),
-            role_config_group=dict(aliases=["role_config_group", "name"]),
+            role_config_group=dict(
+                required=True, aliases=["role_config_group", "name"]
+            ),
+            view=dict(
+                default="summary",
+                choices=["summary", "full"],
+            ),
         ),
         supports_check_mode=True,
     )
 
-    result = ClusterServiceRoleConfigGroupInfo(module)
+    result = ClusterServiceRoleConfigGroupConfigInfo(module)
 
     output = dict(
         changed=False,
-        role_config_groups=result.output,
+        config=result.config,
     )
 
     if result.debug:

@@ -38,8 +38,8 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: service_role_config_group_info
-short_description: Manage the configuration of cluster service role config group.
+module: service_role_config_group_config
+short_description: Manage the configuration of a cluster service role config group.
 description:
   - Manage the configuration details of a role config group of a service in a CDP cluster.
 author:

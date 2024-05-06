@@ -46,6 +46,21 @@ author:
 requirements:
   - cm_client
 options:
+  cluster:
+    description:
+      - The associated cluster.
+    type: str
+    required: yes
+    aliases:
+      - cluster_name
+  service:
+    description:
+      - The service to manage.
+    type: str
+    required: yes
+    aliases:
+      - service_name
+      - name
   parameters:
     description:
       - The service-wide configuration to set.
