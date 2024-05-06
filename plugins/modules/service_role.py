@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Callable
-
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
     parse_role_result,
@@ -700,36 +698,17 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
             self.wait_command(c)
 
     def stop_role(self, role_name: str):
-        self._exec_cmd(
-            RoleCommandsResourceApi(self.api_client).stop_command(
-                self.cluster,
-                self.service,
-                body=ApiRoleNameList(items=[role_name]),
-            )
+        stop_cmds = RoleCommandsResourceApi(self.api_client).stop_command(
+            self.cluster,
+            self.service,
+            body=ApiRoleNameList(items=[role_name]),
         )
 
-        # stop_cmds = RoleCommandsResourceApi(self.api_client).stop_command(
-        #     self.cluster,
-        #     self.service,
-        #     body=ApiRoleNameList(items=[role_name]),
-        # )
-
-        # if stop_cmds.errors:
-        #     error_msg = "\n".join(stop_cmds.errors)
-        #     self.module.fail_json(msg=error_msg)
-
-        # for c in stop_cmds.items:
-        #     # Not in parallel, but should only be a single command
-        #     self.wait_command(c)
-
-    def _exec_cmd(self, cmd: Callable[[str, str, ApiRoleNameList]]):
-        results = cmd
-
-        if results.errors:
-            error_msg = "\n".join(results.errors)
+        if stop_cmds.errors:
+            error_msg = "\n".join(stop_cmds.errors)
             self.module.fail_json(msg=error_msg)
 
-        for c in results.items:
+        for c in stop_cmds.items:
             # Not in parallel, but should only be a single command
             self.wait_command(c)
 
