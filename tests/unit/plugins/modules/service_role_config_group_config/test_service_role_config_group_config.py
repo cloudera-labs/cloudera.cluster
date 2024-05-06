@@ -23,7 +23,7 @@ import os
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import (
-    service_role_config_group,
+    service_role_config_group_config,
 )
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
@@ -60,7 +60,7 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, role_config_group, service"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_missing_service(conn, module_args):
@@ -68,7 +68,7 @@ def test_missing_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, role_config_group"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_missing_cluster(conn, module_args):
@@ -76,7 +76,7 @@ def test_missing_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="role_config_group, service"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_missing_role_config_group(conn, module_args):
@@ -84,7 +84,7 @@ def test_missing_role_config_group(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, service"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_present_invalid_cluster(conn, module_args):
@@ -96,7 +96,7 @@ def test_present_invalid_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: example"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_present_invalid_service(conn, module_args):
@@ -108,7 +108,7 @@ def test_present_invalid_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: example"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_present_missing_role_type(conn, module_args):
@@ -120,7 +120,7 @@ def test_present_missing_role_type(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="missing required arguments: role_type"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
 
 def test_create_role_config_group(conn, module_args):
@@ -135,14 +135,14 @@ def test_create_role_config_group(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example"
     assert e.value.role_config_group["roles"] == []
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example"
@@ -160,7 +160,7 @@ def test_create_role_config_group_with_roles(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -169,7 +169,7 @@ def test_create_role_config_group_with_roles(conn, module_args):
     ]
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -191,7 +191,7 @@ def test_update_role_membership(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -203,7 +203,7 @@ def test_update_role_membership(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -229,7 +229,7 @@ def test_set_role_membership(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -238,7 +238,7 @@ def test_set_role_membership(conn, module_args):
     ]
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -261,14 +261,14 @@ def test_purge_role_membership(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example2"
     assert not e.value.role_config_group["roles"]
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
@@ -287,13 +287,13 @@ def test_remove_role_config_group(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert not e.value.role_config_group
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert not e.value.role_config_group
@@ -311,13 +311,13 @@ def test_remove_role_config_group_with_roles(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == True
     assert not e.value.role_config_group
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        service_role_config_group_config.main()
 
     assert e.value.changed == False
     assert not e.value.role_config_group
@@ -335,4 +335,4 @@ def test_remove_role_config_group_invalid_base(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Group 'hdfs-DATANODE-BASE' is a base group"):
-        service_role_config_group.main()
+        service_role_config_group_config.main()
