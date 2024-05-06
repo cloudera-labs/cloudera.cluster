@@ -22,7 +22,7 @@ import logging
 import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import cluster_service_role_info
+from ansible_collections.cloudera.cluster.plugins.modules import service_role_info
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -58,7 +58,7 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        cluster_service_role_info.main()
+        service_role_info.main()
 
 
 def test_missing_cluster(conn, module_args):
@@ -66,7 +66,7 @@ def test_missing_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        cluster_service_role_info.main()
+        service_role_info.main()
 
 
 def test_invalid_service(conn, module_args):
@@ -79,7 +79,7 @@ def test_invalid_service(conn, module_args):
     )
 
     with pytest.raises(AnsibleFailJson, match="Service 'BOOM' not found in cluster"):
-        cluster_service_role_info.main()
+        service_role_info.main()
 
 
 def test_invalid_cluster(conn, module_args):
@@ -92,7 +92,7 @@ def test_invalid_cluster(conn, module_args):
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
-        cluster_service_role_info.main()
+        service_role_info.main()
 
 
 def test_view_all_service_roles(conn, module_args):
@@ -105,7 +105,7 @@ def test_view_all_service_roles(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_role_info.main()
+        service_role_info.main()
 
     assert len(e.value.roles) > 0
 
@@ -116,12 +116,12 @@ def test_view_service_role(conn, module_args):
             **conn,
             "cluster": os.getenv("CM_CLUSTER"),
             "service": os.getenv("CM_SERVICE"),
-            "role": "yarn-NODEMANAGER-b31d2abaf9e21d6610838c33f4892bf2"
+            "role": "yarn-NODEMANAGER-b31d2abaf9e21d6610838c33f4892bf2",
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_role_info.main()
+        service_role_info.main()
 
     assert len(e.value.roles) == 1
 
@@ -137,9 +137,10 @@ def test_view_service_roles_by_type(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_role_info.main()
+        service_role_info.main()
 
     assert len(e.value.roles) == 3
+
 
 @pytest.mark.skip("Requires hostname")
 def test_view_service_roles_by_hostname(conn, module_args):
@@ -153,11 +154,12 @@ def test_view_service_roles_by_hostname(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_role_info.main()
+        service_role_info.main()
 
     assert len(e.value.roles) == 2
 
-@pytest.mark.skip("Requires host ID") 
+
+@pytest.mark.skip("Requires host ID")
 def test_view_service_roles_by_host_id(conn, module_args):
     module_args(
         {
@@ -169,7 +171,6 @@ def test_view_service_roles_by_host_id(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_role_info.main()
+        service_role_info.main()
 
     assert len(e.value.roles) == 4
-

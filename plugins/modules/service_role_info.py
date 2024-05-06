@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cluster_service_role_info
+module: service_role_info
 short_description: Retrieve information about the service roles of cluster
 description:
   - Gather information about service roles of a CDP cluster.
@@ -43,21 +43,21 @@ requirements:
 options:
   cluster:
     description:
-      - The cluster to examine.
+      - The associated cluster.
     type: str
     required: yes
     aliases:
       - cluster_name
   service:
     description:
-      - A service to examine.
+      - The associated service.
     type: str
     required: yes
     aliases:
       - service_name
   role:
     description:
-      - A role to retrieve.
+      - A role name to examine.
       - If absent, all roles for the I(service) will be returned.
       - Mutually exclusive with I(cluster_hostname), I(cluster_host_id), and I(type).
     type: str
@@ -104,7 +104,7 @@ extends_documentation_fragment:
 EXAMPLES = r"""
 ---
 - name: Gather details of the roles for the 'yarn' service
-  cloudera.cluster.cluster_service_role_info:
+  cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -112,7 +112,7 @@ EXAMPLES = r"""
     service: yarn
   
 - name: Gather the details with additional healthcheck information for the roles in the 'ecs' service
-  cloudera.cluster.cluster_service_role_info:
+  cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -121,7 +121,7 @@ EXAMPLES = r"""
     view: healthcheck
     
 - name: Gather details of the 'NODEMANAGER' roles for the 'yarn' service
-  cloudera.cluster.cluster_service_role_info:
+  cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -130,13 +130,13 @@ EXAMPLES = r"""
     type: NODEMANAGER
     
 - name: Gather details of the roles for the 'yarn' service on a particular cluster host
-  cloudera.cluster.cluster_service_role_info:
+  cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
     service: yarn
-    cluster_hostname: "worker09.example.cloudera.host"
+    cluster_hostname: "worker09.example.cloudera.internal"
 """
 
 RETURN = r"""
