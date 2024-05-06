@@ -1,4 +1,6 @@
-# Copyright 2024 Cloudera, Inc.
+# -*- coding: utf-8 -*-
+
+# # Copyright 2024 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,7 +67,7 @@ service_types:
   description: List of the service types available in the cluster.
   type: list
   elements: str
-  samples:
+  sample:
     - RANGER
     - OZONE
     - ICEBERG_REPLICATION
