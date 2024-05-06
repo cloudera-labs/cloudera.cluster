@@ -66,7 +66,7 @@ class ClouderaManagerLookupBase(LookupBase):
 
         # If provided a CM API endpoint URL, use it directly
         if self.get_option("endpoint"):
-            config.host = self.get_option("endpoint")
+            config.host = str(self.get_option("endpoint")).strip("/ ")
         # Otherwise, run discovery on missing parts
         else:
             config.host = self._discover_endpoint(config)
