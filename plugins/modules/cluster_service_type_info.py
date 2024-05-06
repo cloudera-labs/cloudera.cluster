@@ -17,6 +17,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 )
 
 from cm_client import ClustersResourceApi
+from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
@@ -26,7 +27,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cluster_service_types_info
+module: cluster_service_type_info
 short_description: Retrieve the service types of a cluster
 description:
   - Gather the available service types of a CDP cluster.
@@ -50,7 +51,7 @@ extends_documentation_fragment:
 EXAMPLES = r"""
 ---
 - name: Gather service type details
-  cloudera.cluster.cluster_service_types_info:
+  cloudera.cluster.cluster_service_type_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -60,7 +61,7 @@ EXAMPLES = r"""
 
 RETURN = r"""
 ---
-services:
+service_types:
   description: Details of the service types available in the cluster.
   type: list
   elements: str
@@ -71,9 +72,9 @@ services:
 """
 
 
-class ClusterServiceTypesInfo(ClouderaManagerModule):
+class ClusterServiceTypeInfo(ClouderaManagerModule):
     def __init__(self, module):
-        super(ClusterServiceTypesInfo, self).__init__(module)
+        super(ClusterServiceTypeInfo, self).__init__(module)
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
@@ -89,9 +90,13 @@ class ClusterServiceTypesInfo(ClouderaManagerModule):
     def process(self):
         api_instance = ClustersResourceApi(self.api_client)
 
-        self.service_types = (
-            api_instance.list_service_types(self.cluster).to_dict().get("items", [])
-        )
+        try:
+            self.service_types = (
+                api_instance.list_service_types(self.cluster).to_dict().get("items", [])
+            )
+        except ApiException as e:
+            if e.status != 404:
+                raise e
 
 
 def main():
@@ -102,7 +107,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterServiceTypesInfo(module)
+    result = ClusterServiceTypeInfo(module)
 
     output = dict(
         changed=False,

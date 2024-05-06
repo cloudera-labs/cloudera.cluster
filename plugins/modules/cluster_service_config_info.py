@@ -16,7 +16,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
 
-from cm_client import ApiServiceConfig, ServicesResourceApi
+from cm_client import ServicesResourceApi
 from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
