@@ -24,20 +24,13 @@ import pytest
 
 from ansible.module_utils.common.dict_transformations import recursive_diff
 
-from ansible_collections.cloudera.cluster.plugins.modules import cluster_service
+from ansible_collections.cloudera.cluster.plugins.modules import service
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
 )
 
 LOG = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def am_check_mode(am):
-    am.check_mode = True
-    yield am
-    am.check_mode = False
 
 
 @pytest.fixture
@@ -67,7 +60,7 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, service"):
-        cluster_service.main()
+        service.main()
 
 
 def test_missing_service(conn, module_args):
@@ -75,7 +68,7 @@ def test_missing_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        cluster_service.main()
+        service.main()
 
 
 def test_missing_cluster(conn, module_args):
@@ -83,7 +76,7 @@ def test_missing_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="service"):
-        cluster_service.main()
+        service.main()
 
 
 def test_present_invalid_cluster(conn, module_args):
@@ -94,7 +87,7 @@ def test_present_invalid_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
-        cluster_service.main()
+        service.main()
 
 
 def test_present_missing_type(conn, module_args):
@@ -105,7 +98,7 @@ def test_present_missing_type(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="type"):
-        cluster_service.main()
+        service.main()
 
 
 def test_present_create_service(conn, module_args):
@@ -118,12 +111,12 @@ def test_present_create_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == True
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == False
 
@@ -137,12 +130,12 @@ def test_present_update_service(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == True
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == False
 
@@ -156,12 +149,12 @@ def test_present_maintenance_mode(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.service["maintenance_mode"] == True
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.service["maintenance_mode"] == True
     assert e.value.changed == False
@@ -172,12 +165,12 @@ def test_present_maintenance_mode(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.service["maintenance_mode"] == False
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.service["maintenance_mode"] == False
     assert e.value.changed == False
@@ -194,7 +187,7 @@ def test_present_set_tags(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert (
         recursive_diff(e.value.service["tags"], dict(test="Ansible", key="Value"))
@@ -202,7 +195,7 @@ def test_present_set_tags(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert (
         recursive_diff(e.value.service["tags"], dict(test="Ansible", key="Value"))
@@ -220,18 +213,22 @@ def test_present_append_tags(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert (
-        recursive_diff(e.value.service["tags"], dict(test="Ansible", key="Value", more="Tags"))
+        recursive_diff(
+            e.value.service["tags"], dict(test="Ansible", key="Value", more="Tags")
+        )
         is None
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert (
-        recursive_diff(e.value.service["tags"], dict(test="Ansible", key="Value", more="Tags"))
+        recursive_diff(
+            e.value.service["tags"], dict(test="Ansible", key="Value", more="Tags")
+        )
         is None
     )
     assert e.value.changed == False
@@ -255,7 +252,7 @@ def test_update_tags_check_mode(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == True
     assert e.value.diff["before"]["tags"] == dict()
@@ -272,23 +269,18 @@ def test_present_purge_tags(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
-    assert (
-        recursive_diff(e.value.service["tags"], dict(purge="Ansible"))
-        is None
-    )
+    assert recursive_diff(e.value.service["tags"], dict(purge="Ansible")) is None
     assert e.value.changed == True
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
-    assert (
-        recursive_diff(e.value.service["tags"], dict(purge="Ansible"))
-        is None
-    )
+    assert recursive_diff(e.value.service["tags"], dict(purge="Ansible")) is None
     assert e.value.changed == False
-    
+
+
 def test_started(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -299,12 +291,13 @@ def test_started(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson):
-        cluster_service.main()
+        service.main()
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == False
+
 
 def test_stopped(conn, module_args):
     conn.update(
@@ -315,10 +308,10 @@ def test_stopped(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson):
-        cluster_service.main()
+        service.main()
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == False
 
@@ -332,9 +325,9 @@ def test_absent(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson):
-        cluster_service.main()
+        service.main()
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service.main()
+        service.main()
 
     assert e.value.changed == False

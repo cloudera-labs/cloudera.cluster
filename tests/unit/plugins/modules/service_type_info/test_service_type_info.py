@@ -22,7 +22,7 @@ import logging
 import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import cluster_service_type_info
+from ansible_collections.cloudera.cluster.plugins.modules import service_type_info
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -58,7 +58,7 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        cluster_service_type_info.main()
+        service_type_info.main()
 
 
 def test_invalid_cluster(conn, module_args):
@@ -70,7 +70,7 @@ def test_invalid_cluster(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_type_info.main()
+        service_type_info.main()
 
     assert len(e.value.service_types) == 0
 
@@ -84,6 +84,6 @@ def test_view_all_services_types(conn, module_args):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        cluster_service_type_info.main()
+        service_type_info.main()
 
     assert len(e.value.service_types) > 0

@@ -74,7 +74,7 @@ def test_view_default(conn, module_args):
     module_args({
         **conn,
         "cluster": os.getenv("CM_CLUSTER"),
-        "service": os.getenv("CM_SERVICE"),
+        "service": "yarn", #os.getenv("CM_SERVICE"),
     })
 
     with pytest.raises(AnsibleExitJson) as e:

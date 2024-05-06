@@ -14,10 +14,9 @@
 
 import json
 
-from ansible.module_utils.common.dict_transformations import recursive_diff
-
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
+    resolve_parameter_updates,
 )
 
 from cm_client import (
@@ -56,7 +55,8 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-  - cloudera.cluster.cluster_mutable
+  - cloudera.cluster.purge
+  - cloudera.cluster.message
 attributes:
   check_mode:
     support: full
@@ -227,6 +227,7 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
         self.cluster = self.get_param("cluster")
         self.service = self.get_param("service")
         self.params = self.get_param("parameters")
+        self.purge = self.get_param("purge")
 
         # Initialize the return value
         self.changed = False
@@ -246,12 +247,11 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
             else:
                 raise ex
 
+        refresh = True
         api_instance = ServicesResourceApi(self.api_client)
 
         try:
-            existing = api_instance.read_service_config(
-                self.cluster, self.service, view="full"
-            )
+            existing = api_instance.read_service_config(self.cluster, self.service)
         except ApiException as ex:
             if ex.status == 404:
                 self.module.fail_json(msg=json.loads(ex.body)["message"])
@@ -261,30 +261,40 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
         current = {r.name: r.value for r in existing.items}
         incoming = {k: str(v) if v is not None else v for k, v in self.params.items()}
 
-        (_, add) = recursive_diff(current, incoming)
+        change_set = resolve_parameter_updates(current, incoming, self.purge)
 
-        if add:
+        if change_set:
             self.changed = True
 
             if self.module._diff:
-                self.diff = dict(before={k: current[k] for k in add.keys()}, after=add)
+                self.diff = dict(
+                    before={
+                        k: current[k] if k in current else None
+                        for k in change_set.keys()
+                    },
+                    after=change_set,
+                )
 
             if not self.module.check_mode:
                 body = ApiServiceConfig(
-                    items=[ApiConfig(name=k, value=v) for k, v in add.items()]
+                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
                 )
 
+                refresh = False
                 self.config = [
                     p.to_dict()
                     for p in api_instance.update_service_config(
                         self.cluster, self.service, message=self.message, body=body
                     ).items
                 ]
-        else:
+
+        if refresh:
             # Return 'summary'
             self.config = [
                 p.to_dict()
-                for p in api_instance.read_service_config(self.cluster, self.service).items
+                for p in api_instance.read_service_config(
+                    self.cluster, self.service
+                ).items
             ]
 
 
@@ -294,6 +304,7 @@ def main():
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name", "name"]),
             parameters=dict(type="dict", required=True, aliases=["params"]),
+            purge=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )

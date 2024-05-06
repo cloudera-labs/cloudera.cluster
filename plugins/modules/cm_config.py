@@ -14,10 +14,9 @@
 
 import cm_client
 
-from ansible.module_utils.common.dict_transformations import recursive_diff
-
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
+    resolve_parameter_updates,
 )
 
 ANSIBLE_METADATA = {
@@ -48,6 +47,8 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.purge
+  - cloudera.cluster.message
 attributes:
   check_mode:
     support: full
@@ -162,6 +163,7 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
 
         # Set the parameters
         self.params = self.get_param("parameters")
+        self.purge = self.get_param("purge")
 
         # Initialize the return value
         self.changed = False
@@ -173,31 +175,40 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
-        existing = self.get_cm_config("full")
+        refresh = True
+        existing = self.get_cm_config()
 
         current = {r.name: r.value for r in existing}
         incoming = {k.upper(): v for k, v in self.params.items()}
 
-        (_, add) = recursive_diff(current, incoming)
+        change_set = resolve_parameter_updates(current, incoming, self.purge)
 
-        if add:
+        if change_set:
             self.changed = True
 
             if self.module._diff:
-                self.diff = dict(before={k: current[k] for k in add.keys()}, after=add)
+                self.diff = dict(
+                    before={k: current[k] for k in change_set.keys()},
+                    after=change_set,
+                )
 
             if not self.module.check_mode:
                 body = cm_client.ApiConfigList(
-                    items=[cm_client.ApiConfig(name=k, value=v) for k, v in add.items()]
+                    items=[
+                        cm_client.ApiConfig(name=k, value=v)
+                        for k, v in change_set.items()
+                    ]
                 )
                 # Return 'summary'
+                refresh = False
                 self.config = [
                     p.to_dict()
                     for p in cm_client.ClouderaManagerResourceApi(self.api_client)
                     .update_config(message=self.message, body=body)
                     .items
                 ]
-        else:
+
+        if refresh:
             # Return 'summary'
             self.config = [p.to_dict() for p in self.get_cm_config()]
 
@@ -206,6 +217,7 @@ def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
             parameters=dict(type=dict, required=True, aliases=["params"]),
+            purge=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )

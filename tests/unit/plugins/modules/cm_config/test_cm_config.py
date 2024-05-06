@@ -30,27 +30,111 @@ LOG = logging.getLogger(__name__)
 
 @pytest.fixture()
 def conn():
+    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
+
+    if os.getenv("CM_HOST", None):
+        conn.update(host=os.getenv("CM_HOST"))
+
+    if os.getenv("CM_PORT", None):
+        conn.update(port=os.getenv("CM_PORT"))
+
+    if os.getenv("CM_ENDPOINT", None):
+        conn.update(url=os.getenv("CM_ENDPOINT"))
+
+    if os.getenv("CM_PROXY", None):
+        conn.update(proxy=os.getenv("CM_PROXY"))
+
     return {
-        "username": os.getenv('CM_USERNAME'),
-        "password": os.getenv('CM_PASSWORD'),
-        "host": os.getenv('CM_HOST'),
+        **conn,
         "verify_tls": "no",
-        "debug": "yes"
+        "debug": "no",
     }
 
 def test_missing_parameters(conn, module_args):
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="params"):
+    with pytest.raises(AnsibleFailJson, match="parameters"):
         cm_config.main()
 
 def test_set_config(conn, module_args):
+    conn.update(
+        params=dict(custom_header_color="PURPLE"),
+        _ansible_check_mode=True,
+        _ansible_diff=True,
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == True
+    assert len(e.value.config) > 0
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == False
+    assert len(e.value.config) > 0
+
+
+def test_unset_config(conn, module_args):
     module_args({
         **conn,
-        "params": dict(custom_header_color="PURPLE") 
+        "params": dict(custom_header_color=None) 
     })
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config.main()
 
+    assert e.value.changed == True
     assert len(e.value.config) > 0
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == False
+    assert len(e.value.config) > 0
+
+
+def test_set_config_with_purge(conn, module_args):
+    conn.update(
+        params=dict(custom_header_color="PURPLE"),
+        purge=True,
+        _ansible_check_mode=True,
+        _ansible_diff=True,
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == True
+    assert len(e.value.config) > 1
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == False
+    assert len(e.value.config) > 1
+
+
+def test_purge_all_config(conn, module_args):
+    conn.update(
+        params=dict(),
+        purge=True,
+        _ansible_check_mode=True,
+        _ansible_diff=True,
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == True
+    assert len(e.value.config) > 1
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_config.main()
+
+    assert e.value.changed == False
+    assert len(e.value.config) > 1

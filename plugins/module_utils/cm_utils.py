@@ -28,9 +28,17 @@ from urllib3.util import Url
 from urllib.parse import urljoin
 from time import sleep
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.common.text.converters import to_text
 from time import sleep
-from cm_client import ApiClient, ApiCommand, ApiConfigList, ApiService, Configuration
+from cm_client import (
+    ApiClient,
+    ApiCommand,
+    ApiConfigList,
+    ApiRole,
+    ApiService,
+    Configuration,
+)
 from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
 from cm_client.apis.commands_resource_api import CommandsResourceApi
@@ -56,19 +64,115 @@ SERVICE_OUTPUT = [
     "type",
 ]
 
+ROLE_OUTPUT = [
+    "commission_state",
+    "config_staleness_status",
+    "ha_status",
+    "health_checks",
+    "health_summary",
+    "host_ref",
+    "maintenance_mode",
+    "maintenance_owners",
+    "name",
+    "role_config_group_ref",
+    "role_state",
+    "service_ref",
+    "tags",
+    "type",
+    "zoo_keeper_server_mode",
+]
+
+
+def _parse_output(entity: dict, filter: list) -> dict:
+    output = {}
+    for k in filter:
+        if k == "tags":
+            output[k] = {entry["name"]: entry["value"] for entry in entity[k]}
+        else:
+            output[k] = entity[k]
+
+    return output
+
 
 def parse_service_result(service: ApiService) -> dict:
     rendered = service.to_dict()
-    output = {}
-    
-    for k in SERVICE_OUTPUT:
-        if k == "tags":
-            output[k] = { entry["name"]: entry["value"] for entry in rendered[k]}
+    return _parse_output(rendered, SERVICE_OUTPUT)
+
+
+def parse_role_result(role: ApiRole) -> dict:
+    rendered = role.to_dict()
+    return _parse_output(rendered, ROLE_OUTPUT)
+
+
+def normalize_values(add: dict) -> dict:
+    """Normalize whitespace of parameter values.
+
+    Args:
+        add (dict): Parameters to review
+
+    Returns:
+        dict: Normalized parameters
+    """
+    return {k: (v.strip() if isinstance(v, str) else v) for k, v in add.items()}
+
+
+def resolve_parameter_updates(
+    current: dict, incoming: dict, purge: bool = False
+) -> dict:
+    """Produce a change set between two parameter dictionaries.
+
+    The function will normalize parameter values to remove whitespace.
+
+    Args:
+        current (dict): Existing parameters
+        incoming (dict): Declared parameters
+        purge (bool, optional): Flag to reset any current parameters not found in the declared set. Defaults to False.
+
+    Returns:
+        dict: A change set of the updates
+    """
+    updates = {}
+    diff = recursive_diff(current, incoming)
+    if diff is not None:
+        updates = {
+            k: v
+            for k, v in normalize_values(diff[1]).items()
+            if k in current or (k not in current and v is not None)
+        }
+
+        if purge:
+            # Add the other non-defaults
+            updates = {
+                **updates,
+                **{k: None for k in diff[0].keys() if k not in diff[1]},
+            }
+    return updates
+
+
+def resolve_tag_updates(current: dict, incoming: dict, purge: bool = False) -> tuple[dict, dict]:
+    incoming_tags = {
+        k: str(v)
+        for k, v in incoming.items()
+        if (isinstance(v, str) and v.strip() != "")
+        or (not isinstance(v, str) and v is not None)
+    }
+
+    delta_add = {}
+    delta_del = {}
+
+    diff = recursive_diff(incoming_tags, current)
+
+    if diff is not None:
+        delta_add = diff[0]
+
+        if purge:
+            delta_del = diff[1]
         else:
-            output[k] = rendered[k]
+            delta_del = {
+                k: v for k, v in diff[1].items() if k in diff[0]
+            }
             
-    return output
-    # return {k: rendered[k] for k in SERVICE_OUTPUT}
+    return (delta_add, delta_del)
 
 
 class ClusterTemplate(object):
@@ -387,14 +491,16 @@ class ClouderaManagerModule(object):
 
     def wait_command(self, command: ApiCommand, polling: int = 10, delay: int = 5):
         poll_count = 0
-        while (command.active):
+        while command.active:
             if poll_count > polling:
                 self.module.fail_json(msg="Command timeout: " + command.id)
             sleep(delay)
             poll_count += 1
             command = CommandsResourceApi(self.api_client).read_command(command.id)
         if not command.success:
-            self.module.fail_json(msg=to_text(command.result_message), command_id=to_text(command.id))
+            self.module.fail_json(
+                msg=to_text(command.result_message), command_id=to_text(command.id)
+            )
 
     @staticmethod
     def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):

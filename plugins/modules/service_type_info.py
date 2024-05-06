@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cluster_service_type_info
+module: service_type_info
 short_description: Retrieve the service types of a cluster
 description:
   - Gather the available service types of a CDP cluster.
@@ -51,7 +51,7 @@ extends_documentation_fragment:
 EXAMPLES = r"""
 ---
 - name: Gather service type details
-  cloudera.cluster.cluster_service_type_info:
+  cloudera.cluster.service_type_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -62,7 +62,7 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 service_types:
-  description: Details of the service types available in the cluster.
+  description: List of the service types available in the cluster.
   type: list
   elements: str
   samples:
@@ -78,7 +78,6 @@ class ClusterServiceTypeInfo(ClouderaManagerModule):
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
-        self.view = self.get_param("view")
 
         # Initialize the return values
         self.service_types = []
