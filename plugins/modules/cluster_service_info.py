@@ -100,9 +100,7 @@ services:
       type: str
       returned: always
     type:
-      description:
-        - The cluster service type.
-        - For example,
+      description: The cluster service type.
       type: str
       returned: always
       sample:
@@ -280,9 +278,7 @@ class ClusterServiceInfo(ClouderaManagerModule):
                     )
                 )
             except ApiException as e:
-                if e.status == 404:
-                    pass
-                else:
+                if e.status != 404:
                     raise e
         else:
             self.services = [
