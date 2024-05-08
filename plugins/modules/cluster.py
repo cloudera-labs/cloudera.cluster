@@ -21,6 +21,10 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClusterTemplate,
 )
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    Parcel,
+)
+
 from cm_client import (
     ApiCluster,
     ApiClusterList,
@@ -45,6 +49,7 @@ from cm_client import (
     ClustersResourceApi,
     HostsResourceApi,
     HostTemplatesResourceApi,
+    ParcelResourceApi,
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
 )
@@ -190,7 +195,7 @@ class ClouderaCluster(ClouderaManagerModule):
         self.changed = False
         self.output = {}
 
-        self.polling_interval = 30
+        self.polling_interval = 15
 
         self.process()
 
@@ -464,30 +469,27 @@ class ClouderaCluster(ClouderaManagerModule):
             # Create the cluster configuration
             self.cluster_api.create_clusters(body=ApiClusterList(items=[cluster]))
             self.wait_for_active_cmd(self.name)
-            
-            # Activate parcels
-            if self.parcels:
-                # TODO HERE!!
-                pass
 
             # Add host templates to cluster
             if self.host_templates:
                 test = [
-                            ApiHostTemplate(
-                                name=ht["name"],
-                                role_config_group_refs=[ApiRoleConfigGroupRef(rcg)]
-                            )
-                            for ht in self.host_templates
-                            for rcg in ht["role_groups"]
-                        ]
+                    ApiHostTemplate(
+                        name=ht["name"],
+                        role_config_group_refs=[ApiRoleConfigGroupRef(rcg)],
+                    )
+                    for ht in self.host_templates
+                    for rcg in ht["role_groups"]
+                ]
                 self.host_template_api.create_host_templates(
                     cluster_name=self.name,
-                    body=ApiHostTemplateList(
-                        items=test
-                    ),
+                    body=ApiHostTemplateList(items=test),
                 )
 
-            # Add hosts to cluster
+            # Add hosts to cluster and set up assignments
+            template_map = {}
+            role_group_list = []
+            role_list = []
+                
             if self.hosts:
                 self.cluster_api.add_hosts(
                     cluster_name=self.name,
@@ -496,10 +498,6 @@ class ClouderaCluster(ClouderaManagerModule):
                         items=hostrefs
                     ),
                 )
-
-                template_map = {}
-                role_group_list = []
-                role_list = []
 
                 for h in self.hosts:
                     hostref = (
@@ -523,52 +521,65 @@ class ClouderaCluster(ClouderaManagerModule):
                     if h["roles"]:
                         role_list.append((hostref, h["roles"]))
 
-                # Apply host templates
-                for ht, refs in template_map.items():
-                    self.host_template_api.apply_host_template(
-                        cluster_name=self.name,
-                        host_template_name=ht,
-                        start_roles=False,
-                        body=ApiHostRefList(items=refs),
+            # Activate parcels
+            if self.parcels:
+                parcel_api = ParcelResourceApi(self.api_client)
+                for p, v in self.parcels.items():
+                    parcel = Parcel(
+                        parcel_api=parcel_api,
+                        product=p,
+                        version=v,
+                        cluster=self.name,
+                        delay=self.polling_interval,
                     )
+                    parcel.activate()
 
-                # Configure direct role group assignments
-                if role_group_list:
-                    # Gather all the RCGs for all the services, since we will not
-                    # know the service from the incoming parameter
-                    all_rcgs = {
-                        rcg.name: (s.name, rcg.role_type)
-                        for s in cluster.services
-                        for rcg in s.role_config_groups
-                    }
+            # Apply host templates
+            for ht, refs in template_map.items():
+                self.host_template_api.apply_host_template(
+                    cluster_name=self.name,
+                    host_template_name=ht,
+                    start_roles=False,
+                    body=ApiHostRefList(items=refs),
+                )
 
-                    for hostref, rcgs in role_group_list:
-                        for rg in rcgs:
-                            if rg not in all_rcgs:
-                                self.module.fail_json(
-                                    msg=f"Role config group '{rg}' not found on cluster."
-                                )
+            # Configure direct role group assignments
+            if role_group_list:
+                # Gather all the RCGs for all the services, since we will not
+                # know the service from the incoming parameter
+                all_rcgs = {
+                    rcg.name: (s.name, rcg.role_type)
+                    for s in cluster.services
+                    for rcg in s.role_config_groups
+                }
 
-                            (service_name, role_type) = all_rcgs[rg]
-
-                            # Add the role of that type to the host (generating a name)
-                            direct_roles = self.role_api.create_roles(
-                                cluster_name=self.name,
-                                service_name=service_name,
-                                body=ApiRoleList(
-                                    items=[ApiRole(type=role_type, host_ref=hostref)]
-                                ),
+                for hostref, rcgs in role_group_list:
+                    for rg in rcgs:
+                        if rg not in all_rcgs:
+                            self.module.fail_json(
+                                msg=f"Role config group '{rg}' not found on cluster."
                             )
 
-                            # Move the newly-created role to the RCG
-                            self.role_group_api.move_roles(
-                                cluster_name=self.name,
-                                role_config_group_name=rg,
-                                service_name=service_name,
-                                body=ApiRoleNameList(
-                                    items=[direct_roles.items[0].name]
-                                ),
-                            )
+                        (service_name, role_type) = all_rcgs[rg]
+
+                        # Add the role of that type to the host (generating a name)
+                        direct_roles = self.role_api.create_roles(
+                            cluster_name=self.name,
+                            service_name=service_name,
+                            body=ApiRoleList(
+                                items=[ApiRole(type=role_type, host_ref=hostref)]
+                            ),
+                        )
+
+                        # Move the newly-created role to the RCG
+                        self.role_group_api.move_roles(
+                            cluster_name=self.name,
+                            role_config_group_name=rg,
+                            service_name=service_name,
+                            body=ApiRoleNameList(
+                                items=[direct_roles.items[0].name]
+                            ),
+                        )
 
                 # Configure per-host role overrides
                 # TODO NEXT
@@ -764,7 +775,7 @@ def main():
                 ),
             ),
             # Parcels is a dict of product:version of the cluster
-            parcels=dict(type="dict", elements="str", aliases=["products"]),
+            parcels=dict(type="dict", aliases=["products"]),
             # Tags is a dict of key:value assigned to the cluster
             tags=dict(),
             # Optional UI name
