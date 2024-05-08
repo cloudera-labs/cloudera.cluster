@@ -15,3 +15,23 @@
 # limitations under the License.
 
 requires_ansible: ">=2.10"
+
+action_groups:
+  cm:
+    - cm_config_info
+    - cm_config
+    - cm_license_info
+    - cm_license
+    - cm_resource_info
+    - cm_resource
+    - cm_service_info
+    - cm_service
+    - cm_trial_license
+    - cm_version_info
+    - cm_endpoint_info
+  cluster:
+    - metadata:
+        extend_group:
+          - cm
+    - cluster_info
+    - cluster
