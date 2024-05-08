@@ -57,6 +57,7 @@ html_theme_options = {
         'Training': 'https://www.cloudera.com/about/training.html',
         'Certification': 'https://www.cloudera.com/about/training/certification.html',
     },
+    'analytics_id': 'G-YMR2P5DEWR',
 }
 
 html_content = {
