@@ -280,14 +280,16 @@ def test_present_base_host_host_template_assignment(conn, module_args):
             type: SERVER
             display_name: Server Custom Group
             config:
-              zookeeper_server_java_heapsize: 33554432  # 32MB
+              zookeeper_server_java_heapsize: 134217728  # 128MB
     hosts:
-      - name: test09-worker-free-01.cldr.internal
+      - name: test10-worker-free-01.cldr.internal
         host_template: Example_Template
     host_templates:
       - name: Example_Template
         role_groups:
           - NON-BASE-SERVER
+    parcels:
+      CDH: "7.1.9-1.cdh7.1.9.p0.44702451"
     '''
     conn.update(yaml.safe_load(args))
     module_args(conn)
