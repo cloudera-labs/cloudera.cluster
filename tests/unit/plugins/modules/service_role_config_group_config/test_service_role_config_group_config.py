@@ -59,7 +59,7 @@ def conn():
 def test_missing_required(conn, module_args):
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="cluster, role_config_group, service"):
+    with pytest.raises(AnsibleFailJson, match="cluster, parameters, role_config_group, service"):
         service_role_config_group_config.main()
 
 
@@ -67,7 +67,7 @@ def test_missing_service(conn, module_args):
     conn.update(service="example")
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="cluster, role_config_group"):
+    with pytest.raises(AnsibleFailJson, match="cluster, parameters, role_config_group"):
         service_role_config_group_config.main()
 
 
@@ -75,7 +75,7 @@ def test_missing_cluster(conn, module_args):
     conn.update(cluster="example")
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="role_config_group, service"):
+    with pytest.raises(AnsibleFailJson, match="parameters, role_config_group, service"):
         service_role_config_group_config.main()
 
 
@@ -83,7 +83,14 @@ def test_missing_role_config_group(conn, module_args):
     conn.update(role_config_group="example")
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="cluster, service"):
+    with pytest.raises(AnsibleFailJson, match="cluster, parameters, service"):
+        service_role_config_group_config.main()
+
+def test_missing_parameters(conn, module_args):
+    conn.update(parameters={})
+    module_args(conn)
+
+    with pytest.raises(AnsibleFailJson, match="cluster, role_config_group, service"):
         service_role_config_group_config.main()
 
 
