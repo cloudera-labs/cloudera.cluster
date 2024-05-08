@@ -21,6 +21,7 @@ __metaclass__ = type
 import json
 import sys
 import pytest
+import yaml
 
 from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
@@ -70,4 +71,14 @@ def module_args():
         args = json.dumps({"ANSIBLE_MODULE_ARGS": args})
         basic._ANSIBLE_ARGS = to_bytes(args)
 
+    return prep_args
+
+@pytest.fixture
+def yaml_args():
+    """Prepare module arguments from YAML"""
+    
+    def prep_args(args : str = ""):
+        output = json.dumps({"ANSIBLE_MODULE_ARGS": yaml.safe_load(args)})
+        basic._ANSIBLE_ARGS = to_bytes(output)
+        
     return prep_args
