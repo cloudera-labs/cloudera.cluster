@@ -21,6 +21,7 @@ __metaclass__ = type
 import logging
 import os
 import pytest
+import yaml
 
 from ansible.module_utils.common.dict_transformations import recursive_diff
 
@@ -151,20 +152,201 @@ def test_present_base_auto_assign(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
-    #   ZOOKEEPER:
-    #     SERVICEWIDE:
-    #       zookeeper_datadir_autocreate: true
-    #       service_config_suppression_server_count_validator: true
-    #     SERVER:
-    #       zookeeper_server_java_heapsize: 134217728
+def test_present_base_service(conn, module_args):   
+    args = '''
+    name: Example_Base_Service
+    cluster_version: 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-BASE-SERVICE
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+    '''
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
 
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
 
-def test_present_base_service(conn, module_args):
+    LOG.info(str(e.value.cloudera_manager))
+    
+def test_present_base_service_config(conn, module_args):   
+    args = '''
+    name: Example_Base_Service_Config
+    cluster_version: 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-BASE-SERVICE-CONFIG
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        config:
+          zookeeper_datadir_autocreate: yes
+          service_config_suppression_server_count_validator: yes
+    '''
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    LOG.info(str(e.value.cloudera_manager))
+
+def test_present_base_service_role_groups(conn, module_args):   
+    args = '''
+    name: Example_Base_Service_Role_Groups
+    cluster_version: 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-BASE-SERVICE-ROLE-GROUPS
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        role_groups:
+          - name: BASE-SERVER                           # ignored due to base=True
+            type: SERVER
+            base: yes
+            display_name: Server Base Group
+            config:
+              zookeeper_server_java_heapsize: 134217728 # 128MB
+          - name: NON-BASE-SERVER
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 33554432  # 32MB
+    '''
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    LOG.info(str(e.value.cloudera_manager))
+    
+def test_present_base_host_role_group_assignment(conn, module_args):   
+    args = '''
+    name: Example_Base_Host_Role_Group_Assignment
+    cluster_version: 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-BASE-SERVICE-ROLE-GROUPS
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        role_groups:
+          - name: BASE-SERVER                           # ignored due to base=True
+            type: SERVER
+            base: yes
+            display_name: Server Base Group
+            config:
+              zookeeper_server_java_heapsize: 134217728 # 128MB
+          - name: NON-BASE-SERVER
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 33554432  # 32MB
+    hosts:
+      - name: test10-worker-free-01.cldr.internal
+        role_groups:
+          - NON-BASE-SERVER
+    '''
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    LOG.info(str(e.value.cloudera_manager))
+
+def test_present_base_host_host_template_assignment(conn, module_args):   
+    args = '''
+    name: Example_Base_Host_Host_Template_Assignment
+    cluster_version: "7.1.9-1.cdh7.1.9.p0.44702451" # 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-BASE-SERVICE-ROLE-GROUPS
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        role_groups:
+          - name: BASE-SERVER                           # ignored due to base=True
+            type: SERVER
+            base: yes
+            display_name: Server Base Group
+            config:
+              zookeeper_server_java_heapsize: 134217728 # 128MB
+          - name: NON-BASE-SERVER
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 33554432  # 32MB
+    hosts:
+      - name: test09-worker-free-01.cldr.internal
+        host_template: Example_Template
+    host_templates:
+      - name: Example_Template
+        role_groups:
+          - NON-BASE-SERVER
+    '''
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    LOG.info(str(e.value.cloudera_manager))
+
+def test_present_base_role(conn, module_args):
     conn.update(
-        name="Example_Base_Service",
+        name="Example_Base_Roles",
         cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
+        hosts={
+            "test09-worker-free-01.cldr.internal": {},
+            "test09-worker-free-02.cldr.internal": {}, # Added automatically by the role config reference
+        },
+        services=[
+            dict(
+                name="Example_ZK",
+                type="ZOOKEEPER",
+                display_name="ZK_TEST",
+                config=dict(
+                    zookeeper_datadir_autocreate=True,
+                    service_config_suppression_server_count_validator=True,
+                ),
+                roles=[
+                    dict(
+                        name="example_SERVER_ROLE",
+                        type="SERVER",
+                        config=dict(
+                            zookeeper_server_java_heapsize=33554432,
+                        ),
+                        host="test09-worker-free-02.cldr.internal", # This will automatically add the server to the cluster
+                    )
+                ]
+            ),
+        ],
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+    
+def test_present_base_role_with_rcg(conn, module_args):
+    conn.update(
+        name="Example_Base_Role_RCG",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
+        type="BASE_CLUSTER",
+        state="present",
+        hosts={
+            "test09-worker-free-01.cldr.internal": {}, # Added automatically by the role config reference
+            "test09-worker-free-02.cldr.internal": {}, # Added automatically by the role config reference
+        },
         services=[
             dict(
                 name="Example_ZK",
@@ -193,6 +375,27 @@ def test_present_base_service(conn, module_args):
                         ),
                     ),
                 ],
+                roles=[
+                    dict(
+                        # Implied base (default) RCG
+                        name="example_BASE-OVERRIDE",
+                        type="SERVER",
+                        config=dict(
+                            zookeeper_server_java_heapsize=33554432,
+                        ),
+                        host="test09-worker-free-01.cldr.internal", # This will automatically add the server to the cluster
+                    ),
+                    dict(
+                        #name="example_NON-BASE-OVERRIDE",
+                        #name="Example_ZK-SERVER-override",
+                        type="SERVER",
+                        role_config_group="NON-BASE-SERVER",
+                        config=dict(
+                            zookeeper_server_java_heapsize=67108864,
+                        ),
+                        host="test09-worker-free-02.cldr.internal", # This will automatically add the server to the cluster
+                    )
+                ]
             ),
         ],
     )
@@ -203,7 +406,6 @@ def test_present_base_service(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
-
 
 def test_started_base(conn, module_args):
     conn.update(
