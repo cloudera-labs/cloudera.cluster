@@ -31,14 +31,22 @@ from cm_client import (
     ApiDataContextList,
     ApiHostRef,
     ApiHostRefList,
+    ApiHostTemplate,
+    ApiHostTemplateList,
+    ApiRole,
+    ApiRoleList,
     ApiRoleConfigGroup,
     ApiRoleConfigGroupList,
-    ApiRoleTypeConfig,
+    ApiRoleConfigGroupRef,
+    ApiRoleNameList,
     ApiService,
     ApiServiceConfig,
     ClouderaManagerResourceApi,
     ClustersResourceApi,
     HostsResourceApi,
+    HostTemplatesResourceApi,
+    RoleConfigGroupsResourceApi,
+    RolesResourceApi,
 )
 from cm_client.rest import ApiException
 
@@ -171,6 +179,7 @@ class ClouderaCluster(ClouderaManagerModule):
         self.add_repositories = self.get_param("add_repositories")
         self.maintenance = self.get_param("maintenance")
         self.hosts = self.get_param("hosts")
+        self.host_templates = self.get_param("host_templates")
         self.services = self.get_param("services")
         self.parcels = self.get_param("parcels")
         self.tags = self.get_param("tags")
@@ -189,7 +198,10 @@ class ClouderaCluster(ClouderaManagerModule):
     def process(self):
         self.cm_api = ClouderaManagerResourceApi(self.api_client)
         self.cluster_api = ClustersResourceApi(self.api_client)
+        self.host_template_api = HostTemplatesResourceApi(self.api_client)
         self.host_api = HostsResourceApi(self.api_client)
+        self.role_group_api = RoleConfigGroupsResourceApi(self.api_client)
+        self.role_api = RolesResourceApi(self.api_client)
 
         refresh = True
 
@@ -424,15 +436,18 @@ class ClouderaCluster(ClouderaManagerModule):
                 msg=f"Cluster must be created. Missing required parameter: cluster_version"
             )
 
+        # Configure the core cluster
         cluster = ApiCluster(
             name=self.name,
             full_version=self.cluster_version,
             cluster_type=self.type,
         )
 
+        # Configure cluster services
         if self.services:
             cluster.services = [self.marshal_service(s) for s in self.services]
 
+        # Configure cluster contexts
         if self.contexts:
             cluster.data_context_refs = [ApiDataContext(name=d) for d in self.contexts]
 
@@ -442,53 +457,182 @@ class ClouderaCluster(ClouderaManagerModule):
         if not self.module.check_mode:
             # Validate any incoming host membership to fail fast
             if self.hosts:
-                hostrefs = self.marshal_hostrefs(self.hosts)
+                hostrefs = self.marshal_hostrefs({h["name"]: h for h in self.hosts})
+                hostref_by_host_id = {h.host_id: h for h in hostrefs}
+                hostref_by_hostname = {h.hostname: h for h in hostrefs}
 
+            # Create the cluster configuration
             self.cluster_api.create_clusters(body=ApiClusterList(items=[cluster]))
             self.wait_for_active_cmd(self.name)
+            
+            # Activate parcels
+            if self.parcels:
+                # TODO HERE!!
+                pass
 
-            if self.hosts:
-                self.cluster_api.add_hosts(
-                    cluster_name=self.name, body=ApiHostRefList(items=hostrefs)
+            # Add host templates to cluster
+            if self.host_templates:
+                test = [
+                            ApiHostTemplate(
+                                name=ht["name"],
+                                role_config_group_refs=[ApiRoleConfigGroupRef(rcg)]
+                            )
+                            for ht in self.host_templates
+                            for rcg in ht["role_groups"]
+                        ]
+                self.host_template_api.create_host_templates(
+                    cluster_name=self.name,
+                    body=ApiHostTemplateList(
+                        items=test
+                    ),
                 )
 
+            # Add hosts to cluster
+            if self.hosts:
+                self.cluster_api.add_hosts(
+                    cluster_name=self.name,
+                    body=ApiHostRefList(
+                        # items=[h for h in hostrefs if h.host_id not in prior_host_ids]
+                        items=hostrefs
+                    ),
+                )
+
+                template_map = {}
+                role_group_list = []
+                role_list = []
+
+                for h in self.hosts:
+                    hostref = (
+                        hostref_by_host_id[h["name"]]
+                        if h["name"] in hostref_by_host_id
+                        else hostref_by_hostname[h["name"]]
+                    )
+
+                    # Prepare host template assignments
+                    if h["host_template"]:
+                        if h["host_template"] in template_map:
+                            template_map[h["host_template"]].append(hostref)
+                        else:
+                            template_map[h["host_template"]] = [hostref]
+
+                    # Prepare role group assignments
+                    if h["role_groups"]:
+                        role_group_list.append((hostref, h["role_groups"]))
+
+                    # Prepare role overrides
+                    if h["roles"]:
+                        role_list.append((hostref, h["roles"]))
+
+                # Apply host templates
+                for ht, refs in template_map.items():
+                    self.host_template_api.apply_host_template(
+                        cluster_name=self.name,
+                        host_template_name=ht,
+                        start_roles=False,
+                        body=ApiHostRefList(items=refs),
+                    )
+
+                # Configure direct role group assignments
+                if role_group_list:
+                    # Gather all the RCGs for all the services, since we will not
+                    # know the service from the incoming parameter
+                    all_rcgs = {
+                        rcg.name: (s.name, rcg.role_type)
+                        for s in cluster.services
+                        for rcg in s.role_config_groups
+                    }
+
+                    for hostref, rcgs in role_group_list:
+                        for rg in rcgs:
+                            if rg not in all_rcgs:
+                                self.module.fail_json(
+                                    msg=f"Role config group '{rg}' not found on cluster."
+                                )
+
+                            (service_name, role_type) = all_rcgs[rg]
+
+                            # Add the role of that type to the host (generating a name)
+                            direct_roles = self.role_api.create_roles(
+                                cluster_name=self.name,
+                                service_name=service_name,
+                                body=ApiRoleList(
+                                    items=[ApiRole(type=role_type, host_ref=hostref)]
+                                ),
+                            )
+
+                            # Move the newly-created role to the RCG
+                            self.role_group_api.move_roles(
+                                cluster_name=self.name,
+                                role_config_group_name=rg,
+                                service_name=service_name,
+                                body=ApiRoleNameList(
+                                    items=[direct_roles.items[0].name]
+                                ),
+                            )
+
+                # Configure per-host role overrides
+                # TODO NEXT
+
+                # For each override, look up the role by type and filter by host
+                # to get the role_name (which is generated), using
+                # RolesResourceApi.read_roles() using hostId and role type filters
+                # If found, then RolesResourceApi.update_role_config()
+                # Else, throw an error, as the role is not active on the host
+                # if options["roles"]:
+            #     role_list = []
+
+            #     # TODO Need parameter validation of arbitrary role entries
+            #     for body in options["roles"]:
+            #         role = ApiRole(type=body["type"])
+
+            #         if "name" in body:
+            #             role.name = body["name"]
+
+            #         if "host" in body:
+            #             host_ref = self.host_api.read_host(host_id=body["host"])
+            #             if host_ref.cluster_ref:
+            #                 self.module.fail_json(
+            #                     msg=f"Unable to assign role to host '{host_ref.hostname}'; host is a member of existing cluster '{host_ref.cluster_ref.cluster_name}'"
+            #                 )
+
+            #             role.host_ref = ApiHostRef(host_id=host_ref.host_id)
+
+            #         if "config" in body:
+            #             role.config = ApiConfigList(
+            #                 items=[
+            #                     ApiConfig(name=k, value=v)
+            #                     for k, v in body["config"].items()
+            #                 ]
+            #             )
+
+            #         role_list.append(role)
+
+            #     service.roles = role_list
+
+            # Execute auto-role assignments
             if self.auto_assign:
                 self.cluster_api.auto_assign_roles(cluster_name=self.name)
 
     def marshal_service(self, options: str) -> ApiService:
-        # - name
-        # - type
-        # - config
-        # roles
-        # - displayName
-        # roleConfigGroups
-        # tags
-        # serviceVersion
-
         service = ApiService(name=options["name"], type=options["type"])
 
         if "display_name" in options:
             service.display_name = options["display_name"]
 
-        if "config" in options:
+        # Service-wide configuration
+        if options["config"]:
             service.config = ApiServiceConfig(
                 items=[ApiConfig(name=k, value=v) for k, v in options["config"].items()]
             )
 
-        # list[ApiRole]
-        # name
-        # type
-        # hostRef
-        # config
-        # tags
-        if "roles" in options:
-            pass
-
-        if "role_config_groups" in options:
+        if options["role_groups"]:
             rcg_list = []
 
-            for body in options["role_config_groups"]:
-                rcg = ApiRoleConfigGroup(name=body["name"], role_type=body["type"])
+            for body in options["role_groups"]:
+                rcg = ApiRoleConfigGroup(role_type=body["type"])
+
+                if "name" in body:
+                    rcg.name = body["name"]
 
                 if "display_name" in body:
                     rcg.display_name = body["display_name"]
@@ -508,9 +652,15 @@ class ClouderaCluster(ClouderaManagerModule):
 
             service.role_config_groups = rcg_list
 
+        if "tags" in options:
+            pass
+
+        if "version" in options:
+            pass
+
         return service
 
-    def marshal_hostrefs(self, hosts: dict):
+    def marshal_hostrefs(self, hosts: dict) -> list[ApiHostRef]:
         results = []
         hosts_query = self.host_api.read_hosts().items
         for h in hosts_query:
@@ -548,37 +698,71 @@ def main():
             template=dict(type="path", aliases=["cluster_template"]),
             # Only valid if using 'template'
             add_repositories=dict(type="bool", default=False),
+            # Flag for warning suppression
             maintenance=dict(type="bool", aliases=["maintenance_enabled"]),
-            # Services and configs; keys are refname
+            # Services, service configs, role config groups
             services=dict(
                 type="list",
                 elements="dict",
                 options=dict(
                     name=dict(required=True, aliases=["ref_name"]),
                     type=dict(required=True),
+                    version=dict(),
                     # Service-level config
                     config=dict(type="dict"),
                     # Role config groups (RCG)
-                    role_config_groups=dict(
+                    role_groups=dict(
                         type="list",
+                        elements="dict",
                         options=dict(
-                            name=dict(required=True, aliases=["ref_name"]),
+                            name=dict(aliases=["ref_name"]),
                             type=dict(required=True, aliases=["role_type"]),
                             base=dict(type="bool"),  # Will ignore name if True
                             display_name=dict(),
                             config=dict(type="dict"),
                         ),
+                        aliases=["role_config_groups"],
                     ),
-                    # Roles: keys are refName, values are role type
-                    roles=dict(type="dict"),
                     display_name=dict(),
                     tags=dict(type="dict"),
                 ),
             ),
-            # Hosts and host template assignments; keys are host_id or hostname
-            hosts=dict(type="dict"),
+            # Hosts, host template assignments, explicit role group assignments, and per-host role overrides
+            hosts=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    name=dict(required=True, aliases=["host_id", "hostname"]),
+                    config=dict(),
+                    host_template=dict(),
+                    role_groups=dict(
+                        type="list", elements="str", aliases=["role_config_groups"]
+                    ),
+                    roles=dict(
+                        type="list",
+                        elements="dict",
+                        options=dict(
+                            type=dict(required=True, aliases=["role_type"]),
+                            config=dict(type="dict", required=True),
+                        ),
+                    ),
+                    tags=dict(),
+                ),
+            ),
             # Host templates
-            host_templates=dict(),
+            host_templates=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    name=dict(required=True),
+                    role_groups=dict(
+                        type="list",
+                        elements="str",
+                        required=True,
+                        aliases=["role_config_groups"],
+                    ),
+                ),
+            ),
             # Parcels is a dict of product:version of the cluster
             parcels=dict(type="dict", elements="str", aliases=["products"]),
             # Tags is a dict of key:value assigned to the cluster
