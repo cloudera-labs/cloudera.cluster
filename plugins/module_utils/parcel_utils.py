@@ -24,26 +24,26 @@ from cm_client import ParcelResourceApi
 
 
 # See https://eli.thegreenplace.net/2009/08/29/co-routines-as-an-alternative-to-state-machines/
-def coroutine(func):
-    def start(*args, **kwargs):
-        cr = func(*args, **kwargs)
-        cr.next()
-        return cr
+# def coroutine(func):
+#     def start(*args, **kwargs):
+#         cr = func(*args, **kwargs)
+#         cr.next()
+#         return cr
 
-    return start
+#     return start
 
 
-class ParcelStage(IntEnum):
-    (
-        AVAILABLE_REMOTELY,
-        DOWNLOADING,
-        DOWNLOADED,
-        UNDISTRIBUTING,
-        DISTRIBUTING,
-        DISTRIBUTED,
-        ACTIVATING,
-        ACTIVATED,
-    ) = range(8)
+# class ParcelStage(IntEnum):
+#     (
+#         AVAILABLE_REMOTELY,
+#         DOWNLOADING,
+#         DOWNLOADED,
+#         UNDISTRIBUTING,
+#         DISTRIBUTING,
+#         DISTRIBUTED,
+#         ACTIVATING,
+#         ACTIVATED,
+#     ) = range(8)
 
 
 class Parcel(object):
@@ -69,7 +69,7 @@ class Parcel(object):
         self.delay = delay
         self.timeout = timeout
 
-        self.current = ParcelStage[
+        self.current = Parcel.STAGE[
             str(
                 self.parcel_api.read_parcel(
                     cluster_name=self.cluster,
@@ -79,7 +79,7 @@ class Parcel(object):
             ).upper()
         ]
 
-    def _wait(self, stage: ParcelStage) -> None:
+    def _wait(self, stage: STAGE) -> None:
         end_time = time.time() + self.timeout
 
         while end_time > time.time():
@@ -93,7 +93,7 @@ class Parcel(object):
 
         return Exception(f"Failed to reach {stage.name}: timeout ({self.timeout} secs)")
 
-    def _exec(self, stage: ParcelStage, func) -> None:
+    def _exec(self, stage: STAGE, func) -> None:
         func(
             cluster_name=self.cluster,
             product=self.product,
@@ -102,38 +102,38 @@ class Parcel(object):
         self._wait(stage)
 
     def remove(self):
-        if self.current > ParcelStage.AVAILABLE_REMOTELY:
-            self.download(ParcelStage.AVAILABLE_REMOTELY)
+        if self.current > self.STAGE.AVAILABLE_REMOTELY:
+            self.download(self.STAGE.AVAILABLE_REMOTELY)
             self._exec(
-                ParcelStage.AVAILABLE_REMOTELY, self.parcel_api.remove_download_command
+                self.STAGE.AVAILABLE_REMOTELY, self.parcel_api.remove_download_command
             )
 
-    def download(self, target: ParcelStage = ParcelStage.DOWNLOADED):
+    def download(self, target: STAGE = STAGE.DOWNLOADED):
         if self.current > target:
             self.distribute(target)
             self._exec(
-                ParcelStage.DOWNLOADED,
+                self.STAGE.DOWNLOADED,
                 self.parcel_api.start_removal_of_distribution_command,
             )
-        elif self.current == ParcelStage.DOWNLOADING:
-            self._wait(ParcelStage.DOWNLOADED)
-        elif self.current < ParcelStage.DOWNLOADING:
-            self._exec(ParcelStage.DOWNLOADED, self.parcel_api.start_download_command)
+        elif self.current == self.STAGE.DOWNLOADING:
+            self._wait(self.STAGE.DOWNLOADED)
+        elif self.current < self.STAGE.DOWNLOADING:
+            self._exec(self.STAGE.DOWNLOADED, self.parcel_api.start_download_command)
 
-    def distribute(self, target: ParcelStage = ParcelStage.DISTRIBUTED):
+    def distribute(self, target: STAGE = STAGE.DISTRIBUTED):
         if self.current > target:
-            self._exec(ParcelStage.DISTRIBUTED, self.parcel_api.deactivate_command)
-        elif self.current == ParcelStage.DISTRIBUTING:
-            self._wait(ParcelStage.DISTRIBUTED)
-        elif self.current < ParcelStage.DISTRIBUTING:
+            self._exec(self.STAGE.DISTRIBUTED, self.parcel_api.deactivate_command)
+        elif self.current == self.STAGE.DISTRIBUTING:
+            self._wait(self.STAGE.DISTRIBUTED)
+        elif self.current < self.STAGE.DISTRIBUTING:
             self.download(target)
             self._exec(
-                ParcelStage.DISTRIBUTED, self.parcel_api.start_distribution_command
+                self.STAGE.DISTRIBUTED, self.parcel_api.start_distribution_command
             )
 
     def activate(self):
-        if self.current == ParcelStage.ACTIVATING:
-            self._wait(ParcelStage.ACTIVATED)
-        elif self.current < ParcelStage.ACTIVATED:
-            self.distribute(ParcelStage.ACTIVATED)
-            self._exec(ParcelStage.ACTIVATED, self.parcel_api.activate_command)
+        if self.current == self.STAGE.ACTIVATING:
+            self._wait(self.STAGE.ACTIVATED)
+        elif self.current < self.STAGE.ACTIVATED:
+            self.distribute(self.STAGE.ACTIVATED)
+            self._exec(self.STAGE.ACTIVATED, self.parcel_api.activate_command)
