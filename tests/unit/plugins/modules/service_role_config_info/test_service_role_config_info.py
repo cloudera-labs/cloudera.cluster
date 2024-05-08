@@ -63,7 +63,7 @@ def test_missing_required(conn, module_args):
         service_role_config_info.main()
 
 
-def test_missing_cluster(conn, module_args):
+def test_missing_service(conn, module_args):
     conn.update(service="example")
     module_args(conn)
 
@@ -101,13 +101,12 @@ def test_invalid_service(conn, module_args):
             **conn,
             "cluster": os.getenv("CM_CLUSTER"),
             "service": "BOOM",
+            "role": os.getenv("CM_ROLE"),
         }
     )
 
-    with pytest.raises(AnsibleExitJson) as e:
+    with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
         service_role_config_info.main()
-
-    assert len(e.value.config) == 0
 
 
 def test_invalid_cluster(conn, module_args):
@@ -116,10 +115,9 @@ def test_invalid_cluster(conn, module_args):
             **conn,
             "cluster": "BOOM",
             "service": os.getenv("CM_SERVICE"),
+            "role": os.getenv("CM_ROLE"),
         }
     )
 
-    with pytest.raises(AnsibleExitJson) as e:
+    with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
         service_role_config_info.main()
-
-    assert len(e.value.config) == 0
