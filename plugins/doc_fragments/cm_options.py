@@ -91,4 +91,14 @@ class ModuleDocFragment(object):
             type: str
             required: False
             default: ClouderaFoundry
+            aliases:
+                - user_agent
+        proxy_server:
+            description:
+                - Set the HTTP/S proxy server when interacting with the CM API endpoint.
+            type: str
+            required: False
+            aliases:
+                - proxy
+                - http_proxy
     """

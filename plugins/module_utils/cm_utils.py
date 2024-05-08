@@ -28,9 +28,18 @@ from urllib3.util import Url
 from urllib.parse import urljoin
 from time import sleep
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.common.text.converters import to_text
 from time import sleep
-from cm_client import ApiClient, ApiConfigList, Configuration
+from cm_client import (
+    ApiClient,
+    ApiCommand,
+    ApiConfigList,
+    ApiRole,
+    ApiRoleConfigGroup,
+    ApiService,
+    Configuration,
+)
 from cm_client.rest import ApiException, RESTClientObject
 from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
 from cm_client.apis.commands_resource_api import CommandsResourceApi
@@ -38,6 +47,156 @@ from cm_client.apis.commands_resource_api import CommandsResourceApi
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
+
+
+SERVICE_OUTPUT = [
+    "client_config_staleness_status",
+    # "cluster_ref",
+    "config_staleness_status",
+    "display_name",
+    "health_checks",
+    "health_summary",
+    "maintenance_mode",
+    "maintenance_owners",
+    "name",
+    "service_state",
+    "service_version",
+    "tags",
+    "type",
+]
+
+ROLE_OUTPUT = [
+    "commission_state",
+    "config_staleness_status",
+    "ha_status",
+    "health_checks",
+    "health_summary",
+    # "host_ref",
+    "maintenance_mode",
+    "maintenance_owners",
+    "name",
+    # "role_config_group_ref",
+    "role_state",
+    # "service_ref",
+    "tags",
+    "type",
+    "zoo_keeper_server_mode",
+]
+
+ROLE_CONFIG_GROUP = [
+    "name",
+    "role_type",
+    "base",
+    "display_name",
+    # "service_ref",
+]
+
+
+def _parse_output(entity: dict, filter: list) -> dict:
+    output = {}
+    for k in filter:
+        if k == "tags":
+            output[k] = {entry["name"]: entry["value"] for entry in entity[k]}
+        else:
+            output[k] = entity[k]
+
+    return output
+
+
+def parse_service_result(service: ApiService) -> dict:
+    # Retrieve only the cluster_name
+    output = dict(cluster_name=service.cluster_ref.cluster_name)
+    output.update(_parse_output(service.to_dict(), SERVICE_OUTPUT))
+    return output
+
+
+def parse_role_result(role: ApiRole) -> dict:
+    # Retrieve only the host_id, role_config_group, and service identifiers
+    output = dict(
+        host_id=role.host_ref.host_id,
+        role_config_group_name=role.role_config_group_ref.role_config_group_name,
+        service_name=role.service_ref.service_name,
+    )
+    output.update(_parse_output(role.to_dict(), ROLE_OUTPUT))
+    return output
+
+
+def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup):
+    # Retrieve only the service identifier
+    output = dict(service_name=role_config_group.service_ref.service_name)
+    output.update(_parse_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
+    return output
+
+
+def normalize_values(add: dict) -> dict:
+    """Normalize whitespace of parameter values.
+
+    Args:
+        add (dict): Parameters to review
+
+    Returns:
+        dict: Normalized parameters
+    """
+    return {k: (v.strip() if isinstance(v, str) else v) for k, v in add.items()}
+
+
+def resolve_parameter_updates(
+    current: dict, incoming: dict, purge: bool = False
+) -> dict:
+    """Produce a change set between two parameter dictionaries.
+
+    The function will normalize parameter values to remove whitespace.
+
+    Args:
+        current (dict): Existing parameters
+        incoming (dict): Declared parameters
+        purge (bool, optional): Flag to reset any current parameters not found in the declared set. Defaults to False.
+
+    Returns:
+        dict: A change set of the updates
+    """
+    updates = {}
+    diff = recursive_diff(current, incoming)
+    if diff is not None:
+        updates = {
+            k: v
+            for k, v in normalize_values(diff[1]).items()
+            if k in current or (k not in current and v is not None)
+        }
+
+        if purge:
+            # Add the other non-defaults
+            updates = {
+                **updates,
+                **{k: None for k in diff[0].keys() if k not in diff[1]},
+            }
+    return updates
+
+
+def resolve_tag_updates(
+    current: dict, incoming: dict, purge: bool = False
+) -> tuple[dict, dict]:
+    incoming_tags = {
+        k: str(v)
+        for k, v in incoming.items()
+        if (isinstance(v, str) and v.strip() != "")
+        or (not isinstance(v, str) and v is not None)
+    }
+
+    delta_add = {}
+    delta_del = {}
+
+    diff = recursive_diff(incoming_tags, current)
+
+    if diff is not None:
+        delta_add = diff[0]
+
+        if purge:
+            delta_del = diff[1]
+        else:
+            delta_del = {k: v for k, v in diff[1].items() if k in diff[0]}
+
+    return (delta_add, delta_del)
 
 
 class ClusterTemplate(object):
@@ -155,14 +314,15 @@ class ClouderaManagerModule(object):
                 return f(self, *args, **kwargs)
             except ApiException as ae:
                 err = dict(
-                    msg="API error: " + to_text(ae.reason),
                     status_code=ae.status,
                 )
                 if ae.body:
                     try:
-                        err.update(body=json.loads(ae.body))
+                        err.update(msg=json.loads(ae.body)["message"])
                     except Exception:
-                        err.update(body=ae.body.decode("utf-8")),
+                        err.update(msg="API error: " + to_text(ae.reason))
+                else:
+                    err.update(msg="API error: " + to_text(ae.reason))
 
                 self.module.fail_json(**_add_log(err))
             except MaxRetryError as maxe:
@@ -190,6 +350,7 @@ class ClouderaManagerModule(object):
         self.ssl_ca_cert = self.get_param("ssl_ca_cert")
         self.debug = self.get_param("debug")
         self.agent_header = self.get_param("agent_header")
+        self.proxy_server = self.get_param("proxy")
 
         # Initialize common return values
         self.changed = False
@@ -200,6 +361,10 @@ class ClouderaManagerModule(object):
         config.password = self.password
         config.verify_ssl = self.verify_tls
         config.debug = self.debug
+
+        # Configure HTTP proxy server
+        if self.proxy_server:
+            config.proxy = self.proxy_server
 
         # Configure custom validation certificate
         if self.ssl_ca_cert:
@@ -254,6 +419,9 @@ class ClouderaManagerModule(object):
         # Create and set the API Client
         self.api_client = ApiClient()
 
+        # Update the User Agent
+        self.api_client.user_agent = self.agent_header
+
     def get_auth_headers(self, config):
         """
         Constructs a Basic Auth header dictionary from the Configuration. This
@@ -303,10 +471,12 @@ class ClouderaManagerModule(object):
             api_instance.get_version()
         self.api_client.cookie = self.api_client.last_response.getheader("Set-Cookie")
 
-    def wait_for_command_state(self,command_id, polling_interval):
+    def wait_for_command_state(self, command_id, polling_interval):
         command_api_instance = CommandsResourceApi(self.api_client)
         while True:
-            get_command_state = command_api_instance.read_command_with_http_info(command_id=command_id)
+            get_command_state = command_api_instance.read_command_with_http_info(
+                command_id=command_id
+            )
             state = get_command_state[0].active
             if not state:
                 break
@@ -338,10 +508,23 @@ class ClouderaManagerModule(object):
         data = json.loads(results[0].data.decode("utf-8"))
         if field in data:
             data = data[field]
-        return data if type(data) is list else [data]
+        return data if isinstance(data, list) else [data]
 
     def get_cm_config(self, scope: str = "summary") -> ApiConfigList:
         return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
+
+    def wait_command(self, command: ApiCommand, polling: int = 10, delay: int = 5):
+        poll_count = 0
+        while command.active:
+            if poll_count > polling:
+                self.module.fail_json(msg="Command timeout: " + command.id)
+            sleep(delay)
+            poll_count += 1
+            command = CommandsResourceApi(self.api_client).read_command(command.id)
+        if not command.success:
+            self.module.fail_json(
+                msg=to_text(command.result_message), command_id=to_text(command.id)
+            )
 
     @staticmethod
     def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):
@@ -370,7 +553,13 @@ class ClouderaManagerModule(object):
                     aliases=["debug_endpoints"],
                 ),
                 agent_header=dict(
-                    required=False, type="str", default="ClouderaFoundry"
+                    required=False,
+                    type="str",
+                    default="ClouderaFoundry",
+                    aliases=["user_agent"],
+                ),
+                proxy_server=dict(
+                    required=False, type="str", aliases=["proxy", "http_proxy"]
                 ),
             ),
             required_together=required_together + [["username", "password"]],
@@ -380,24 +569,34 @@ class ClouderaManagerModule(object):
     @staticmethod
     def ansible_module(
         argument_spec={},
+        bypass_checks=False,
+        no_log=False,
         mutually_exclusive=[],
-        required_one_of=[],
         required_together=[],
-        **kwargs,
+        required_one_of=[],
+        add_file_common_args=False,
+        supports_check_mode=False,
+        required_if=None,
+        required_by=None,
     ):
         """
         Creates the base Ansible module argument spec and dependencies,
         including discovery and direct endpoint URL support.
         """
         return ClouderaManagerModule.ansible_module_internal(
-            argument_spec=dict(
+            dict(
                 **argument_spec,
                 url=dict(type="str", aliases=["endpoint", "cm_endpoint_url"]),
             ),
+            required_together,
+            bypass_checks=bypass_checks,
+            no_log=no_log,
             mutually_exclusive=mutually_exclusive + [["url", "host"]],
             required_one_of=required_one_of + [["url", "host"]],
-            required_together=required_together,
-            **kwargs,
+            add_file_common_args=add_file_common_args,
+            supports_check_mode=supports_check_mode,
+            required_if=required_if,
+            required_by=required_by,
         )
 
 
@@ -405,22 +604,32 @@ class ClouderaManagerMutableModule(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaManagerMutableModule, self).__init__(module)
         self.message = self.get_param("message")
-        
+
     @staticmethod
     def ansible_module(
         argument_spec={},
+        bypass_checks=False,
+        no_log=False,
         mutually_exclusive=[],
-        required_one_of=[],
         required_together=[],
-        **kwargs,
+        required_one_of=[],
+        add_file_common_args=False,
+        supports_check_mode=False,
+        required_if=None,
+        required_by=None,
     ):
         return ClouderaManagerModule.ansible_module(
-            dict(
+            argument_spec=dict(
                 **argument_spec,
-                message=dict(default="Managed by Ansible", aliases=["msg"])
+                message=dict(default="Managed by Ansible", aliases=["msg"]),
             ),
-            mutually_exclusive,
-            required_one_of,
-            required_together,
-            **kwargs
+            bypass_checks=bypass_checks,
+            no_log=no_log,
+            mutually_exclusive=mutually_exclusive,
+            required_together=required_together,
+            required_one_of=required_one_of,
+            add_file_common_args=add_file_common_args,
+            supports_check_mode=supports_check_mode,
+            required_if=required_if,
+            required_by=required_by,
         )

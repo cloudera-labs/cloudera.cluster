@@ -1,4 +1,6 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# -*- coding: utf-8 -*-
+
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cm_client
-
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_parameter_updates,
+    ClouderaManagerModule,
+    parse_role_config_group_result,
 )
+
+from cm_client import (
+    ClustersResourceApi,
+    RoleConfigGroupsResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
@@ -27,61 +34,77 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cm_config
-short_description: Manage the configuration of Cloudera Manager 
+module: service_role_config_group_config_info
+short_description: Retrieve the configuration of a cluster service role config group.
 description:
-  - Manage Cloudera Manager configuration settings.
+  - Gather the configuration details of role config group of a service in a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
   - cm_client
 options:
-  parameters:
+  cluster:
     description:
-      - The Cloudera Manager configuration to set.
-      - To unset a parameter, use C(None) as the value.
-    type: dict
+      - The associated cluster.
+    type: str
     required: yes
     aliases:
-      - params
+      - cluster_name
+  service:
+    description:
+      - The associated service.
+    type: str
+    required: yes
+    aliases:
+      - service_name
+  role_config_group:
+    description:
+      - A role config group name to manage.
+    type: str
+    required: True
+    aliases:
+      - role_config_group
+      - name
+  view:
+    description:
+      - The view to materialize.
+    type: str
+    default: summary
+    choices:
+        - summary
+        - full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-  - cloudera.cluster.purge
-  - cloudera.cluster.message
-attributes:
-  check_mode:
-    support: full
-  diff_mode:
-    support: full
 """
 
 EXAMPLES = r"""
 ---
-- name: Update several Cloudera Manager parameters
-  cloudera.cluster.cm_config:
-    host: example.cloudera.com
-    username: "jane_smith"
+- name: Gather the configuration details for a cluster service role config group
+  cloudera.cluster.service_role_config_group_config_info:
+    host: "example.cloudera.internal"
+    username: "jane_person"
     password: "S&peR4Ec*re"
-    parameters:
-      frontend_url: "schema://host:port"
-      custom_header_color: "PURPLE"
-
-- name: Reset or remove a Cloudera Manager parameter
-  cloudera.cluster.cm_config:
-    host: example.cloudera.com
-    username: "jane_smith"
+    cluster: ExampleCluster
+    service: knox
+    role_config_group: hdfs-GATEWAY-base
+  
+- name: Gather the configuration details in 'full' for a cluster service role config group
+  cloudera.cluster.service_role_config_group_config_info:
+    host: "example.cloudera.internal"
+    username: "jane_person"
     password: "S&peR4Ec*re"
-    parameters:
-      custom_header_color: None
+    cluster: ExampleCluster
+    service: ecs
+    role: hdfs-GATEWAY-base
+    view: full
 """
 
 RETURN = r"""
 ---
 config:
   description:
-    - List of Cloudera Manager configurations.
-    - Returns the C(summary) view of the resulting configuration.
+    - List of configurations for a service role config group.
   type: list
   elements: dict
   returned: always
@@ -157,80 +180,80 @@ config:
 """
 
 
-class ClouderaManagerConfig(ClouderaManagerMutableModule):
+class ClusterServiceRoleConfigGroupConfigInfo(ClouderaManagerModule):
     def __init__(self, module):
-        super(ClouderaManagerConfig, self).__init__(module)
+        super(ClusterServiceRoleConfigGroupConfigInfo, self).__init__(module)
 
         # Set the parameters
-        self.params = self.get_param("parameters")
-        self.purge = self.get_param("purge")
+        self.cluster = self.get_param("cluster")
+        self.service = self.get_param("service")
+        self.role_config_group = self.get_param("role_config_group")
+        self.view = self.get_param("view")
 
-        # Initialize the return value
-        self.changed = False
-        self.diff = {}
+        # Initialize the return values
         self.config = []
 
         # Execute the logic
         self.process()
 
-    @ClouderaManagerMutableModule.handle_process
+    @ClouderaManagerModule.handle_process
     def process(self):
-        refresh = True
-        existing = self.get_cm_config()
+        try:
+            ClustersResourceApi(self.api_client).read_cluster(self.cluster)
+        except ApiException as ex:
+            if ex.status == 404:
+                self.module.fail_json(msg="Cluster does not exist: " + self.cluster)
+            else:
+                raise ex
 
-        current = {r.name: r.value for r in existing}
-        incoming = {k.upper(): v for k, v in self.params.items()}
+        try:
+            ServicesResourceApi(self.api_client).read_service(
+                self.cluster, self.service
+            )
+        except ApiException as ex:
+            if ex.status == 404:
+                self.module.fail_json(msg="Service does not exist: " + self.service)
+            else:
+                raise ex
 
-        change_set = resolve_parameter_updates(current, incoming, self.purge)
+        api_instance = RoleConfigGroupsResourceApi(self.api_client)
 
-        if change_set:
-            self.changed = True
+        try:
+            results = api_instance.read_config(
+                cluster_name=self.cluster,
+                role_config_group_name=self.role_config_group,
+                service_name=self.service,
+                view=self.view,
+            )
 
-            if self.module._diff:
-                self.diff = dict(
-                    before={k: current[k] for k in change_set.keys()},
-                    after=change_set,
-                )
-
-            if not self.module.check_mode:
-                body = cm_client.ApiConfigList(
-                    items=[
-                        cm_client.ApiConfig(name=k, value=v)
-                        for k, v in change_set.items()
-                    ]
-                )
-                # Return 'summary'
-                refresh = False
-                self.config = [
-                    p.to_dict()
-                    for p in cm_client.ClouderaManagerResourceApi(self.api_client)
-                    .update_config(message=self.message, body=body)
-                    .items
-                ]
-
-        if refresh:
-            # Return 'summary'
-            self.config = [p.to_dict() for p in self.get_cm_config()]
+            self.config = [s.to_dict() for s in results.items]
+        except ApiException as e:
+            if e.status != 404:
+                raise e
 
 
 def main():
-    module = ClouderaManagerMutableModule.ansible_module(
+    module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            parameters=dict(type=dict, required=True, aliases=["params"]),
-            purge=dict(type="bool", default=False),
+            cluster=dict(required=True, aliases=["cluster_name"]),
+            service=dict(required=True, aliases=["service_name"]),
+            role_config_group=dict(
+                required=True, aliases=["role_config_group", "name"]
+            ),
+            view=dict(
+                default="summary",
+                choices=["summary", "full"],
+            ),
         ),
         supports_check_mode=True,
     )
 
-    result = ClouderaManagerConfig(module)
+    result = ClusterServiceRoleConfigGroupConfigInfo(module)
 
     output = dict(
-        changed=result.changed,
+        changed=False,
         config=result.config,
     )
-
-    if module._diff:
-        output.update(diff=result.diff)
 
     if result.debug:
         log = result.log_capture.getvalue()

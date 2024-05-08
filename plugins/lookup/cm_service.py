@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     lookup: cm_service
     author: Webster Mudge (@wmudge) <wmudge@cloudera.com>
     short_description: Get the details for a service on a CDP Datahub cluster
@@ -83,35 +84,46 @@ DOCUMENTATION = '''
             description: Value to return if no service is found on the cluster.
             type: any
         version:
-            description: Version number of the Cloudera Manager API.
+            description: Version of the Cloudera Manager API.
             type: string
-            default: v40
         agent_header:
             description: Header string to identify the connection.
             type: string
             default: cm_service     
     notes:
         - Requires C(cm_client).
-'''
+"""
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_controller_utils import ClouderaManagerLookupBase
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_controller_utils import (
+    ClouderaManagerLookupBase,
+)
 
 
 class LookupModule(ClouderaManagerLookupBase):
     def run(self, terms, variables=None, **kwargs):
         self.set_options(var_options=variables, direct=kwargs)
-        
+
         self.initialize_client()
-        all_services = {service['type']:service for service in self.get("%s/clusters/%s/services" % (self.get_option('version'), self.get_option('cluster')))}
-        
+        all_services = {
+            service["type"]: service
+            for service in self.get(
+                "/%s/clusters/%s/services"
+                % (self.get_option("version"), self.get_option("cluster"))
+            )
+        }
+
         results = []
         for term in LookupModule._flatten(terms):
             if term in all_services:
-                results.append(all_services[term] if self.get_option('detailed') else all_services[term]['name'])
+                results.append(
+                    all_services[term]
+                    if self.get_option("detailed")
+                    else all_services[term]["name"]
+                )
             else:
-                if self.get_option('default') is not None:
-                    results.append(self.get_option('default'))
-                elif self.get_option('detailed'):
+                if self.get_option("default") is not None:
+                    results.append(self.get_option("default"))
+                elif self.get_option("detailed"):
                     results.append({})
                 else:
                     results.append("")

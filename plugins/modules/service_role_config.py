@@ -1,4 +1,6 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# -*- coding: utf-8 -*-
+
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cm_client
+import json
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
     resolve_parameter_updates,
 )
+
+from cm_client import (
+    ApiConfig,
+    ApiConfigList,
+    ClustersResourceApi,
+    RolesResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
@@ -27,23 +38,51 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cm_config
-short_description: Manage the configuration of Cloudera Manager 
+module: service_role_config
+short_description: Manage a service role configuration in cluster 
 description:
-  - Manage Cloudera Manager configuration settings.
+  - Manage a service role configuration (role-specific) in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
   - cm_client
 options:
+  cluster:
+    description:
+      - The associated cluster.
+    type: str
+    required: yes
+    aliases:
+      - cluster_name
+  service:
+    description:
+      - The associated service.
+    type: str
+    required: yes
+    aliases:
+      - service_name
+  role:
+    description:
+      - A role name to manage.
+    type: str
+    required: True
+    aliases:
+      - role_name
+      - name
   parameters:
     description:
-      - The Cloudera Manager configuration to set.
+      - The role-specific configuration to set.
       - To unset a parameter, use C(None) as the value.
     type: dict
     required: yes
     aliases:
       - params
+  purge:
+    description:
+      - Flag for whether the declared parameters should append or overwrite any existing parameters.
+      - To clear all parameters, set I(parameters={}), i.e. an empty dictionary, and I(purge=True).
+    type: bool
+    default: False
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -58,22 +97,48 @@ attributes:
 
 EXAMPLES = r"""
 ---
-- name: Update several Cloudera Manager parameters
-  cloudera.cluster.cm_config:
+- name: Update (append) role parameters
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: example-service
     parameters:
-      frontend_url: "schema://host:port"
-      custom_header_color: "PURPLE"
+      a_configuration: "schema://host:port"
+      another_configuration: 234
 
-- name: Reset or remove a Cloudera Manager parameter
-  cloudera.cluster.cm_config:
+- name: Reset a role parameter
+  cloudera.cluster.cluster_service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: example-service
     parameters:
-      custom_header_color: None
+      more_configuration: None
+      
+- name: Update (purge) role parameters
+  cloudera.cluster.cluster_service_role_config:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: example-service
+    parameters:
+      config_one: None
+      config_two: ValueTwo
+      config_three: 2345
+      
+- name: Reset all role parameters
+  cloudera.cluster.cluster_service_role_config:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: example-service
+    parameters: {}
+    purge: yes
 """
 
 RETURN = r"""
@@ -157,11 +222,14 @@ config:
 """
 
 
-class ClouderaManagerConfig(ClouderaManagerMutableModule):
+class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
     def __init__(self, module):
-        super(ClouderaManagerConfig, self).__init__(module)
+        super(ClusterServiceRoleConfig, self).__init__(module)
 
         # Set the parameters
+        self.cluster = self.get_param("cluster")
+        self.service = self.get_param("service")
+        self.role = self.get_param("role")
         self.params = self.get_param("parameters")
         self.purge = self.get_param("purge")
 
@@ -175,11 +243,39 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
-        refresh = True
-        existing = self.get_cm_config()
+        try:
+            ClustersResourceApi(self.api_client).read_cluster(self.cluster)
+        except ApiException as ex:
+            if ex.status == 404:
+                self.module.fail_json(msg="Cluster does not exist: " + self.cluster)
+            else:
+                raise ex
 
-        current = {r.name: r.value for r in existing}
-        incoming = {k.upper(): v for k, v in self.params.items()}
+        try:
+            ServicesResourceApi(self.api_client).read_service(
+                self.cluster, self.service
+            )
+        except ApiException as ex:
+            if ex.status == 404:
+                self.module.fail_json(msg="Service does not exist: " + self.service)
+            else:
+                raise ex
+
+        refresh = True
+        api_instance = RolesResourceApi(self.api_client)
+
+        try:
+            existing = api_instance.read_role_config(
+                self.cluster, self.role, self.service
+            )
+        except ApiException as ex:
+            if ex.status == 404:
+                self.module.fail_json(msg=json.loads(ex.body)["message"])
+            else:
+                raise ex
+
+        current = {r.name: r.value for r in existing.items}
+        incoming = {k: str(v) if v is not None else v for k, v in self.params.items()}
 
         change_set = resolve_parameter_updates(current, incoming, self.purge)
 
@@ -188,41 +284,53 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
 
             if self.module._diff:
                 self.diff = dict(
-                    before={k: current[k] for k in change_set.keys()},
+                    before={
+                        k: current[k] if k in current else None
+                        for k in change_set.keys()
+                    },
                     after=change_set,
                 )
 
             if not self.module.check_mode:
-                body = cm_client.ApiConfigList(
-                    items=[
-                        cm_client.ApiConfig(name=k, value=v)
-                        for k, v in change_set.items()
-                    ]
+                body = ApiConfigList(
+                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
                 )
-                # Return 'summary'
+
                 refresh = False
                 self.config = [
                     p.to_dict()
-                    for p in cm_client.ClouderaManagerResourceApi(self.api_client)
-                    .update_config(message=self.message, body=body)
-                    .items
+                    for p in api_instance.update_role_config(
+                        self.cluster,
+                        self.role,
+                        self.service,
+                        message=self.message,
+                        body=body,
+                    ).items
                 ]
 
         if refresh:
             # Return 'summary'
-            self.config = [p.to_dict() for p in self.get_cm_config()]
+            self.config = [
+                p.to_dict()
+                for p in api_instance.read_role_config(
+                    self.cluster, self.role, self.service
+                ).items
+            ]
 
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            parameters=dict(type=dict, required=True, aliases=["params"]),
+            cluster=dict(required=True, aliases=["cluster_name"]),
+            service=dict(required=True, aliases=["service_name"]),
+            role=dict(required=True, aliases=["role_name", "name"]),
+            parameters=dict(type="dict", required=True, aliases=["params"]),
             purge=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )
 
-    result = ClouderaManagerConfig(module)
+    result = ClusterServiceRoleConfig(module)
 
     output = dict(
         changed=result.changed,
