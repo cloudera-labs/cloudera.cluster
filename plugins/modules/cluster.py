@@ -25,10 +25,20 @@ from cm_client import (
     ApiCluster,
     ApiClusterList,
     ApiClusterTemplate,
+    ApiConfig,
+    ApiConfigList,
     ApiDataContext,
     ApiDataContextList,
+    ApiHostRef,
+    ApiHostRefList,
+    ApiRoleConfigGroup,
+    ApiRoleConfigGroupList,
+    ApiRoleTypeConfig,
+    ApiService,
+    ApiServiceConfig,
     ClouderaManagerResourceApi,
     ClustersResourceApi,
+    HostsResourceApi,
 )
 from cm_client.rest import ApiException
 
@@ -160,11 +170,13 @@ class ClouderaCluster(ClouderaManagerModule):
         self.template = self.get_param("template")
         self.add_repositories = self.get_param("add_repositories")
         self.maintenance = self.get_param("maintenance")
+        self.hosts = self.get_param("hosts")
         self.services = self.get_param("services")
         self.parcels = self.get_param("parcels")
         self.tags = self.get_param("tags")
         self.display_name = self.get_param("display_name")
         self.contexts = self.get_param("contexts")
+        self.auto_assign = self.get_param("auto_assign")
 
         self.changed = False
         self.output = {}
@@ -175,17 +187,18 @@ class ClouderaCluster(ClouderaManagerModule):
 
     @ClouderaManagerModule.handle_process
     def process(self):
-        cm_api = ClouderaManagerResourceApi(self.api_client)
-        cluster_api = ClustersResourceApi(self.api_client)
+        self.cm_api = ClouderaManagerResourceApi(self.api_client)
+        self.cluster_api = ClustersResourceApi(self.api_client)
+        self.host_api = HostsResourceApi(self.api_client)
 
         refresh = True
-        
+
         # TODO manage services following the ClusterTemplateService data model
         # TODO manage host and host template assignments following the ClusterTemplateHostInfo data model
         # TODO manage host templates following the ClusterTemplateHostTemplate data model
-        # TODO manage role config groups following the ClusterTemplateRoleConfigGroupInfo data model
+        # TODO manage role config groups following the ClusterTemplateRoleConfigGroupInfo data model (-CREATE-, MODIFY)
         # TODO cluster template change management
-        # TODO auto assign roles
+        # TODO auto assign roles (xCREATEx, MODIFY)
         # TODO auto configure services and roles
         # TODO auto-TLS (separate module for full credential lifecycle)
         # TODO configure KRB (separate module for full KRB lifecycle)
@@ -200,7 +213,7 @@ class ClouderaCluster(ClouderaManagerModule):
         # Retrieve existing cluster
         existing = None
         try:
-            existing = cluster_api.read_cluster(cluster_name=self.name)
+            existing = self.cluster_api.read_cluster(cluster_name=self.name)
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
@@ -224,17 +237,23 @@ class ClouderaCluster(ClouderaManagerModule):
                     "Module currently does not support reconcilation of cluster templates with existing clusters."
                 )
                 refresh = False
-                pass
+
                 # Reconcile the existing vs. the incoming values into a set of diffs
                 # then process via the PUT /clusters/{clusterName} endpoint
+
+                if self.auto_assign:
+                    self.changed = True
+                    if not self.module.check_mode:
+                        self.cluster_api.auto_assign_roles(cluster_name=self.name)
+                        refresh = True
             # Create cluster
             else:
                 # TODO import_cluster_template appears to construct and first run the cluster, which is NOT what present should do
                 # That would mean import_cluster_template should only be executed on a fresh cluster with 'started' or 'restarted' states
                 if template_contents:
-                    self.create_cluster_from_template(cm_api, template_contents)
+                    self.create_cluster_from_template(template_contents)
                 else:
-                    self.create_cluster_from_parameters(cluster_api)
+                    self.create_cluster_from_parameters()
 
         elif self.state == "absent":
             # Delete cluster
@@ -248,8 +267,8 @@ class ClouderaCluster(ClouderaManagerModule):
             if existing:
                 self.changed = True
                 if not self.module.check_mode:
-                    cluster_api.delete_cluster(cluster_name=self.name)
-                    self.wait_for_active_cmd(cluster_api, self.name)
+                    self.cluster_api.delete_cluster(cluster_name=self.name)
+                    self.wait_for_active_cmd(self.name)
 
         elif self.state == "started":
             # TODO NONE seems to be fresh cluster, never run before
@@ -259,25 +278,25 @@ class ClouderaCluster(ClouderaManagerModule):
                 pass
             # Start underway
             elif existing and existing.entity_status == "STARTING":
-                self.wait_for_active_cmd(cluster_api, self.name)
+                self.wait_for_active_cmd(self.name)
             # Needs starting
             else:
                 # Create if needed
                 if not existing:
                     if template_contents:
-                        self.create_cluster_from_template(cm_api, template_contents)
+                        self.create_cluster_from_template(template_contents)
                     else:
-                        self.create_cluster_from_parameters(cluster_api)
+                        self.create_cluster_from_parameters()
 
                 self.changed = True
                 if not self.module.check_mode:
                     # If newly created or created by not yet initialize
                     if not existing or existing.entity_status == "NONE":
-                        first_run = cluster_api.first_run(cluster_name=self.name)
+                        first_run = self.cluster_api.first_run(cluster_name=self.name)
                         self.wait_for_composite_cmd(first_run.id)
                     # Start the existing and previously initialized cluster
                     else:
-                        start = cluster_api.start_command(cluster_name=self.name)
+                        start = self.cluster_api.start_command(cluster_name=self.name)
                         self.wait_for_composite_cmd(start.id)
 
         if self.state == "stopped":
@@ -287,43 +306,45 @@ class ClouderaCluster(ClouderaManagerModule):
                 pass
             # Stop underway
             elif existing and existing.entity_status == "STOPPING":
-                self.wait_for_active_cmd(cluster_api, self.name)
+                self.wait_for_active_cmd(self.name)
             # Needs stopping
             else:
                 # Create if needed
                 if not existing:
                     if template_contents:
-                        self.create_cluster_from_template(cm_api, template_contents)
+                        self.create_cluster_from_template(template_contents)
                     else:
-                        self.create_cluster_from_parameters(cluster_api)
+                        self.create_cluster_from_parameters()
                 # Stop an existing cluster
                 else:
                     self.changed = True
                     if not self.module.check_mode:
-                        stop = cluster_api.stop_command(cluster_name=self.name)
+                        stop = self.cluster_api.stop_command(cluster_name=self.name)
                         self.wait_for_composite_cmd(stop.id)
 
         if self.state == "restarted":
             # Start underway
             if existing and existing.entity_status == "STARTING":
-                self.wait_for_active_cmd(cluster_api, self.name)
+                self.wait_for_active_cmd(self.name)
             # Needs restarting
             else:
                 # Create if needed
                 if not existing:
                     if template_contents:
-                        self.create_cluster_from_template(cm_api, template_contents)
+                        self.create_cluster_from_template(template_contents)
                     else:
-                        self.create_cluster_from_parameters(cluster_api)
+                        self.create_cluster_from_parameters()
 
                 self.changed = True
                 if not self.module.check_mode:
-                    restart = cluster_api.restart_command(cluster_name=self.name)
+                    restart = self.cluster_api.restart_command(cluster_name=self.name)
                     self.wait_for_composite_cmd(restart.id)
 
         if refresh:
             # Retrieve the updated cluster details
-            self.output = cluster_api.read_cluster(cluster_name=self.name).to_dict()
+            self.output = self.cluster_api.read_cluster(
+                cluster_name=self.name
+            ).to_dict()
         elif existing:
             self.output = existing.to_dict()
 
@@ -344,15 +365,12 @@ class ClouderaCluster(ClouderaManagerModule):
 
         return cmd
 
-    def wait_for_active_cmd(
-        self, cluster_api_client: ClustersResourceApi, cluster_name: str
-    ):
+    def wait_for_active_cmd(self, cluster_name: str):
         active_cmd = None
-
         try:
             active_cmd = next(
                 iter(
-                    cluster_api_client.list_active_commands(
+                    self.cluster_api.list_active_commands(
                         cluster_name=cluster_name
                     ).items
                 ),
@@ -368,9 +386,7 @@ class ClouderaCluster(ClouderaManagerModule):
                 polling_interval=self.polling_interval,
             )
 
-    def create_cluster_from_template(
-        self, cm_api_client: ClouderaManagerResourceApi, template_contents: dict
-    ):
+    def create_cluster_from_template(self, template_contents: dict):
         payload = dict()
 
         # Construct import template payload from the template and/or explicit parameters
@@ -393,7 +409,7 @@ class ClouderaCluster(ClouderaManagerModule):
         # Execute the import
         self.changed = True
         if not self.module.check_mode:
-            import_template_request = cm_api_client.import_cluster_template(
+            import_template_request = self.cm_api.import_cluster_template(
                 **payload
             ).to_dict()
 
@@ -402,7 +418,7 @@ class ClouderaCluster(ClouderaManagerModule):
                 command_id=command_id, polling_interval=self.polling_interval
             )
 
-    def create_cluster_from_parameters(self, cluster_api_client: ClustersResourceApi):
+    def create_cluster_from_parameters(self):
         if self.cluster_version is None:  # or self.type is None:
             self.module.fail_json(
                 msg=f"Cluster must be created. Missing required parameter: cluster_version"
@@ -414,14 +430,105 @@ class ClouderaCluster(ClouderaManagerModule):
             cluster_type=self.type,
         )
 
+        if self.services:
+            cluster.services = [self.marshal_service(s) for s in self.services]
+
         if self.contexts:
             cluster.data_context_refs = [ApiDataContext(name=d) for d in self.contexts]
 
         # Execute the creation
         self.changed = True
+
         if not self.module.check_mode:
-            cluster_api_client.create_clusters(body=ApiClusterList(items=[cluster]))
-            self.wait_for_active_cmd(cluster_api_client, self.name)
+            # Validate any incoming host membership to fail fast
+            if self.hosts:
+                hostrefs = self.marshal_hostrefs(self.hosts)
+
+            self.cluster_api.create_clusters(body=ApiClusterList(items=[cluster]))
+            self.wait_for_active_cmd(self.name)
+
+            if self.hosts:
+                self.cluster_api.add_hosts(
+                    cluster_name=self.name, body=ApiHostRefList(items=hostrefs)
+                )
+
+            if self.auto_assign:
+                self.cluster_api.auto_assign_roles(cluster_name=self.name)
+
+    def marshal_service(self, options: str) -> ApiService:
+        # - name
+        # - type
+        # - config
+        # roles
+        # - displayName
+        # roleConfigGroups
+        # tags
+        # serviceVersion
+
+        service = ApiService(name=options["name"], type=options["type"])
+
+        if "display_name" in options:
+            service.display_name = options["display_name"]
+
+        if "config" in options:
+            service.config = ApiServiceConfig(
+                items=[ApiConfig(name=k, value=v) for k, v in options["config"].items()]
+            )
+
+        # list[ApiRole]
+        # name
+        # type
+        # hostRef
+        # config
+        # tags
+        if "roles" in options:
+            pass
+
+        if "role_config_groups" in options:
+            rcg_list = []
+
+            for body in options["role_config_groups"]:
+                rcg = ApiRoleConfigGroup(name=body["name"], role_type=body["type"])
+
+                if "display_name" in body:
+                    rcg.display_name = body["display_name"]
+
+                if "base" in body:
+                    rcg.base = body["base"]
+
+                if "config" in body:
+                    rcg.config = ApiConfigList(
+                        items=[
+                            ApiConfig(name=k, value=v)
+                            for k, v in body["config"].items()
+                        ]
+                    )
+
+                rcg_list.append(rcg)
+
+            service.role_config_groups = rcg_list
+
+        return service
+
+    def marshal_hostrefs(self, hosts: dict):
+        results = []
+        hosts_query = self.host_api.read_hosts().items
+        for h in hosts_query:
+            if h.host_id in hosts.keys() or h.hostname in hosts.keys():
+                if (
+                    h.cluster_ref is not None
+                    and h.cluster_ref.cluster_name != self.name
+                ):
+                    self.module.fail_json(
+                        msg=f"Invalid host reference! Host {h.hostname} ({h.host_id}) already in use with cluster '{h.cluster_ref.cluster_name}'!"
+                    )
+                results.append(ApiHostRef(host_id=h.host_id, hostname=h.hostname))
+        if len(results) != len(hosts.keys()):
+            self.module.fail_json(
+                msg="Did not find the following hosts: "
+                + ", ".join(set(hosts.keys() - set(results)))
+            )
+        return results
 
 
 def main():
@@ -442,14 +549,36 @@ def main():
             # Only valid if using 'template'
             add_repositories=dict(type="bool", default=False),
             maintenance=dict(type="bool", aliases=["maintenance_enabled"]),
-            # Services and configs
-            services=dict(),
-            # Hosts and host template assignments
-            hosts=dict(),
+            # Services and configs; keys are refname
+            services=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    name=dict(required=True, aliases=["ref_name"]),
+                    type=dict(required=True),
+                    # Service-level config
+                    config=dict(type="dict"),
+                    # Role config groups (RCG)
+                    role_config_groups=dict(
+                        type="list",
+                        options=dict(
+                            name=dict(required=True, aliases=["ref_name"]),
+                            type=dict(required=True, aliases=["role_type"]),
+                            base=dict(type="bool"),  # Will ignore name if True
+                            display_name=dict(),
+                            config=dict(type="dict"),
+                        ),
+                    ),
+                    # Roles: keys are refName, values are role type
+                    roles=dict(type="dict"),
+                    display_name=dict(),
+                    tags=dict(type="dict"),
+                ),
+            ),
+            # Hosts and host template assignments; keys are host_id or hostname
+            hosts=dict(type="dict"),
             # Host templates
             host_templates=dict(),
-            # Non-base role config groups
-            role_config_groups=dict(),
             # Parcels is a dict of product:version of the cluster
             parcels=dict(type="dict", elements="str", aliases=["products"]),
             # Tags is a dict of key:value assigned to the cluster
@@ -460,6 +589,8 @@ def main():
             contexts=dict(type="list", elements="str", aliases=["data_contexts"]),
             # Optional enable/disable TLS for the cluster
             tls=dict(type="bool", aliases=["tls_enabled", "cluster_tls"]),
+            # Optional auto-assign roles on cluster (honors existing assignments)
+            auto_assign=dict(type="bool", default=False, aliases=["auto_assign_roles"]),
         ),
         supports_check_mode=True,
         # required_together=[

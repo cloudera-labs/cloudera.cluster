@@ -55,16 +55,18 @@ def conn():
         "debug": "no",
     }
 
+
 def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="name"):
         cluster.main()
 
+
 def test_present_base_minimum(conn, module_args):
     conn.update(
         name="Example_Base",
-        cluster_version="7", #"1.5.1-b626.p0.42068229",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
     )
@@ -76,10 +78,137 @@ def test_present_base_minimum(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
+
+def test_present_base_hosts(conn, module_args):
+    conn.update(
+        name="Example_Base_Hosts",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
+        type="BASE_CLUSTER",
+        state="present",
+        hosts={
+            "test09-worker-free-01.cldr.internal": {},
+        },
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+
+def test_present_base_hosts_not_found(conn, module_args):
+    conn.update(
+        name="Example_Base_Hosts_Not_Found",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
+        type="BASE_CLUSTER",
+        state="present",
+        hosts={
+            "should.not.find": {},
+        },
+    )
+    module_args(conn)
+
+    with pytest.raises(
+        AnsibleFailJson, match="Did not find the following hosts: should.not.find"
+    ):
+        cluster.main()
+
+
+def test_present_base_hosts_in_use(conn, module_args):
+    conn.update(
+        name="Example_Base_Hosts_In_Use",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
+        type="BASE_CLUSTER",
+        state="present",
+        hosts={
+            "test09-worker-02.cldr.internal": {},
+        },
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleFailJson, match="Invalid host reference!"):
+        cluster.main()
+
+
+def test_present_base_auto_assign(conn, module_args):
+    conn.update(
+        name="Example_Base",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
+        type="BASE_CLUSTER",
+        state="present",
+        auto_assign=True,
+        hosts={
+            "test09-worker-free-01.cldr.internal": {},
+        },
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+    #   ZOOKEEPER:
+    #     SERVICEWIDE:
+    #       zookeeper_datadir_autocreate: true
+    #       service_config_suppression_server_count_validator: true
+    #     SERVER:
+    #       zookeeper_server_java_heapsize: 134217728
+
+
+def test_present_base_service(conn, module_args):
+    conn.update(
+        name="Example_Base_Service",
+        cluster_version="7",  # "1.5.1-b626.p0.42068229",
+        type="BASE_CLUSTER",
+        state="present",
+        services=[
+            dict(
+                name="Example_ZK",
+                type="ZOOKEEPER",
+                display_name="ZK_TEST",
+                config=dict(
+                    zookeeper_datadir_autocreate=True,
+                    service_config_suppression_server_count_validator=True,
+                ),
+                role_config_groups=[
+                    dict(
+                        name="BASE-SERVER", #  ignored due to base=True
+                        type="SERVER",
+                        display_name="Server Base Group",
+                        base=True,
+                        config=dict(
+                            zookeeper_server_java_heapsize=134217728,
+                        ),
+                    ),
+                    dict(
+                        name="NON-BASE-SERVER",
+                        type="SERVER",
+                        display_name="Server Custom Group",
+                        config=dict(
+                            zookeeper_server_java_heapsize=33554432,
+                        ),
+                    ),
+                ],
+            ),
+        ],
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    # LOG.info(str(e.value))
+    LOG.info(str(e.value.cloudera_manager))
+
+
 def test_started_base(conn, module_args):
     conn.update(
         name="PVC-Base",
-        cluster_version="7.1.9", #"1.5.1-b626.p0.42068229",
+        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
         # type="COMPUTE_CLUSTER",
         state="started",
     )
@@ -90,11 +219,12 @@ def test_started_base(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
-    
+
+
 def test_restarted_base(conn, module_args):
     conn.update(
         name="PVC-Base",
-        cluster_version="7.1.9", #"1.5.1-b626.p0.42068229",
+        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
         # type="COMPUTE_CLUSTER",
         state="restarted",
     )
@@ -106,10 +236,11 @@ def test_restarted_base(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
+
 def test_stopped_base(conn, module_args):
     conn.update(
         name="PVC-Base",
-        cluster_version="7.1.9", #"1.5.1-b626.p0.42068229",
+        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
         # type="COMPUTE_CLUSTER",
         state="stopped",
     )
@@ -120,6 +251,7 @@ def test_stopped_base(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
+
 
 def test_absent_base(conn, module_args):
     conn.update(
@@ -133,11 +265,12 @@ def test_absent_base(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
-    
+
+
 def test_present_compute_minimum(conn, module_args):
     conn.update(
         name="Example_Compute",
-        cluster_version="7.1.9", #"1.5.1-b626.p0.42068229",
+        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
         # type="COMPUTE_CLUSTER",
         contexts=["SDX"],
         state="present",
@@ -150,10 +283,11 @@ def test_present_compute_minimum(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
+
 def test_started_compute_minimum(conn, module_args):
     conn.update(
         name="Example_Compute",
-        cluster_version="7.1.9", #"1.5.1-b626.p0.42068229",
+        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
         # type="COMPUTE_CLUSTER",
         contexts=["SDX"],
         state="started",
@@ -165,6 +299,7 @@ def test_started_compute_minimum(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
+
 
 def test_absent_compute(conn, module_args):
     conn.update(
@@ -179,10 +314,11 @@ def test_absent_compute(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
+
 def test_present_experience_minimum(conn, module_args):
     conn.update(
         name="Example_Experience",
-        cluster_version="1.5.1", #"1.5.1-b626.p0.42068229",
+        cluster_version="1.5.1",  # "1.5.1-b626.p0.42068229",
         type="EXPERIENCE_CLUSTER",
         state="present",
     )
@@ -193,6 +329,7 @@ def test_present_experience_minimum(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
+
 
 def test_absent_experience(conn, module_args):
     conn.update(
@@ -207,19 +344,20 @@ def test_absent_experience(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
+
 def test_pytest_cluster_with_template(module_args):
     module_args(
         {
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            "username": os.getenv("CM_USERNAME"),
+            "password": os.getenv("CM_PASSWORD"),
+            "host": os.getenv("CM_HOST"),
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
             "cluster_name": "Base_CM_Cluster",
             "template": "./files/cluster-template.json",
             "add_repositories": "True",
-            "state": "present"
+            "state": "present",
         }
     )
 
