@@ -56,9 +56,9 @@ def conn():
 
 def test_pytest_download_parcel(conn, module_args):
     conn.update(
-        cluster_name="Example_Base_Host_Host_Template_Assignment",  # os.getenv("CM_CLUSTER"),
-        parcel_name="SPARK3",
-        parcel_version="3.3.0.3.3.7180.0-274-1.p0.31212967",
+        cluster_name=os.getenv("CM_CLUSTER"),
+        parcel_name=os.getenv("CM_PARCEL_NAME"),
+        parcel_version=os.getenv("CM_PARCEL_VERSION"),
         state="downloaded",
     )
     module_args(conn)
@@ -71,9 +71,9 @@ def test_pytest_download_parcel(conn, module_args):
 
 def test_pytest_distribute_parcel(conn, module_args):
     conn.update(
-        cluster_name="Example_Base_Host_Host_Template_Assignment",  # os.getenv("CM_CLUSTER"),
-        parcel_name="SPARK3",
-        parcel_version="3.3.0.3.3.7180.0-274-1.p0.31212967",
+        cluster_name=os.getenv("CM_CLUSTER"),
+        parcel_name=os.getenv("CM_PARCEL_NAME"),
+        parcel_version=os.getenv("CM_PARCEL_VERSION"),
         state="distributed",
     )
     module_args(conn)
@@ -86,9 +86,9 @@ def test_pytest_distribute_parcel(conn, module_args):
 
 def test_pytest_activate_parcel(conn, module_args):
     conn.update(
-        cluster_name="Example_Base_Host_Host_Template_Assignment",  # os.getenv("CM_CLUSTER"),
-        parcel_name="SPARK3",
-        parcel_version="3.3.0.3.3.7180.0-274-1.p0.31212967",
+        cluster_name=os.getenv("CM_CLUSTER"),
+        parcel_name=os.getenv("CM_PARCEL_NAME"),
+        parcel_version=os.getenv("CM_PARCEL_VERSION"),
         state="activated",
     )
     module_args(conn)
@@ -116,9 +116,9 @@ def test_pytest_deactivate_parcel(conn, module_args):
 
 def test_pytest_undistribute_parcel(conn, module_args):
     conn.update(
-        cluster_name="Example_Base_Host_Host_Template_Assignment",  # os.getenv("CM_CLUSTER"),
-        parcel_name="SPARK3",
-        parcel_version="3.3.0.3.3.7180.0-274-1.p0.31212967",
+        cluster_name=os.getenv("CM_CLUSTER"),
+        parcel_name=os.getenv("CM_PARCEL_NAME"),
+        parcel_version=os.getenv("CM_PARCEL_VERSION"),
         state="downloaded",
     )
     module_args(conn)
@@ -131,9 +131,9 @@ def test_pytest_undistribute_parcel(conn, module_args):
 
 def test_pytest_remove_parcel(conn, module_args):
     conn.update(
-        cluster_name="Example_Base_Host_Host_Template_Assignment",  # os.getenv("CM_CLUSTER"),
-        parcel_name="SPARK3",
-        parcel_version="3.3.0.3.3.7180.0-274-1.p0.31212967",
+        cluster_name=os.getenv("CM_CLUSTER"),
+        parcel_name=os.getenv("CM_PARCEL_NAME"),
+        parcel_version=os.getenv("CM_PARCEL_VERSION"),
         state="absent",
     )
     module_args(conn)
