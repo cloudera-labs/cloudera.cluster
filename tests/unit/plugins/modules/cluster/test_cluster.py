@@ -23,8 +23,6 @@ import os
 import pytest
 import yaml
 
-from ansible.module_utils.common.dict_transformations import recursive_diff
-
 from ansible_collections.cloudera.cluster.plugins.modules import cluster
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
@@ -47,8 +45,8 @@ def conn():
     if os.getenv("CM_ENDPOINT", None):
         conn.update(url=os.getenv("CM_ENDPOINT"))
 
-    # if os.getenv("CM_PROXY", None):
-    #     conn.update(proxy=os.getenv("CM_PROXY"))
+    if os.getenv("CM_PROXY", None):
+        conn.update(proxy=os.getenv("CM_PROXY"))
 
     return {
         **conn,
