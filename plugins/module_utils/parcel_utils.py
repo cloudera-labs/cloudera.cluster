@@ -23,29 +23,6 @@ from enum import IntEnum
 from cm_client import ParcelResourceApi
 
 
-# See https://eli.thegreenplace.net/2009/08/29/co-routines-as-an-alternative-to-state-machines/
-# def coroutine(func):
-#     def start(*args, **kwargs):
-#         cr = func(*args, **kwargs)
-#         cr.next()
-#         return cr
-
-#     return start
-
-
-# class ParcelStage(IntEnum):
-#     (
-#         AVAILABLE_REMOTELY,
-#         DOWNLOADING,
-#         DOWNLOADED,
-#         UNDISTRIBUTING,
-#         DISTRIBUTING,
-#         DISTRIBUTED,
-#         ACTIVATING,
-#         ACTIVATED,
-#     ) = range(8)
-
-
 class Parcel(object):
 
     STAGE = IntEnum(
@@ -78,6 +55,10 @@ class Parcel(object):
                 ).stage
             ).upper()
         ]
+        
+    @property
+    def stage(self) -> str:
+        return self.current.name
 
     def _wait(self, stage: STAGE) -> None:
         end_time = time.time() + self.timeout
