@@ -80,7 +80,7 @@ EXAMPLES = r"""
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
-  
+
 - name: Gather the details with additional healthcheck information for a service
   cloudera.cluster.service_info:
     host: "example.cloudera.host"

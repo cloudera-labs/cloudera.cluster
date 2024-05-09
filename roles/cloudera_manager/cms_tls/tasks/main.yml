@@ -1,39 +1,39 @@
 ---
 - name: Setup TLS for Activity Monitor
   cm_api:
-    method: PUT 
+    method: PUT
     endpoint: /cm/service/roleConfigGroups/mgmt-ACTIVITYMONITOR-BASE/config
     body: "{{ lookup('file', 'cms_keystore_tls.json', convert_data=False) }}"
 
 - name: Setup TLS for Host Monitor
   cm_api:
-    method: PUT 
+    method: PUT
     endpoint: /cm/service/roleConfigGroups/mgmt-HOSTMONITOR-BASE/config
     body: "{{ lookup('file', 'cms_keystore_tls.json', convert_data=False) }}"
 
 - name: Setup TLS for Service Monitor
   cm_api:
-    method: PUT 
+    method: PUT
     endpoint: /cm/service/roleConfigGroups/mgmt-SERVICEMONITOR-BASE/config
     body: "{{ lookup('file', 'cms_keystore_tls.json', convert_data=False) }}"
 
 - name: Setup TLS for Navigator
   cm_api:
-    method: PUT 
+    method: PUT
     endpoint: /cm/service/roleConfigGroups/mgmt-NAVIGATOR-BASE/config
     body: "{{ lookup('file', 'cms_navigator_keystore_tls.json', convert_data=False) }}"
   when: cloudera_manager_version is version('7.0.0','<')
 
-- name: Setup TLS for Navigator Meta Server 
+- name: Setup TLS for Navigator Meta Server
   cm_api:
-    method: PUT 
+    method: PUT
     endpoint: /cm/service/roleConfigGroups/mgmt-NAVIGATORMETASERVER-BASE/config
     body: "{{ lookup('file', 'cms_navigator_metaserver_keystore_tls.json', convert_data=False) }}"
   when: cloudera_manager_version is version('7.0.0','<')
 
 - name: Setup TLS for CMS
   cm_api:
-    method: PUT 
+    method: PUT
     endpoint: /cm/service/config
     body: "{{ lookup('file', 'cms_truststore_tls.json', convert_data=False) }}"
   notify:

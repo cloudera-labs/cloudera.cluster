@@ -64,7 +64,7 @@ EXAMPLES = r"""
     product: "ECS"
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
 
-- name: Gather details about all parcels on the cluster 
+- name: Gather details about all parcels on the cluster
   cloudera.cluster.parcel_info:
     host: example.cloudera.com
     username: "jane_smith"
@@ -82,15 +82,15 @@ cloudera_manager:
         product:
             product: The name of the product.
             type: str
-            returned: always  
+            returned: always
         version:
             description: The version of the product
             type: str
-            returned: always  
+            returned: always
         stage:
             description: Current stage of the parcel.
             type: str
-            returned: always  
+            returned: always
         state:
             description: The state of the parcel. This shows the progress of state transitions and if there were any errors.
             type: dict
@@ -118,7 +118,6 @@ class ClouderaParcelInfo(ClouderaManagerModule):
         self.parcel_version = self.get_param("parcel_version")
         self.process()
 
-
     @ClouderaManagerModule.handle_process
     def process(self):
         parcel_api_instance = ParcelResourceApi(self.api_client)
@@ -135,23 +134,30 @@ class ClouderaParcelInfo(ClouderaManagerModule):
                 self.module.fail_json(msg=f" Cluster {self.cluster_name} {ex.reason}")
 
         if self.product and self.parcel_version:
-            self.parcel_info = parcel_api_instance.read_parcel(cluster_name=self.cluster_name, product=self.product, version=self.parcel_version).to_dict()
-            self.parcel_output = {"items":[self.parcel_info]}
+            self.parcel_info = parcel_api_instance.read_parcel(
+                cluster_name=self.cluster_name,
+                product=self.product,
+                version=self.parcel_version,
+            ).to_dict()
+            self.parcel_output = {"items": [self.parcel_info]}
         else:
-            self.parcel_output = parcels_api_instance.read_parcels(cluster_name=self.cluster_name).to_dict()
+            self.parcel_output = parcels_api_instance.read_parcels(
+                cluster_name=self.cluster_name
+            ).to_dict()
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-           argument_spec=dict(
+        argument_spec=dict(
             cluster_name=dict(required=True, type="str"),
             product=dict(required=False, type="str"),
-            parcel_version=dict(required=False, type="str")),
+            parcel_version=dict(required=False, type="str"),
+        ),
         supports_check_mode=True,
         required_together=[
-            ('product', 'parcel_version'),
-            ],
-        )
+            ("product", "parcel_version"),
+        ],
+    )
 
     result = ClouderaParcelInfo(module)
 

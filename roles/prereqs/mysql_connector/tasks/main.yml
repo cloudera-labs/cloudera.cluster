@@ -79,5 +79,3 @@
     - name: Install Mysql packages for python - PyMySQL
       shell: /usr/local/bin/pip install PyMySQL --force-reinstall --ignore-installed
       ignore_errors: true
-
-  

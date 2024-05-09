@@ -135,4 +135,3 @@ backend bk_oozie
     {% for host in groups['gatewaylb_servers'] %}
     server oozie{{ host }} {{ host }}:{{ cdh_services | json_query('[?type==`oozie`].oozie_https_port') | first }} ssl ca-file {{ tls.cert_chain }}
     {% endfor %}
-

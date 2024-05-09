@@ -21,7 +21,7 @@ on:
     branches:
       - 'release/**'
       - 'devel'
-    
+
   workflow_dispatch:
 
 jobs:

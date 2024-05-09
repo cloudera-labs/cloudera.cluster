@@ -45,7 +45,7 @@
     existing_clusters: "{{ clusters_response.json | json_query('items[*].name') }}"
 
 # If you get failures here check in CM to ensure you don't have empty clusters or other oddities
-# Add deploy_only="base" to select base from several clusters in clusters.yml 
+# Add deploy_only="base" to select base from several clusters in clusters.yml
 - name: Create base clusters
   include_tasks: create_base.yml
   loop: "{{ definition.clusters }}"
@@ -57,8 +57,8 @@
     - cluster.type | default(default_cluster_type) == 'base'
     - cluster.name not in existing_clusters
     - (deploy_only is defined and 'base' in deploy_only) or deploy_only is not defined
-    
-# Add deploy_only="base" to select base from several clusters in clusters.yml    
+
+# Add deploy_only="base" to select base from several clusters in clusters.yml
 - name: Update base clusters
   include_tasks: update_base.yml
   loop: "{{ definition.clusters }}"
@@ -72,7 +72,7 @@
     - (cdh_cdp_upgrade|default(false)|bool) or (update_services|default(false)|bool) or (upgrade_runtime|default(false)|bool)
     - (deploy_only is defined and 'base' in deploy_only) or deploy_only is not defined
 
-# Add deploy_only="base" to select base from several clusters in clusters.yml   
+# Add deploy_only="base" to select base from several clusters in clusters.yml
 - name: Create base cluster data contexts (SDX)
   include_tasks: create_data_context.yml
   loop: "{{ definition.clusters }}"
@@ -98,9 +98,9 @@
     - cluster.name not in existing_clusters
     - '"kts_active" in groups'
     - (deploy_only is defined and 'encryption' in deploy_only) or deploy_only is not defined
-    
 
-# Add deploy_only="encryption" to select kts from several clusters in clusters.yml    
+
+# Add deploy_only="encryption" to select kts from several clusters in clusters.yml
 - name: Upgrade Key Trustee server cluster
   include_tasks: upgrade_kts.yml
   loop: "{{ definition.clusters }}"
@@ -114,8 +114,8 @@
     - '"kts_active" in groups'
     - upgrade_kts_cluster | default(false)
     - (deploy_only is defined and 'encryption' in deploy_only) or deploy_only is not defined
-    
-# Add deploy_only="compute" to select compute clust from several clusters in clusters.yml        
+
+# Add deploy_only="compute" to select compute clust from several clusters in clusters.yml
 - name: Create compute clusters
   include_tasks: create_base.yml
   loop: "{{ definition.clusters }}"

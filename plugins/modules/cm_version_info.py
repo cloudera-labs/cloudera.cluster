@@ -48,9 +48,9 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
   register: cm_output
- 
+
 # This will first try 'http://example.cloudera.com:7180' and will
-# follow any redirects 
+# follow any redirects
 - name: Gather details using auto-discovery
   cloudera.cluster.cm_version:
     host: example.cloudera.com

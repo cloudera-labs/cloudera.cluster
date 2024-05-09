@@ -27,6 +27,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+
 @pytest.fixture
 def conn():
     conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
@@ -49,35 +50,38 @@ def conn():
         "debug": "no",
     }
 
+
 def test_cluster_info_base(conn, module_args):
     conn.update(
         name="Example_Base",
     )
-    
+
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         cluster_info.main()
 
     LOG.debug(str(e.value.clusters))
-    
+
+
 def test_cluster_info_compute(conn, module_args):
     conn.update(
         name="Example_Compute",
     )
-    
+
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         cluster_info.main()
 
-    LOG.info(str(e.value.clusters))    
+    LOG.info(str(e.value.clusters))
+
 
 def test_cluster_info_experience(conn, module_args):
     conn.update(
         name="Example_Experience",
     )
-    
+
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:

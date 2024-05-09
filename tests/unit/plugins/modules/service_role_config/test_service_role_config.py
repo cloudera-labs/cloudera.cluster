@@ -53,6 +53,7 @@ def conn():
         "debug": "no",
     }
 
+
 def test_missing_required(conn, module_args):
     module_args(conn)
 

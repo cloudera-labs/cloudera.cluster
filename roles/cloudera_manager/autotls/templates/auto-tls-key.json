@@ -6,4 +6,4 @@
     "userName" : "{{ sudoerUser|default("root") }}",
     "privateKey": "{{ node_key_one_line|default('~/node_key') }}"
     "passphrase": "{{ passphrase|default("") }}"
-} 
+}

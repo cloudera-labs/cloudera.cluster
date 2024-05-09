@@ -88,7 +88,7 @@ EXAMPLES = r"""
     cluster: ExampleCluster
     service: knox
     role: GATEWAY
-  
+
 - name: Gather the configuration details in 'full' for a cluster service role
   cloudera.cluster.service_role_config_info:
     host: "example.cloudera.internal"

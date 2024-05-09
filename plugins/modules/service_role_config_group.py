@@ -131,7 +131,7 @@ EXAMPLES = r"""
     service: HDFS
     role_config_group: Example-DATANODE
     type: DATANODE
-      
+
 - name: Create or update a role config group with role associations
   cloudera.cluster.service_role_config_group:
     host: example.cloudera.com
@@ -154,7 +154,7 @@ EXAMPLES = r"""
     role_config_group: Example-DATANODE
     roles:
       - hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac # Now two roles
-      
+
 - name: Update (purge) role associations to a role config group
   cloudera.cluster.cluster_service_role_config:
     host: example.cloudera.com
@@ -166,7 +166,7 @@ EXAMPLES = r"""
     roles:
       - hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac # Now only one role
     purge: yes
-      
+
 - name: Reset all role associations to a role config group
   cloudera.cluster.cluster_service_role_config:
     host: example.cloudera.com
@@ -187,7 +187,7 @@ EXAMPLES = r"""
     service: HDFS
     role_config_group: Example-DATANODE
     state: absent
-- 
+-
 """
 
 RETURN = r"""

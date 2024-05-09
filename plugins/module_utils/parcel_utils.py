@@ -55,7 +55,7 @@ class Parcel(object):
                 ).stage
             ).upper()
         ]
-        
+
     @property
     def stage(self) -> str:
         return self.current.name

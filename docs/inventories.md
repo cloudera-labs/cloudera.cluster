@@ -13,7 +13,7 @@ host-1.example.com
 
 ### Cluster Nodes
 
-A group named `cluster` is **required**. This is the set of nodes which will have a Cloudera Manager agent and receive pre-requisite configurations like OS tuning, database client and JDK installation and Kerberos configs. 
+A group named `cluster` is **required**. This is the set of nodes which will have a Cloudera Manager agent and receive pre-requisite configurations like OS tuning, database client and JDK installation and Kerberos configs.
 
 Usually, `cluster` will be composed of child groups like this:
 
@@ -40,7 +40,7 @@ host-5.example.com
 host-6.example.com
 ```
 
-The names of the cluster sub-groups are arbitrary. These are only for convenience when assigning host template names and to make the inventory easier to read and understand. 
+The names of the cluster sub-groups are arbitrary. These are only for convenience when assigning host template names and to make the inventory easier to read and understand.
 
 #### Assigning Host Templates
 
@@ -114,9 +114,9 @@ cdsw
 
 ### HDFS Encryption (KMS / Key Trustee Server)
 
-Configuring HDFS encryption requires two extra groups `kts_active` and `kms_servers` with a third, optional (but **recommended**) group `kts_passive` to enable Key Trustee Server high availability. 
+Configuring HDFS encryption requires two extra groups `kts_active` and `kms_servers` with a third, optional (but **recommended**) group `kts_passive` to enable Key Trustee Server high availability.
 
-The `kts_active` and `kts_passive` groups must contain a single node each. The KMS group `kms_servers` must have at least one host but can have as many as desired. 
+The `kts_active` and `kts_passive` groups must contain a single node each. The KMS group `kms_servers` must have at least one host but can have as many as desired.
 
 ```ini
 [kms_servers]
@@ -181,10 +181,10 @@ host-10.example.com
 
 ## Multiple Clusters
 
-It is possible to define multiple clusters in the inventory. The key point is that the `cluster` group must contain **all** servers which will be under Cloudera Manager's control, regardless of which cluster they belong to. 
+It is possible to define multiple clusters in the inventory. The key point is that the `cluster` group must contain **all** servers which will be under Cloudera Manager's control, regardless of which cluster they belong to.
 
 
-The inventory group names `cluster1` and `cluster2` are arbitrary. This is just a convenience to make the inventory easier to understand. 
+The inventory group names `cluster1` and `cluster2` are arbitrary. This is just a convenience to make the inventory easier to understand.
 
 ```ini
 [cluster1]

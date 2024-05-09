@@ -37,6 +37,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
 )
 
+
 @pytest.fixture(autouse=True)
 def skip_python():
     if sys.version_info < (3, 6):
@@ -73,12 +74,13 @@ def module_args():
 
     return prep_args
 
+
 @pytest.fixture
 def yaml_args():
     """Prepare module arguments from YAML"""
-    
-    def prep_args(args : str = ""):
+
+    def prep_args(args: str = ""):
         output = json.dumps({"ANSIBLE_MODULE_ARGS": yaml.safe_load(args)})
         basic._ANSIBLE_ARGS = to_bytes(output)
-        
+
     return prep_args

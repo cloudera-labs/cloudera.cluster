@@ -79,7 +79,7 @@ EXAMPLES = r"""
     body:
       authRoles:
         - name: "ROLE_LIMITED"
-        
+
 - name: Delete a Cloudera Manager user using a custom SSL certificate
   host: example.cloudera.com
     username: "jane_smith"

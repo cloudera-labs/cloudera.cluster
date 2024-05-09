@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
     options:
         path:
             description:
@@ -38,4 +39,4 @@ class ModuleDocFragment(object):
             default: 'items'
             aliases:
                 - return_field
-    '''
+    """

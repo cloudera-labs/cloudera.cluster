@@ -53,7 +53,7 @@ EXAMPLES = r"""
     name: "OneNodeCluster"
     password: "S&peR4Ec*re"
     port: "7180"
-    
+
 - name: Get information about all clusters
   cloudera.cluster.cluster_info:
     host: example.cloudera.com

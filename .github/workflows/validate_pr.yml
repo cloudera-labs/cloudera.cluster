@@ -21,7 +21,7 @@ on:
     branches:
       - 'release/**'
       - 'devel'
-    
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: '3.9'
           cache: 'pip'
-      
+
       - name: Set up Ansible and Ansible collections and roles
         run: |
           sudo update-alternatives --install /usr/bin/python python $(which python3) 1
@@ -49,16 +49,16 @@ jobs:
           ansible --version
           ansible-galaxy collection list
           ansible-galaxy role list
-      
+
       - name: Set up Ansible collection dependencies
         run: |
           ansible-builder introspect --write-pip final_python.txt --write-bindep final_bindep.txt /usr/share/ansible/collections
           [[ -f final_python.txt ]] && pip install -r final_python.txt || echo "No Python dependencies found."
           [[ -f final_bindep.txt ]] && bindep --file final_bindep.txt || echo "No system dependencies found."
-      
+
       - name: Report installed Python dependencies
         run: pip freeze
-      
+
       - name: Validate collection
         run: |
           pushd /usr/share/ansible/collections/ansible_collections/cloudera/cluster
@@ -75,7 +75,7 @@ jobs:
         run: |
           mkdir -p ./pr
           echo $PR_NUMBER > ./pr/pr_number
-      
+
       - name: Upload the PR number
         uses: actions/upload-artifact@v3
         with:

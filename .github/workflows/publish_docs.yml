@@ -19,8 +19,8 @@ name: Publish documentation
 on:
   push:
     branches:
-      - 'main' 
-  
+      - 'main'
+
   workflow_dispatch:
 
 jobs:

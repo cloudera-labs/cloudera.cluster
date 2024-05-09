@@ -34,7 +34,7 @@
     src: "{{ __fragment.path }}"
     dest: "{{ fragments_temp_directory.path }}/{{ __fragment.path | basename }}"
   loop: "{{ fragments.files }}"
-  loop_control: 
+  loop_control:
     loop_var: __fragment
     label: "{{ __fragment.path | basename }}"
   when: fragments.matched > 0

@@ -77,4 +77,3 @@
     dest: /var/lib/streamsmsgmgr
     state: link
   when: smm_home.stat.exists
-

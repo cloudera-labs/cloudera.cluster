@@ -62,7 +62,7 @@
           cluster.host_templates
           | default({})
           | json_query('values(@) | map(&keys(@),@)')
-          | flatten 
+          | flatten
           | unique
           }}
     - set_fact:

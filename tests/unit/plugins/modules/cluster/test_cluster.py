@@ -150,8 +150,9 @@ def test_present_base_auto_assign(conn, module_args):
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
-def test_present_base_service(conn, module_args):   
-    args = '''
+
+def test_present_base_service(conn, module_args):
+    args = """
     name: Example_Base_Service
     cluster_version: 7
     type: BASE_CLUSTER
@@ -160,7 +161,7 @@ def test_present_base_service(conn, module_args):
       - name: ZK-BASE-SERVICE
         type: ZOOKEEPER
         display_name: ZK_TEST
-    '''
+    """
     conn.update(yaml.safe_load(args))
     module_args(conn)
 
@@ -168,9 +169,10 @@ def test_present_base_service(conn, module_args):
         cluster.main()
 
     LOG.info(str(e.value.cloudera_manager))
-    
-def test_present_base_service_config(conn, module_args):   
-    args = '''
+
+
+def test_present_base_service_config(conn, module_args):
+    args = """
     name: Example_Base_Service_Config
     cluster_version: 7
     type: BASE_CLUSTER
@@ -182,7 +184,7 @@ def test_present_base_service_config(conn, module_args):
         config:
           zookeeper_datadir_autocreate: yes
           service_config_suppression_server_count_validator: yes
-    '''
+    """
     conn.update(yaml.safe_load(args))
     module_args(conn)
 
@@ -191,8 +193,9 @@ def test_present_base_service_config(conn, module_args):
 
     LOG.info(str(e.value.cloudera_manager))
 
-def test_present_base_service_role_groups(conn, module_args):   
-    args = '''
+
+def test_present_base_service_role_groups(conn, module_args):
+    args = """
     name: Example_Base_Service_Role_Groups
     cluster_version: 7
     type: BASE_CLUSTER
@@ -213,7 +216,7 @@ def test_present_base_service_role_groups(conn, module_args):
             display_name: Server Custom Group
             config:
               zookeeper_server_java_heapsize: 33554432  # 32MB
-    '''
+    """
     conn.update(yaml.safe_load(args))
     module_args(conn)
 
@@ -221,9 +224,10 @@ def test_present_base_service_role_groups(conn, module_args):
         cluster.main()
 
     LOG.info(str(e.value.cloudera_manager))
-    
-def test_present_base_host_role_group_assignment(conn, module_args):   
-    args = '''
+
+
+def test_present_base_host_role_group_assignment(conn, module_args):
+    args = """
     name: Example_Base_Host_Role_Group_Assignment
     cluster_version: 7
     type: BASE_CLUSTER
@@ -248,7 +252,7 @@ def test_present_base_host_role_group_assignment(conn, module_args):
       - name: test10-worker-free-01.cldr.internal
         role_groups:
           - NON-BASE-SERVER
-    '''
+    """
     conn.update(yaml.safe_load(args))
     module_args(conn)
 
@@ -257,8 +261,9 @@ def test_present_base_host_role_group_assignment(conn, module_args):
 
     LOG.info(str(e.value.cloudera_manager))
 
-def test_present_base_host_host_template_assignment(conn, module_args):   
-    args = '''
+
+def test_present_base_host_host_template_assignment(conn, module_args):
+    args = """
     name: Example_Base_Host_Host_Template_Assignment
     cluster_version: "7.1.9-1.cdh7.1.9.p0.44702451" # 7
     type: BASE_CLUSTER
@@ -288,7 +293,7 @@ def test_present_base_host_host_template_assignment(conn, module_args):
           - NON-BASE-SERVER
     parcels:
       CDH: "7.1.9-1.cdh7.1.9.p0.44702451"
-    '''
+    """
     conn.update(yaml.safe_load(args))
     module_args(conn)
 
@@ -296,6 +301,7 @@ def test_present_base_host_host_template_assignment(conn, module_args):
         cluster.main()
 
     LOG.info(str(e.value.cloudera_manager))
+
 
 def test_present_base_role(conn, module_args):
     conn.update(
@@ -305,7 +311,7 @@ def test_present_base_role(conn, module_args):
         state="present",
         hosts={
             "test09-worker-free-01.cldr.internal": {},
-            "test09-worker-free-02.cldr.internal": {}, # Added automatically by the role config reference
+            "test09-worker-free-02.cldr.internal": {},  # Added automatically by the role config reference
         },
         services=[
             dict(
@@ -323,9 +329,9 @@ def test_present_base_role(conn, module_args):
                         config=dict(
                             zookeeper_server_java_heapsize=33554432,
                         ),
-                        host="test09-worker-free-02.cldr.internal", # This will automatically add the server to the cluster
+                        host="test09-worker-free-02.cldr.internal",  # This will automatically add the server to the cluster
                     )
-                ]
+                ],
             ),
         ],
     )
@@ -336,7 +342,8 @@ def test_present_base_role(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
-    
+
+
 def test_present_base_role_with_rcg(conn, module_args):
     conn.update(
         name="Example_Base_Role_RCG",
@@ -344,8 +351,8 @@ def test_present_base_role_with_rcg(conn, module_args):
         type="BASE_CLUSTER",
         state="present",
         hosts={
-            "test09-worker-free-01.cldr.internal": {}, # Added automatically by the role config reference
-            "test09-worker-free-02.cldr.internal": {}, # Added automatically by the role config reference
+            "test09-worker-free-01.cldr.internal": {},  # Added automatically by the role config reference
+            "test09-worker-free-02.cldr.internal": {},  # Added automatically by the role config reference
         },
         services=[
             dict(
@@ -358,7 +365,7 @@ def test_present_base_role_with_rcg(conn, module_args):
                 ),
                 role_config_groups=[
                     dict(
-                        name="BASE-SERVER", #  ignored due to base=True
+                        name="BASE-SERVER",  #  ignored due to base=True
                         type="SERVER",
                         display_name="Server Base Group",
                         base=True,
@@ -383,19 +390,19 @@ def test_present_base_role_with_rcg(conn, module_args):
                         config=dict(
                             zookeeper_server_java_heapsize=33554432,
                         ),
-                        host="test09-worker-free-01.cldr.internal", # This will automatically add the server to the cluster
+                        host="test09-worker-free-01.cldr.internal",  # This will automatically add the server to the cluster
                     ),
                     dict(
-                        #name="example_NON-BASE-OVERRIDE",
-                        #name="Example_ZK-SERVER-override",
+                        # name="example_NON-BASE-OVERRIDE",
+                        # name="Example_ZK-SERVER-override",
                         type="SERVER",
                         role_config_group="NON-BASE-SERVER",
                         config=dict(
                             zookeeper_server_java_heapsize=67108864,
                         ),
-                        host="test09-worker-free-02.cldr.internal", # This will automatically add the server to the cluster
-                    )
-                ]
+                        host="test09-worker-free-02.cldr.internal",  # This will automatically add the server to the cluster
+                    ),
+                ],
             ),
         ],
     )
@@ -406,6 +413,7 @@ def test_present_base_role_with_rcg(conn, module_args):
 
     # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
+
 
 def test_started_base(conn, module_args):
     conn.update(

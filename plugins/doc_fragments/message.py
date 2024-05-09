@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
     options:
         message:
             description:
@@ -26,4 +27,4 @@ class ModuleDocFragment(object):
             default: "Managed by Ansible"
             aliases:
                 - msg
-    '''
+    """

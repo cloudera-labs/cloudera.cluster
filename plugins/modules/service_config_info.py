@@ -78,7 +78,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
     service: knox
-  
+
 - name: Gather the configuration details in 'full' for a cluster service
   cloudera.cluster.service_config_info:
     host: "example.cloudera.host"
@@ -102,14 +102,14 @@ config:
       returned: always
     value:
       description:
-        - The user-defined value. 
+        - The user-defined value.
         - When absent, the default value (if any) will be used.
         - Can also be absent, when enumerating allowed configs.
       type: str
       returned: always
     required:
       description:
-        - Whether this configuration is required for the service. 
+        - Whether this configuration is required for the service.
         - If any required configuration is not set, operations on the service may not work.
         - Available using I(view=full).
       type: bool
@@ -140,7 +140,7 @@ config:
       returned: when supported
     sensitive:
       description:
-        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller. 
+        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller.
       type: bool
       returned: when supported
     validation_state:
@@ -161,8 +161,8 @@ config:
       returned: when supported
     validation_warnings_suppressed:
       description:
-        - Whether validation warnings associated with this parameter are suppressed. 
-        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI. 
+        - Whether validation warnings associated with this parameter are suppressed.
+        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI.
         - Configurations that do not produce warnings will not contain this field.
         - Available using I(view=full).
       type: bool

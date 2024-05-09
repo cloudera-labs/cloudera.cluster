@@ -29,7 +29,7 @@ default_database_versions:
     '8': 10.2
   mysql:
     '7': 5.7
-    '8': 8.0  
+    '8': 8.0
 
 # Located in cloudera.cluster.infrastructure.krb5_common
 #krb5_realm: CLOUDERA.LOCAL
@@ -160,8 +160,8 @@ databases_cm_svcs:
     name: rman
     user: rman
     password: "{{ database_default_password }}"
-   
-# Deprecated in ecs 1.5.0 +   
+
+# Deprecated in ecs 1.5.0 +
 databases_ecs:
   ALERTS:
     host: "{{ database_host }}"

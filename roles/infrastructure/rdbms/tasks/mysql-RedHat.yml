@@ -18,7 +18,7 @@
   rpm_key:
     key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
     state: present
-  when: 
+  when:
     - not (skip_rdbms_repo_setup | default(False))
 
 - name: Install MySQL Community repository
@@ -26,11 +26,11 @@
     name: https://repo.mysql.com/mysql{{ database_version | replace('.','') }}-community-release-el{{ ansible_distribution_major_version }}.rpm
     update_cache: true
     lock_timeout: 180
-    state: present 
-  when: 
+    state: present
+  when:
     - not (skip_rdbms_repo_setup | default(False))
-    
-    
+
+
 - name: Install MySQL
   include_role:
     name: ansible-role-mysql

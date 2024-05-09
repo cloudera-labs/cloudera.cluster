@@ -89,7 +89,7 @@ DOCUMENTATION = """
         agent_header:
             description: Header string to identify the connection.
             type: string
-            default: cm_service     
+            default: cm_service
     notes:
         - Requires C(cm_client).
 """

@@ -89,7 +89,7 @@ EXAMPLES = r"""
     cluster_version: "1.5.1-b626.p0.42068229"
     cluster_type: EXPERIENCE_CLUSTER
     state: present
-   
+
 - name: Create a cluster from a cluster template
   cloudera.cluster.cm_cluster:
     host: example.cloudera.com
@@ -489,7 +489,7 @@ class ClouderaCluster(ClouderaManagerModule):
             template_map = {}
             role_group_list = []
             role_list = []
-                
+
             if self.hosts:
                 self.cluster_api.add_hosts(
                     cluster_name=self.name,
@@ -576,9 +576,7 @@ class ClouderaCluster(ClouderaManagerModule):
                             cluster_name=self.name,
                             role_config_group_name=rg,
                             service_name=service_name,
-                            body=ApiRoleNameList(
-                                items=[direct_roles.items[0].name]
-                            ),
+                            body=ApiRoleNameList(items=[direct_roles.items[0].name]),
                         )
 
                 # Configure per-host role overrides

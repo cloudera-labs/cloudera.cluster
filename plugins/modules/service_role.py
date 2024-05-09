@@ -43,7 +43,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: service_role
-short_description: Manage a service role in cluster 
+short_description: Manage a service role in cluster
 description:
   - Manage a service role in a cluster.
 author:
@@ -153,7 +153,7 @@ EXAMPLES = r"""
     type: GATEWAY
     name: example-gateway
     cluster_hostname: worker-01.cloudera.internal
-    
+
 - name: Set a service role to maintenance mode
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -163,7 +163,7 @@ EXAMPLES = r"""
     service: example-hdfs
     name: example-gateway
     maintenance: yes
-    
+
 - name: Update (append) tags to a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -175,7 +175,7 @@ EXAMPLES = r"""
     tags:
       tag_one: value_one
       tag_two: value_two
-      
+
 - name: Set (purge) tags to a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -186,7 +186,7 @@ EXAMPLES = r"""
     tags:
       tag_three: value_three
     purge: yes
-    
+
 - name: Remove all tags on a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -197,7 +197,7 @@ EXAMPLES = r"""
     name: example-gateway
     tags: {}
     purge: yes
-  
+
 - name: Start a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -207,7 +207,7 @@ EXAMPLES = r"""
     service: example-hdfs
     name: example-gateway
     state: started
-    
+
 - name: Force a restart to a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -217,7 +217,7 @@ EXAMPLES = r"""
     service: example-hdfs
     name: example-gateway
     state: restarted
-    
+
 - name: Start a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
@@ -227,7 +227,7 @@ EXAMPLES = r"""
     service: example-hdfs
     name: example-gateway
     state: started
-    
+
 - name: Remove a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com

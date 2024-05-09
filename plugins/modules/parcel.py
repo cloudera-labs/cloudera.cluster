@@ -75,7 +75,7 @@ options:
 
 EXAMPLES = r"""
 ---
-- name: Download, distribute and activate a parcel on a cluster 
+- name: Download, distribute and activate a parcel on a cluster
   cloudera.cluster.parcel:
     host: example.cloudera.com
     username: "jane_smith"
@@ -85,7 +85,7 @@ EXAMPLES = r"""
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
     state: "activated"
 
-- name: Downloand and distribute a parcel on a cluster 
+- name: Downloand and distribute a parcel on a cluster
   cloudera.cluster.parcel:
     host: example.cloudera.com
     username: "jane_smith"
@@ -95,7 +95,7 @@ EXAMPLES = r"""
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
     state: "distributed"
 
-- name: Remove the parcel on a specified cluster 
+- name: Remove the parcel on a specified cluster
   cloudera.cluster.parcel:
     host: example.cloudera.com
     username: "jane_smith"

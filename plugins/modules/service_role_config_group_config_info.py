@@ -88,7 +88,7 @@ EXAMPLES = r"""
     cluster: ExampleCluster
     service: knox
     role_config_group: hdfs-GATEWAY-base
-  
+
 - name: Gather the configuration details in 'full' for a cluster service role config group
   cloudera.cluster.service_role_config_group_config_info:
     host: "example.cloudera.internal"

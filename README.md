@@ -18,7 +18,7 @@ If you have any questions, want to chat about the collection's capabilities and 
 
 ## API
 
-See the [API documentation](https://cloudera-labs.github.io/cloudera.cluster/) for details for each plugin and role within the collection. 
+See the [API documentation](https://cloudera-labs.github.io/cloudera.cluster/) for details for each plugin and role within the collection.
 
 ## Roadmap
 
@@ -105,7 +105,7 @@ The collection also requires the following Python libraries to operate its modul
 
 The collection's Python dependencies alone, _not_ the required Python libraries of its collection dependencies, are in `requirements.txt`.
 
-All collection dependencies, required and optional, can be found in `requirements.yml`; only the _required_ dependencies are in `galaxy.yml`. `ansible-galaxy` will install only the _required_ collection dependencies; you will need to add the _optional_ collection dependencies as needed (see above). 
+All collection dependencies, required and optional, can be found in `requirements.yml`; only the _required_ dependencies are in `galaxy.yml`. `ansible-galaxy` will install only the _required_ collection dependencies; you will need to add the _optional_ collection dependencies as needed (see above).
 
 `ansible-builder` can discover and install all Python dependencies - current collection and dependencies - if you wish to use that application to construct your environment. Otherwise, you will need to read each collection and role dependency and follow its installation instructions.
 
@@ -154,7 +154,7 @@ For example, here we use the
 To create a local collection tarball, run:
 
 ```bash
-ansible-galaxy collection build 
+ansible-galaxy collection build
 ```
 
 ## Building the API Documentation

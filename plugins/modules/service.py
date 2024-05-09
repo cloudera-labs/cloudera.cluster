@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: service
-short_description: Manage a service in cluster 
+short_description: Manage a service in cluster
 description:
   - Manage a service in a cluster.
 author:
@@ -121,7 +121,7 @@ EXAMPLES = r"""
     service: example_ecs
     type: ECS
     display_name: Example ECS
-    
+
 
 - name: Stop a cluster service
   cloudera.cluster.service:
@@ -131,7 +131,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     state: stopped
-    
+
 - name: Force a restart of a cluster service
   cloudera.cluster.service:
     host: example.cloudera.com
@@ -140,7 +140,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     state: restarted
-    
+
 - name: Set a cluster service into maintenance mode
   cloudera.cluster.service:
     host: example.cloudera.com
@@ -149,7 +149,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     maintenance: yes
-    
+
 - name: Update (append) several tags on a cluster service
   cloudera.cluster.service:
     host: example.cloudera.com
@@ -160,7 +160,7 @@ EXAMPLES = r"""
     tags:
       tag_one: valueOne
       tag_two: valueTwo
-      
+
 - name: Update (purge) the tags on a cluster service
   cloudera.cluster.service:
     host: example.cloudera.com
@@ -171,7 +171,7 @@ EXAMPLES = r"""
     tags:
       tag_three: value_three
     purge: yes
-    
+
 - name: Remove all the tags on a cluster service
   cloudera.cluster.service:
     host: example.cloudera.com
@@ -180,7 +180,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     tags: {}
-    purge: yes    
+    purge: yes
 
 - name: Remove a cluster service
   cloudera.cluster.service:

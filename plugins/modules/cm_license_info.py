@@ -96,14 +96,14 @@ class ClouderaLicenseInfo(ClouderaManagerModule):
             self.cm_license_output = api_instance.read_license().to_dict()
         except ApiException as e:
             if e.status == 404:
-                self.cm_cluster_info = (f"Error: License not found.")
-                self.module.fail_json(msg=str(self.cm_license_output)) 
+                self.cm_cluster_info = f"Error: License not found."
+                self.module.fail_json(msg=str(self.cm_license_output))
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(supports_check_mode=False)
 
     result = ClouderaLicenseInfo(module)
-
 
     output = dict(
         changed=False,

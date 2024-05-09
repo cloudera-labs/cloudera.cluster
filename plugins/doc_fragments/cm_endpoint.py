@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
     options:
         url:
             description:
@@ -27,4 +28,4 @@ class ModuleDocFragment(object):
             aliases:
                 - endpoint
                 - cm_endpoint_url
-    '''
+    """

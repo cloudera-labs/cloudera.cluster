@@ -25,5 +25,3 @@
     name: haproxy
     enabled: yes
     state: restarted
-
-

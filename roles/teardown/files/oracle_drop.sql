@@ -31,6 +31,6 @@ BEGIN
       DBMS_OUTPUT.put_line('ERROR: DROP ' || cur_rec.object_type || ' ' || cur_rec.object_name );
     END;
   END LOOP;
-END; 
+END;
 /
 exit

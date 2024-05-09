@@ -97,7 +97,7 @@ class ClouderaTrial(ClouderaManagerModule):
                 if get_trial_state_request:
                     self.cm_trial_output = get_trial_state_request
                     self.changed = False
-                    
+
             except ApiException as e:
                 if e.status == 404:
                     api_instance.begin_trial()
@@ -105,13 +105,11 @@ class ClouderaTrial(ClouderaManagerModule):
                     self.cm_trial_output = get_trial_state_request
                     self.changed = True
 
+
 def main():
     module = ClouderaManagerModule.ansible_module(
-        
-        argument_spec=
-        dict(),
-          supports_check_mode=True
-          )
+        argument_spec=dict(), supports_check_mode=True
+    )
 
     result = ClouderaTrial(module)
 

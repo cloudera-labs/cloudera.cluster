@@ -29,14 +29,23 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import ClusterTemplate
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClusterTemplate,
+)
+
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
-    
-    def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
-        super().__init__(task, connection, play_context, loader, templar, shared_loader_obj)
-        self.TEMPLATE = ClusterTemplate(warn_fn=self._display.warning, error_fn=self._display.error)
+
+    def __init__(
+        self, task, connection, play_context, loader, templar, shared_loader_obj
+    ):
+        super().__init__(
+            task, connection, play_context, loader, templar, shared_loader_obj
+        )
+        self.TEMPLATE = ClusterTemplate(
+            warn_fn=self._display.warning, error_fn=self._display.error
+        )
         self.MERGED = {}
 
     def assemble_fragments(
@@ -67,7 +76,9 @@ class ActionModule(ActionBase):
                     if not self.MERGED:
                         self.MERGED = json.loads(fragment_file.read())
                     else:
-                        self.TEMPLATE.merge(self.MERGED, json.loads(fragment_file.read()))
+                        self.TEMPLATE.merge(
+                            self.MERGED, json.loads(fragment_file.read())
+                        )
                 except json.JSONDecodeError as e:
                     raise AnsibleActionFail(
                         message=f"JSON parsing error: {to_text(e.msg)}",
