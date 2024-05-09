@@ -75,7 +75,7 @@
 
 - name: Update Capacity Scheduler Config in CM
   cloudera.cluster.cm_api:
-    endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/config
+    # endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/config
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/roleConfigGroups/yarn-RESOURCEMANAGER-BASE/config
     method: PUT
     body:
