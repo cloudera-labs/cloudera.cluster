@@ -283,9 +283,49 @@ def test_present_base_host_host_template_assignment(conn, module_args):
             type: SERVER
             display_name: Server Custom Group
             config:
-              zookeeper_server_java_heapsize: 134217728  # 128MB
+              zookeeper_server_java_heapsize: 75497472  # 72MB
     hosts:
       - name: test10-worker-free-01.cldr.internal
+        host_template: Example_Template
+    host_templates:
+      - name: Example_Template
+        role_groups:
+          - NON-BASE-SERVER
+    parcels:
+      CDH: "7.1.9-1.cdh7.1.9.p0.44702451"
+    """
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    LOG.info(str(e.value.cloudera_manager))
+
+
+def test_present_base_host_role_overrides(conn, module_args):
+    args = """
+    name: Example_Base_Host_Role_Overrides
+    cluster_version: "7.1.9-1.cdh7.1.9.p0.44702451" # 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-BASE-SERVICE-ROLE-GROUPS
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        role_groups:
+          - name: NON-BASE-SERVER
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 75497472  # 72MB
+    hosts:
+      - name: test10-worker-free-02.cldr.internal
+        roles:
+          - service: ZK-BASE-SERVICE-ROLE-GROUPS
+            type: SERVER
+            config:
+              zookeeper_server_java_heapsize: 67108864 # 64MB
         host_template: Example_Template
     host_templates:
       - name: Example_Template

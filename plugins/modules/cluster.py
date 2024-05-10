@@ -195,7 +195,9 @@ class ClouderaCluster(ClouderaManagerModule):
         self.changed = False
         self.output = {}
 
-        self.polling_interval = 15
+        self.delay = 15
+        self.timeout = 7200  # 2 hours
+        self.message = "Ansible-powered"
 
         self.process()
 
@@ -368,7 +370,7 @@ class ClouderaCluster(ClouderaManagerModule):
     def wait_for_composite_cmd(self, command_id: str):
         cmd = self.wait_for_command_state(
             command_id=command_id,
-            polling_interval=self.polling_interval,
+            polling_interval=self.delay,
         )
         if not cmd[0].success:
             collected_msgs = [
@@ -400,7 +402,7 @@ class ClouderaCluster(ClouderaManagerModule):
         if active_cmd:
             self.wait_for_command_state(
                 command_id=active_cmd.id,
-                polling_interval=self.polling_interval,
+                polling_interval=self.delay,
             )
 
     def create_cluster_from_template(self, template_contents: dict):
@@ -432,7 +434,7 @@ class ClouderaCluster(ClouderaManagerModule):
 
             command_id = import_template_request["id"]
             self.wait_for_command_state(
-                command_id=command_id, polling_interval=self.polling_interval
+                command_id=command_id, polling_interval=self.delay
             )
 
     def create_cluster_from_parameters(self):
@@ -493,10 +495,7 @@ class ClouderaCluster(ClouderaManagerModule):
             if self.hosts:
                 self.cluster_api.add_hosts(
                     cluster_name=self.name,
-                    body=ApiHostRefList(
-                        # items=[h for h in hostrefs if h.host_id not in prior_host_ids]
-                        items=hostrefs
-                    ),
+                    body=ApiHostRefList(items=hostrefs),
                 )
 
                 for h in self.hosts:
@@ -530,7 +529,8 @@ class ClouderaCluster(ClouderaManagerModule):
                         product=p,
                         version=v,
                         cluster=self.name,
-                        delay=self.polling_interval,
+                        delay=self.delay,
+                        timeout=self.timeout,
                     )
                     parcel.activate()
 
@@ -579,44 +579,43 @@ class ClouderaCluster(ClouderaManagerModule):
                             body=ApiRoleNameList(items=[direct_roles.items[0].name]),
                         )
 
-                # Configure per-host role overrides
-                # TODO NEXT
+            # Configure per-host role overrides
+            for (
+                hostref,
+                overrides,
+            ) in role_list:
+                for override in overrides:
+                    # Discover the role on the host
+                    host_role = next(
+                        iter(
+                            self.role_api.read_roles(
+                                cluster_name=self.name,
+                                service_name=override["service"],
+                                filter="type==%s;hostId==%s"
+                                % (override["type"], hostref.host_id),
+                            ).items
+                        ),
+                        None,
+                    )
 
-                # For each override, look up the role by type and filter by host
-                # to get the role_name (which is generated), using
-                # RolesResourceApi.read_roles() using hostId and role type filters
-                # If found, then RolesResourceApi.update_role_config()
-                # Else, throw an error, as the role is not active on the host
-                # if options["roles"]:
-            #     role_list = []
-
-            #     # TODO Need parameter validation of arbitrary role entries
-            #     for body in options["roles"]:
-            #         role = ApiRole(type=body["type"])
-
-            #         if "name" in body:
-            #             role.name = body["name"]
-
-            #         if "host" in body:
-            #             host_ref = self.host_api.read_host(host_id=body["host"])
-            #             if host_ref.cluster_ref:
-            #                 self.module.fail_json(
-            #                     msg=f"Unable to assign role to host '{host_ref.hostname}'; host is a member of existing cluster '{host_ref.cluster_ref.cluster_name}'"
-            #                 )
-
-            #             role.host_ref = ApiHostRef(host_id=host_ref.host_id)
-
-            #         if "config" in body:
-            #             role.config = ApiConfigList(
-            #                 items=[
-            #                     ApiConfig(name=k, value=v)
-            #                     for k, v in body["config"].items()
-            #                 ]
-            #             )
-
-            #         role_list.append(role)
-
-            #     service.roles = role_list
+                    if host_role is not None:
+                        self.role_api.update_role_config(
+                            cluster_name=self.name,
+                            service_name=override["service"],
+                            role_name=host_role.name,
+                            message=self.message,
+                            body=ApiConfigList(
+                                items=[
+                                    ApiConfig(name=k, value=v)
+                                    for k, v in override["config"].items()
+                                ]
+                            ),
+                        )
+                    else:
+                        self.module.fail_json(
+                            msg="Role not found. No role type '%s' for service '%s' found on host '%s'"
+                            % (override["type"], override["service"], hostref.hostname)
+                        )
 
             # Execute auto-role assignments
             if self.auto_assign:
@@ -751,6 +750,7 @@ def main():
                         type="list",
                         elements="dict",
                         options=dict(
+                            service=dict(required=True, aliases=["service_name"]),
                             type=dict(required=True, aliases=["role_type"]),
                             config=dict(type="dict", required=True),
                         ),
