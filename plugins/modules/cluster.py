@@ -32,7 +32,6 @@ from cm_client import (
     ApiConfig,
     ApiConfigList,
     ApiDataContext,
-    ApiDataContextList,
     ApiHostRef,
     ApiHostRefList,
     ApiHostTemplate,
@@ -40,7 +39,6 @@ from cm_client import (
     ApiRole,
     ApiRoleList,
     ApiRoleConfigGroup,
-    ApiRoleConfigGroupList,
     ApiRoleConfigGroupRef,
     ApiRoleNameList,
     ApiService,
@@ -50,6 +48,7 @@ from cm_client import (
     HostsResourceApi,
     HostTemplatesResourceApi,
     ParcelResourceApi,
+    ServicesResourceApi,
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
 )
@@ -195,9 +194,9 @@ class ClouderaCluster(ClouderaManagerModule):
         self.changed = False
         self.output = {}
 
-        self.delay = 15
-        self.timeout = 7200  # 2 hours
-        self.message = "Ansible-powered"
+        self.delay = 15  # TODO Parameterize
+        self.timeout = 7200  # TODO Parameterize
+        self.message = "Ansible-powered"  # TODO Parameterize
 
         self.process()
 
@@ -205,6 +204,7 @@ class ClouderaCluster(ClouderaManagerModule):
     def process(self):
         self.cm_api = ClouderaManagerResourceApi(self.api_client)
         self.cluster_api = ClustersResourceApi(self.api_client)
+        self.service_api = ServicesResourceApi(self.api_client)
         self.host_template_api = HostTemplatesResourceApi(self.api_client)
         self.host_api = HostsResourceApi(self.api_client)
         self.role_group_api = RoleConfigGroupsResourceApi(self.api_client)
@@ -438,7 +438,7 @@ class ClouderaCluster(ClouderaManagerModule):
             )
 
     def create_cluster_from_parameters(self):
-        if self.cluster_version is None:  # or self.type is None:
+        if self.cluster_version is None:
             self.module.fail_json(
                 msg=f"Cluster must be created. Missing required parameter: cluster_version"
             )
@@ -474,17 +474,29 @@ class ClouderaCluster(ClouderaManagerModule):
 
             # Add host templates to cluster
             if self.host_templates:
-                test = [
+
+                # Prepare host template role group assignments
+                # and discover base role groups if needed
+                templates = [
                     ApiHostTemplate(
                         name=ht["name"],
-                        role_config_group_refs=[ApiRoleConfigGroupRef(rcg)],
+                        role_config_group_refs=[
+                            ApiRoleConfigGroupRef(
+                                rcg["name"]
+                                if rcg["name"]
+                                else self.find_base_role_group_name(
+                                    service_type=rcg["service"], role_type=rcg["type"]
+                                )
+                            )
+                            for rcg in ht["role_groups"]
+                        ],
                     )
                     for ht in self.host_templates
-                    for rcg in ht["role_groups"]
                 ]
+
                 self.host_template_api.create_host_templates(
                     cluster_name=self.name,
-                    body=ApiHostTemplateList(items=test),
+                    body=ApiHostTemplateList(items=templates),
                 )
 
             # Add hosts to cluster and set up assignments
@@ -493,12 +505,14 @@ class ClouderaCluster(ClouderaManagerModule):
             role_list = []
 
             if self.hosts:
+                # Add the hosts
                 self.cluster_api.add_hosts(
                     cluster_name=self.name,
                     body=ApiHostRefList(items=hostrefs),
                 )
 
                 for h in self.hosts:
+                    # Normalize hostref
                     hostref = (
                         hostref_by_host_id[h["name"]]
                         if h["name"] in hostref_by_host_id
@@ -545,39 +559,78 @@ class ClouderaCluster(ClouderaManagerModule):
 
             # Configure direct role group assignments
             if role_group_list:
-                # Gather all the RCGs for all the services, since we will not
-                # know the service from the incoming parameter
+                # Gather all the RCGs for all services, as the host template might
+                # not reference RCGs that are directly configured in the service
+                # definition, i.e. base role groups
                 all_rcgs = {
-                    rcg.name: (s.name, rcg.role_type)
-                    for s in cluster.services
-                    for rcg in s.role_config_groups
+                    rcg.name: (
+                        rcg.base,
+                        s.name,
+                        rcg.role_type,
+                    )
+                    for s in self.service_api.read_services(
+                        cluster_name=self.name
+                    ).items  # s.name
+                    for rcg in self.role_group_api.read_role_config_groups(
+                        cluster_name=self.name, service_name=s.name
+                    ).items
                 }
 
-                for hostref, rcgs in role_group_list:
-                    for rg in rcgs:
-                        if rg not in all_rcgs:
-                            self.module.fail_json(
-                                msg=f"Role config group '{rg}' not found on cluster."
+                for hostref, host_rcgs in role_group_list:
+                    for rcg in host_rcgs:
+                        rcg_ref = None
+
+                        if rcg["name"]:
+                            # Use the declared RCG name
+                            if rcg["name"] not in all_rcgs:
+                                self.module.fail_json(
+                                    msg="Role config group '%s' not found on cluster."
+                                    % rcg["name"]
+                                )
+                            else:
+                                rcg_ref = all_rcgs[rcg["name"]]
+                        else:
+                            # Or discover the role group
+                            rcg_name = next(
+                                iter(
+                                    [
+                                        name
+                                        for name, refs in all_rcgs.items()
+                                        if refs[0]
+                                        and refs[1] == rcg["service"]
+                                        and refs[2] == rcg["type"]
+                                    ]
+                                ),
+                                None,
                             )
 
-                        (service_name, role_type) = all_rcgs[rg]
+                            if rcg_name is None:
+                                self.module.fail_json(
+                                    msg="Unable to find base role group, '%s [%s]', on cluster, '%s'"
+                                    % (rcg["service"], rcg["type"], self.name)
+                                )
+
+                            rcg_ref = all_rcgs[rcg_name]
 
                         # Add the role of that type to the host (generating a name)
                         direct_roles = self.role_api.create_roles(
                             cluster_name=self.name,
-                            service_name=service_name,
+                            service_name=rcg_ref[1],
                             body=ApiRoleList(
-                                items=[ApiRole(type=role_type, host_ref=hostref)]
+                                items=[ApiRole(type=rcg_ref[2], host_ref=hostref)]
                             ),
                         )
 
-                        # Move the newly-created role to the RCG
-                        self.role_group_api.move_roles(
-                            cluster_name=self.name,
-                            role_config_group_name=rg,
-                            service_name=service_name,
-                            body=ApiRoleNameList(items=[direct_roles.items[0].name]),
-                        )
+                        # Move the newly-created role to the RCG if it is not a base/default group
+                        if not rcg_ref[0]:
+                            self.role_group_api.move_roles(
+                                cluster_name=self.name,
+                                role_config_group_name=rcg["name"],
+                                service_name=rcg_ref[1],
+                                body=ApiRoleNameList(
+                                    items=[direct_roles.items[0].name]
+                                ),
+                            )
 
             # Configure per-host role overrides
             for (
@@ -639,16 +692,16 @@ class ClouderaCluster(ClouderaManagerModule):
             for body in options["role_groups"]:
                 rcg = ApiRoleConfigGroup(role_type=body["type"])
 
-                if "name" in body:
+                # Either a defined role group or a default/base group
+                if body["name"]:
                     rcg.name = body["name"]
+                else:
+                    rcg.base = True
 
-                if "display_name" in body:
+                if body["display_name"]:
                     rcg.display_name = body["display_name"]
 
-                if "base" in body:
-                    rcg.base = body["base"]
-
-                if "config" in body:
+                if body["config"]:
                     rcg.config = ApiConfigList(
                         items=[
                             ApiConfig(name=k, value=v)
@@ -688,6 +741,31 @@ class ClouderaCluster(ClouderaManagerModule):
             )
         return results
 
+    def find_base_role_group_name(
+        self, service_type: str, role_type: str
+    ) -> ApiRoleConfigGroup:
+        rcgs = [
+            rcg
+            for s in self.service_api.read_services(cluster_name=self.name).items
+            for rcg in self.role_group_api.read_role_config_groups(
+                cluster_name=self.name, service_name=s.name
+            ).items
+            if s.type == service_type
+        ]
+
+        base = next(
+            iter([rcg for rcg in rcgs if rcg.base and rcg.role_type == role_type]),
+            None,
+        )
+
+        if base is None:
+            self.module.fail_json(
+                "Invalid role group; unable to discover base role group for service role, %s[%s]"
+                % (role_type, service_type)
+            )
+        else:
+            return base.name
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(
@@ -713,7 +791,7 @@ def main():
                 type="list",
                 elements="dict",
                 options=dict(
-                    name=dict(required=True, aliases=["ref_name"]),
+                    name=dict(aliases=["ref", "ref_name"]),
                     type=dict(required=True),
                     version=dict(),
                     # Service-level config
@@ -723,9 +801,8 @@ def main():
                         type="list",
                         elements="dict",
                         options=dict(
-                            name=dict(aliases=["ref_name"]),
+                            name=dict(aliases=["ref", "ref_name"]),
                             type=dict(required=True, aliases=["role_type"]),
-                            base=dict(type="bool"),  # Will ignore name if True
                             display_name=dict(),
                             config=dict(type="dict"),
                         ),
@@ -744,13 +821,25 @@ def main():
                     config=dict(),
                     host_template=dict(),
                     role_groups=dict(
-                        type="list", elements="str", aliases=["role_config_groups"]
+                        type="list",
+                        elements="dict",
+                        options=dict(
+                            name=dict(aliases=["ref", "ref_name"]),
+                            service=dict(required=True, aliases=["service_name"]),
+                            type=dict(aliases=["role_type"]),
+                        ),
+                        aliases=["role_config_groups"],
+                        mutually_exclusive=[
+                            ("name", "type"),
+                        ],
                     ),
                     roles=dict(
                         type="list",
                         elements="dict",
                         options=dict(
-                            service=dict(required=True, aliases=["service_name"]),
+                            service=dict(
+                                required=True, aliases=["service_name", "service_ref"]
+                            ),
                             type=dict(required=True, aliases=["role_type"]),
                             config=dict(type="dict", required=True),
                         ),
@@ -766,9 +855,17 @@ def main():
                     name=dict(required=True),
                     role_groups=dict(
                         type="list",
-                        elements="str",
+                        elements="dict",
                         required=True,
+                        options=dict(
+                            name=dict(aliases=["ref", "ref_name"]),
+                            service=dict(required=True, aliases=["service_name"]),
+                            type=dict(aliases=["role_type"]),
+                        ),
                         aliases=["role_config_groups"],
+                        mutually_exclusive=[
+                            ("name", "type"),
+                        ],
                     ),
                 ),
             ),
@@ -786,13 +883,10 @@ def main():
             auto_assign=dict(type="bool", default=False, aliases=["auto_assign_roles"]),
         ),
         supports_check_mode=True,
-        # required_together=[
-        #     ("cdh_version", "type"),
-        # ],
-        mutually_exclusive=[("cdh_version", "cdh_short_version")],
-        required_if=[
-            ("type", "COMPUTE_CLUSTER", ("contexts")),
+        mutually_exclusive=[
+            ("cdh_version", "cdh_short_version"),
         ],
+        required_if=[("type", "COMPUTE_CLUSTER", ("contexts"))],
     )
 
     result = ClouderaCluster(module)
