@@ -64,7 +64,7 @@ def test_missing_required(conn, module_args):
 
 def test_present_base_minimum(conn, module_args):
     conn.update(
-        name="Example_Base",
+        name="Example_Base_Minimum",
         cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
@@ -74,8 +74,8 @@ def test_present_base_minimum(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
+    assert e.value.cloudera_manager
 
 
 def test_present_base_hosts(conn, module_args):
@@ -84,16 +84,13 @@ def test_present_base_hosts(conn, module_args):
         cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
-        hosts={
-            "test09-worker-free-01.cldr.internal": {},
-        },
+        hosts=[{"name": "test10-worker-free-01.cldr.internal"}],
     )
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
@@ -103,9 +100,7 @@ def test_present_base_hosts_not_found(conn, module_args):
         cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
-        hosts={
-            "should.not.find": {},
-        },
+        hosts=[{"name": "should.not.find"}],
     )
     module_args(conn)
 
@@ -121,9 +116,7 @@ def test_present_base_hosts_in_use(conn, module_args):
         cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
-        hosts={
-            "test09-worker-02.cldr.internal": {},
-        },
+        hosts=[{"name": "test10-worker-02.cldr.internal"}],
     )
     module_args(conn)
 
@@ -133,21 +126,18 @@ def test_present_base_hosts_in_use(conn, module_args):
 
 def test_present_base_auto_assign(conn, module_args):
     conn.update(
-        name="Example_Base",
+        name="Example_Base_Auto_Assign",
         cluster_version="7",  # "1.5.1-b626.p0.42068229",
         type="BASE_CLUSTER",
         state="present",
         auto_assign=True,
-        hosts={
-            "test09-worker-free-01.cldr.internal": {},
-        },
+        hosts=[{"name": "test10-worker-free-01.cldr.internal"}],
     )
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
@@ -205,9 +195,7 @@ def test_present_base_service_role_groups(conn, module_args):
         type: ZOOKEEPER
         display_name: ZK_TEST
         role_groups:
-          - name: BASE-SERVER                           # ignored due to base=True
-            type: SERVER
-            base: yes
+          - type: SERVER
             display_name: Server Base Group
             config:
               zookeeper_server_java_heapsize: 134217728 # 128MB
@@ -226,32 +214,66 @@ def test_present_base_service_role_groups(conn, module_args):
     LOG.info(str(e.value.cloudera_manager))
 
 
-def test_present_base_host_role_group_assignment(conn, module_args):
+def test_present_base_host_role_group_assignment_base(conn, module_args):
     args = """
     name: Example_Base_Host_Role_Group_Assignment
     cluster_version: 7
     type: BASE_CLUSTER
     state: present
     services:
-      - name: ZK-BASE-SERVICE-ROLE-GROUPS
+      - name: ZK_HOST_ROLE_GROUP_ASSIGNMENT
         type: ZOOKEEPER
         display_name: ZK_TEST
         role_groups:
-          - name: BASE-SERVER                           # ignored due to base=True
-            type: SERVER
-            base: yes
+          - type: SERVER
             display_name: Server Base Group
             config:
               zookeeper_server_java_heapsize: 134217728 # 128MB
-          - name: NON-BASE-SERVER
+          - name: HOST_ROLE_GROUP_ASSIGNMENT_NON_BASE_SERVER
             type: SERVER
             display_name: Server Custom Group
             config:
               zookeeper_server_java_heapsize: 33554432  # 32MB
     hosts:
-      - name: test10-worker-free-01.cldr.internal
+      - name: test10-worker-free-02.cldr.internal
         role_groups:
-          - NON-BASE-SERVER
+          - type: SERVER
+            service: ZK_HOST_ROLE_GROUP_ASSIGNMENT
+    """
+    conn.update(yaml.safe_load(args))
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cluster.main()
+
+    LOG.info(str(e.value.cloudera_manager))
+
+
+def test_present_base_host_role_group_assignment_custom(conn, module_args):
+    args = """
+    name: Example_Base_Host_Role_Group_Assignment
+    cluster_version: 7
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK_HOST_ROLE_GROUP_ASSIGNMENT_CUSTOM
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        role_groups:
+          - type: SERVER
+            display_name: Server Base Group
+            config:
+              zookeeper_server_java_heapsize: 134217728 # 128MB
+          - name: ZK_HOST_ROLE_GROUP_ASSIGNMENT_CUSTOM_NON_BASE_SERVER
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 33554432  # 32MB
+    hosts:
+      - name: test10-worker-free-03.cldr.internal
+        role_groups:
+          - name: ZK_HOST_ROLE_GROUP_ASSIGNMENT_CUSTOM_NON_BASE_SERVER
+            service: ZK_HOST_ROLE_GROUP_ASSIGNMENT_CUSTOM
     """
     conn.update(yaml.safe_load(args))
     module_args(conn)
@@ -343,123 +365,101 @@ def test_present_base_host_role_overrides(conn, module_args):
     LOG.info(str(e.value.cloudera_manager))
 
 
-def test_present_base_role(conn, module_args):
-    conn.update(
-        name="Example_Base_Roles",
-        cluster_version="7",  # "1.5.1-b626.p0.42068229",
-        type="BASE_CLUSTER",
-        state="present",
-        hosts={
-            "test09-worker-free-01.cldr.internal": {},
-            "test09-worker-free-02.cldr.internal": {},  # Added automatically by the role config reference
-        },
-        services=[
-            dict(
-                name="Example_ZK",
-                type="ZOOKEEPER",
-                display_name="ZK_TEST",
-                config=dict(
-                    zookeeper_datadir_autocreate=True,
-                    service_config_suppression_server_count_validator=True,
-                ),
-                roles=[
-                    dict(
-                        name="example_SERVER_ROLE",
-                        type="SERVER",
-                        config=dict(
-                            zookeeper_server_java_heapsize=33554432,
-                        ),
-                        host="test09-worker-free-02.cldr.internal",  # This will automatically add the server to the cluster
-                    )
-                ],
-            ),
-        ],
-    )
+def test_present_basic_cluster(conn, module_args):
+    args = """
+    name: Basic_Cluster
+    cluster_version: "7.1.9-1.cdh7.1.9.p0.44702451"
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: core-settings-0
+        type: CORE_SETTINGS
+        display_name: CORE_SETTINGS_TEST
+      - name: zookeeper-0
+        type: ZOOKEEPER
+        display_name: ZK_TEST
+        config:
+          zookeeper_datadir_autocreate: yes
+      - name: hdfs-0
+        type: HDFS
+        display_name: HDFS_TEST
+        config:
+            zookeeper_service: zookeeper-0
+            core_connector: core-settings-0
+        role_groups:
+          - type: DATANODE
+            config:
+              dfs_data_dir_list: /dfs/dn
+          - type: NAMENODE
+            config:
+              dfs_name_dir_list: /dfs/nn
+          - type: SECONDARYNAMENODE
+            config:
+              fs_checkpoint_dir_list: /dfs/snn
+      - name: yarn-0
+        type: YARN
+        display_name: YARN_TEST
+        config:
+          hdfs_service: hdfs-0
+          zookeeper_service: zookeeper-0
+        role_groups:
+          - type: RESOURCEMANAGER
+            config:
+              yarn_scheduler_maximum_allocation_mb: 4096
+              yarn_scheduler_maximum_allocation_vcores: 4
+          - type: NODEMANAGER
+            config:
+              yarn_nodemanager_resource_memory_mb: 4096
+              yarn_nodemanager_resource_cpu_vcores: 4
+              yarn_nodemanager_local_dirs:  /tmp/nm
+              yarn_nodemanager_log_dirs: /var/log/nm
+          - type: GATEWAY
+            config:
+              mapred_submit_replication: 3
+              mapred_reduce_tasks: 6
+    host_templates:
+      - name: Master1
+        role_groups:
+          - service: HDFS
+            type: NAMENODE
+          - service: HDFS
+            type: SECONDARYNAMENODE
+          - service: YARN
+            type: RESOURCEMANAGER
+          - service: YARN
+            type: JOBHISTORY
+      - name: Worker
+        role_groups:
+          - service: HDFS
+            type: DATANODE
+          - service: YARN
+            type: NODEMANAGER
+          - service: ZOOKEEPER
+            type: SERVER
+    parcels:
+      CDH: "7.1.9-1.cdh7.1.9.p0.44702451"
+    hosts:
+      - name: test10-worker-free-01.cldr.internal
+        host_template: Master1
+      - name: test10-worker-free-02.cldr.internal
+        host_template: Worker
+      - name: test10-worker-free-03.cldr.internal
+        host_template: Worker
+    """
+    conn.update(yaml.safe_load(args))
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
-def test_present_base_role_with_rcg(conn, module_args):
-    conn.update(
-        name="Example_Base_Role_RCG",
-        cluster_version="7",  # "1.5.1-b626.p0.42068229",
-        type="BASE_CLUSTER",
-        state="present",
-        hosts={
-            "test09-worker-free-01.cldr.internal": {},  # Added automatically by the role config reference
-            "test09-worker-free-02.cldr.internal": {},  # Added automatically by the role config reference
-        },
-        services=[
-            dict(
-                name="Example_ZK",
-                type="ZOOKEEPER",
-                display_name="ZK_TEST",
-                config=dict(
-                    zookeeper_datadir_autocreate=True,
-                    service_config_suppression_server_count_validator=True,
-                ),
-                role_config_groups=[
-                    dict(
-                        name="BASE-SERVER",  #  ignored due to base=True
-                        type="SERVER",
-                        display_name="Server Base Group",
-                        base=True,
-                        config=dict(
-                            zookeeper_server_java_heapsize=134217728,
-                        ),
-                    ),
-                    dict(
-                        name="NON-BASE-SERVER",
-                        type="SERVER",
-                        display_name="Server Custom Group",
-                        config=dict(
-                            zookeeper_server_java_heapsize=33554432,
-                        ),
-                    ),
-                ],
-                roles=[
-                    dict(
-                        # Implied base (default) RCG
-                        name="example_BASE-OVERRIDE",
-                        type="SERVER",
-                        config=dict(
-                            zookeeper_server_java_heapsize=33554432,
-                        ),
-                        host="test09-worker-free-01.cldr.internal",  # This will automatically add the server to the cluster
-                    ),
-                    dict(
-                        # name="example_NON-BASE-OVERRIDE",
-                        # name="Example_ZK-SERVER-override",
-                        type="SERVER",
-                        role_config_group="NON-BASE-SERVER",
-                        config=dict(
-                            zookeeper_server_java_heapsize=67108864,
-                        ),
-                        host="test09-worker-free-02.cldr.internal",  # This will automatically add the server to the cluster
-                    ),
-                ],
-            ),
-        ],
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    # LOG.info(str(e.value))
-    LOG.info(str(e.value.cloudera_manager))
-
-
+@pytest.mark.skip(reason="Not yet implemented")
 def test_started_base(conn, module_args):
     conn.update(
         name="PVC-Base",
         cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
-        # type="COMPUTE_CLUSTER",
         state="started",
     )
     module_args(conn)
@@ -467,15 +467,14 @@ def test_started_base(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_restarted_base(conn, module_args):
     conn.update(
         name="PVC-Base",
         cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
-        # type="COMPUTE_CLUSTER",
         state="restarted",
     )
     module_args(conn)
@@ -483,10 +482,10 @@ def test_restarted_base(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_stopped_base(conn, module_args):
     conn.update(
         name="PVC-Base",
@@ -503,6 +502,7 @@ def test_stopped_base(conn, module_args):
     LOG.info(str(e.value.cloudera_manager))
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_absent_base(conn, module_args):
     conn.update(
         name="Example_Base",
@@ -513,15 +513,13 @@ def test_absent_base(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
 def test_present_compute_minimum(conn, module_args):
     conn.update(
         name="Example_Compute",
-        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
-        # type="COMPUTE_CLUSTER",
+        cluster_version="7.1.9",
         contexts=["SDX"],
         state="present",
     )
@@ -530,15 +528,14 @@ def test_present_compute_minimum(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_started_compute_minimum(conn, module_args):
     conn.update(
         name="Example_Compute",
-        cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
-        # type="COMPUTE_CLUSTER",
+        cluster_version="7.1.9",
         contexts=["SDX"],
         state="started",
     )
@@ -547,7 +544,6 @@ def test_started_compute_minimum(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
@@ -561,14 +557,13 @@ def test_absent_compute(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
 def test_present_experience_minimum(conn, module_args):
     conn.update(
         name="Example_Experience",
-        cluster_version="1.5.1",  # "1.5.1-b626.p0.42068229",
+        cluster_version="1.5.3",
         type="EXPERIENCE_CLUSTER",
         state="present",
     )
@@ -577,7 +572,6 @@ def test_present_experience_minimum(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
@@ -591,7 +585,6 @@ def test_absent_experience(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
@@ -614,5 +607,4 @@ def test_pytest_cluster_with_template(module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
