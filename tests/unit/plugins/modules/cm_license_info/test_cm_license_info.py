@@ -22,16 +22,20 @@ import logging
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import cm_license_info
-from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
+from ansible_collections.cloudera.cluster.tests.unit import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+)
 
 LOG = logging.getLogger(__name__)
+
 
 def test_pytest_cm_license_info(module_args):
     module_args(
         {
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            "username": os.getenv("CM_USERNAME"),
+            "password": os.getenv("CM_PASSWORD"),
+            "host": os.getenv("CM_HOST"),
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",

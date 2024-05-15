@@ -14,20 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import logging
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import cm_endpoint_info
-from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
+from ansible_collections.cloudera.cluster.tests.unit import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+)
 
 from cm_client.rest import RESTClientObject
 from urllib3.response import HTTPResponse
 
 LOG = logging.getLogger(__name__)
-    
+
+
 def test_host_discovery(module_args, monkeypatch):
     spec = {
         "username": "testuser",
@@ -35,19 +40,17 @@ def test_host_discovery(module_args, monkeypatch):
         "host": "test.cldr.info",
         "port": "7180",
         "verify_tls": "no",
-        "debug": "yes"
+        "debug": "yes",
     }
-    
+
     def response():
         return HTTPResponse()
-    
+
     monkeypatch.setattr("urllib3.HTTPConnectionPool.urlopen", response)
-    
-    
+
     module_args(spec)
-    
+
     with pytest.raises(AnsibleExitJson) as e:
         cm_endpoint_info.main()
-        
+
     assert e.value.endpoint == f"https://{spec['host']}:7183/api/v01"
-    

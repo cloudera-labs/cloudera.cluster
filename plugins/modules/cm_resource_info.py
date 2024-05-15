@@ -49,7 +49,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     path: "/users"
   register: cm_users
-    
+
 - name: Retrieve details for all running commands on a cluster using a custom SSL certificate
   cloudera.cluster.cm_resource_info:
     host: example.cloudera.com

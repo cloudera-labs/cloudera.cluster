@@ -5,5 +5,4 @@
     {% if freeipa_activated %}"trustedCaCerts" : "/etc/ipa/ca.crt",{% endif %}
     "userName" : "root",
     "password": "{{ node_password }}"
-} 
-    
+}

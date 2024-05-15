@@ -35,6 +35,7 @@ from cm_client import (
     ApiClient,
     ApiCommand,
     ApiConfigList,
+    ApiParcel,
     ApiRole,
     ApiRoleConfigGroup,
     ApiService,
@@ -91,6 +92,16 @@ ROLE_CONFIG_GROUP = [
     # "service_ref",
 ]
 
+PARCEL = [
+    "product",
+    "version",
+    "stage",
+    # "cluster_ref",
+    "state",
+    "display_name",
+    "description",
+]
+
 
 def _parse_output(entity: dict, filter: list) -> dict:
     output = {}
@@ -121,10 +132,17 @@ def parse_role_result(role: ApiRole) -> dict:
     return output
 
 
-def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup):
+def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dict:
     # Retrieve only the service identifier
     output = dict(service_name=role_config_group.service_ref.service_name)
     output.update(_parse_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
+    return output
+
+
+def parse_parcel_result(parcel: ApiParcel) -> dict:
+    # Retrieve only the cluster identifier
+    output = dict(cluster_name=parcel.cluster_ref.cluster_name)
+    output.update(_parse_output(parcel.to_dict(), PARCEL))
     return output
 
 

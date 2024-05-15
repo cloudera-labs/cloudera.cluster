@@ -32,4 +32,3 @@
     repo: "deb [arch=amd64] {{ cloudera_manager_repo_url_with_creds | default(cloudera_manager_repo_url) }} {{ cloudera_manager_repo_apt_codename }} {{ cloudera_manager_repo_apt_component }}"
     filename: cloudera-manager
   no_log: yes
-

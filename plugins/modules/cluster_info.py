@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r"""
 ---
-module: cm_cluster_info
+module: cluster_info
 short_description: Retrieve details about one or more clusters
 description:
   - Retrieves details about one or more clusters managed by Cloudera Manager
@@ -47,15 +47,15 @@ requirements:
 EXAMPLES = r"""
 ---
 - name: Get information about the cluster
-  cloudera.cluster.cm_cluster_info:
+  cloudera.cluster.cluster_info:
     host: example.cloudera.com
     username: "jane_smith"
     name: "OneNodeCluster"
     password: "S&peR4Ec*re"
     port: "7180"
-    
+
 - name: Get information about all clusters
-  cloudera.cluster.cm_cluster_info:
+  cloudera.cluster.cluster_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -129,30 +129,34 @@ class ClusterInfo(ClouderaManagerModule):
         try:
             cluster_api_instance = ClustersResourceApi(self.api_client)
             if self.name:
-                self.output = [cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()]
+                self.output = [
+                    cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()
+                ]
             else:
-                self.output = cluster_api_instance.read_clusters().to_dict()['items']
-                
+                self.output = cluster_api_instance.read_clusters().to_dict()["items"]
+
         except ApiException as e:
             if e.status == 404:
                 pass
             else:
                 raise e
         except KeyError as ke:
-            self.module.fail_json(msg='Invalid result object from Cloudera Manager API', error=to_native(ke))
+            self.module.fail_json(
+                msg="Invalid result object from Cloudera Manager API",
+                error=to_native(ke),
+            )
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-        
         argument_spec=dict(
-            name=dict(aliases=["cluster_name","cluster"]),
+            name=dict(aliases=["cluster_name", "cluster"]),
         ),
-          supports_check_mode=True
-          )
+        supports_check_mode=True,
+    )
 
-    result = ClusterInfo(module) 
-    
+    result = ClusterInfo(module)
+
     output = dict(
         changed=False,
         clusters=result.output,

@@ -2,7 +2,7 @@
 
 - name: Post Ranger policies declared in policies directory
   register: __ranger_pol_response
-  uri: 
+  uri:
     url: "{{ ranger_url }}/service/public/v2/api/policy"
     method: POST
     user: "{{ ranger_user }}"

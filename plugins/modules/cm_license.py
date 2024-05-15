@@ -51,7 +51,7 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 cloudera_manager:
-    description: Details about a active license 
+    description: Details about a active license
     type: dict
     contains:
         owner:
@@ -91,10 +91,10 @@ class ClouderaLicense(ClouderaManagerModule):
     def process(self):
 
         try:
-                api_instance = ClouderaManagerResourceApi(self.api_client)
+            api_instance = ClouderaManagerResourceApi(self.api_client)
 
-                self.cm_license_output = api_instance.read_license().to_dict()
-                self.changed = False
+            self.cm_license_output = api_instance.read_license().to_dict()
+            self.changed = False
 
         except ApiException as e:
             if e.status == 404:
@@ -105,21 +105,17 @@ class ClouderaLicense(ClouderaManagerModule):
                     self.changed = True
 
         except FileNotFoundError:
-            self.cm_license_output = (f"Error: File '{self.license}' not found.")
-            self.module.fail_json(msg=str(self.cm_license_output)) 
+            self.cm_license_output = f"Error: File '{self.license}' not found."
+            self.module.fail_json(msg=str(self.cm_license_output))
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-        
-        argument_spec=
-        dict(
-            license=dict(required=True, type="path")
-        ),
-          supports_check_mode=True
-          )
+        argument_spec=dict(license=dict(required=True, type="path")),
+        supports_check_mode=True,
+    )
 
     result = ClouderaLicense(module)
-
 
     output = dict(
         changed=result.changed,

@@ -167,7 +167,6 @@ class ClouderaHostInfo(ClouderaManagerModule):
         # Execute the logic
         self.process()
 
-
     @ClouderaManagerModule.handle_process
     def process(self):
 
@@ -177,9 +176,13 @@ class ClouderaHostInfo(ClouderaManagerModule):
         if self.cluster_hostname or self.host_id:
             try:
                 if self.cluster_hostname:
-                    self.host_output = host_api_instance.read_host(host_id=self.cluster_hostname).to_dict()
+                    self.host_output = host_api_instance.read_host(
+                        host_id=self.cluster_hostname
+                    ).to_dict()
                 else:
-                    self.host_output = host_api_instance.read_host(host_id=self.host_id).to_dict()
+                    self.host_output = host_api_instance.read_host(
+                        host_id=self.host_id
+                    ).to_dict()
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
@@ -189,11 +192,12 @@ class ClouderaHostInfo(ClouderaManagerModule):
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-           argument_spec=dict(
+        argument_spec=dict(
             cluster_hostname=dict(required=False, type="str"),
-            host_id=dict(required=False, type="str")),
+            host_id=dict(required=False, type="str"),
+        ),
         supports_check_mode=True,
-        )
+    )
 
     result = ClouderaHostInfo(module)
 
@@ -209,6 +213,7 @@ def main():
         output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
+
 
 if __name__ == "__main__":
     main()

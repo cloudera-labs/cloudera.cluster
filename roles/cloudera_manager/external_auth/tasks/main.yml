@@ -17,7 +17,7 @@
 - name: Conditionally load in variables for initializing IPA
   ansible.builtin.include_vars:
     file: freeipa.yml
-  when: 
+  when:
   - freeipa_activated
   - cloudera_manager_external_auth is undefined
   - cloudera_manager_version is version('6.0.0','>=')

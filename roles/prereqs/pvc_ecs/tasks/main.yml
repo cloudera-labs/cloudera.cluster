@@ -15,7 +15,7 @@
 # limitations under the License.
 
 - name: Fail Fast if ECS OS is not RH family
-  ansible.builtin.fail: 
+  ansible.builtin.fail:
     msg: ECS is not supported on this OS, should be Centos or RHEL
   when: ansible_os_family != 'RedHat'
 
@@ -64,24 +64,24 @@
     - security
   loop_control:
     loop_var: __iptables_flush_item
-    
+
   ## see https://docs.rke2.io/known_issues
 - name: Set NetworkManager to ignore any ECS calico & flannel interfaces
   ansible.builtin.copy:
     src: networkmanager.conf
-    dest: /etc/NetworkManager/conf.d/rke2-canal.config 
+    dest: /etc/NetworkManager/conf.d/rke2-canal.config
     owner: root
     group: root
     mode: 0644
-  when: 
+  when:
     - ansible_distribution_major_version|int >= 7
     - ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
-  
+
 - name: Reload NetworkManager daemon
   ansible.builtin.service:
     state: restarted
     daemon_reload: true
-    name: NetworkManager.service  
-  when: 
+    name: NetworkManager.service
+  when:
     - ansible_distribution_major_version|int >= 7
     - ansible_facts.services["NetworkManager.service"]['status'] != "not-found"

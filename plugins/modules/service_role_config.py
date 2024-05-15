@@ -39,7 +39,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: service_role_config
-short_description: Manage a service role configuration in cluster 
+short_description: Manage a service role configuration in cluster
 description:
   - Manage a service role configuration (role-specific) in a cluster.
 author:
@@ -117,7 +117,7 @@ EXAMPLES = r"""
     service: example-service
     parameters:
       more_configuration: None
-      
+
 - name: Update (purge) role parameters
   cloudera.cluster.cluster_service_role_config:
     host: example.cloudera.com
@@ -129,7 +129,7 @@ EXAMPLES = r"""
       config_one: None
       config_two: ValueTwo
       config_three: 2345
-      
+
 - name: Reset all role parameters
   cloudera.cluster.cluster_service_role_config:
     host: example.cloudera.com

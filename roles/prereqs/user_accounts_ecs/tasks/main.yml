@@ -57,4 +57,3 @@
       when: account.when | default(True)
 
   when: (not skip_user_group_init) | default(true)
-

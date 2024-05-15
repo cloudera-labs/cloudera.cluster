@@ -44,41 +44,41 @@
           "hue"
         ],
         "groups": [
-          
+
         ],
         "roles": [
-          
+
         ],
         "conditions": [
-          
+
         ],
         "delegateAdmin": true
       }
     ],
     "denyPolicyItems": [
-      
+
     ],
     "allowExceptions": [
-      
+
     ],
     "denyExceptions": [
-      
+
     ],
     "dataMaskPolicyItems": [
-      
+
     ],
     "rowFilterPolicyItems": [
-      
+
     ],
     "serviceType": "solr",
     "options": {
-      
+
     },
     "validitySchedules": [
-      
+
     ],
     "policyLabels": [
-      
+
     ],
     "zoneName": "",
     "isDenyAllElse": false

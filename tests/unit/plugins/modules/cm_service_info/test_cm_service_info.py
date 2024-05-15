@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import os
@@ -23,24 +24,33 @@ import unittest
 
 
 from ansible_collections.cloudera.cluster.plugins.modules import cm_service_info
-from ansible_collections.cloudera.cluster.tests.unit.plugins.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, setup_module_args
+from ansible_collections.cloudera.cluster.tests.unit.plugins.modules.utils import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+    ModuleTestCase,
+    setup_module_args,
+)
 
 
-@unittest.skipUnless(os.getenv('CM_USERNAME'), "Cloudera Manager access parameters not set")
+@unittest.skipUnless(
+    os.getenv("CM_USERNAME"), "Cloudera Manager access parameters not set"
+)
 class TestCMServiceInfo(ModuleTestCase):
-    
     def test_service_info(self):
-        setup_module_args({
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
-            "port": "7180",
-            "verify_tls": "no",
-            "debug": "yes"
-        })
-        
+        setup_module_args(
+            {
+                "username": os.getenv("CM_USERNAME"),
+                "password": os.getenv("CM_PASSWORD"),
+                "host": os.getenv("CM_HOST"),
+                "port": "7180",
+                "verify_tls": "no",
+                "debug": "yes",
+            }
+        )
+
         with pytest.raises(AnsibleExitJson) as e:
             cm_service_info.main()
-            
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()

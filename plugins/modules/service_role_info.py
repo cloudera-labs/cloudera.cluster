@@ -110,7 +110,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
     service: yarn
-  
+
 - name: Gather the details with additional healthcheck information for the roles in the 'ecs' service
   cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
@@ -119,7 +119,7 @@ EXAMPLES = r"""
     cluster: ExampleCluster
     service: ecs
     view: healthcheck
-    
+
 - name: Gather details of the 'NODEMANAGER' roles for the 'yarn' service
   cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
@@ -128,7 +128,7 @@ EXAMPLES = r"""
     cluster: ExampleCluster
     service: yarn
     type: NODEMANAGER
-    
+
 - name: Gather details of the roles for the 'yarn' service on a particular cluster host
   cloudera.cluster.service_role_info:
     host: "example.cloudera.host"

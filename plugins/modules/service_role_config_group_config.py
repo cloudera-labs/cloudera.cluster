@@ -131,7 +131,7 @@ EXAMPLES = r"""
       config_one: ValueOne
       config_two: 4567
     purge: yes
-    
+
 - name: Reset all role config group parameters
   cloudera.cluster.service_role_config_group_config:
     host: example.cloudera.com
@@ -266,7 +266,7 @@ class ClusterServiceRoleConfigGroupConfig(ClouderaManagerMutableModule):
         api_instance = RoleConfigGroupsResourceApi(self.api_client)
 
         refresh = True
-        
+
         try:
             existing = api_instance.read_config(
                 cluster_name=self.cluster,
@@ -311,7 +311,7 @@ class ClusterServiceRoleConfigGroupConfig(ClouderaManagerMutableModule):
                         body=body,
                     ).items
                 ]
-                
+
                 if self.view == "full":
                     refresh = True
 
@@ -329,7 +329,9 @@ def main():
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name"]),
-            role_config_group=dict(required=True, aliases=["role_config_group", "name"]),
+            role_config_group=dict(
+                required=True, aliases=["role_config_group", "name"]
+            ),
             parameters=dict(type="dict", required=True, aliases=["params"]),
             purge=dict(type="bool", default=False),
             view=dict(

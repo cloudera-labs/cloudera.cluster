@@ -6,6 +6,6 @@
        generate_truststore(self.cfg.keytool, cluster_ca_jks, truststore_password,
 -                          cluster_ca_pem)
 +                          cluster_ca_pem, self.cfg.keystore_type)
- 
+
      global_ca_pem = self.trust_files[GLOBAL_TLS_SET][PEM_TLS_TYPE]
      copied_cluster_to_global = False

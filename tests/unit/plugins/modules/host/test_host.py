@@ -22,23 +22,27 @@ import logging
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import host
-from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
+from ansible_collections.cloudera.cluster.tests.unit import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+)
 
 LOG = logging.getLogger(__name__)
+
 
 def test_pytest_add_host_to_cloudera_manager(module_args):
     module_args(
         {
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            "username": os.getenv("CM_USERNAME"),
+            "password": os.getenv("CM_PASSWORD"),
+            "host": os.getenv("CM_HOST"),
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
             "cluster_hostname": "cloudera.host.example",
             "rack_id": "/defo",
             "cluster_host_ip": "10.10.1.1",
-            "state": "present"
+            "state": "present",
         }
     )
 
@@ -52,9 +56,9 @@ def test_pytest_add_host_to_cloudera_manager(module_args):
 def test_pytest_attach_host_to_cluster(module_args):
     module_args(
         {
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            "username": os.getenv("CM_USERNAME"),
+            "password": os.getenv("CM_PASSWORD"),
+            "host": os.getenv("CM_HOST"),
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
@@ -62,7 +66,7 @@ def test_pytest_attach_host_to_cluster(module_args):
             "name": "Cluster_Example",
             "rack_id": "/defo",
             "cluster_host_ip": "10.10.1.1",
-            "state": "attached"
+            "state": "attached",
         }
     )
 
@@ -76,15 +80,15 @@ def test_pytest_attach_host_to_cluster(module_args):
 def test_pytest_detach_host_from_cluster(module_args):
     module_args(
         {
-            "username": os.getenv('CM_USERNAME'),
-            "password": os.getenv('CM_PASSWORD'),
-            "host": os.getenv('CM_HOST'),
+            "username": os.getenv("CM_USERNAME"),
+            "password": os.getenv("CM_PASSWORD"),
+            "host": os.getenv("CM_HOST"),
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
             "cluster_hostname": "cloudera.host.example",
             "name": "Cluster_Example",
-            "state": "detached"
+            "state": "detached",
         }
     )
 

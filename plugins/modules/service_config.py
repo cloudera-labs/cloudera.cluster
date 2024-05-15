@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: service_config
-short_description: Manage a service configuration in cluster 
+short_description: Manage a service configuration in cluster
 description:
   - Manage a service configuration (service-wide) in a cluster.
 author:
@@ -123,7 +123,7 @@ EXAMPLES = r"""
       config_one: ValueOne
       config_two: 4567
     purge: yes
-    
+
 - name: Reset all service-wide parameters
   cloudera.cluster.service_config:
     host: example.cloudera.com
@@ -148,14 +148,14 @@ config:
       returned: always
     value:
       description:
-        - The user-defined value. 
+        - The user-defined value.
         - When absent, the default value (if any) will be used.
         - Can also be absent, when enumerating allowed configs.
       type: str
       returned: always
     required:
       description:
-        - Whether this configuration is required for the service. 
+        - Whether this configuration is required for the service.
         - If any required configuration is not set, operations on the service may not work.
         - Available using I(view=full).
       type: bool
@@ -186,7 +186,7 @@ config:
       returned: when supported
     sensitive:
       description:
-        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller. 
+        - Whether this configuration is sensitive, i.e. contains information such as passwords, which might affect how the value of this configuration might be shared by the caller.
       type: bool
       returned: when supported
     validation_state:
@@ -207,8 +207,8 @@ config:
       returned: when supported
     validation_warnings_suppressed:
       description:
-        - Whether validation warnings associated with this parameter are suppressed. 
-        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI. 
+        - Whether validation warnings associated with this parameter are suppressed.
+        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI.
         - Configurations that do not produce warnings will not contain this field.
         - Available using I(view=full).
       type: bool

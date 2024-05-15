@@ -141,4 +141,3 @@
       datalakeClusterName: "{{ cluster.datalake }}"
       valuesYaml: "{{ custom_values | to_yaml }}"
   register: controlplane_response
-

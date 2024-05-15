@@ -67,4 +67,3 @@
     - restart cloudera-scm-server
     - restart cloudera management service
     - restart cloudera-scm-agent
-

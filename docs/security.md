@@ -43,7 +43,7 @@ tls=True
 ca-server-1.example.com
 ```
 
-3b) If you wish to manually sign certificates against an 
+3b) If you wish to manually sign certificates against an
 external CA, like Active Directory, add the path where signed certificates will be stored and root CA certificate details in `defintion.yml`
 
 ```yaml

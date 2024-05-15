@@ -109,4 +109,3 @@ cluster_services_ordered:
   - OOZIE
   - HUE
   - KNOX
-

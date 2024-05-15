@@ -1,31 +1,31 @@
-/* Copyright (c) 2009, 2021, Oracle and/or its affiliates. 
+/* Copyright (c) 2009, 2021, Oracle and/or its affiliates.
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License, version 2.0,
   as published by the Free Software Foundation.
-  
+
   This program is also distributed with certain software (including
   but not limited to OpenSSL) that is licensed under separate terms,
   as designated in a particular file or component or in included license
   documentation.  The authors of MySQL hereby grant you an additional
   permission to link the program and your derivative works with the
   separately licensed software that they have included with MySQL.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License, version 2.0, for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
-  
+
  #ifndef MY_CONFIG_H
  #define MY_CONFIG_H
-  
+
  /*
   * From configure.cmake, in order of appearance
   */
-  
+
  /* Libraries */
  #define HAVE_LIBM 1
  /* #undef HAVE_LIBNSL */
@@ -35,7 +35,7 @@
  #define HAVE_LIBRT 1
  /* #undef HAVE_LIBWRAP */
  /* #undef HAVE_LIBWRAP_PROTOTYPES */
-  
+
  /* Header files */
  #define HAVE_ALLOCA_H 1
  #define HAVE_ARPA_INET_H 1
@@ -65,7 +65,7 @@
  #define HAVE_FNMATCH_H 1
  #define HAVE_SYS_UN_H 1
  #define HAVE_SASL_SASL_H 1
-  
+
  /* Functions */
  /* #undef HAVE_ALIGNED_MALLOC */
  #define HAVE_BACKTRACE 1
@@ -116,13 +116,13 @@
  #define HAVE_NL_LANGINFO 1
  /* #undef HAVE_HTONLL */
  #define HAVE_EPOLL 1
-  
+
  /* WL2373 */
  #define HAVE_SYS_TIME_H 1
  #define HAVE_SYS_TIMES_H 1
  #define HAVE_TIMES 1
  #define HAVE_GETTIMEOFDAY 1
-  
+
  /* Symbols */
  #define HAVE_LRAND48 1
  #define GWINSZ_IN_SYS_IOCTL 1
@@ -130,16 +130,16 @@
  /* #undef FIONREAD_IN_SYS_FILIO */
  #define HAVE_MADV_DONTDUMP 1
  #define HAVE_O_TMPFILE
-  
+
  /* #undef HAVE_KQUEUE */
  #define HAVE_SETNS 1
  /* #undef HAVE_KQUEUE_TIMERS */
  #define HAVE_POSIX_TIMERS 1
-  
+
  /* Endianess */
  /* #undef WORDS_BIGENDIAN */
  #define HAVE_ENDIAN_CONVERSION_MACROS 1
-  
+
  /* Type sizes */
  #define SIZEOF_VOIDP     8
  #define SIZEOF_CHARP     8
@@ -151,10 +151,10 @@
  #define HAVE_ULONG 1
  #define HAVE_U_INT32_T 1
  #define HAVE_TM_GMTOFF 1
-  
+
  /* Support for tagging symbols with __attribute__((visibility("hidden"))) */
  #define HAVE_VISIBILITY_HIDDEN 1
-  
+
  /* Code tests*/
  #define HAVE_CLOCK_GETTIME 1
  #define HAVE_CLOCK_REALTIME 1
@@ -175,11 +175,11 @@
  /* #undef HAVE_PTHREAD_THREADID_NP */
  #define HAVE_INTEGER_PTHREAD_SELF 1
  #define HAVE_PTHREAD_SETNAME_NP 1
-  
+
  /* IPV6 */
  /* #undef HAVE_NETINET_IN6_H */
  /* #undef HAVE_STRUCT_IN6_ADDR */
-  
+
  /*
   * Platform specific CMake files
   */
@@ -193,7 +193,7 @@
  #define SYSTEM_TYPE "Linux"
  /* This should mean case insensitive file system */
  /* #undef FN_NO_CASE_SENSE */
-  
+
  /*
   * From main CMakeLists.txt
   */
@@ -211,10 +211,10 @@
  /* #undef KERBEROS_LIB_CONFIGURED */
  #define SCRAM_LIB_CONFIGURED
  /* #undef WITH_HYPERGRAPH_OPTIMIZER */
-  
+
  /* Lock Order */
  /* #undef WITH_LOCK_ORDER */
-  
+
  /* Character sets and collations */
  #define DEFAULT_MYSQL_HOME "/usr/local/mysql"
  #define SHAREDIR "/usr/local/mysql/share"
@@ -240,8 +240,8 @@
  #define USE_NEW_EDITLINE_INTERFACE 1
  #define EDITLINE_HAVE_COMPLETION_CHAR 1
  /* #undef EDITLINE_HAVE_COMPLETION_INT */
-  
-  
+
+
  /*
   * Libedit
   */
@@ -252,13 +252,13 @@
  /* #undef HAVE_UNVIS */
  /* #undef HAVE_GETPW_R_DRAFT */
  #define HAVE_GETPW_R_POSIX
-  
+
  /*
   * Character sets
   */
  #define MYSQL_DEFAULT_CHARSET_NAME "utf8mb4"
  #define MYSQL_DEFAULT_COLLATION_NAME "utf8mb4_0900_ai_ci"
-  
+
  /*
   * Performance schema
   */
@@ -280,7 +280,7 @@
  /* #undef DISABLE_PSI_METADATA */
  /* #undef DISABLE_PSI_MEMORY */
  /* #undef DISABLE_PSI_TRANSACTION */
-  
+
  /*
   * MySQL version
   */
@@ -292,26 +292,26 @@
  #define PACKAGE_VERSION "8.0.25"
  #define VERSION "8.0.25"
  #define PROTOCOL_VERSION 10
-  
+
  /*
   * CPU info
   */
  #define CPU_LEVEL1_DCACHE_LINESIZE 64
-  
-  
+
+
  /*
   * NDB
   */
  /* #undef HAVE_GETRLIMIT */
  /* #undef WITH_NDBCLUSTER_STORAGE_ENGINE */
  /* #undef HAVE_PTHREAD_SETSCHEDPARAM */
-  
+
  /*
   * Other
   */
  /* #undef EXTRA_DEBUG */
  #define HANDLE_FATAL_SIGNALS 1
-  
+
  /*
   * Hardcoded values needed by libevent/NDB/memcached
   */
@@ -331,25 +331,25 @@
  #define HAVE_SYS_STAT_H 1
  #define HAVE_SYS_TYPES_H 1
  #define SIZEOF_CHAR 1
-  
+
  /* For --secure-file-priv */
  #define DEFAULT_SECURE_FILE_PRIV_DIR "NULL"
  #define HAVE_LIBNUMA 1
-  
+
  /* For default value of --early_plugin_load */
  /* #undef DEFAULT_EARLY_PLUGIN_LOAD */
-  
+
  /* For default value of --partial_revokes */
  #define DEFAULT_PARTIAL_REVOKES 0
-  
+
  #define SO_EXT ".so"
-  
-  
+
+
  /* From libmysql/CMakeLists.txt */
  #define HAVE_UNIX_DNS_SRV 1
  /* #undef HAVE_WIN32_DNS_SRV */
-  
+
  /* ARM crc32 support */
  /* #undef HAVE_ARMV8_CRC32_INTRINSIC */
-  
+
  #endif

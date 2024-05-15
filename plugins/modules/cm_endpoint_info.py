@@ -40,7 +40,7 @@ extends_documentation_fragment:
 EXAMPLES = r"""
 ---
 # This will first try 'http://example.cloudera.com:7180' and will
-# follow any redirects 
+# follow any redirects
 - name: Gather details using auto-discovery
   cloudera.cluster.cm_endpoint_info:
     host: example.cloudera.com

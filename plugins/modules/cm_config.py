@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r"""
 ---
 module: cm_config
-short_description: Manage the configuration of Cloudera Manager 
+short_description: Manage the configuration of Cloudera Manager
 description:
   - Manage Cloudera Manager configuration settings.
 author:

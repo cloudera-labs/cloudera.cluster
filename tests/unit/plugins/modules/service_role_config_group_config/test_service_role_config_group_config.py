@@ -59,7 +59,9 @@ def conn():
 def test_missing_required(conn, module_args):
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="cluster, parameters, role_config_group, service"):
+    with pytest.raises(
+        AnsibleFailJson, match="cluster, parameters, role_config_group, service"
+    ):
         service_role_config_group_config.main()
 
 
@@ -85,6 +87,7 @@ def test_missing_role_config_group(conn, module_args):
 
     with pytest.raises(AnsibleFailJson, match="cluster, parameters, service"):
         service_role_config_group_config.main()
+
 
 def test_missing_parameters(conn, module_args):
     conn.update(parameters={})
@@ -280,7 +283,7 @@ def test_purge_role_membership(conn, module_args):
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
     assert not e.value.role_config_group["roles"]
-    
+
 
 def test_remove_role_config_group(conn, module_args):
     conn.update(
@@ -341,5 +344,7 @@ def test_remove_role_config_group_invalid_base(conn, module_args):
     )
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="Group 'hdfs-DATANODE-BASE' is a base group"):
+    with pytest.raises(
+        AnsibleFailJson, match="Group 'hdfs-DATANODE-BASE' is a base group"
+    ):
         service_role_config_group_config.main()

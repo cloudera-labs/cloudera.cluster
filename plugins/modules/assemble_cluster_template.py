@@ -25,8 +25,8 @@ short_description: Merge Cloudera Manager cluster template fragments
 description:
   - Merge multiple Cloudera Manager cluster template files into a single cluster template file.
   - Often a cluster template file is composed of several services, host templates,
-    and other parameters from multiple sources and/or configurations. 
-    M(cloudera.cluster.assemble_cluster_template) will take a directory of 
+    and other parameters from multiple sources and/or configurations.
+    M(cloudera.cluster.assemble_cluster_template) will take a directory of
     cluster template configuration files that can be local or have already been
     transferred to the system and merge them together to produce a single,
     composite cluster template configuration file.
@@ -123,7 +123,7 @@ EXAMPLES = r"""
     src: examples
     dest: /opt/cloudera/cluster-template.json
     regexp: "base|nifi"
-    
+
 - name: Assemble a cluster template from files on the target host
   cloudera.cluster.assemble_cluster_template:
     src: /tmp/examples
@@ -193,11 +193,11 @@ class AssembleClusterTemplate(object):
             with open(fragment, "r", encoding="utf-8") as fragment_file:
                 try:
                     if not self.merged:
-                      self.merged = json.loads(fragment_file.read())
+                        self.merged = json.loads(fragment_file.read())
                     else:
-                      self.template.merge(
-                          self.merged, json.loads(fragment_file.read())
-                      )
+                        self.template.merge(
+                            self.merged, json.loads(fragment_file.read())
+                        )
                 except json.JSONDecodeError as e:
                     self.module.fail_json(
                         msg=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}",

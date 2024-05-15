@@ -4,7 +4,7 @@ Thank you for considering contributions to the `cloudera.cluster` Ansible collec
 
 ## Submitting a pull request
 
-You can start work on issues that are not yet part of a [Milestone](https://github.com/cloudera-labs/cloudera.cluster/milestones) -- anything in our issue tracker that isn't assigned to a Milestone is considered the [backlog](https://github.com/cloudera-labs/cloudera.cluster/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone). 
+You can start work on issues that are not yet part of a [Milestone](https://github.com/cloudera-labs/cloudera.cluster/milestones) -- anything in our issue tracker that isn't assigned to a Milestone is considered the [backlog](https://github.com/cloudera-labs/cloudera.cluster/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone).
 
 Before you start working, please announce that you want to do so by commenting on the issue. _([Create an issue](https://github.com/cloudera-labs/cloudera.cluster/issues/new?labels=enhancement) if there isn't one yet, and you can also check out our [Discussions](https://github.com/cloudera-labs/cloudera.cluster/discussions) for ideas.)_ We try to ensure that all active work is assigned to a Milestone in order to keep our backlog accurate.
 

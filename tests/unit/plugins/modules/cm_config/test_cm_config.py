@@ -23,7 +23,10 @@ import os
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import cm_config
-from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
+from ansible_collections.cloudera.cluster.tests.unit import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -50,11 +53,13 @@ def conn():
         "debug": "no",
     }
 
+
 def test_missing_parameters(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="parameters"):
         cm_config.main()
+
 
 def test_set_config(conn, module_args):
     conn.update(
@@ -78,10 +83,7 @@ def test_set_config(conn, module_args):
 
 
 def test_unset_config(conn, module_args):
-    module_args({
-        **conn,
-        "parameters": dict(custom_header_color=None) 
-    })
+    module_args({**conn, "parameters": dict(custom_header_color=None)})
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config.main()

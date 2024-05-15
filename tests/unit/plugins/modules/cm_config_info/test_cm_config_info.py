@@ -23,7 +23,10 @@ import os
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import cm_config_info
-from ansible_collections.cloudera.cluster.tests.unit import AnsibleExitJson, AnsibleFailJson
+from ansible_collections.cloudera.cluster.tests.unit import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -31,13 +34,14 @@ LOG = logging.getLogger(__name__)
 @pytest.fixture()
 def conn():
     return {
-        "username": os.getenv('CM_USERNAME'),
-        "password": os.getenv('CM_PASSWORD'),
-        "host": os.getenv('CM_HOST'),
+        "username": os.getenv("CM_USERNAME"),
+        "password": os.getenv("CM_PASSWORD"),
+        "host": os.getenv("CM_HOST"),
         "port": "7180",
         "verify_tls": "no",
         "debug": "yes",
     }
+
 
 def test_get_cluster_config(conn, module_args):
     module_args(conn)
@@ -47,11 +51,9 @@ def test_get_cluster_config(conn, module_args):
 
     assert len(e.value.config) > 0
 
+
 def test_get_cluster_config_full(conn, module_args):
-    module_args({
-        **conn,
-        "view": "full"
-    })
+    module_args({**conn, "view": "full"})
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config_info.main()
