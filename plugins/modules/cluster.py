@@ -273,21 +273,18 @@ class ClouderaCluster(ClouderaManagerModule):
 
         elif self.state == "absent":
             # Delete cluster
-
             refresh = False
-
-            # TODO Check for status when deleting
-            # if existing and existing.entity_status == "":
-            #     self.wait_for_active_cmd(cluster_api, self.cluster_name)
-            # elif existing:
             if existing:
                 self.changed = True
                 if not self.module.check_mode:
-                    self.cluster_api.delete_cluster(cluster_name=self.name)
-                    self.wait_for_active_cmd(self.name)
+                    if existing.entity_status != "STOPPED":
+                        stop = self.cluster_api.stop_command(cluster_name=self.name)
+                        self.wait_command(stop, polling=self.timeout, delay=self.delay)
+
+                    delete = self.cluster_api.delete_cluster(cluster_name=self.name)
+                    self.wait_command(delete, polling=self.timeout, delay=self.delay)
 
         elif self.state == "started":
-            # TODO NONE seems to be fresh cluster, never run before
             # Already started
             if existing and existing.entity_status == "GOOD_HEALTH":
                 refresh = False
@@ -309,11 +306,11 @@ class ClouderaCluster(ClouderaManagerModule):
                     # If newly created or created by not yet initialize
                     if not existing or existing.entity_status == "NONE":
                         first_run = self.cluster_api.first_run(cluster_name=self.name)
-                        self.wait_for_composite_cmd(first_run.id)
+                        self.wait_command(first_run)
                     # Start the existing and previously initialized cluster
                     else:
                         start = self.cluster_api.start_command(cluster_name=self.name)
-                        self.wait_for_composite_cmd(start.id)
+                        self.wait_command(start, polling=self.timeout, delay=self.delay)
 
         if self.state == "stopped":
             # Already stopped
@@ -336,7 +333,7 @@ class ClouderaCluster(ClouderaManagerModule):
                     self.changed = True
                     if not self.module.check_mode:
                         stop = self.cluster_api.stop_command(cluster_name=self.name)
-                        self.wait_for_composite_cmd(stop.id)
+                        self.wait_command(stop, polling=self.timeout, delay=self.delay)
 
         if self.state == "restarted":
             # Start underway
@@ -354,7 +351,7 @@ class ClouderaCluster(ClouderaManagerModule):
                 self.changed = True
                 if not self.module.check_mode:
                     restart = self.cluster_api.restart_command(cluster_name=self.name)
-                    self.wait_for_composite_cmd(restart.id)
+                    self.wait_command(restart, polling=self.timeout, delay=self.delay)
 
         if refresh:
             # Retrieve the updated cluster details
@@ -544,7 +541,6 @@ class ClouderaCluster(ClouderaManagerModule):
                         timeout=self.timeout,
                     )
                     parcel.activate()
-
             # Apply host templates
             for ht, refs in template_map.items():
                 self.host_template_api.apply_host_template(
