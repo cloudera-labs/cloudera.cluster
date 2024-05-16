@@ -64,7 +64,7 @@ cloudera_manager:
             returned: optional
         expiration:
             description: Expiration date of trial license
-            type: date
+            type: str
             returned: optional
         features:
             description: List of features within the trial license
@@ -72,11 +72,11 @@ cloudera_manager:
             returned: optional
         deactivation_date:
             description: Date until trial is active
-            type: date
+            type: str
             returned: optional
         start_date:
             description: trial activation date
-            type: date
+            type: str
             returned: optional
 """
 

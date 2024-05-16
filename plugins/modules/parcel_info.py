@@ -80,11 +80,11 @@ cloudera_manager:
     elements: dict
     contains:
         product:
-            product: The name of the product.
+            description: The name of the product.
             type: str
             returned: always
         version:
-            description: The version of the product
+            description: The version of the product.
             type: str
             returned: always
         stage:
@@ -92,11 +92,13 @@ cloudera_manager:
             type: str
             returned: always
         state:
-            description: The state of the parcel. This shows the progress of state transitions and if there were any errors.
+            description:
+                - The state of the parcel.
+                - Shows the progress of state transitions and reports any errors.
             type: dict
             returned: always
         clusterRef:
-            description:  A reference to the enclosing cluster.
+            description: A reference to the enclosing cluster.
             type: dict
             returned: always
         displayName:

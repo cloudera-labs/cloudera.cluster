@@ -45,7 +45,7 @@ description:
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
-  - cm_client
+  - cm-client
 options:
   cluster:
     description:
@@ -86,6 +86,7 @@ options:
         - summary
         - full
 extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.purge
@@ -95,6 +96,8 @@ attributes:
     support: full
   diff_mode:
     support: full
+  platform:
+    platforms: all
 """
 
 EXAMPLES = r"""

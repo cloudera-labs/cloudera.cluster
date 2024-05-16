@@ -44,7 +44,7 @@ description:
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
-  - cm_client
+  - cm-client
 options:
   cluster:
     description:
@@ -102,7 +102,7 @@ options:
     description:
       - The presence or absence of the role config group.
       - On I(state=absent), any associated role will be moved to the service's default group, i.e. the C(base) role config group.
-      - NOTE: you cannot remove a C(base) role config group.
+      - "NOTE: you cannot remove a C(base) role config group."
     type: str
     required: False
     choices:
@@ -110,6 +110,7 @@ options:
       - absent
     default: present
 extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
@@ -118,6 +119,8 @@ attributes:
     support: full
   diff_mode:
     support: full
+  platform:
+    platforms: all
 """
 
 EXAMPLES = r"""
