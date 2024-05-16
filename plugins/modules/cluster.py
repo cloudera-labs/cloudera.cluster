@@ -61,7 +61,6 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = r"""
----
 module: cluster
 short_description: Manage the lifecycle and state of a cluster
 description:
@@ -77,7 +76,6 @@ requirements:
 """
 
 EXAMPLES = r"""
----
 - name: Create an ECS cluster
   cloudera.cluster.cluster:
     host: example.cloudera.com
@@ -119,7 +117,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 cloudera_manager:
     description: Details about Cloudera Manager Cluster
     type: dict
@@ -674,10 +671,10 @@ class ClouderaCluster(ClouderaManagerModule):
             if self.auto_assign:
                 self.cluster_api.auto_assign_roles(cluster_name=self.name)
 
-    def marshal_service(self, options: str) -> ApiService:
+    def marshal_service(self, options: dict) -> ApiService:
         service = ApiService(name=options["name"], type=options["type"])
 
-        if "display_name" in options:
+        if options["display_name"]:
             service.display_name = options["display_name"]
 
         # Service-wide configuration
@@ -741,9 +738,7 @@ class ClouderaCluster(ClouderaManagerModule):
             )
         return results
 
-    def find_base_role_group_name(
-        self, service_type: str, role_type: str
-    ) -> ApiRoleConfigGroup:
+    def find_base_role_group_name(self, service_type: str, role_type: str) -> str:
         rcgs = [
             rcg
             for s in self.service_api.read_services(cluster_name=self.name).items
