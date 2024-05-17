@@ -20,7 +20,11 @@ import time
 
 from enum import IntEnum
 
-from cm_client import ParcelResourceApi
+from cm_client import ApiParcel, ParcelResourceApi
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    _parse_output,
+)
 
 
 class Parcel(object):
@@ -118,3 +122,21 @@ class Parcel(object):
         elif self.current < self.STAGE.ACTIVATED:
             self.distribute(self.STAGE.ACTIVATED)
             self._exec(self.STAGE.ACTIVATED, self.parcel_api.activate_command)
+
+
+PARCEL = [
+    "product",
+    "version",
+    "stage",
+    # "cluster_ref",
+    "state",
+    "display_name",
+    "description",
+]
+
+
+def parse_parcel_result(parcel: ApiParcel) -> dict:
+    # Retrieve only the cluster identifier
+    output = dict(cluster_name=parcel.cluster_ref.cluster_name)
+    output.update(_parse_output(parcel.to_dict(), PARCEL))
+    return output

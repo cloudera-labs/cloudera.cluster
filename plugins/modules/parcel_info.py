@@ -16,6 +16,10 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    parse_parcel_result,
+)
+
 from cm_client import ClustersResourceApi, ParcelResourceApi, ParcelsResourceApi
 from cm_client.rest import ApiException
 
@@ -26,7 +30,6 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = r"""
----
 module: parcel_info
 short_description: Gather details about the parcels on the cluster
 description:
@@ -34,27 +37,33 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
 requirements:
-  - cm_client
+  - cm-client
 options:
-  cluster_name:
+  cluster:
     description:
       - The name of the cluster
     type: str
     required: yes
-  product:
+    aliases:
+      - cluster_name
+  name:
     description:
-      - The name of the product, e.g. CDH, Impala
+      - The name of the product, e.g. CDH, Impala.
+      - Required if I(parcel_version) is declared.
     type: str
     required: no
+    aliases:
+      - product
+      - parcel
   parcel_version:
     description:
       - The version of the product, e.g. 1.1.0, 2.3.0.
+      - Required if I(name) is declared.
     type: str
     required: no
 """
 
 EXAMPLES = r"""
----
 - name: Gather details about specific parcel
   cloudera.cluster.parcel_info:
     host: example.cloudera.com
@@ -73,9 +82,8 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
-cloudera_manager:
-    description: Returns details about specific parcel or all parcels on the cluster
+parcels:
+    description: Returns details about a specific parcel or all parcels on the cluster
     type: list
     elements: dict
     contains:
@@ -94,14 +102,14 @@ cloudera_manager:
         state:
             description:
                 - The state of the parcel.
-                - Shows the progress of state transitions and reports any errors.
+                - This shows the progress of state transitions and if there were any errors.
             type: dict
             returned: when supported
         cluster_name:
             description: The name of the enclosing cluster.
             type: dict
             returned: always
-        displayName:
+        display_name:
             description: Display name of the parcel.
             type: str
             returned: when supported
@@ -115,59 +123,65 @@ cloudera_manager:
 class ClouderaParcelInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaParcelInfo, self).__init__(module)
-        self.cluster_name = self.get_param("cluster_name")
-        self.product = self.get_param("product")
+
+        self.cluster = self.get_param("cluster")
+        self.parcel = self.get_param("name")
         self.parcel_version = self.get_param("parcel_version")
+
+        self.output = {}
+        self.changed = False
+
         self.process()
 
     @ClouderaManagerModule.handle_process
     def process(self):
-        parcel_api_instance = ParcelResourceApi(self.api_client)
-        parcels_api_instance = ParcelsResourceApi(self.api_client)
-        cluster_api_instance = ClustersResourceApi(self.api_client)
 
-        self.parcel_output = {}
-        self.changed = False
+        parcel_api = ParcelResourceApi(self.api_client)
+        parcels_api = ParcelsResourceApi(self.api_client)
+        cluster_api = ClustersResourceApi(self.api_client)
 
         try:
-            cluster_api_instance.read_cluster(cluster_name=self.cluster_name).to_dict()
+            cluster_api.read_cluster(cluster_name=self.cluster)
         except ApiException as ex:
             if ex.status == 404:
-                self.module.fail_json(msg=f" Cluster {self.cluster_name} {ex.reason}")
+                self.module.fail_json(msg=f"Cluster '{self.cluster}' not found")
 
-        if self.product and self.parcel_version:
-            self.parcel_info = parcel_api_instance.read_parcel(
-                cluster_name=self.cluster_name,
-                product=self.product,
-                version=self.parcel_version,
-            ).to_dict()
-            self.parcel_output = {"items": [self.parcel_info]}
+        if self.parcel and self.parcel_version:
+            try:
+                parcel_info = parcel_api.read_parcel(
+                    cluster_name=self.cluster,
+                    product=self.parcel,
+                    version=self.parcel_version,
+                )
+                self.output = [parse_parcel_result(parcel_info)]
+            except ApiException as ex:
+                if ex.status == 404:
+                    pass
         else:
-            self.parcel_output = parcels_api_instance.read_parcels(
-                cluster_name=self.cluster_name
-            ).to_dict()
+            self.output = [
+                parse_parcel_result(p)
+                for p in parcels_api.read_parcels(cluster_name=self.cluster).items
+            ]
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            cluster_name=dict(required=True, type="str"),
-            product=dict(required=False, type="str"),
-            parcel_version=dict(required=False, type="str"),
+            cluster=dict(required=True, aliases=["cluster_name"]),
+            name=dict(aliases=["product", "parcel"]),
+            parcel_version=dict(),
         ),
         supports_check_mode=True,
         required_together=[
-            ("product", "parcel_version"),
+            ("name", "parcel_version"),
         ],
     )
 
     result = ClouderaParcelInfo(module)
 
-    changed = result.changed
-
     output = dict(
-        changed=changed,
-        cloudera_manager=result.parcel_output,
+        changed=result.changed,
+        parcels=result.output,
     )
 
     if result.debug:
