@@ -365,97 +365,6 @@ def test_present_base_host_role_overrides(conn, module_args):
     LOG.info(str(e.value.cloudera_manager))
 
 
-def test_present_basic_cluster(conn, module_args):
-    args = """
-    name: Basic_Cluster
-    cluster_version: "7.1.9-1.cdh7.1.9.p0.44702451"
-    type: BASE_CLUSTER
-    state: present
-    services:
-      - name: core-settings-0
-        type: CORE_SETTINGS
-        display_name: CORE_SETTINGS_TEST
-      - name: zookeeper-0
-        type: ZOOKEEPER
-        display_name: ZK_TEST
-        config:
-          zookeeper_datadir_autocreate: yes
-      - name: hdfs-0
-        type: HDFS
-        display_name: HDFS_TEST
-        config:
-            zookeeper_service: zookeeper-0
-            core_connector: core-settings-0
-        role_groups:
-          - type: DATANODE
-            config:
-              dfs_data_dir_list: /dfs/dn
-          - type: NAMENODE
-            config:
-              dfs_name_dir_list: /dfs/nn
-          - type: SECONDARYNAMENODE
-            config:
-              fs_checkpoint_dir_list: /dfs/snn
-      - name: yarn-0
-        type: YARN
-        display_name: YARN_TEST
-        config:
-          hdfs_service: hdfs-0
-          zookeeper_service: zookeeper-0
-        role_groups:
-          - type: RESOURCEMANAGER
-            config:
-              yarn_scheduler_maximum_allocation_mb: 4096
-              yarn_scheduler_maximum_allocation_vcores: 4
-          - type: NODEMANAGER
-            config:
-              yarn_nodemanager_resource_memory_mb: 4096
-              yarn_nodemanager_resource_cpu_vcores: 4
-              yarn_nodemanager_local_dirs:  /tmp/nm
-              yarn_nodemanager_log_dirs: /var/log/nm
-          - type: GATEWAY
-            config:
-              mapred_submit_replication: 3
-              mapred_reduce_tasks: 6
-    host_templates:
-      - name: Master1
-        role_groups:
-          - service: HDFS
-            type: NAMENODE
-          - service: HDFS
-            type: SECONDARYNAMENODE
-          - service: YARN
-            type: RESOURCEMANAGER
-          - service: YARN
-            type: JOBHISTORY
-      - name: Worker
-        role_groups:
-          - service: HDFS
-            type: DATANODE
-          - service: YARN
-            type: NODEMANAGER
-          - service: ZOOKEEPER
-            type: SERVER
-    parcels:
-      CDH: "7.1.9-1.cdh7.1.9.p0.44702451"
-    hosts:
-      - name: test10-worker-free-01.cldr.internal
-        host_template: Master1
-      - name: test10-worker-free-02.cldr.internal
-        host_template: Worker
-      - name: test10-worker-free-03.cldr.internal
-        host_template: Worker
-    """
-    conn.update(yaml.safe_load(args))
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    LOG.info(str(e.value.cloudera_manager))
-
-
-@pytest.mark.skip(reason="Not yet implemented")
 def test_started_base(conn, module_args):
     conn.update(
         name="PVC-Base",
@@ -470,7 +379,6 @@ def test_started_base(conn, module_args):
     LOG.info(str(e.value.cloudera_manager))
 
 
-@pytest.mark.skip(reason="Not yet implemented")
 def test_restarted_base(conn, module_args):
     conn.update(
         name="PVC-Base",
@@ -485,12 +393,10 @@ def test_restarted_base(conn, module_args):
     LOG.info(str(e.value.cloudera_manager))
 
 
-@pytest.mark.skip(reason="Not yet implemented")
 def test_stopped_base(conn, module_args):
     conn.update(
         name="PVC-Base",
         cluster_version="7.1.9",  # "1.5.1-b626.p0.42068229",
-        # type="COMPUTE_CLUSTER",
         state="stopped",
     )
     module_args(conn)
@@ -498,86 +404,12 @@ def test_stopped_base(conn, module_args):
     with pytest.raises(AnsibleExitJson) as e:
         cluster.main()
 
-    # LOG.info(str(e.value))
     LOG.info(str(e.value.cloudera_manager))
 
 
-@pytest.mark.skip(reason="Not yet implemented")
 def test_absent_base(conn, module_args):
     conn.update(
         name="Example_Base",
-        state="absent",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    LOG.info(str(e.value.cloudera_manager))
-
-
-def test_present_compute_minimum(conn, module_args):
-    conn.update(
-        name="Example_Compute",
-        cluster_version="7.1.9",
-        contexts=["SDX"],
-        state="present",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    LOG.info(str(e.value.cloudera_manager))
-
-
-@pytest.mark.skip(reason="Not yet implemented")
-def test_started_compute_minimum(conn, module_args):
-    conn.update(
-        name="Example_Compute",
-        cluster_version="7.1.9",
-        contexts=["SDX"],
-        state="started",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    LOG.info(str(e.value.cloudera_manager))
-
-
-def test_absent_compute(conn, module_args):
-    conn.update(
-        name="Example_Compute",
-        state="absent",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    LOG.info(str(e.value.cloudera_manager))
-
-
-def test_present_experience_minimum(conn, module_args):
-    conn.update(
-        name="Example_Experience",
-        cluster_version="1.5.3",
-        type="EXPERIENCE_CLUSTER",
-        state="present",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cluster.main()
-
-    LOG.info(str(e.value.cloudera_manager))
-
-
-def test_absent_experience(conn, module_args):
-    conn.update(
-        name="Example_Experience",
         state="absent",
     )
     module_args(conn)
