@@ -25,6 +25,10 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils impo
     Parcel,
 )
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
+    parse_cluster_result,
+)
+
 from cm_client import (
     ApiCluster,
     ApiClusterList,
@@ -67,35 +71,352 @@ description:
   - Enables cluster management, cluster creation, deletion, and unified control of all services of a cluster.
   - Create or delete cluster in Cloudera Manager.
   - Start or stop all services inside the cluster.
-  - If provided the C(template) parameter, the module will create a cluster based on the template.
+  - If provided the C(template) parameter, the module will populate its parameters using the cluster template contents.
+  - Any other parameters will merge on top of the parameters declared by the cluster template.
 author:
   - "Ronald Suplina (@rsuplina)"
   - "Webster Mudge (@wmudge)"
 requirements:
-  - cm_client
+  - cm-client
+options:
+  name:
+    description:
+      - The cluster name.
+    type: str
+    required: yes
+    aliases:
+      - cluster_name
+  cluster_version:
+    description:
+      - The runtime version of the cluster.
+    type: str
+    required: no
+  type:
+    description:
+      - The type of cluster.
+    type: str
+    required: no
+    choices:
+      - BASE_CLUSTER
+      - COMPUTE_CLUSTER
+      - EXPERIENCE_CLUSTER
+  state:
+    description:
+      - The state of the cluster.
+      - If I(state=absent), the cluster's services will be shut down first, then the cluster deleted.
+    type: str
+    required: no
+    default: present
+    choices:
+      - present
+      - absent
+      - stopped
+      - started
+      - restarted
+  template:
+    description:
+      - A cluster template file to populate the module parameters, e.g. as a baseline.
+    type: path
+    required: no
+    aliases:
+      - cluster_template
+  add_repositories:
+    description:
+      - Flag to add any repositories found in a cluster template should be added to Cloudera Manager.
+      - Valid only if I(template) is set.
+    type: bool
+    required: no
+    default: no
+  maintenance:
+    description:
+      - Flag enabling the maintenance mode for the cluster.
+    type: bool
+    required: no
+    aliases:
+      - maintenance_enabled
+  services:
+    description:
+      - List of services and service configurations to enable for the cluster.
+    type: list
+    elements: dict
+    required: no
+    suboptions:
+      name:
+        description:
+          - The name or reference of the service.
+          - If not set, a name for the service will be auto-generated.
+        type: str
+        required: no
+        aliases:
+          - ref
+          - ref_name
+      type:
+        description:
+          - The type of service to enable.
+        type: str
+        required: yes
+      version:
+        description:
+          - The version of the service to enable.
+        type: str
+        required: no
+      config:
+        description:
+          - The service configuration values, i.e. the "service-wide" configuration.
+        type: dict
+        required: no
+      role_groups:
+        description:
+          - List of role configuration groups for a role type of the service.
+          - Both base and custom role configuration groups are supported.
+        type: list
+        elements: dict
+        required: no
+        aliases:
+          - role_config_groups
+        suboptions:
+          name:
+            description:
+              - The name of the role group.
+              - If not set, the base role group, i.e. the default role group, for the role type is used.
+            type: str
+            required: no
+            aliases:
+              - ref
+              - ref_name
+          type:
+            description:
+              - The role type for the role group.
+            type: str
+            required: yes
+            aliases:
+              - role_type
+          display_name:
+            description:
+              - The display name of the role group in the Cloudera Manager UI.
+              - If not set, the I(name) will be used.
+            type: str
+            required: no
+          config:
+            description:
+              - The role group configuration values.
+            type: dict
+            required: no
+      display_name:
+        description:
+          - The display name of the service in the Cloudera Manager UI.
+          - If not set, the I(name) will be used.
+        type: str
+        required: no
+      tags:
+        description:
+          - The tags labeling the service.
+        type: dict
+        required: no
+  hosts:
+    description:
+      - List of hosts and their configuration attached to the cluster.
+    type: list
+    elements: dict
+    required: no
+    suboptions:
+      name:
+        description:
+          - The hostname or host ID of the host.
+        type: str
+        required: yes
+        aliases:
+          - host_id
+          - hostname
+      config:
+        description:
+          - The host configuration values.
+        type: dict
+        required: no
+      host_template:
+        description:
+          - The host template to apply to the host.
+        type: str
+        required: no
+      role_groups:
+        description:
+          - List of role groups to associate directly with the host.
+        type: list
+        elements: dict
+        aliases:
+          - role_config_groups
+        suboptions:
+          name:
+            description:
+              - The name of the custom role group.
+              - Mutually exclusive with I(type).
+            type: str
+            required: no
+            aliases:
+              - ref
+              - ref_name
+          service:
+            description:
+              - The name of the service associated with the role group.
+            type: str
+            required: yes
+            aliases:
+              - service_name
+              - service_ref
+          type:
+            description:
+              - The role type of the base role group for the service.
+              - Mutually exclusive with I(name).
+            type: str
+            required: no
+            aliases:
+              - role_type
+      roles:
+        description:
+          - List of per-host role instance configuration overrides.
+        type: list
+        elements: dict
+        required: no
+        suboptions:
+          service:
+            description:
+              - The name of the service of the role instance.
+            type: str
+            required: yes
+            aliases:
+              - service_name
+              - service_ref
+          type:
+            description:
+              - The role type of the role instance.
+            type: str
+            required: yes
+            aliases:
+              - role_type
+          config:
+            description:
+              - The role instance override configuration values.
+            type: dict
+            required: yes
+      tags:
+        description:
+          - The tags labeling the host.
+        type: dict
+        required: no
+  host_templates:
+    description:
+      - List of host template definitions for the cluster for use with hosts.
+    type: list
+    elements: dict
+    required: no
+    suboptions:
+      name:
+        description:
+          - The name of the host template.
+        type: str
+        required: yes
+      role_groups:
+        description:
+          - List of role groups, base and custom, to associated with the host template.
+        type: list
+        elements: dict
+        aliases:
+          - role_config_groups
+        suboptions:
+          name:
+            description:
+              - The name of the custom role group.
+              - Mutually exclusive with I(type).
+            type: str
+            required: no
+            aliases:
+              - ref
+              - ref_name
+          service:
+            description:
+              - The name of the service associated with the role group.
+            type: str
+            required: yes
+            aliases:
+              - service_name
+              - service_ref
+          type:
+            description:
+              - The role type of the base role group for the service.
+              - Mutually exclusive with I(name).
+            type: str
+            required: no
+            aliases:
+              - role_type
+  parcels:
+    description:
+      - The parcels by version enabled for a cluster.
+      - The name of the parcel is the c(key), the version of the parcel is the c(value).
+    type: dict
+    required: no
+  tags:
+    description:
+      - The tags labeling the cluster.
+    type: dict
+    required: no
+  display_name:
+    description:
+      - The name of the cluster in the Cloudera Manager UI.
+      - If not set, the I(name) of the cluster will be used.
+    type: str
+    required: no
+  contexts:
+    description:
+      - List of data contexts for compute-type clusters.
+      - Required if I(type=COMPUTE_CLUSTER).
+    type: list
+    elements: str
+    required: no
+    aliases:
+      - data_contexts
+  tls:
+    description:
+      - Flag enabling TLS for the cluster.
+    type: bool
+    required: no
+    aliases:
+      - tls_enabled
+      - cluster_tls
+  auto_assign:
+    description:
+      - Flag enabling the auto-assignment of role in the cluster.
+      - This function honors existing or declared assignments.
+    type: bool
+    required: no
+    default: no
+    aliases:
+      - auto_assign_roles
+extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.purge
+  - cloudera.cluster.message
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: all
 """
 
 EXAMPLES = r"""
-- name: Create an ECS cluster
+- name: Create a minimal cluster (can be used by other modules to establish services, etc.)
   cloudera.cluster.cluster:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     port: 7180
-    clusterName: example-cluster
-    cluster_version: "1.5.1-b626.p0.42068229"
-    cluster_type: EXPERIENCE_CLUSTER
+    cluster_name: example-cluster
+    cluster_version: "7.1.9"
+    cluster_type: BASE_CLUSTER
     state: present
-
-- name: Create a cluster from a cluster template
-  cloudera.cluster.cm_cluster:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    port: "7180"
-    clusterName: example-cluster
-    template: "./files/cluster-template.json"
-    add_repositories: yes
 
 - name: Start all services on a cluster
   cloudera.cluster.cluster:
@@ -103,17 +424,215 @@ EXAMPLES = r"""
     port: "7180"
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    clusterName: example-cluster
+    name: example-cluster
     state: started
 
 - name: Delete a Cluster
-  cloudera.cluster.cm_cluster:
+  cloudera.cluster.cluster:
     host: example.cloudera.com
     port: "7180"
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    clusterName: example-cluster
+    name: example-cluster
     state: absent
+
+- name: Create a cluster with a direct assignment of a base role group
+  cloudera.cluster.cluster:
+    host: example.cloudera.com
+    port: "7180"
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    name: example-host-assignment-base
+    cluster_version: "7.1.9"
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ROLE_GROUP_ASSIGNMENT
+        type: ZOOKEEPER
+        role_groups:
+          - type: SERVER
+            display_name: Server Base Group
+            config:
+              zookeeper_server_java_heapsize: 134217728 # 128MB
+          - name: DIRECT_ROLE_GROUP_ASSIGNMENT
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 33554432  # 32MB
+    hosts:
+      - name: worker-02.cldr.internal
+        role_groups:
+          - type: SERVER
+            service: ROLE_GROUP_ASSIGNMENT
+
+- name: Create a cluster with a direct assignment of a custom role group
+  cloudera.cluster.cluster:
+    host: example.cloudera.com
+    port: "7180"
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    name: example-host-assignment-custom
+    cluster_version: "7.1.9"
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ROLE_GROUP_ASSIGNMENT
+        type: ZOOKEEPER
+        role_groups:
+          - type: SERVER
+            display_name: Server Base Group
+            config:
+              zookeeper_server_java_heapsize: 134217728 # 128MB
+          - name: DIRECT_ROLE_GROUP_ASSIGNMENT
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 33554432  # 32MB
+    hosts:
+      - name: worker-02.cldr.internal
+        role_groups:
+          - type: SERVER
+            name: DIRECT_ROLE_GROUP_ASSIGNMENT
+
+- name: Create a cluster with a per-host override of a role configuration
+  cloudera.cluster.cluster:
+    host: example.cloudera.com
+    port: "7180"
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    name: example-host-override
+    cluster_version: "7.1.9"
+    type: BASE_CLUSTER
+    state: present
+    services:
+      - name: ZK-EXAMPLE
+        type: ZOOKEEPER
+        role_groups:
+          - name: NON-BASE-SERVER
+            type: SERVER
+            display_name: Server Custom Group
+            config:
+              zookeeper_server_java_heapsize: 75497472  # 72MB
+    hosts:
+      - name: worker-01.cldr.internal
+        roles:
+          - service: ZK-EXAMPLE
+            type: SERVER
+            config:
+              zookeeper_server_java_heapsize: 67108864 # 64MB
+        host_template: Example_Template
+    host_templates:
+      - name: Example_Template
+        role_groups:
+          - NON-BASE-SERVER
+    parcels:
+      CDH: "7.1.9"
+
+- name: Create and establish a minimal base cluster
+  cloudera.cluster.cluster:
+    host: example.cloudera.com
+    port: "7180"
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    name: Basic_Cluster
+    cluster_version: "7.1.9-1.cdh7.1.9.p0.44702451"
+    type: BASE_CLUSTER
+    state: started
+    services:
+      - name: core-settings-0
+        type: CORE_SETTINGS
+        display_name: Core Settings
+      - name: zookeeper-0
+        type: ZOOKEEPER
+        display_name: Zookeeper
+        config:
+          zookeeper_datadir_autocreate: yes
+      - name: hdfs-0
+        type: HDFS
+        config:
+            zookeeper_service: zookeeper-0
+            core_connector: core-settings-0
+        role_groups:
+          - type: DATANODE
+            config:
+              dfs_data_dir_list: /dfs/dn
+          - type: NAMENODE
+            config:
+              dfs_name_dir_list: /dfs/nn
+          - type: SECONDARYNAMENODE
+            config:
+              fs_checkpoint_dir_list: /dfs/snn
+      - name: yarn-0
+        type: YARN
+        config:
+          hdfs_service: hdfs-0
+          zookeeper_service: zookeeper-0
+        role_groups:
+          - type: RESOURCEMANAGER
+            config:
+              yarn_scheduler_maximum_allocation_mb: 4096
+              yarn_scheduler_maximum_allocation_vcores: 4
+          - type: NODEMANAGER
+            config:
+              yarn_nodemanager_resource_memory_mb: 4096
+              yarn_nodemanager_resource_cpu_vcores: 4
+              yarn_nodemanager_local_dirs: /tmp/nm
+              yarn_nodemanager_log_dirs: /var/log/nm
+          - type: GATEWAY
+            config:
+              mapred_submit_replication: 3
+              mapred_reduce_tasks: 6
+    host_templates:
+      - name: Master1
+        role_groups:
+          - service: HDFS
+            type: NAMENODE
+          - service: HDFS
+            type: SECONDARYNAMENODE
+          - service: YARN
+            type: RESOURCEMANAGER
+          - service: YARN
+            type: JOBHISTORY
+      - name: Worker
+        role_groups:
+          - service: HDFS
+            type: DATANODE
+          - service: YARN
+            type: NODEMANAGER
+          - service: ZOOKEEPER
+            type: SERVER
+    parcels:
+      CDH: "7.1.9-1.cdh7.1.9.p0.44702451"
+    hosts:
+      - name: master-01.cldr.internal
+        host_template: Master1
+      - name: worker-01.cldr.internal
+        host_template: Worker
+      - name: worker-02.cldr.internal
+        host_template: Worker
+      - name: worker-03.cldr.internal
+        host_template: Worker
+
+- name: Create a cluster from a cluster template
+  cloudera.cluster.cluster:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    port: "7180"
+    name: example-cluster
+    template: "./files/cluster-template.json"
+    add_repositories: yes
+
+- name: Create an ECS cluster
+  cloudera.cluster.cluster:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    port: 7180
+    cluster_name: example-cluster
+    cluster_version: "1.5.1-b626.p0.42068229"
+    cluster_type: EXPERIENCE_CLUSTER
+    state: present
 """
 
 RETURN = r"""
@@ -121,50 +640,42 @@ cloudera_manager:
     description: Details about Cloudera Manager Cluster
     type: dict
     contains:
-        cluster_type:
-            description: The type of cluster created from template.
+        name:
+            description: The name of the cluster.
             type: str
-            returned: optional
-        cluster_url:
-            description: Url of Cloudera Manager cluster.
-            type: str
-            returned: optional
+            returned: always
         display_name:
-            description: The name of the cluster displayed on the site.
+            description: The name of the cluster displayed in the Cloudera Manager UI.
             type: str
-            returned: optional
+            returned: always
         entity_status:
             description: Health status of the cluster.
             type: str
-            returned: optional
-        full_version:
+            returned: always
+        version:
             description: Version of the cluster installed.
             type: str
-            returned: optional
-        hosts_url:
-            description: Url of all the hosts on which cluster is installed.
-            type: str
-            returned: optional
+            returned: always
         maintenance_mode:
-            description: Maintance mode of Cloudera Manager Cluster.
+            description: Maintance mode of cluster.
             type: bool
-            returned: optional
+            returned: always
         maintenance_owners:
-            description: List of Maintance owners for Cloudera Manager Cluster.
+            description: List of maintance owners for cluster.
             type: list
-            returned: optional
-        name:
-            description: The name of the cluster created.
+            returned: always
+        cluster_type:
+            description: The type of cluster.
             type: str
-            returned: optional
+            returned: always
         tags:
-            description: List of tags for Cloudera Manager Cluster.
+            description: List of tags for cluster.
             type: list
-            returned: optional
+            returned: always
         uuid:
-            description: Unique ID of created cluster
+            description: The unique ID of the cluster.
             type: bool
-            returned: optional
+            returned: always
 """
 
 
@@ -224,7 +735,6 @@ class ClouderaCluster(ClouderaManagerModule):
         # TODO restart arguments (selective restarts)
         # TODO rolling restart arguments
         # TODO rolling upgrade arguments
-        # TODO cluster object return
 
         # Retrieve existing cluster
         existing = None
@@ -355,11 +865,11 @@ class ClouderaCluster(ClouderaManagerModule):
 
         if refresh:
             # Retrieve the updated cluster details
-            self.output = self.cluster_api.read_cluster(
-                cluster_name=self.name
-            ).to_dict()
+            self.output = parse_cluster_result(
+                self.cluster_api.read_cluster(cluster_name=self.name)
+            )
         elif existing:
-            self.output = existing.to_dict()
+            self.output = parse_cluster_result(existing)
 
     def wait_for_composite_cmd(self, command_id: str):
         cmd = self.wait_for_command_state(
@@ -816,11 +1326,16 @@ def main():
                         elements="dict",
                         options=dict(
                             name=dict(aliases=["ref", "ref_name"]),
-                            service=dict(required=True, aliases=["service_name"]),
+                            service=dict(
+                                required=True, aliases=["service_name", "service_ref"]
+                            ),
                             type=dict(aliases=["role_type"]),
                         ),
                         aliases=["role_config_groups"],
                         mutually_exclusive=[
+                            ("name", "type"),
+                        ],
+                        required_one_of=[
                             ("name", "type"),
                         ],
                     ),
@@ -850,11 +1365,16 @@ def main():
                         required=True,
                         options=dict(
                             name=dict(aliases=["ref", "ref_name"]),
-                            service=dict(required=True, aliases=["service_name"]),
+                            service=dict(
+                                required=True, aliases=["service_name", "service_ref"]
+                            ),
                             type=dict(aliases=["role_type"]),
                         ),
                         aliases=["role_config_groups"],
                         mutually_exclusive=[
+                            ("name", "type"),
+                        ],
+                        requires_one_of=[
                             ("name", "type"),
                         ],
                     ),
