@@ -54,6 +54,18 @@ def conn():
     }
 
 
+def test_invalid_cluster(module_args, conn):
+    conn.update(
+        cluster_name="BOOM",
+        parcel="test",
+        parcel_version="test",
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleFailJson, match="Cluster 'BOOM' not found"):
+        parcel.main()
+
+
 def test_pytest_download_parcel(conn, module_args):
     conn.update(
         cluster_name=os.getenv("CM_CLUSTER"),

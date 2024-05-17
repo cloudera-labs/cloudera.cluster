@@ -14,11 +14,11 @@
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
-    parse_parcel_result,
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
     Parcel,
+    parse_parcel_result,
 )
 
 from cm_client import ClustersResourceApi, ParcelResourceApi
@@ -31,7 +31,6 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = r"""
----
 module: parcel
 short_description: Manage the state of parcels on a cluster
 description:
@@ -43,17 +42,22 @@ author:
 requirements:
   - cm-client
 options:
-  cluster_name:
+  cluster:
     description:
       - The name of the cluster
     type: str
     required: yes
-  product:
+    aliases:
+      - cluster_name
+  name:
     description:
       - The name of the product, e.g. CDH, Impala
     type: str
     required: yes
-  version:
+    aliases:
+      - parcel
+      - product
+  parcel_version:
     description:
       - The semantic version of the product, e.g. 1.1.0, 2.3.0.
     type: str
@@ -61,7 +65,7 @@ options:
   state:
     description:
       - State of the parcel.
-      - I(present) is the same as I(activated).
+      - I(present) is mapped to I(activated).
     type: str
     default: 'present'
     choices:
@@ -85,7 +89,6 @@ attributes:
 """
 
 EXAMPLES = r"""
----
 - name: Download, distribute and activate a parcel on a cluster
   cloudera.cluster.parcel:
     host: example.cloudera.com
@@ -124,12 +127,10 @@ EXAMPLES = r"""
     cluster_name: "Example_Cluster"
     product: "ECS"
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
-    state: "downloaded"  # Assuming the current state as stated above
-
+    state: "downloaded"  # Assuming the current state is "distributed" or "activated"
 """
 
 RETURN = r"""
----
 parcel:
     description: Details about the parcel
     type: dict
@@ -181,7 +182,7 @@ class ClouderaParcel(ClouderaManagerModule):
 
         # Set parameters
         self.cluster = self.get_param("cluster")
-        self.parcel_name = self.get_param("parcel")
+        self.parcel_name = self.get_param("name")
         self.parcel_version = self.get_param("parcel_version")
         self.state = self.get_param("state")
         self.delay = self.get_param("delay")
@@ -204,7 +205,7 @@ class ClouderaParcel(ClouderaManagerModule):
             cluster_api.read_cluster(cluster_name=self.cluster).to_dict()
         except ApiException as ex:
             if ex.status == 404:
-                self.module.fail_json(msg=f" Cluster {self.cluster} {ex.reason}")
+                self.module.fail_json(msg=f" Cluster '{self.cluster}' not found")
 
         try:
             parcel = Parcel(
@@ -252,7 +253,7 @@ def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
-            parcel=dict(required=True, aliases=["parcel_name", "product", "name"]),
+            name=dict(required=True, aliases=["parcel", "product"]),
             parcel_version=dict(required=True),
             delay=dict(
                 required=False, type="int", default=10, aliases=["polling_interval"]

@@ -17,6 +17,7 @@
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
+
 import os
 import logging
 import pytest
@@ -30,43 +31,82 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-def test_pytest_specific_parcel_info(module_args):
-    module_args(
-        {
-            "username": os.getenv("CM_USERNAME"),
-            "password": os.getenv("CM_PASSWORD"),
-            "host": os.getenv("CM_HOST"),
-            "port": "7180",
-            "verify_tls": "no",
-            "debug": "no",
-            "cluster_name": "Base_Edge2AI_Node",
-            "product": "ECS",
-            "parcel_version": "1.5.1-b626-ecs-1.5.1-b626.p0.42068229",
-        }
+@pytest.fixture
+def conn():
+    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
+
+    if os.getenv("CM_HOST", None):
+        conn.update(host=os.getenv("CM_HOST"))
+
+    if os.getenv("CM_PORT", None):
+        conn.update(port=os.getenv("CM_PORT"))
+
+    if os.getenv("CM_ENDPOINT", None):
+        conn.update(url=os.getenv("CM_ENDPOINT"))
+
+    if os.getenv("CM_PROXY", None):
+        conn.update(proxy=os.getenv("CM_PROXY"))
+
+    return {
+        **conn,
+        "verify_tls": "no",
+        "debug": "no",
+    }
+
+
+def test_invalid_cluster(module_args, conn):
+    conn.update(
+        cluster_name="BOOM",
     )
+    module_args(conn)
+
+    with pytest.raises(AnsibleFailJson, match="Cluster 'BOOM' not found"):
+        parcel_info.main()
+
+
+def test_single_parcel(module_args, conn):
+    conn.update(
+        cluster_name=os.getenv("CM_CLUSTER"),
+        product="CDH",
+        parcel_version="7.1.9-1.cdh7.1.9.p0.44702451",
+    )
+
+    module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         parcel_info.main()
 
-    # LOG.info(str(e.value))
-    LOG.info(str(e.value.cloudera_manager))
+    LOG.info(str(e.value.parcels))
+
+    assert len(e.value.parcels) == 1
 
 
-def test_pytest_get_all_parcels(module_args):
-    module_args(
-        {
-            "username": os.getenv("CM_USERNAME"),
-            "password": os.getenv("CM_PASSWORD"),
-            "host": os.getenv("CM_HOST"),
-            "port": "7180",
-            "verify_tls": "no",
-            "debug": "no",
-            "cluster_name": "Base_Edge2AI_Node",
-        }
+def test_missing_parcel(module_args, conn):
+    conn.update(
+        cluster_name=os.getenv("CM_CLUSTER"),
+        product="BOOM",
+        parcel_version="1.2.3",
     )
+
+    module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         parcel_info.main()
 
-    # LOG.info(str(e.value))
-    LOG.info(str(e.value.cloudera_manager))
+    LOG.info(str(e.value.parcels))
+
+    assert len(e.value.parcels) == 0
+
+
+def test_all_parcels(module_args, conn):
+    conn.update(
+        cluster_name=os.getenv("CM_CLUSTER"),
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        parcel_info.main()
+
+    LOG.info(str(e.value.parcels))
+
+    assert len(e.value.parcels) > 1
