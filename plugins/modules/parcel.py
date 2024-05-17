@@ -151,7 +151,7 @@ parcel:
                 - The state of the parcel.
                 - This shows the progress of state transitions and if there were any errors.
             type: dict
-            returned: optional
+            returned: when supported
         cluster_name:
             description: The name of the enclosing cluster.
             type: dict
@@ -159,11 +159,11 @@ parcel:
         display_name:
             description: Display name of the parcel.
             type: str
-            returned: optional
+            returned: when supported
         description:
             description: Description of the parcel.
             type: str
-            returned: optional
+            returned: when supported
 """
 
 

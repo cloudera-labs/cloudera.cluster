@@ -96,19 +96,19 @@ cloudera_manager:
                 - The state of the parcel.
                 - Shows the progress of state transitions and reports any errors.
             type: dict
-            returned: always
-        clusterRef:
-            description: A reference to the enclosing cluster.
+            returned: when supported
+        cluster_name:
+            description: The name of the enclosing cluster.
             type: dict
             returned: always
         displayName:
             description: Display name of the parcel.
             type: str
-            returned: always
+            returned: when supported
         description:
             description: Description of the parcel.
             type: str
-            returned: always
+            returned: when supported
 """
 
 

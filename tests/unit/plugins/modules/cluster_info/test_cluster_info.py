@@ -41,8 +41,8 @@ def conn():
     if os.getenv("CM_ENDPOINT", None):
         conn.update(url=os.getenv("CM_ENDPOINT"))
 
-    # if os.getenv("CM_PROXY", None):
-    #     conn.update(proxy=os.getenv("CM_PROXY"))
+    if os.getenv("CM_PROXY", None):
+        conn.update(proxy=os.getenv("CM_PROXY"))
 
     return {
         **conn,

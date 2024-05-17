@@ -13,9 +13,15 @@
 # limitations under the License.
 
 from ansible.module_utils.basic import to_native
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
+    parse_cluster_result,
+)
+
 from cm_client.rest import ApiException
 from cm_client import ClustersResourceApi
 
@@ -26,7 +32,6 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = r"""
----
 module: cluster_info
 short_description: Retrieve details about one or more clusters
 description:
@@ -45,7 +50,6 @@ requirements:
 """
 
 EXAMPLES = r"""
----
 - name: Get information about the cluster
   cloudera.cluster.cluster_info:
     host: example.cloudera.com
@@ -64,54 +68,45 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 clusters:
-    description: Details about Cloudera Manager Cluster
+    description: Details about a Cloudera Manager cluster or clusters
     type: list
     elements: dict
     contains:
-        cluster_type:
-            description: The type of Cloudera Manager cluster.
-            type: str
-            returned: always
-        cluster_url:
-            description: Url of Cloudera Manager cluster.
+        name:
+            description: The name of the cluster.
             type: str
             returned: always
         display_name:
-            description: The name of the cluster displayed on the site.
+            description: The name of the cluster displayed in the Cloudera Manager UI.
             type: str
             returned: always
         entity_status:
             description: Health status of the cluster.
             type: str
             returned: always
-        full_version:
+        version:
             description: Version of the cluster installed.
             type: str
             returned: always
-        hosts_url:
-            description: Url of all the hosts on which cluster is installed.
-            type: str
-            returned: always
         maintenance_mode:
-            description: Maintance mode of Cloudera Manager Cluster.
+            description: Maintance mode of cluster.
             type: bool
             returned: always
         maintenance_owners:
-            description: List of Maintance owners for Cloudera Manager Cluster.
+            description: List of maintance owners for cluster.
             type: list
             returned: always
-        name:
-            description: The name of the cluster.
+        cluster_type:
+            description: The type of cluster.
             type: str
             returned: always
         tags:
-            description: List of tags for Cloudera Manager Cluster.
+            description: List of tags for cluster.
             type: list
             returned: always
         uuid:
-            description: Unique ID of the cluster
+            description: The unique ID of the cluster.
             type: bool
             returned: always
 """
@@ -130,21 +125,26 @@ class ClusterInfo(ClouderaManagerModule):
             cluster_api_instance = ClustersResourceApi(self.api_client)
             if self.name:
                 self.output = [
-                    cluster_api_instance.read_cluster(cluster_name=self.name).to_dict()
+                    parse_cluster_result(
+                        cluster_api_instance.read_cluster(cluster_name=self.name)
+                    )
                 ]
             else:
-                self.output = cluster_api_instance.read_clusters().to_dict()["items"]
+                self.output = [
+                    parse_cluster_result(c)
+                    for c in cluster_api_instance.read_clusters().items
+                ]
 
         except ApiException as e:
             if e.status == 404:
                 pass
             else:
                 raise e
-        except KeyError as ke:
-            self.module.fail_json(
-                msg="Invalid result object from Cloudera Manager API",
-                error=to_native(ke),
-            )
+        # except KeyError as ke:
+        #     self.module.fail_json(
+        #         msg="Invalid result object from Cloudera Manager API",
+        #         error=to_native(ke),
+        #     )
 
 
 def main():

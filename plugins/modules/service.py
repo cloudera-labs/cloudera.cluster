@@ -16,8 +16,10 @@
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    parse_service_result,
     resolve_tag_updates,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
+    parse_service_result,
 )
 
 from cm_client import (
@@ -36,7 +38,6 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = r"""
----
 module: service
 short_description: Manage a service in cluster
 description:
@@ -114,7 +115,6 @@ attributes:
 """
 
 EXAMPLES = r"""
----
 - name: Establish a cluster service
   cloudera.cluster.service:
     host: example.cloudera.com
@@ -196,7 +196,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 service:
   description: Details about the service.
   type: dict
