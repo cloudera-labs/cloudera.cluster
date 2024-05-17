@@ -38,7 +38,6 @@ from cm_client import (
     ApiParcel,
     ApiRole,
     ApiRoleConfigGroup,
-    ApiService,
     Configuration,
 )
 from cm_client.rest import ApiException, RESTClientObject
@@ -48,23 +47,6 @@ from cm_client.apis.commands_resource_api import CommandsResourceApi
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
-
-
-SERVICE_OUTPUT = [
-    "client_config_staleness_status",
-    # "cluster_ref",
-    "config_staleness_status",
-    "display_name",
-    "health_checks",
-    "health_summary",
-    "maintenance_mode",
-    "maintenance_owners",
-    "name",
-    "service_state",
-    "service_version",
-    "tags",
-    "type",
-]
 
 ROLE_OUTPUT = [
     "commission_state",
@@ -111,13 +93,6 @@ def _parse_output(entity: dict, filter: list) -> dict:
         else:
             output[k] = entity[k]
 
-    return output
-
-
-def parse_service_result(service: ApiService) -> dict:
-    # Retrieve only the cluster_name
-    output = dict(cluster_name=service.cluster_ref.cluster_name)
-    output.update(_parse_output(service.to_dict(), SERVICE_OUTPUT))
     return output
 
 
