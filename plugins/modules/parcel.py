@@ -41,7 +41,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
 requirements:
-  - cm_client
+  - cm-client
 options:
   cluster_name:
     description:
@@ -71,6 +71,17 @@ options:
       - 'present'
       - 'absent'
     required: False
+extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: all
 """
 
 EXAMPLES = r"""
@@ -105,7 +116,7 @@ EXAMPLES = r"""
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
     state: "absent"
 
-- name: Undistribute the parcel on a specified cluster
+- name: Undistribute the parcel on a specified cluster (if "distributed" or "activated")
   cloudera.cluster.parcel:
     host: example.cloudera.com
     username: "jane_smith"
@@ -113,7 +124,7 @@ EXAMPLES = r"""
     cluster_name: "Example_Cluster"
     product: "ECS"
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
-    state: "downloaded"  # Assuming the current state is "distributed" or "activated"
+    state: "downloaded"  # Assuming the current state as stated above
 
 """
 
@@ -124,7 +135,7 @@ parcel:
     type: dict
     contains:
         product:
-            product: The name of the product.
+            description: The name of the product.
             type: str
             returned: always
         version:

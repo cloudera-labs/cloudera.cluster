@@ -62,7 +62,7 @@ cloudera_manager:
             returned: optional
         expiration:
             description: Expiration date of the license
-            type: date
+            type: str
             returned: optional
         features:
             description: List of features within the  license
@@ -70,11 +70,11 @@ cloudera_manager:
             returned: optional
         deactivation_date:
             description: Date until license is valid
-            type: date
+            type: str
             returned: optional
         start_date:
             description: License activation date
-            type: date
+            type: str
             returned: optional
 """
 

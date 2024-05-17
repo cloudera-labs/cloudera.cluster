@@ -71,9 +71,17 @@ options:
       - 'attached'
       - 'detached'
     required: False
+extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
 attributes:
   check_mode:
     support: full
+  diff_mode:
+    support: none
+  platform:
+    platforms: all
 """
 
 EXAMPLES = r"""

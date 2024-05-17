@@ -8,7 +8,7 @@ pushd "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 trap "{ popd; }" EXIT
 
 # Create collection documentation into temporary directory
-rm -rf temp-rst
+rm -rf temp-rst rst build
 mkdir -p temp-rst
 chmod og-w temp-rst  # antsibull-docs wants that directory only readable by itself
 antsibull-docs \

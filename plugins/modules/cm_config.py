@@ -45,6 +45,7 @@ options:
     aliases:
       - params
 extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.purge
@@ -54,6 +55,8 @@ attributes:
     support: full
   diff_mode:
     support: full
+  platform:
+    platforms: all
 """
 
 EXAMPLES = r"""
