@@ -16,9 +16,12 @@
 
 namespace:  cloudera
 name:       cluster
-version:    4.3.0
+version:    4.3.1
 readme:     README.md
-authors:    []
+authors:
+- Webster Mudge @wmudge
+- Ronald Suplina @rsuplina
+- Jim Enright @jimright
 
 description: >
   A set of roles, modules, and other plugins for interacting with the services
@@ -28,9 +31,9 @@ license_file: LICENSE
 tags:
 - cloudera
 - cdp
-- private cloud
-- data services
-- cloudera manager
+- private_cloud
+- data_services
+- cloudera_manager
 - cm
 
 dependencies:
