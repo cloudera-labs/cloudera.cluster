@@ -492,7 +492,7 @@ class ClouderaManagerModule(object):
         poll_count = 0
         while command.active:
             if poll_count > polling:
-                self.module.fail_json(msg="Command timeout: " + command.id)
+                self.module.fail_json(msg="Command timeout: " + str(command.id))
             sleep(delay)
             poll_count += 1
             command = CommandsResourceApi(self.api_client).read_command(command.id)
