@@ -816,7 +816,9 @@ class ClouderaCluster(ClouderaManagerModule):
                     # If newly created or created by not yet initialize
                     if not existing or existing.entity_status == "NONE":
                         first_run = self.cluster_api.first_run(cluster_name=self.name)
-                        self.wait_command(first_run)
+                        self.wait_command(
+                            first_run, polling=self.timeout, delay=self.delay
+                        )
                     # Start the existing and previously initialized cluster
                     else:
                         start = self.cluster_api.start_command(cluster_name=self.name)
