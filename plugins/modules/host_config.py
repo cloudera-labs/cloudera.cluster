@@ -41,6 +41,7 @@ author:
   - "Ronald Suplina (@rsuplina)"
 requirements:
   - cm_client
+options:
   name:
     description:
       - The ID of the host.
@@ -235,7 +236,8 @@ class ClouderaHostConfigInfo(ClouderaManagerMutableModule):
                       host_id=self.hostname, body=body
                   ).items
               ]
-
+        else:
+            self.host_config = [p.to_dict() for p in existing.items]
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
@@ -251,7 +253,7 @@ def main():
     result = ClouderaHostConfigInfo(module)
 
     output = dict(
-        changed=False,
+        changed=result.changed,
         host_config=result.host_config,
     )
     if module._diff:

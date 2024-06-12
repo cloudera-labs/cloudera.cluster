@@ -57,21 +57,61 @@ def conn():
 def test_set_host_config(module_args, conn):
     conn.update(
         name=os.getenv("CM_HOST"),
-        parameters=dict(flood_torrent_port="7195",
-                        java_home="/usr/custom/javaa"
-                        ),
+        parameters=dict(flood_torrent_port="7195"),
     )
     module_args(conn)
+
     with pytest.raises(AnsibleExitJson) as e:
         host_config.main()
 
-    LOG.info(str(e.value.host_config))
+    assert e.value.changed == True
+    results = {c["name"]: c["value"] for c in e.value.host_config}
+    assert results[
+        "flood_torrent_port"
+    ] == "7195"
+
+    with pytest.raises(AnsibleExitJson) as e:
+        host_config.main()
+
+    assert e.value.changed == False
+    results = {c["name"]: c["value"] for c in e.value.host_config}
+    assert results[
+        "flood_torrent_port"
+    ] == "7195"
+
+
 
 
 def test_set_host_config_with_purge(module_args, conn):
     conn.update(
         name=os.getenv("CM_HOST"),
+        parameters=dict(flood_torrent_port="7195"),
         purge=True,
+    )
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        host_config.main()
+
+    assert e.value.changed == True
+    results = {c["name"]: c["value"] for c in e.value.host_config}
+    assert results[
+        "flood_torrent_port"
+    ] == "7195"
+
+    with pytest.raises(AnsibleExitJson) as e:
+        host_config.main()
+
+    assert e.value.changed == False
+    results = {c["name"]: c["value"] for c in e.value.host_config}
+    assert results[
+        "flood_torrent_port"
+    ] == "7195"
+
+
+def test_set_host_configs(module_args, conn):
+    conn.update(
+        name=os.getenv("CM_HOST"),
         parameters=dict(flood_torrent_port="7195",
                         java_home="/usr/custom/java"
                         ),
