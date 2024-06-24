@@ -56,7 +56,7 @@ def test_create_host_template(module_args, conn):
     conn.update(
         name="TestCluster",
         host_template_name="MyTemplate",
-        role_configs_groups = ['atlas-ATLAS_SERVER-BASE', 'atlas-GATEWAY-BASE']
+        role_configs_groups=["atlas-ATLAS_SERVER-BASE", "atlas-GATEWAY-BASE"],
     )
 
     module_args(conn)
@@ -65,12 +65,18 @@ def test_create_host_template(module_args, conn):
         host_template.main()
 
     LOG.info(str(e.value.host_template_output))
+
 
 def test_update_host_template(module_args, conn):
     conn.update(
         name="TestCluster",
         host_template_name="MyTemplate",
-        role_configs_groups = ['atlas-ATLAS_SERVER-BASE', 'atlas-GATEWAY-BASE','tez-GATEWAY-BASE','hdfs-NAMENODE-BASE']
+        role_configs_groups=[
+            "atlas-ATLAS_SERVER-BASE",
+            "atlas-GATEWAY-BASE",
+            "tez-GATEWAY-BASE",
+            "hdfs-NAMENODE-BASE",
+        ],
     )
 
     module_args(conn)
@@ -79,4 +85,3 @@ def test_update_host_template(module_args, conn):
         host_template.main()
 
     LOG.info(str(e.value.host_template_output))
-

@@ -15,7 +15,14 @@
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
-from cm_client import HostTemplatesResourceApi,ClustersResourceApi,ApiHostTemplate,ApiRoleConfigGroupRef,ApiClusterRef,ApiHostTemplateList
+from cm_client import (
+    HostTemplatesResourceApi,
+    ClustersResourceApi,
+    ApiHostTemplate,
+    ApiRoleConfigGroupRef,
+    ApiClusterRef,
+    ApiHostTemplateList,
+)
 from cm_client.rest import ApiException
 
 ANSIBLE_METADATA = {
@@ -124,33 +131,54 @@ class ClouderaHostTemplate(ClouderaManagerModule):
             ClustersResourceApi(self.api_client).read_cluster(self.cluster_name)
         except ApiException as ex:
             if ex.status == 404:
-                self.module.fail_json(msg="Cluster does not exist: " + self.cluster_name)
+                self.module.fail_json(
+                    msg="Cluster does not exist: " + self.cluster_name
+                )
             else:
                 raise ex
 
         if not self.module.check_mode:
-          try:
-              self.host_template = host_temp_api_instance.read_host_template(cluster_name=self.cluster_name,host_template_name=self.host_template_name)
-          except ApiException as ex:
-              if ex.status == 404:
-                  pass
-              else:
-                  raise ex
-              
-          host_template = ApiHostTemplate(
-                  cluster_ref=ApiClusterRef(cluster_name=self.cluster_name,display_name=self.cluster_name),
-                  name=self.host_template_name,
-                  role_config_group_refs=[ApiRoleConfigGroupRef(role_config_group_name=group) for group in self.role_configs_groups]
-                                )
-          if self.host_template:
-            self.host_template_output =  host_temp_api_instance.update_host_template(cluster_name=self.cluster_name,host_template_name=self.host_template_name,body=host_template)
-            self.changed = True
-          else:
-            body = ApiHostTemplateList(items=[host_template])
-            self.host_template_output =  host_temp_api_instance.create_host_templates(cluster_name=self.cluster_name,body=body)
-            self.changed = True
+            try:
+                self.host_template = host_temp_api_instance.read_host_template(
+                    cluster_name=self.cluster_name,
+                    host_template_name=self.host_template_name,
+                )
+            except ApiException as ex:
+                if ex.status == 404:
+                    pass
+                else:
+                    raise ex
 
-          self.host_template_output =  host_temp_api_instance.read_host_template(cluster_name=self.cluster_name,host_template_name=self.host_template_name).to_dict()
+            host_template = ApiHostTemplate(
+                cluster_ref=ApiClusterRef(
+                    cluster_name=self.cluster_name, display_name=self.cluster_name
+                ),
+                name=self.host_template_name,
+                role_config_group_refs=[
+                    ApiRoleConfigGroupRef(role_config_group_name=group)
+                    for group in self.role_configs_groups
+                ],
+            )
+            if self.host_template:
+                self.host_template_output = host_temp_api_instance.update_host_template(
+                    cluster_name=self.cluster_name,
+                    host_template_name=self.host_template_name,
+                    body=host_template,
+                )
+                self.changed = True
+            else:
+                body = ApiHostTemplateList(items=[host_template])
+                self.host_template_output = (
+                    host_temp_api_instance.create_host_templates(
+                        cluster_name=self.cluster_name, body=body
+                    )
+                )
+                self.changed = True
+
+            self.host_template_output = host_temp_api_instance.read_host_template(
+                cluster_name=self.cluster_name,
+                host_template_name=self.host_template_name,
+            ).to_dict()
 
 
 def main():
@@ -158,8 +186,8 @@ def main():
         argument_spec=dict(
             name=dict(required=True, type="str", aliases=["cluster_name"]),
             host_template_name=dict(required=True, type="str"),
-            role_configs_groups=dict(required=True, type="list")
-            ),
+            role_configs_groups=dict(required=True, type="list"),
+        ),
         supports_check_mode=True,
     )
 

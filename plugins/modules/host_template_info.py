@@ -114,31 +114,39 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
             ClustersResourceApi(self.api_client).read_cluster(self.cluster_name)
         except ApiException as ex:
             if ex.status == 404:
-                self.module.fail_json(msg="Cluster does not exist: " + self.cluster_name)
+                self.module.fail_json(
+                    msg="Cluster does not exist: " + self.cluster_name
+                )
             else:
                 raise ex
-            
+
         host_temp_api_instance = HostTemplatesResourceApi(self.api_client)
         if self.host_template_name:
+            try:
+                self.host_templates_output = host_temp_api_instance.read_host_template(
+                    cluster_name=self.cluster_name,
+                    host_template_name=self.host_template_name,
+                ).to_dict()
+            except ApiException as ex:
+                if ex.status == 404:
+                    self.module.fail_json(
+                        msg="Host Template does not exist: " + self.host_template_name
+                    )
+                else:
+                    raise ex
 
-          try:
-              self.host_templates_output =  host_temp_api_instance.read_host_template(cluster_name=self.cluster_name,host_template_name=self.host_template_name).to_dict()
-          except ApiException as ex:
-              if ex.status == 404:
-                  self.module.fail_json(msg="Host Template does not exist: " + self.host_template_name)
-              else:
-                  raise ex
-              
         else:
-          self.host_templates_output =  host_temp_api_instance.read_host_templates(cluster_name=self.cluster_name).items
+            self.host_templates_output = host_temp_api_instance.read_host_templates(
+                cluster_name=self.cluster_name
+            ).items
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             name=dict(required=True, type="str", aliases=["cluster_name"]),
-            host_template_name=dict(required=False, type="str")
-            ),
+            host_template_name=dict(required=False, type="str"),
+        ),
         supports_check_mode=True,
     )
 

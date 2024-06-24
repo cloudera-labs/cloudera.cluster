@@ -77,4 +77,3 @@ def test_single_host_template(module_args, conn):
         host_template_info.main()
 
     LOG.info(str(e.value.host_templates_output))
-
