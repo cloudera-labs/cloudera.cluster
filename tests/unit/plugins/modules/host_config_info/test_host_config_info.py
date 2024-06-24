@@ -66,12 +66,11 @@ def test_get_host_config(module_args, conn):
 
     LOG.info(str(e.value.host_config_info))
 
+
 def test_get_host_config_summary(module_args, conn):
     module_args({**conn, "view": "full"})
-
 
     with pytest.raises(AnsibleExitJson) as e:
         host_config_info.main()
 
     LOG.info(str(e.value.host_config_info))
-

@@ -17,13 +17,14 @@ from cm_client import (
     HostsResourceApi,
     ApiConfigList,
     ApiConfig,
-    )
+)
 from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
     resolve_parameter_updates,
 )
+
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
     "status": ["preview"],
@@ -207,9 +208,9 @@ class ClouderaHostConfigInfo(ClouderaManagerMutableModule):
                 self.module.fail_json(msg="Host does not exist: " + self.hostname)
             else:
                 raise ex
-            
+
         api_instance = HostsResourceApi(self.api_client)
-        existing =  api_instance.read_host_config(host_id=self.hostname,view=self.view)
+        existing = api_instance.read_host_config(host_id=self.hostname, view=self.view)
 
         current = {r.name: r.value for r in existing.items}
         incoming = {k: str(v) if v is not None else v for k, v in self.params.items()}
@@ -228,25 +229,30 @@ class ClouderaHostConfigInfo(ClouderaManagerMutableModule):
                 )
 
             if not self.module.check_mode:
-              body = ApiConfigList(items=[ApiConfig(name=k, value=f"{v}") for k, v in change_set.items()])
+                body = ApiConfigList(
+                    items=[
+                        ApiConfig(name=k, value=f"{v}") for k, v in change_set.items()
+                    ]
+                )
 
-              self.host_config = [
-                  p.to_dict()
-                  for p in api_instance.update_host_config(
-                      host_id=self.hostname, body=body
-                  ).items
-              ]
+                self.host_config = [
+                    p.to_dict()
+                    for p in api_instance.update_host_config(
+                        host_id=self.hostname, body=body
+                    ).items
+                ]
         else:
             self.host_config = [p.to_dict() for p in existing.items]
+
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
             name=dict(required=False, type="str"),
             parameters=dict(type="dict", required=True, aliases=["params"]),
-            view=dict(required=False,default="full", choices=["summary", "full"]),
+            view=dict(required=False, default="full", choices=["summary", "full"]),
             purge=dict(type="bool", default=False),
-            ),
+        ),
         supports_check_mode=True,
     )
 
@@ -268,6 +274,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

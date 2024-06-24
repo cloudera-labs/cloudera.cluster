@@ -169,7 +169,7 @@ class ClouderaHostConfigInfo(ClouderaManagerModule):
 
     @ClouderaManagerModule.handle_process
     def process(self):
-        
+
         try:
             HostsResourceApi(self.api_client).read_host(self.hostname)
         except ApiException as ex:
@@ -179,17 +179,19 @@ class ClouderaHostConfigInfo(ClouderaManagerModule):
                 raise ex
 
         host_api_instance = HostsResourceApi(self.api_client)
-        host_configs =  host_api_instance.read_host_config(host_id=self.hostname,view=self.view)
-        
+        host_configs = host_api_instance.read_host_config(
+            host_id=self.hostname, view=self.view
+        )
+
         self.host_config_info = [s.to_dict() for s in host_configs.items]
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=False, type="str", aliases=["host_id","host_name"]),
-            view=dict(default="full", choices=["summary", "full"])
-            ),
+            name=dict(required=False, type="str", aliases=["host_id", "host_name"]),
+            view=dict(default="full", choices=["summary", "full"]),
+        ),
         supports_check_mode=True,
     )
 
