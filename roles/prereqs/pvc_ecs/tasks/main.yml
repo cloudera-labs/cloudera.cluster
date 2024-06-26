@@ -38,20 +38,53 @@
     - name: Install iptables for rhel7
       ansible.builtin.package:
         lock_timeout: 180
-        name: "{{ __iptables_item }}"
+        name: "iptables"
         update_cache: yes
         state: present
-      loop:
-        - iptables
-      loop_control:
-        loop_var: __iptables_item
 
 - name: Setup iptables for rhel8
-  when: ansible_distribution_major_version | int >= 8
+  when: 
+    - ansible_distribution_major_version | int == 8
   block:
     - name: Install iptables for rhel8, using rpm option tsflags=noscripts
       ansible.builtin.command: dnf install -y iptables --setopt=tsflags=noscripts
 
+- name: Setup deprecated iptables for rhel9
+  when: 
+    - ansible_distribution_major_version | int >= 9
+  block:
+    - name: Install iptables for rhel9, using rpm option tsflags=noscripts
+      ansible.builtin.command: dnf install -y iptables --setopt=tsflags=noscripts
+
+    - name: Check for existence of lnk /usr/sbin/iptables-nft
+      ansible.builtin.stat: 
+        path: /usr/sbin/iptables-nft
+      register: iptables_nft
+
+    - name: Create symlink for iptables
+      ansible.builtin.file:
+        path: /usr/sbin/iptables
+        src: /usr/sbin/iptables-nft
+        state: link
+        follow: false
+      when: iptables_nft.stat.islnk
+
+    - name: Create symlink for iptables-save
+      ansible.builtin.file:
+        path: /usr/sbin/iptables-save
+        src: /usr/sbin/iptables-nft-save
+        state: link
+        follow: false
+      when: iptables_nft.stat.islnk
+
+    - name: Create symlink for iptables-restore
+      ansible.builtin.file:
+        path: /usr/sbin/iptables-restore
+        src: /usr/sbin/iptables-nft-restore
+        state: link
+        follow: false
+      when: iptables_nft.stat.islnk
+           
 - name: Flush iptables
   ansible.builtin.iptables:
     flush: yes
@@ -73,15 +106,11 @@
     owner: root
     group: root
     mode: 0644
-  when:
-    - ansible_distribution_major_version|int >= 7
-    - ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
-
+  when: ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
+  
 - name: Reload NetworkManager daemon
   ansible.builtin.service:
     state: restarted
     daemon_reload: true
-    name: NetworkManager.service
-  when:
-    - ansible_distribution_major_version|int >= 7
-    - ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
+    name: NetworkManager.service  
+  when: ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
