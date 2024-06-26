@@ -31,8 +31,8 @@ default_database_versions:
     '9': 10.6
   mysql:
     '7': 5.7
-    '8': 8.0 
-    '9': 8.0 
+    '8': 8.0
+    '9': 8.0
 
 # Located in cloudera.cluster.infrastructure.krb5_common
 #krb5_realm: CLOUDERA.LOCAL
