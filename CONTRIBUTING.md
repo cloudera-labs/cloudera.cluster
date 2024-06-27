@@ -21,6 +21,16 @@ As a _best practice_, you can prefix your branches with:
 > [!NOTE]
 > :fire_extinguisher: A **hotfix** should branch from `main`. It will then be committed to both the `main` and `devel` branches.
 
+## Running pre-commit
+
+We use [pre-commit](https://pre-commit.com/) to lint and validate submissions.
+
+Setting up `pre-commit` is straightforward; see the [Installation](https://pre-commit.com/#installation) documentation on the `pre-commit` site for details.
+
+We highly suggest you install the local `git` hook scripts as well; run `pre-commit install` within the root of the project.
+
+Lastly, you can run the hooks prior to committing changes (and PR submission) by executing `pre-commit run -a`.
+
 ## Signing your commits
 
 Note that we require signed commits inline with [Developer Certificate of Origin](https://developercertificate.org/) best-practices for open source collaboration.
