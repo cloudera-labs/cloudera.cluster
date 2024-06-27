@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+# Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,5 +13,12 @@
 # limitations under the License.
 
 ---
-dependencies:
-  - role: cloudera.cluster.deployment.definition
+
+dns_package: bind-utils
+nscd_package: nscd
+nscd_service: nscd
+ntp_package: ntp
+ntp_service: ntpd
+rngd_package: rng-tools
+rngd_service: rngd
+needs_python2: False
