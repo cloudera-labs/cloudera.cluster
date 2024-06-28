@@ -53,7 +53,7 @@ options:
       - host_name
   parameters:
     description:
-      - The service-wide configuration to set.
+      - The host configurations to set.
       - To unset a parameter, use C(None) as the value.
     type: dict
     required: yes
