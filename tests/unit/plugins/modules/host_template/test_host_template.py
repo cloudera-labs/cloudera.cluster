@@ -54,9 +54,9 @@ def conn():
 
 def test_create_host_template(module_args, conn):
     conn.update(
-        name="TestCluster",
-        host_template_name="MyTemplate",
-        role_configs_groups=["atlas-ATLAS_SERVER-BASE", "atlas-GATEWAY-BASE"],
+        cluster="cloudera.cluster.example",
+        name="New_template",
+        role_groups=["atlas-ATLAS_SERVER-BASE", "atlas-GATEWAY-BASE"],
     )
 
     module_args(conn)
@@ -69,14 +69,33 @@ def test_create_host_template(module_args, conn):
 
 def test_update_host_template(module_args, conn):
     conn.update(
-        name="TestCluster",
-        host_template_name="MyTemplate",
-        role_configs_groups=[
+        cluster="cloudera.cluster.example",
+        name="New_template",
+        role_groups=[
             "atlas-ATLAS_SERVER-BASE",
-            "atlas-GATEWAY-BASE",
             "tez-GATEWAY-BASE",
             "hdfs-NAMENODE-BASE",
         ],
+    )
+
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        host_template.main()
+
+    LOG.info(str(e.value.host_template_output))
+
+
+def remove_template(module_args, conn):
+    conn.update(
+        cluster="Base-PVC",
+        name="4",
+        role_groups=[
+            "atlas-ATLAS_SERVER-BASE",
+            "tez-GATEWAY-BASE",
+            "hdfs-NAMENODE-BASE",
+        ],
+        state="absent",
     )
 
     module_args(conn)

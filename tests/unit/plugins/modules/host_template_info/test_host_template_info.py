@@ -54,7 +54,7 @@ def conn():
 
 def test_all_host_templates(module_args, conn):
     conn.update(
-        name="TestCluster",
+        cluster="cloudera.cluster.example",
     )
 
     module_args(conn)
@@ -67,8 +67,8 @@ def test_all_host_templates(module_args, conn):
 
 def test_single_host_template(module_args, conn):
     conn.update(
-        name="TestCluster",
-        host_template_name="template1",
+        cluster="cloudera.cluster.example",
+        name="MyTemplate13",
     )
 
     module_args(conn)

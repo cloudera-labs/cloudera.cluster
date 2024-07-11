@@ -36,14 +36,14 @@ author:
 requirements:
   - cm_client
 options:
-  name:
+  cluster:
     description:
       - The associated cluster name.
     type: str
     required: yes
     aliases:
       - cluster_name
-  host_template_name:
+  name:
     description:
       - The name of the host template.
     type: str
@@ -57,20 +57,20 @@ EXAMPLES = r"""
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    name: "cfm_cluster"
-    host_template_name: "cfm_host_template"
+    cluster: "cfm_cluster"
+    name: "cfm_host_template"
 
 - name: Retrieve the details about all host templates within the cluster
   cloudera.cluster.host_template_info
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    name: "cfm_cluster"
+    cluster: "cfm_cluster"
 """
 
 RETURN = r"""
 ---
-cloudera_manager:
+host_template_info:
   description:
     - Details about host template.
   type: list
@@ -82,11 +82,11 @@ cloudera_manager:
         - The name of the host template
       type: str
       returned: always
-    clusterRef:
+    cluster_name:
       description: A reference to the enclosing cluster.
       type: dict
       returned: always
-    roleConfigGroupRefs:
+    role_config_group_refs:
       description:
         - The names of the role config groups
       type: list
@@ -99,8 +99,8 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
         super(ClouderaHostTemplateInfo, self).__init__(module)
 
         # Set the parameters
-        self.cluster_name = self.get_param("name")
-        self.host_template_name = self.get_param("host_template_name")
+        self.cluster_name = self.get_param("cluster")
+        self.name = self.get_param("name")
 
         # Initialize the return value
         self.host_templates_output = []
@@ -121,16 +121,16 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
                 raise ex
 
         host_temp_api_instance = HostTemplatesResourceApi(self.api_client)
-        if self.host_template_name:
+        if self.name:
             try:
                 self.host_templates_output = host_temp_api_instance.read_host_template(
                     cluster_name=self.cluster_name,
-                    host_template_name=self.host_template_name,
+                    host_template_name=self.name,
                 ).to_dict()
             except ApiException as ex:
                 if ex.status == 404:
                     self.module.fail_json(
-                        msg="Host Template does not exist: " + self.host_template_name
+                        msg="Host Template does not exist: " + self.name
                     )
                 else:
                     raise ex
@@ -144,8 +144,8 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=True, type="str", aliases=["cluster_name"]),
-            host_template_name=dict(required=False, type="str"),
+            cluster=dict(required=True, type="str", aliases=["cluster_name"]),
+            name=dict(required=False, type="str"),
         ),
         supports_check_mode=True,
     )
