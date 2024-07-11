@@ -37,7 +37,7 @@ DOCUMENTATION = r"""
 module: host_template
 short_description: Configure a host template
 description:
-  - Creates a new host template or updates an existing one 
+  - Creates a new host template or updates an existing one
   - The module supports C(check_mode).
 author:
   - "Ronald Suplina (@rsuplina)"
@@ -72,7 +72,7 @@ attributes:
 
 EXAMPLES = r"""
 ---
-- name: Create host template 
+- name: Create host template
   cloudera.cluster.host_template
     host: example.cloudera.com
     username: "jane_smith"
@@ -81,7 +81,7 @@ EXAMPLES = r"""
     name: "MyTemplate"
     role_groups: ["kafka-GATEWAY-BASE", "atlas-ATLAS_SERVER-BASE" , "hive_on_tez-GATEWAY-BASE"]
 
-- name: Update host template 
+- name: Update host template
   cloudera.cluster.host_template
     host: example.cloudera.com
     username: "jane_smith"
@@ -90,7 +90,7 @@ EXAMPLES = r"""
     name: "MyTemplate"
     role_groups: ["kafka-GATEWAY-BASE", "atlas-ATLAS_SERVER-BASE"]
 
-- name: Remove host template 
+- name: Remove host template
   cloudera.cluster.host_template
     host: example.cloudera.com
     username: "jane_smith"
