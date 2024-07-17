@@ -204,21 +204,25 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                 body = ApiHostTemplateList(items=[host_template_body])
                 if not self.module.check_mode:
                     host_temp_api_instance.create_host_templates(
-                            cluster_name=self.cluster_name, body=body
-                        )
+                        cluster_name=self.cluster_name, body=body
+                    )
                     self.changed = True
 
-            self.host_template_output = _parse_host_template_output(host_temp_api_instance.read_host_template(
-                cluster_name=self.cluster_name,
-                host_template_name=self.name,
-            ).to_dict())
+            self.host_template_output = _parse_host_template_output(
+                host_temp_api_instance.read_host_template(
+                    cluster_name=self.cluster_name,
+                    host_template_name=self.name,
+                ).to_dict()
+            )
 
         if self.state == "absent":
             if not self.module.check_mode:
-                self.host_template_output = _parse_host_template_output(host_temp_api_instance.delete_host_template(
-                    cluster_name=self.cluster_name,
-                    host_template_name=self.name,
-                ).to_dict())
+                self.host_template_output = _parse_host_template_output(
+                    host_temp_api_instance.delete_host_template(
+                        cluster_name=self.cluster_name,
+                        host_template_name=self.name,
+                    ).to_dict()
+                )
                 self.changed = True
 
 
