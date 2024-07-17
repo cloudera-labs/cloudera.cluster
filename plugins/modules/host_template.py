@@ -15,7 +15,9 @@
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
-
+from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
+    _parse_host_template_output,
+)
 from cm_client import (
     HostTemplatesResourceApi,
     ClustersResourceApi,
@@ -118,7 +120,7 @@ host_template:
       description: A reference to the enclosing cluster.
       type: str
       returned: always
-    role_config_group_refs:
+    role_groups:
       description:
         - The role config groups belonging to this host tempalte.
       type: list
@@ -192,34 +194,31 @@ class ClouderaHostTemplate(ClouderaManagerModule):
             )
             if self.host_template:
                 if not self.module.check_mode:
-                    self.host_template_output = (
-                        host_temp_api_instance.update_host_template(
-                            cluster_name=self.cluster_name,
-                            host_template_name=self.name,
-                            body=host_template_body,
-                        )
+                    host_temp_api_instance.update_host_template(
+                        cluster_name=self.cluster_name,
+                        host_template_name=self.name,
+                        body=host_template_body,
                     )
                     self.changed = True
             else:
                 body = ApiHostTemplateList(items=[host_template_body])
                 if not self.module.check_mode:
-                    self.host_template_output = (
-                        host_temp_api_instance.create_host_templates(
+                    host_temp_api_instance.create_host_templates(
                             cluster_name=self.cluster_name, body=body
                         )
-                    )
                     self.changed = True
-            self.host_template_output = host_temp_api_instance.read_host_template(
+
+            self.host_template_output = _parse_host_template_output(host_temp_api_instance.read_host_template(
                 cluster_name=self.cluster_name,
                 host_template_name=self.name,
-            ).to_dict()
+            ).to_dict())
 
         if self.state == "absent":
             if not self.module.check_mode:
-                self.host_template_output = host_temp_api_instance.delete_host_template(
+                self.host_template_output = _parse_host_template_output(host_temp_api_instance.delete_host_template(
                     cluster_name=self.cluster_name,
                     host_template_name=self.name,
-                ).to_dict()
+                ).to_dict())
                 self.changed = True
 
 
