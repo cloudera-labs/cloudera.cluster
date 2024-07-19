@@ -15,7 +15,7 @@
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
 )
-from cm_client import DataContextsResourceApi, ApiDataContextRef, ApiDataContextList
+from cm_client import DataContextsResourceApi, ApiDataContextList
 
 from cm_client import (
     ClustersResourceApi,
@@ -65,7 +65,7 @@ options:
   state:
     description:
       - If I(state=present), the data context will be created or updated.
-      - If I(state=absent), the data context will be deleted deleted.
+      - If I(state=absent), the data context will be deleted
     type: str
     required: no
     default: present
@@ -219,30 +219,28 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
 
         if self.state == "present":
             if existing:
-                existing = {service["service_name"] for service in existing["services"]}
-                incoming = set(self.services)
-
-                if self.module._diff:
-                    self.diff.update(
-                        before=list(existing - incoming),
-                        after=list(incoming - existing),
-                    )
-                if existing != incoming:
+                existing_service = {
+                    service["service_name"] for service in existing["services"]
+                }
+                incoming_service = set(self.services)
+                if existing_service != incoming_service:
+                    if self.module._diff:
+                        self.diff.update(
+                            before=list(existing_service - incoming_service),
+                            after=list(incoming_service - existing_service),
+                        )
                     services = [
                         {"serviceName": service, "clusterName": self.cluster_name}
-                        for service in incoming
+                        for service in incoming_service
                     ]
-                    body = ApiDataContext(name=self.data_contex_name, services=services)
                     if not self.module.check_mode:
                         update_data_context = data_context_api.update_data_context(
-                            body=body
+                            body=ApiDataContext(
+                                name=self.data_contex_name, services=services
+                            )
                         ).to_dict()
-
-                        data_context_unparsed = ApiDataContextList(
-                            items=[update_data_context]
-                        )
                         self.data_context_output = parse_data_context_result(
-                            data_context_unparsed
+                            ApiDataContextList(items=[update_data_context])
                         )
                         self.changed = True
                 else:
@@ -252,42 +250,33 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
                     {"serviceName": service, "clusterName": self.cluster_name}
                     for service in self.services
                 ]
-                body = ApiDataContext(name=self.data_contex_name, services=services)
                 if not self.module.check_mode:
                     create_data_context = data_context_api.create_data_context(
-                        body=body
+                        body=ApiDataContext(
+                            name=self.data_contex_name, services=services
+                        )
                     ).to_dict()
 
-                    data_context_unparsed = ApiDataContextList(
-                        items=[create_data_context]
-                    )
                     self.data_context_output = parse_data_context_result(
-                        data_context_unparsed
+                        ApiDataContextList(items=[create_data_context])
                     )
                     self.changed = True
 
         if self.state == "absent":
             if existing:
                 if not self.module.check_mode:
-                    remove_data_context = data_context_api.delete_data_context(
+                    data_context_api.delete_data_context(
                         data_context_name=self.data_contex_name
                     ).to_dict()
-
-                    data_context_unparsed = ApiDataContextList(
-                        items=[remove_data_context]
-                    )
-                    self.data_context_output = parse_data_context_result(
-                        data_context_unparsed
-                    )
                     self.changed = True
 
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=False, type="str"),
-            cluster=dict(required=True, type="str", aliases=["cluster_name"]),
-            services=dict(required=True, type="list"),
+            name=dict(required=True, type="str"),
+            cluster=dict(required=False, type="str", aliases=["cluster_name"]),
+            services=dict(required=False, type="list"),
             state=dict(
                 type="str",
                 default="present",
@@ -295,6 +284,9 @@ def main():
             ),
         ),
         supports_check_mode=True,
+        required_if=[
+            ("state", "present", ("cluster", "services"), False),
+        ],
     )
     result = ClouderaDataContext(module)
 

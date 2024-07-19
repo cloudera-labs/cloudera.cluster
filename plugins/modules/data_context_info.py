@@ -134,7 +134,7 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
         super(ClouderaDataContextInfo, self).__init__(module)
 
         # Set the parameters
-        self.data_contex_name = self.get_param("name")
+        self.data_context_name = self.get_param("name")
 
         # Initialize the return value
         self.data_context_info = []
@@ -145,34 +145,27 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
     @ClouderaManagerMutableModule.handle_process
     def process(self):
         data_context_api = DataContextsResourceApi(self.api_client)
-        try:
-            if self.data_contex_name:
+        if self.data_context_name:
+            try:
                 data_contex = data_context_api.read_data_context(
-                    data_context_name=self.data_contex_name
+                    data_context_name=self.data_context_name
                 ).to_dict()
-
-                data_context_unparsed = ApiDataContextList(items=[data_contex])
                 self.data_context_info = parse_data_context_result(
-                    data_context_unparsed
+                    ApiDataContextList(items=[data_contex])
                 )
+            except ApiException as ex:
+                if ex.status == 500:
+                    self.module.fail_json(
+                        msg="Data Context does not exist: " + self.data_context_name
+                    )
+                else:
+                    raise ex
+        else:
+            data_contexts_info = data_context_api.read_data_contexts().to_dict()
 
-            else:
-                data_contexts_info = data_context_api.read_data_contexts().to_dict()
-
-                data_context_unparsed = ApiDataContextList(
-                    items=data_contexts_info.get("items", [])
-                )
-                self.data_context_info = parse_data_context_result(
-                    data_context_unparsed
-                )
-
-        except ApiException as ex:
-            if ex.status == 500:
-                self.module.fail_json(
-                    msg="Data Contex does not exist: " + self.data_contex_name
-                )
-            else:
-                raise ex
+            self.data_context_info = parse_data_context_result(
+                ApiDataContextList(items=data_contexts_info.get("items", []))
+            )
 
 
 def main():
