@@ -45,7 +45,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
 requirements:
-  - cm_client
+  - cm-client >= 54
 options:
   name:
     description:
@@ -116,7 +116,7 @@ data_context:
   description:
     - A dictionary containing details of data contexts within the cluster.
   type: dict
-  elements: dict
+  elements: complex
   returned: always
   contains:
     name:
