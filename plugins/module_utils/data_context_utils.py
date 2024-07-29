@@ -42,9 +42,5 @@ def _parse_output(data: dict, keys: list) -> dict:
     return {key: data[key] for key in keys if key in data}
 
 
-def _remove_unwanted_fields(data: dict) -> dict:
-    return _parse_output(data, DATA_CONTEXT_OUTPUT)
-
-
 def parse_data_context_result(data_contexts: ApiDataContextList) -> list:
-    return [_remove_unwanted_fields(item) for item in data_contexts.items]
+    return [_parse_output(item, DATA_CONTEXT_OUTPUT) for item in data_contexts.items]

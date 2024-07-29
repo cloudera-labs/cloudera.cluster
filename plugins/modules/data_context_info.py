@@ -44,6 +44,9 @@ options:
       - The name of the data context.
     type: str
     required: no
+    aliases:
+      - context_name
+      - data_context_name
 """
 
 EXAMPLES = r"""
@@ -154,11 +157,7 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
                     ApiDataContextList(items=[data_contex])
                 )
             except ApiException as ex:
-                if ex.status == 500:
-                    self.module.fail_json(
-                        msg="Data Context does not exist: " + self.data_context_name
-                    )
-                else:
+                if ex.status != 500:
                     raise ex
         else:
             data_contexts_info = data_context_api.read_data_contexts().to_dict()
@@ -171,7 +170,11 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=False, type="str"),
+            name=dict(
+                required=False,
+                type="str",
+                aliases=["context_name", "data_context_name"],
+            ),
         ),
         supports_check_mode=False,
     )

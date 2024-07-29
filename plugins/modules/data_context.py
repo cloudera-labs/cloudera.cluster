@@ -52,11 +52,16 @@ options:
       - The name of the data context.
     type: str
     required: yes
+    aliases:
+      - context_name
+      - data_context_name
   cluster:
     description:
       - The name of the Cloudera Manager cluster.
     type: str
     required: no
+    aliases:
+      - cluster_name
   services:
     description:
       - A list of services that the data context will include.
@@ -186,10 +191,12 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
         self.cluster_name = self.get_param("cluster")
         self.services = self.get_param("services")
         self.state = self.get_param("state")
+
         # Initialize the return value
         self.data_context_output = []
         self.changed = False
         self.diff = {}
+
         # Execute the logic
         self.process()
 
@@ -212,7 +219,9 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
                 data_context_name=self.data_contex_name
             ).to_dict()
         except ApiException as ex:
-            if ex.status == 500:
+            if (
+                ex.status == 500
+            ):  # Future change: Expected server response code will be 404
                 pass
             else:
                 raise ex
@@ -274,7 +283,9 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=True, type="str"),
+            name=dict(
+                required=True, type="str", aliases=["context_name", "data_context_name"]
+            ),
             cluster=dict(required=False, type="str", aliases=["cluster_name"]),
             services=dict(required=False, type="list"),
             state=dict(
