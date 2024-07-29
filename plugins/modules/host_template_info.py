@@ -94,6 +94,7 @@ host_template_info:
       description:
         - The names of the role config groups
       type: list
+      elements: str
       returned: always
 """
 
@@ -134,11 +135,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
                     ).to_dict()
                 )
             except ApiException as ex:
-                if ex.status == 404:
-                    self.module.fail_json(
-                        msg="Host Template does not exist: " + self.name
-                    )
-                else:
+                if ex.status != 404:
                     raise ex
 
         else:
