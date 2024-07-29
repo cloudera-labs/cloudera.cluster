@@ -925,7 +925,7 @@ class ClouderaCluster(ClouderaManagerModule):
             warn_fn=self.module.warn, error_fn=self.module.fail_json
         )
         TEMPLATE.merge(template_contents, explicit_params)
-        payload.update(body=ApiClusterTemplate(**template_contents))
+        payload.update(body=template_contents)
 
         # Update to include repositories
         if self.add_repositories:
