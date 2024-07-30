@@ -232,7 +232,7 @@ def main():
             cluster=dict(required=True, type="str", aliases=["cluster_name"]),
             name=dict(required=True, type="str"),
             role_groups=dict(
-                required=True, type="list", aliases=["role_config_groups"]
+                required=False, type="list", aliases=["role_config_groups"]
             ),
             state=dict(
                 type="str",
@@ -241,6 +241,9 @@ def main():
             ),
         ),
         supports_check_mode=True,
+        required_if=[
+            ("state", "present", ("cluster", "role_groups")),
+        ],
     )
 
     result = ClouderaHostTemplate(module)
