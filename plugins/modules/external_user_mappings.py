@@ -106,7 +106,7 @@ EXAMPLES = r"""
     state: "present"
     type: "LDAP"
     auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER","ROLE_CLUSTER_CREATOR"]
-    
+
 - name: Replace current permissions in external user mapping
   cloudera.cluster.external_user_mappings:
     host: example.cloudera.com
