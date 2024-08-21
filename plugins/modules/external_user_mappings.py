@@ -60,13 +60,14 @@ options:
     required: no
   auth_roles:
     description:
-      - A list of auth roles that the external user mapping will include.
+      - A list of authorization roles that the external user mapping will include.
     type: list
     required: no
   state:
     description:
-      - If I(state=present), the external user mapping will be created or updated.
-      - If I(state=absent), the external user mapping will be updated or deleted.
+      - Defines the desired state of the external user mapping.
+      - If I(state=present), the external user mapping will be created if it doesn't exist or updated if it does.
+      - If I(state=absent), the external user mapping will be modified by removing the specified authorization roles or entirely deleted if no specific roles are provided.
     type: str
     required: no
     default: present
@@ -75,7 +76,9 @@ options:
       - absent
   purge:
     description:
-      - Flag for whether the declared auth roles should append or overwrite any existing auth roles.
+      - Flag for whether the declared authorization roles should append or overwrite any existing authorization roles.
+      - If I(purge=True), all existing authorization roles will be removed, and only the provided authorization roles will be set.
+      - If I(purge=False), the provided authorization roles will be added to the existing ones, and any duplicates will be ignored.
     type: bool
     default: False
 attributes:
@@ -118,6 +121,16 @@ EXAMPLES = r"""
     type: "LDAP"
     auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
 
+- name: Remove specified authorization roles from external user mapping
+  cloudera.cluster.external_user_mappings:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    name: "default_user"
+    state: "absent"
+    type: "LDAP"
+    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
+
 - name: Remove external user mapping
   cloudera.cluster.external_user_mappings:
     host: example.cloudera.com
@@ -127,15 +140,14 @@ EXAMPLES = r"""
     state: "absent"
     type: "LDAP"
 
-- name: Remove permissions from external user mapping
+- name: Remove all authorizing roles from external user mapping
   cloudera.cluster.external_user_mappings:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    name: "default_user"
-    state: "absent"
+    name: "basic_user"
+    purge: True
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
 """
 
 RETURN = r"""
@@ -183,7 +195,6 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
         self.auth_roles = self.get_param("auth_roles")
 
         # Initialize the return value
-        self.host_template = []
         self.external_user_mappings_output = []
         self.changed = False
         self.diff = {}
@@ -315,6 +326,12 @@ def main():
             ),
         ),
         supports_check_mode=True,
+        required_one_of=[
+            ("name", "uuid"),
+        ],
+        mutually_exclusive=[
+            ("name", "uuid"),
+        ],
     )
 
     result = ClouderaExternalUserMappingsInfo(module)
