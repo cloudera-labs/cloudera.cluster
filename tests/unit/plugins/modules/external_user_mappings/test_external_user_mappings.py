@@ -65,6 +65,7 @@ def test_create_admin_external_mapping(module_args, conn):
 
     LOG.info(str(e.value.external_user_mappings_output))
 
+
 def test_delete_admin_external_mapping(module_args, conn):
     conn.update(
         name="admin_mapping",
@@ -79,12 +80,12 @@ def test_delete_admin_external_mapping(module_args, conn):
 
     LOG.info(str(e.value.external_user_mappings_output))
 
+
 def test_create_default_user_external_mapping(module_args, conn):
     conn.update(
         name="user_mapping",
         type="LDAP",
-        auth_roles=[ "ROLE_DASHBOARD_USER","ROLE_USER"],
-
+        auth_roles=["ROLE_DASHBOARD_USER", "ROLE_USER"],
     )
 
     module_args(conn)
@@ -99,8 +100,7 @@ def test_upgrade_default_user_external_mapping(module_args, conn):
     conn.update(
         name="user_mapping",
         type="LDAP",
-        auth_roles=[ "ROLE_CLUSTER_ADMIN"],
-
+        auth_roles=["ROLE_CLUSTER_ADMIN"],
     )
 
     module_args(conn)
@@ -115,9 +115,8 @@ def test_configure_new_auth_roles_on_existing_user(module_args, conn):
     conn.update(
         name="user_mapping",
         type="LDAP",
-        auth_roles=[ "ROLE_CLUSTER_ADMIN"],
+        auth_roles=["ROLE_CLUSTER_ADMIN"],
         purge=True,
-
     )
 
     module_args(conn)

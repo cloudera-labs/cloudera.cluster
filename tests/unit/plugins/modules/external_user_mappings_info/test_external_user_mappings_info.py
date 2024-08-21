@@ -20,7 +20,9 @@ import logging
 import os
 import pytest
 
-from ansible_collections.cloudera.cluster.plugins.modules import external_user_mappings_info
+from ansible_collections.cloudera.cluster.plugins.modules import (
+    external_user_mappings_info,
+)
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
 )
