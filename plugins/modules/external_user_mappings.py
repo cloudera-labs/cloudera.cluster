@@ -147,7 +147,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     name: "basic_user"
     purge: True
-    type: "LDAP"
+    auth_roles: [""]
 """
 
 RETURN = r"""
