@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
                         )
                 except json.JSONDecodeError as e:
                     raise AnsibleActionFail(
-                        message=f"JSON parsing error: {to_text(e.msg)}",
+                        message=f"JSON parsing error for file, {fragment}: {to_text(e.msg)}",
                         obj=to_native(e),
                     )
 
