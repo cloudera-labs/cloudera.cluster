@@ -360,17 +360,17 @@ options:
         description:
           - The url of the remote repository where the private cloud artifacts to install are hosted.
         type: str
-        required: no
+        required: yes
       datalake_cluster_name:
         description:
           - The name of the datalake cluster to use for the initial environment in this control plane.
         type: str
-        required: no
+        required: yes
       control_plane_config:
         description:
           - A yaml structured dictionary with configuration parameters for the installation.
         type: dict
-        required: no
+        required: yes
         aliases:
           - values_yaml
   parcels:
@@ -1145,10 +1145,6 @@ class ClouderaCluster(ClouderaManagerModule):
                     cluster_name=self.name,
                     body=ApiHostTemplateList(items=templates),
                 )
-                self.host_template_api.create_host_templates(
-                    cluster_name=self.name,
-                    body=ApiHostTemplateList(items=templates),
-                )
 
             # Add hosts to cluster and set up assignments
             template_map = {}
@@ -1430,12 +1426,8 @@ class ClouderaCluster(ClouderaManagerModule):
                 for rcg in self.role_group_api.read_role_config_groups(
                     cluster_name=self.name, service_name=s.name
                 ).items
-                if s.name == service_type.lower()
+                if s.type == service_type
             ]
-        else:
-            self.module.fail_json(
-                "Either 'service_name' or 'service_type' must be provided."
-            )
 
         base = next(
             iter([rcg for rcg in rcgs if rcg.base and rcg.role_type == role_type]),
@@ -1565,9 +1557,11 @@ def main():
             control_plane=dict(
                 type="dict",
                 options=dict(
-                    remote_repo_url=dict(type="str"),
-                    datalake_cluster_name=dict(type="str"),
-                    control_plane_config=dict(type="dict", aliases=["values_yaml"]),
+                    remote_repo_url=dict(required=True, type="str"),
+                    datalake_cluster_name=dict(required=True, type="str"),
+                    control_plane_config=dict(
+                        required=True, type="dict", aliases=["values_yaml"]
+                    ),
                 ),
             ),
             # Parcels is a dict of product:version of the cluster
