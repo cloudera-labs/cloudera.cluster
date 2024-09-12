@@ -19,7 +19,7 @@
 - set_fact:
 #    databases: "{{ database_defaults | combine(cluster.databases | default({}), recursive=True) }}"
     databases: []
-    
+
 - name: Retrieve repository metadata
   include_role:
     name: cloudera.cluster.deployment.repometa

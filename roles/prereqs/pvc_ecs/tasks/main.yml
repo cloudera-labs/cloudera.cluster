@@ -43,21 +43,21 @@
         state: present
 
 - name: Setup iptables for rhel8
-  when: 
+  when:
     - ansible_distribution_major_version | int == 8
   block:
     - name: Install iptables for rhel8, using rpm option tsflags=noscripts
       ansible.builtin.command: dnf install -y iptables --setopt=tsflags=noscripts
 
 - name: Setup deprecated iptables for rhel9
-  when: 
+  when:
     - ansible_distribution_major_version | int >= 9
   block:
     - name: Install iptables for rhel9, using rpm option tsflags=noscripts
       ansible.builtin.command: dnf install -y iptables --setopt=tsflags=noscripts
 
     - name: Check for existence of lnk /usr/sbin/iptables-nft
-      ansible.builtin.stat: 
+      ansible.builtin.stat:
         path: /usr/sbin/iptables-nft
       register: iptables_nft
 
@@ -84,7 +84,7 @@
         state: link
         follow: false
       when: iptables_nft.stat.islnk
-           
+
 - name: Flush iptables
   ansible.builtin.iptables:
     flush: yes
@@ -107,10 +107,10 @@
     group: root
     mode: 0644
   when: ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
-  
+
 - name: Reload NetworkManager daemon
   ansible.builtin.service:
     state: restarted
     daemon_reload: true
-    name: NetworkManager.service  
+    name: NetworkManager.service
   when: ansible_facts.services["NetworkManager.service"]['status'] != "not-found"
