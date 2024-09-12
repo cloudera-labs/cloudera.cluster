@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+import json, yaml
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 
@@ -55,6 +55,8 @@ from cm_client import (
     ServicesResourceApi,
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
+    ControlPlanesResourceApi,
+    ApiInstallEmbeddedControlPlaneArgs,
 )
 from cm_client.rest import ApiException
 
@@ -348,6 +350,29 @@ options:
             required: no
             aliases:
               - role_type
+  control_plane:
+    description:
+      - Private Cloud Control Plane on embedded kubernetes
+    type: dict
+    required: no
+    suboptions:
+      remote_repo_url:
+        description:
+          - The url of the remote repository where the private cloud artifacts to install are hosted.
+        type: str
+        required: yes
+      datalake_cluster_name:
+        description:
+          - The name of the datalake cluster to use for the initial environment in this control plane.
+        type: str
+        required: yes
+      control_plane_config:
+        description:
+          - A yaml structured dictionary with configuration parameters for the installation.
+        type: dict
+        required: yes
+        aliases:
+          - values_yaml
   parcels:
     description:
       - The parcels by version enabled for a cluster.
@@ -629,10 +654,123 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     port: 7180
-    cluster_name: example-cluster
+    cluster_name: ECS-cluster
     cluster_version: "1.5.1-b626.p0.42068229"
     cluster_type: EXPERIENCE_CLUSTER
     state: present
+    parcels:
+      ECS: "1.5.1-b626.p0.42068229"
+    services:
+      - name: docker
+        type: DOCKER
+        config:
+          docker_images_destination_registry_user: registry-user
+          defaultDataPath: /mnt/docker
+      - name: ecs
+        type: ECS
+        config:
+          app_domain: test.lab.example
+          k8s_webui_secret_admin_token: ecs-k8s_webui_secret_admin_token
+          cp_prometheus_ingress_user: cloudera-manager
+          infra_prometheus_ingress_user: cloudera-manager
+          longhorn_replication: 2
+          lsoDataPath: /ecs/local
+          docker: docker
+          cp_prometheus_ingress_password: password1
+          infra_prometheus_ingress_password: password1
+          defaultDataPath: /ecs/longhorn-storage
+          nfs_over_provisioning: 800
+    host_templates:
+      - name: ecs_master
+        role_groups:
+          - service_type: DOCKER
+            type: DOCKER_SERVER
+          - service_type: ECS
+            type: ECS_SERVER
+      - name: ecs_workers
+        role_groups:
+          - service_type: DOCKER
+            type: DOCKER_SERVER
+          - service_type: ECS
+            type: ECS_AGENT
+    hosts:
+      - name: ecs-master-01.test.lab.example
+        host_template: ecs_master
+      - name: ecs-worker-01.test.lab.example
+        host_template: ecs_workers
+      - name: ecs-worker-02.test.lab.example
+        host_template: ecs_workers
+      - name: ecs-worker-03.test.lab.example
+        host_template: ecs_workers
+    control_plane:
+      datalake_cluster_name: PVC-Base
+      remote_repo_url: "https://test_website/cdp-pvc-ds/1.5.1"
+      control_plane_config:
+        ContainerInfo:
+               Mode: public
+               CopyDocker: false
+        Database:
+          Mode: embedded
+          EmbeddedDbStorage: 50
+        Services:
+          thunderheadenvironment:
+            Config:
+              database:
+                name: db-env
+          mlxcontrolplaneapp:
+            Config:
+              database:
+                name: db-mlx
+          dwx:
+            Config:
+              database:
+                name: db-dwx
+          cpxliftie:
+            Config:
+              database:
+                name: db-liftie
+          dex:
+            Config:
+              database:
+                name: db-dex
+          resourcepoolmanager:
+            Config:
+              database:
+                name: db-resourcepoolmanager
+          cdpcadence:
+            Config:
+              database:
+                name: db-cadence
+          cdpcadencevisibility:
+            Config:
+              database:
+                name: db-cadence-visibility
+          clusteraccessmanager:
+            Config:
+              database:
+                name: db-clusteraccessmanager
+          monitoringapp:
+            Config:
+              database:
+                name: db-alerts
+          thunderheadusermanagementprivate:
+            Config:
+              database:
+                name: db-ums
+          classicclusters:
+            Config:
+              database:
+                name: cm-registration
+          clusterproxy:
+            Config:
+              database:
+                name: cluster-proxy
+          dssapp:
+            Config:
+              database:
+                name: db-dss-app
+        Vault:
+          Mode: embedded
 """
 
 RETURN = r"""
@@ -698,6 +836,7 @@ class ClouderaCluster(ClouderaManagerModule):
         self.display_name = self.get_param("display_name")
         self.contexts = self.get_param("contexts")
         self.auto_assign = self.get_param("auto_assign")
+        self.control_plane = self.get_param("control_plane")
 
         self.changed = False
         self.output = {}
@@ -717,6 +856,7 @@ class ClouderaCluster(ClouderaManagerModule):
         self.host_api = HostsResourceApi(self.api_client)
         self.role_group_api = RoleConfigGroupsResourceApi(self.api_client)
         self.role_api = RolesResourceApi(self.api_client)
+        self.control_plane_api = ControlPlanesResourceApi(self.api_client)
 
         refresh = True
 
@@ -991,7 +1131,9 @@ class ClouderaCluster(ClouderaManagerModule):
                                 rcg["name"]
                                 if rcg["name"]
                                 else self.find_base_role_group_name(
-                                    service_type=rcg["service"], role_type=rcg["type"]
+                                    service_name=rcg["service"],
+                                    service_type=rcg["service_type"],
+                                    role_type=rcg["type"],
                                 )
                             )
                             for rcg in ht["role_groups"]
@@ -999,7 +1141,6 @@ class ClouderaCluster(ClouderaManagerModule):
                     )
                     for ht in self.host_templates
                 ]
-
                 self.host_template_api.create_host_templates(
                     cluster_name=self.name,
                     body=ApiHostTemplateList(items=templates),
@@ -1174,6 +1315,25 @@ class ClouderaCluster(ClouderaManagerModule):
                             msg="Role not found. No role type '%s' for service '%s' found on host '%s'"
                             % (override["type"], override["service"], hostref.hostname)
                         )
+            # Configure the experience cluster
+            if self.control_plane:
+                values_yaml_data = self.control_plane["control_plane_config"]
+                values_yaml_str = yaml.dump(values_yaml_data)
+
+                # Assemble body for Install Control Plane request
+                body = ApiInstallEmbeddedControlPlaneArgs(
+                    experience_cluster_name=self.name,
+                    containerized_cluster_name=self.name,
+                    datalake_cluster_name=self.control_plane["datalake_cluster_name"],
+                    remote_repo_url=self.control_plane["remote_repo_url"],
+                    values_yaml=values_yaml_str,
+                )
+                setup_control_plane = (
+                    self.control_plane_api.install_embedded_control_plane(body=body)
+                )
+                self.wait_for_command_state(
+                    command_id=setup_control_plane.id, polling_interval=self.delay
+                )
 
             # Execute auto-role assignments
             if self.auto_assign:
@@ -1246,15 +1406,28 @@ class ClouderaCluster(ClouderaManagerModule):
             )
         return results
 
-    def find_base_role_group_name(self, service_type: str, role_type: str) -> str:
-        rcgs = [
-            rcg
-            for s in self.service_api.read_services(cluster_name=self.name).items
-            for rcg in self.role_group_api.read_role_config_groups(
-                cluster_name=self.name, service_name=s.name
-            ).items
-            if s.type == service_type
-        ]
+    def find_base_role_group_name(
+        self, role_type: str, service_name: str = None, service_type: str = None
+    ) -> str:
+        if service_name:
+
+            rcgs = [
+                rcg
+                for s in self.service_api.read_services(cluster_name=self.name).items
+                for rcg in self.role_group_api.read_role_config_groups(
+                    cluster_name=self.name, service_name=s.name
+                ).items
+                if s.name == service_name
+            ]
+        elif service_type:
+            rcgs = [
+                rcg
+                for s in self.service_api.read_services(cluster_name=self.name).items
+                for rcg in self.role_group_api.read_role_config_groups(
+                    cluster_name=self.name, service_name=s.name
+                ).items
+                if s.type == service_type
+            ]
 
         base = next(
             iter([rcg for rcg in rcgs if rcg.base and rcg.role_type == role_type]),
@@ -1263,8 +1436,8 @@ class ClouderaCluster(ClouderaManagerModule):
 
         if base is None:
             self.module.fail_json(
-                "Invalid role group; unable to discover base role group for service role, %s[%s]"
-                % (role_type, service_type)
+                "Invalid role group; unable to discover base role group for service role, %s"
+                % role_type
             )
         else:
             return base.name
@@ -1367,18 +1540,27 @@ def main():
                         required=True,
                         options=dict(
                             name=dict(aliases=["ref", "ref_name"]),
-                            service=dict(
-                                required=True, aliases=["service_name", "service_ref"]
-                            ),
+                            service=dict(aliases=["service_name", "service_ref"]),
                             type=dict(aliases=["role_type"]),
+                            service_type=dict(),
                         ),
                         aliases=["role_config_groups"],
                         mutually_exclusive=[
-                            ("name", "type"),
+                            ("service", "service_type"),
                         ],
                         requires_one_of=[
-                            ("name", "type"),
+                            ("service", "service_type"),
                         ],
+                    ),
+                ),
+            ),
+            control_plane=dict(
+                type="dict",
+                options=dict(
+                    remote_repo_url=dict(required=True, type="str"),
+                    datalake_cluster_name=dict(required=True, type="str"),
+                    control_plane_config=dict(
+                        required=True, type="dict", aliases=["values_yaml"]
                     ),
                 ),
             ),
