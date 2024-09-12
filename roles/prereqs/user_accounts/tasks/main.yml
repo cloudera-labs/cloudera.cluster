@@ -35,7 +35,9 @@
 
     - set_fact:
         local_accounts: "{{ local_accounts | union(mariadb_accounts) }}"
-      when: '"db_server" in group_names and database_type == "mariadb"'
+      when:
+        - '"db_server" in group_names'
+        -  database_type == "mysql" or database_type == "mariadb"
 
     - name: Create local user accounts
       ansible.builtin.user:

@@ -67,3 +67,12 @@
   when:
     - krb5_kdc_type == 'Red Hat IPA'
     - "'cluster' in group_names or 'cloudera_manager' in group_names"
+
+- name: Remove ipa includedir directive
+  lineinfile:
+    path: /etc/krb5.conf
+    regexp: "^includedir /etc/krb5.conf.d/"
+    state: absent
+  when:
+    - krb5_kdc_type == 'Red Hat IPA'
+    - "'cluster' in group_names or 'cloudera_manager' in group_names"
