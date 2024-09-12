@@ -24,8 +24,8 @@
     loop_var: data_context
   register: result
   failed_when:
-    - result.status != 200
-    - "'already exists' not in result.json.message | default('')"
+    - "{{ (result | map(attribute='results') | map(attribute='status') | reject('eq', 200) | length) > 0 }}"
+    - "{{ (result | map(attribute='results') | map(attribute='json') | map(attribute='message') | reject('regex', 'already exists') | length) > 0 }}"
   when:
     - cluster.data_contexts is iterable
     - "'HDFS' in cluster.services"
