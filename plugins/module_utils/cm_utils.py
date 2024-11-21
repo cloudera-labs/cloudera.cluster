@@ -29,7 +29,7 @@ from urllib.parse import urljoin
 from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.dict_transformations import recursive_diff
-from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from time import sleep
 from cm_client import (
     ApiClient,
@@ -434,6 +434,12 @@ class ClouderaManagerModule(object):
         if not self.version:
             pre_versioned = urljoin(rendered_url, "/api/version")
             versioned = rest.pool_manager.request("GET", pre_versioned, headers=headers)
+            if versioned.status != 200:
+                self.module.fail_json(
+                    "Unable to retrieve API version",
+                    status=to_native(versioned.status),
+                    reason=to_native(versioned.reason),
+                )
             self.version = versioned.data.decode("utf-8")
 
         # Construct the discovered API endpoint
