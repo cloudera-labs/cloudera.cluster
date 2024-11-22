@@ -90,7 +90,7 @@ EXAMPLES = r"""
     account_name: "admin_user"
     account_password: "Password123"
     roles: ["Full Administrator"]
-    state: "Present"
+    state: "present"
     purge: false
 
 - name: Add additional roles to user
@@ -102,7 +102,7 @@ EXAMPLES = r"""
     account_name: "john"
     account_password: "Password123"
     roles: ["Configurator","Dashboard User","Limited Operator"]
-    state: "Present"
+    state: "present"
 
 - name: Reduce permissions on user to a single role
   cloudera.cluster.user:
@@ -113,7 +113,7 @@ EXAMPLES = r"""
     account_name: "john"
     account_password: "Password123"
     roles: ["Dashboard User"]
-    state: "Present"
+    state: "present"
     purge: true
 
 - name: Remove specified user
