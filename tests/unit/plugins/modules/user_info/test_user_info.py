@@ -49,6 +49,7 @@ def conn():
         "debug": "no",
     }
 
+
 def test_pytest_all_userss(module_args, conn):
     conn.update()
     module_args(conn)
@@ -57,6 +58,7 @@ def test_pytest_all_userss(module_args, conn):
         user_info.main()
 
     LOG.info(str(e.value.user_info))
+
 
 def test_user_get_single_user(module_args, conn):
     conn.update(
@@ -68,4 +70,3 @@ def test_user_get_single_user(module_args, conn):
         user_info.main()
 
     LOG.info(str(e.value.user_info_output))
-
