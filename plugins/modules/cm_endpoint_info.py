@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = r"""
----
 module: cm_endpoint_info
 short_description: Discover the Cloudera Manager API endpoint
 description:
@@ -38,7 +37,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
----
 # This will first try 'http://example.cloudera.com:7180' and will
 # follow any redirects
 - name: Gather details using auto-discovery
@@ -50,9 +48,8 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 endpoint:
-    description: The discovered Cloudera Manager API endpoint
+    description: The discovered Cloudera Manager API endpoint, i.e. the base URL.
     type: str
     returned: always
 """
