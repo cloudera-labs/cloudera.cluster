@@ -49,14 +49,14 @@ def conn():
         "debug": "no",
     }
 
+
 def test_pytest_create_new_user(module_args, conn):
     conn.update(
-        account_name = 'John',
-        account_password = 'passowrd',
-        roles=['Configurator','Dashboard User','Limited Operator'],
-        state = "present",
-        purge = True,
-
+        account_name="John",
+        account_password="passowrd",
+        roles=["Configurator", "Dashboard User", "Limited Operator"],
+        state="present",
+        purge=True,
     )
 
     module_args(conn)
@@ -65,12 +65,27 @@ def test_pytest_create_new_user(module_args, conn):
         user.main()
 
     LOG.info(str(e.value.user_output))
+
+
+def test_pytest_create_new_admin_user(module_args, conn):
+    conn.update(
+        account_name="Admin2",
+        account_password="passowrd",
+        roles=["Full Administrator"],
+    )
+
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson) as e:
+        user.main()
+
+    LOG.info(str(e.value.user_output))
+
 
 def test_pytest_remove_user(module_args, conn):
     conn.update(
-        account_name = 'John',
-        state = "absent",
-
+        account_name="John",
+        state="absent",
     )
 
     module_args(conn)
@@ -79,5 +94,3 @@ def test_pytest_remove_user(module_args, conn):
         user.main()
 
     LOG.info(str(e.value.user_output))
-
-

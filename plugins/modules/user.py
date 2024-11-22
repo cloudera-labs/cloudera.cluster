@@ -93,7 +93,7 @@ EXAMPLES = r"""
     state: "Present"
     purge: false
 
-- name: Add additional roles to user 
+- name: Add additional roles to user
   cloudera.cluster.user:
     host: example.cloudera.com
     port: "7180"
@@ -203,7 +203,6 @@ class ClouderaUserInfo(ClouderaManagerModule):
                 else:
                     roles_to_add = list(set(existing_roles) | set(incoming_roles))
 
-
                 if roles_to_add:
                     auth_roles = [
                         ApiAuthRoleRef(uuid=role_uuid) for role_uuid in roles_to_add
@@ -255,7 +254,9 @@ class ClouderaUserInfo(ClouderaManagerModule):
 
         if self.state == "absent":
             if existing:
-                self.user_output = api_instance.delete_user2(self.account_name).to_dict()
+                self.user_output = api_instance.delete_user2(
+                    self.account_name
+                ).to_dict()
                 self.changed = True
 
 

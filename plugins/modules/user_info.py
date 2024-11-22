@@ -65,7 +65,7 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 user_info:
-    description: 
+    description:
       - Retrieve details of single user or all users within the Cloudera Manager
     type: list
     elements: dict
