@@ -131,7 +131,7 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 user:
-    description: List of users within the cluster
+    description: Details of a single user within the cluster
     type: dict
     elements: dict
     returned: always
@@ -141,7 +141,7 @@ user:
             type: str
             returned: always
         auth_roles:
-            description: A list of ApiAuthRole objects representing the authentication roles assigned to the user.
+            description: Cloudera Manager authorization roles assigned to the user.
             type: list
             returned: optional
 """

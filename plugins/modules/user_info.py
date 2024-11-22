@@ -64,7 +64,7 @@ EXAMPLES = r"""
 
 RETURN = r"""
 ---
-user_info:
+users:
     description:
       - Retrieve details of single user or all users within the Cloudera Manager
     type: list
@@ -76,7 +76,7 @@ user_info:
             type: str
             returned: always
         auth_roles:
-            description: A list of Authorization Role objects representing the authentication roles assigned to the user.
+            description: Cloudera Manager authorization roles assigned to the user.
             type: list
             returned: optional
 """
@@ -86,8 +86,12 @@ class ClouderaUserInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaUserInfo, self).__init__(module)
 
-        # Initialize the return values
+        # Set the parameters
+
         self.account_name = self.get_param("account_name")
+
+        # Initialize the return values
+        self.user_info_output = []
         self.changed = False
 
         # Execute the logic
@@ -107,8 +111,9 @@ class ClouderaUserInfo(ClouderaManagerModule):
 
         except ApiException as e:
             if e.status == 404:
-                self.user_info = f"User {self.account_name} does not exist."
-                self.module.fail_json(msg=str(self.user_info_output))
+                pass
+            else:
+                raise e
 
 
 def main():
