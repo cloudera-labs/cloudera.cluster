@@ -132,6 +132,9 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Ansible tests
+.ansible
+
 # Environments
 .env
 .venv
