@@ -26,11 +26,11 @@ import yaml
 from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
 
-# Required for pytest discovery in VSCode, reasons unknown...
-try:
-    from ansible.plugins.action import ActionBase
-except ModuleNotFoundError:
-    pass
+# # Required for pytest discovery in VSCode, reasons unknown...
+# try:
+#     from ansible.plugins.action import ActionBase
+# except ModuleNotFoundError:
+#     pass
 
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
@@ -84,3 +84,23 @@ def yaml_args():
         basic._ANSIBLE_ARGS = to_bytes(output)
 
     return prep_args
+
+
+# class AnsibleExitJson(Exception):
+#     """Exception class to be raised by module.exit_json and caught by the test case"""
+
+#     def __init__(self, kwargs):
+#         super(AnsibleExitJson, self).__init__(
+#             kwargs.get("msg", "General module success")
+#         )
+#         self.__dict__.update(kwargs)
+
+
+# class AnsibleFailJson(Exception):
+#     """Exception class to be raised by module.fail_json and caught by the test case"""
+
+#     def __init__(self, kwargs):
+#         super(AnsibleFailJson, self).__init__(
+#             kwargs.get("msg", "General module failure")
+#         )
+#         self.__dict__.update(kwargs)
