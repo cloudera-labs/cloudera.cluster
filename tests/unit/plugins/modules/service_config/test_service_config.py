@@ -326,15 +326,17 @@ def test_present_invalid_parameter(conn, module_args, target_service):
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=None, tickTime=1111))
 def test_set_parameters(conn, module_args, target_service_config):
-    conn.update(
-        cluster=target_service_config.cluster_ref.cluster_name,
-        service=target_service_config.name,
-        parameters=dict(autopurgeSnapRetainCount=9),
-        message="test_service_config::test_set_parameters",
-        # _ansible_check_mode=True,
-        # _ansible_diff=True,
+    module_args(
+        {
+            **conn,
+            "cluster": target_service_config.cluster_ref.cluster_name,
+            "service": target_service_config.name,
+            "parameters": dict(autopurgeSnapRetainCount=9),
+            "message": "test_service_config::test_set_parameters",
+            # "_ansible_check_mode": True,
+            # "_ansible_diff": True,
+        }
     )
-    module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
@@ -358,13 +360,15 @@ def test_set_parameters(conn, module_args, target_service_config):
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=7, tickTime=1111))
 def test_unset_parameters(conn, module_args, target_service_config):
-    conn.update(
-        cluster=target_service_config.cluster_ref.cluster_name,
-        service=target_service_config.name,
-        parameters=dict(autopurgeSnapRetainCount=None),
-        message="test_service_config::test_unset_parameters",
+    module_args(
+        {
+            **conn,
+            "cluster": target_service_config.cluster_ref.cluster_name,
+            "service": target_service_config.name,
+            "parameters": dict(autopurgeSnapRetainCount=None),
+            "message": "test_service_config::test_unset_parameters",
+        }
     )
-    module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
@@ -386,16 +390,18 @@ def test_unset_parameters(conn, module_args, target_service_config):
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=7, tickTime=1111))
 def test_set_parameters_with_purge(conn, module_args, target_service_config):
-    conn.update(
-        cluster=target_service_config.cluster_ref.cluster_name,
-        service=target_service_config.name,
-        parameters=dict(autopurgeSnapRetainCount=9),
-        purge=True,
-        message="test_service_config::test_set_parameters_with_purge",
-        # _ansible_check_mode=True,
-        # _ansible_diff=True,
+    module_args(
+        {
+            **conn,
+            "cluster": target_service_config.cluster_ref.cluster_name,
+            "service": target_service_config.name,
+            "parameters": dict(autopurgeSnapRetainCount=9),
+            "purge": True,
+            "message": "test_service_config::test_set_parameters_with_purge",
+            # "_ansible_check_mode": True,
+            # "_ansible_diff": True,
+        }
     )
-    module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
@@ -418,16 +424,18 @@ def test_set_parameters_with_purge(conn, module_args, target_service_config):
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=8, tickTime=2222))
 def test_purge_all_parameters(conn, module_args, target_service_config):
-    conn.update(
-        cluster=target_service_config.cluster_ref.cluster_name,
-        service=target_service_config.name,
-        parameters=dict(),
-        purge=True,
-        message="test_service_config::test_purge_all_parameters",
-        # _ansible_check_mode=True,
-        # _ansible_diff=True,
+    module_args(
+        {
+            **conn,
+            "cluster": target_service_config.cluster_ref.cluster_name,
+            "service": target_service_config.name,
+            "parameters": dict(),
+            "purge": True,
+            "message": "test_service_config::test_purge_all_parameters",
+            # "_ansible_check_mode": True,
+            # "_ansible_diff": True,
+        }
     )
-    module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
