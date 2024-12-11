@@ -104,7 +104,9 @@ def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dic
 
 
 def normalize_values(add: dict) -> dict:
-    """Normalize whitespace of parameter values.
+    """Normalize parameter values. Strings have whitespace trimmed, integers are
+    converted to strings, and Boolean values are converted their string representation
+    and lowercased.
 
     Args:
         add (dict): Parameters to review
@@ -112,7 +114,18 @@ def normalize_values(add: dict) -> dict:
     Returns:
         dict: Normalized parameters
     """
-    return {k: (v.strip() if isinstance(v, str) else v) for k, v in add.items()}
+
+    def _normalize(value):
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, int):
+            return str(value)
+        elif isinstance(value, bool):
+            return str(value).lower()
+        else:
+            return value
+
+    return {k: _normalize(v) for k, v in add.items()}
 
 
 def resolve_parameter_updates(
@@ -120,7 +133,8 @@ def resolve_parameter_updates(
 ) -> dict:
     """Produce a change set between two parameter dictionaries.
 
-    The function will normalize parameter values to remove whitespace.
+    The function will normalize parameter values to remove whitespace from strings,
+    convert integers and Booleans to their string representations.
 
     Args:
         current (dict): Existing parameters
@@ -131,20 +145,23 @@ def resolve_parameter_updates(
         dict: A change set of the updates
     """
     updates = {}
-    diff = recursive_diff(current, incoming)
+
+    diff = recursive_diff(current, normalize_values(incoming))
+
     if diff is not None:
         updates = {
             k: v
-            for k, v in normalize_values(diff[1]).items()
+            for k, v in diff[1].items()
             if k in current or (k not in current and v is not None)
         }
 
         if purge:
-            # Add the other non-defaults
+            # Add the remaining non-default values for removal
             updates = {
                 **updates,
                 **{k: None for k in diff[0].keys() if k not in diff[1]},
             }
+
     return updates
 
 
@@ -384,7 +401,7 @@ class ClouderaManagerModule(object):
         """Creates the CM API client"""
         config = Configuration()
 
-        # If provided a CML endpoint URL, use it directly
+        # If provided a CM endpoint URL, use it directly
         if self.url:
             config.host = str(self.url).rstrip(" /")
         # Otherwise, run discovery on missing parts
