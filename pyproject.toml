@@ -53,7 +53,7 @@ filterwarnings = [
   "ignore:'crypt' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
 ]
 markers = [
-  "prep: Prepare Cloudera Manager and resources for tests",
+  "prepare: Prepare Cloudera Manager and resources for tests",
 ]
 
 [build-system]
