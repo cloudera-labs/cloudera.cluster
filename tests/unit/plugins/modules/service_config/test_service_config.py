@@ -22,6 +22,30 @@ import logging
 import os
 import pytest
 
+from pathlib import Path
+from time import sleep
+
+from cm_client import (
+    ClustersResourceApi,
+    Configuration,
+    ApiClient,
+    ApiClusterList,
+    ApiCluster,
+    ApiCommand,
+    ApiConfig,
+    ParcelResourceApi,
+    ApiHostRefList,
+    ApiHostRef,
+    ApiParcel,
+    ApiParcelList,
+    ApiServiceList,
+    ApiService,
+    ApiServiceConfig,
+    CommandsResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException, RESTClientObject
+
 from ansible_collections.cloudera.cluster.plugins.modules import service_config
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
@@ -31,7 +55,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def conn():
     conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
 
@@ -52,6 +76,190 @@ def conn():
         "verify_tls": "no",
         "debug": "no",
     }
+
+
+@pytest.fixture(scope="session")
+def prep_client(conn):
+    """Create a Cloudera Manager API client, resolving HTTP/S and version URL.
+
+    Args:
+        conn (dict): Connection details
+
+    Returns:
+        ApiClient: Cloudera Manager API client
+    """
+    config = Configuration()
+
+    config.username = conn["username"]
+    config.password = conn["password"]
+
+    if "url" in conn:
+        config.host = str(conn["url"]).rstrip(" /")
+    else:
+        rest = RESTClientObject()
+
+        # Handle redirects
+        url = rest.GET(conn["host"]).urllib3_response.geturl()
+
+        # Get version
+        auth = config.auth_settings().get("basic")
+        version = rest.GET(
+            f"{url}api/version", headers={auth["key"]: auth["value"]}
+        ).data
+
+        # Set host
+        config.host = f"{url}api/{version}"
+
+    client = ApiClient()
+    client.user_agent = "pytest"
+    return client
+
+
+@pytest.fixture(
+    scope="module",
+)
+def prep_cluster(prep_client, request):
+    """Create a 7.1.9 test cluster using the module name."""
+
+    marker = request.node.get_closest_marker("prep")
+    if marker is None:
+        raise Exception("Preparation marker not found.")
+    elif "version" not in marker.kwargs:
+        raise Exception("Cluster version parameter not found.")
+    elif "hosts" not in marker.kwargs:
+        raise Exception("Cluster hosts parameter not found.")
+    else:
+        version = marker.kwargs["version"]
+        hosts = marker.kwargs["hosts"]
+
+    cluster_api = ClustersResourceApi(prep_client)
+    parcel_api = ParcelResourceApi(prep_client)
+
+    try:
+        config = ApiCluster(
+            name=request.node.name,
+            full_version=version,
+        )
+        # Create the cluster
+        clusters = cluster_api.create_clusters(body=ApiClusterList(items=[config]))
+
+        # Activate the parcel(s)
+        from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+            Parcel,
+        )
+
+        parcel = Parcel(
+            parcel_api=parcel_api,
+            product="CDH",
+            version=version,
+            cluster=request.node.name,
+        )
+
+        cluster_api.add_hosts(
+            cluster_name=request.node.name,
+            body=ApiHostRefList(items=[ApiHostRef(hostname=h) for h in hosts]),
+        )
+        yield clusters.items[0]
+        cluster_api.delete_cluster(cluster_name=request.node.name)
+    except ApiException as ae:
+        raise Exception(str(ae))
+
+
+@pytest.mark.skip
+def test_wip_cluster(prep_cluster):
+    results = prep_cluster
+    print(results)
+
+
+def wait_for_command(
+    api_client: ApiClient, command: ApiCommand, polling: int = 10, delay: int = 5
+):
+    poll_count = 0
+    while command.active:
+        if poll_count > polling:
+            raise Exception("CM command timeout")
+        sleep(delay)
+        poll_count += 1
+        command = CommandsResourceApi(api_client).read_command(command.id)
+    if not command.success:
+        raise Exception(f"CM command [{command.id}] failed: {command.result_message}")
+
+
+@pytest.fixture(scope="module")
+def prep_service(prep_client, request):
+    api = ServicesResourceApi(prep_client)
+    cluster_api = ClustersResourceApi(prep_client)
+
+    name = Path(request.node.name).stem + "_zookeeper"
+
+    service = ApiService(
+        name=name,
+        type="ZOOKEEPER",
+    )
+
+    api.create_services(cluster_name="TestOne", body=ApiServiceList(items=[service]))
+    cluster_api.auto_assign_roles(cluster_name="TestOne")
+
+    # configure = cluster_api.auto_configure(cluster_name="TestOne")
+    wait_for_command(
+        prep_client, api.first_run(cluster_name="TestOne", service_name=name)
+    )
+
+    yield api.read_service(cluster_name="TestOne", service_name=name)
+
+    api.delete_service(cluster_name="TestOne", service_name=name)
+
+
+def test_wip_service(prep_service):
+    results = prep_service
+    print(results)
+
+
+@pytest.fixture
+def prep_service_config(prep_client, request):
+    marker = request.node.get_closest_marker("prep")
+
+    if marker is None:
+        raise Exception("Unable to determine parameter to prepare")
+    elif len(marker.args) != 3:
+        raise Exception("Invalid number of values for parameter preparation")
+    else:
+        cluster = marker.args[0]
+        service = marker.args[1]
+        params = marker.args[2]
+
+    api = ServicesResourceApi(prep_client)
+
+    # Set the parameter
+    try:
+        api.update_service_config(
+            cluster_name=cluster,
+            service_name=service,
+            message=f"test_service_config::{request.node.name}:set",
+            body=ApiServiceConfig(
+                items=[ApiConfig(name=k, value=v) for k, v in params.items()]
+            ),
+        )
+    except ApiException as ae:
+        if ae.status != 400 or "delete with template" not in str(ae.body):
+            raise Exception(str(ae))
+
+    # Go run the test
+    yield
+
+    # Reset the parameter
+    try:
+        api.update_service_config(
+            cluster_name=cluster,
+            service_name=service,
+            message=f"test_service_config::{request.node.name}::reset",
+            body=ApiServiceConfig(
+                items=[ApiConfig(name=k, value=v) for k, v in params.items()]
+            ),
+        )
+    except ApiException as ae:
+        if ae.status != 400 or "delete with template" not in str(ae.body):
+            raise Exception(str(ae))
 
 
 def test_missing_required(conn, module_args):
@@ -94,7 +302,7 @@ def test_present_invalid_cluster(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
-        service_config.main()
+        prep_service_config.main()
 
 
 def test_present_invalid_service(conn, module_args):
@@ -123,13 +331,19 @@ def test_present_invalid_parameter(conn, module_args):
         service_config.main()
 
 
-def test_set_parameters(conn, module_args):
+@pytest.mark.prep(
+    os.getenv("CM_CLUSTER"),
+    os.getenv("CM_SERVICE"),
+    dict(autopurgeSnapRetainCount=None, tickTime=1111),
+)
+def test_set_parameters(conn, module_args, prep_service_config):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
         service=os.getenv("CM_SERVICE"),
         parameters=dict(autopurgeSnapRetainCount=9),
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        message="test_service_config::test_set_parameters",
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
@@ -140,7 +354,9 @@ def test_set_parameters(conn, module_args):
     assert {c["name"]: c["value"] for c in e.value.config}[
         "autopurgeSnapRetainCount"
     ] == "9"
+    assert len(e.value.config) == 2
 
+    # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
@@ -148,13 +364,20 @@ def test_set_parameters(conn, module_args):
     assert {c["name"]: c["value"] for c in e.value.config}[
         "autopurgeSnapRetainCount"
     ] == "9"
+    assert len(e.value.config) == 2
 
 
-def test_unset_parameters(conn, module_args):
+@pytest.mark.prep(
+    os.getenv("CM_CLUSTER"),
+    os.getenv("CM_SERVICE"),
+    dict(autopurgeSnapRetainCount=7, tickTime=1111),
+)
+def test_unset_parameters(conn, module_args, prep_service_config):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
         service=os.getenv("CM_SERVICE"),
         parameters=dict(autopurgeSnapRetainCount=None),
+        message="test_service_config::test_unset_parameters",
     )
     module_args(conn)
 
@@ -164,23 +387,32 @@ def test_unset_parameters(conn, module_args):
     assert e.value.changed == True
     results = {c["name"]: c["value"] for c in e.value.config}
     assert "autopurgeSnapRetainCount" not in results
+    assert len(e.value.config) == 1
 
+    # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
     assert e.value.changed == False
     results = {c["name"]: c["value"] for c in e.value.config}
     assert "autopurgeSnapRetainCount" not in results
+    assert len(e.value.config) == 1
 
 
-def test_set_parameters_with_purge(conn, module_args):
+@pytest.mark.prep(
+    os.getenv("CM_CLUSTER"),
+    os.getenv("CM_SERVICE"),
+    dict(autopurgeSnapRetainCount=7, tickTime=1111),
+)
+def test_set_parameters_with_purge(conn, module_args, prep_service_config):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
         service=os.getenv("CM_SERVICE"),
         parameters=dict(autopurgeSnapRetainCount=9),
         purge=True,
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        message="test_service_config::test_set_parameters_with_purge",
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
@@ -191,6 +423,7 @@ def test_set_parameters_with_purge(conn, module_args):
     assert {c["name"]: c["value"] for c in e.value.config}[
         "autopurgeSnapRetainCount"
     ] == "9"
+    assert len(e.value.config) == 1
 
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
@@ -199,16 +432,23 @@ def test_set_parameters_with_purge(conn, module_args):
     assert {c["name"]: c["value"] for c in e.value.config}[
         "autopurgeSnapRetainCount"
     ] == "9"
+    assert len(e.value.config) == 1
 
 
-def test_purge_all_parameters(conn, module_args):
+@pytest.mark.prep(
+    os.getenv("CM_CLUSTER"),
+    os.getenv("CM_SERVICE"),
+    dict(autopurgeSnapRetainCount=8, tickTime=2222),
+)
+def test_purge_all_parameters(conn, module_args, prep_service_config):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
         service=os.getenv("CM_SERVICE"),
         parameters=dict(),
         purge=True,
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        message="test_service_config::test_purge_all_parameters",
+        # _ansible_check_mode=True,
+        # _ansible_diff=True,
     )
     module_args(conn)
 
