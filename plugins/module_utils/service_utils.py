@@ -13,14 +13,19 @@
 # limitations under the License.
 
 """
-A common functions for Cloudera Manager service management
+A common functions for service management
 """
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     _parse_output,
+    resolve_parameter_updates,
 )
 
-from cm_client import ApiService
+from cm_client import (
+    ApiConfig,
+    ApiService,
+    ApiServiceConfig,
+)
 
 SERVICE_OUTPUT = [
     "client_config_staleness_status",
@@ -44,3 +49,22 @@ def parse_service_result(service: ApiService) -> dict:
     output = dict(cluster_name=service.cluster_ref.cluster_name)
     output.update(_parse_output(service.to_dict(), SERVICE_OUTPUT))
     return output
+
+
+class ServiceConfigUpdates(object):
+    def __init__(self, existing: ApiServiceConfig, updates: dict, purge: bool) -> None:
+        current = {r.name: r.value for r in existing.items}
+        changeset = resolve_parameter_updates(current, updates, purge)
+
+        self.diff = dict(
+            before={k: current[k] if k in current else None for k in changeset.keys()},
+            after=changeset,
+        )
+
+        self.config = ApiServiceConfig(
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+        )
+
+    @property
+    def changed(self) -> bool:
+        return bool(self.config.items)
