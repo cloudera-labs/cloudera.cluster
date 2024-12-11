@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright 2024 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,6 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from time import sleep
+
+from cm_client import (
+    ApiClient,
+    ApiCommand,
+    CommandsResourceApi,
+)
 
 
 class AnsibleExitJson(Exception):
@@ -31,3 +41,17 @@ class AnsibleFailJson(Exception):
             kwargs.get("msg", "General module failure")
         )
         self.__dict__.update(kwargs)
+
+
+def wait_for_command(
+    api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 5
+):
+    poll_count = 0
+    while command.active:
+        if poll_count > polling:
+            raise Exception("CM command timeout")
+        sleep(delay)
+        poll_count += 1
+        command = CommandsResourceApi(api_client).read_command(command.id)
+    if not command.success:
+        raise Exception(f"CM command [{command.id}] failed: {command.result_message}")
