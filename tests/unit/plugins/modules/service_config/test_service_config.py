@@ -21,32 +21,38 @@ __metaclass__ = type
 import logging
 import os
 import pytest
+import random
+import string
 
 from pathlib import Path
 from time import sleep
 
 from cm_client import (
-    ClustersResourceApi,
-    Configuration,
     ApiClient,
     ApiClusterList,
     ApiCluster,
     ApiCommand,
     ApiConfig,
-    ParcelResourceApi,
-    ApiHostRefList,
     ApiHostRef,
-    ApiParcel,
-    ApiParcelList,
-    ApiServiceList,
+    ApiHostRefList,
     ApiService,
     ApiServiceConfig,
+    ApiServiceList,
+    ClustersResourceApi,
     CommandsResourceApi,
+    Configuration,
+    HostsResourceApi,
+    ParcelResourceApi,
+    ParcelsResourceApi,
     ServicesResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
 
 from ansible_collections.cloudera.cluster.plugins.modules import service_config
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    Parcel,
+)
+
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -115,62 +121,71 @@ def cm_api_client(conn):
     return client
 
 
-@pytest.fixture(scope="module")
-def prep_cluster(cm_api_client, request):
-    """Create a 7.1.9 test cluster using the module name."""
+@pytest.fixture(scope="session")
+def target_cluster(cm_api_client, request):
+    """Create a 7.1.9 test cluster."""
 
-    marker = request.node.get_closest_marker("prep")
-    if marker is None:
-        raise Exception("Preparation marker not found.")
-    elif "version" not in marker.kwargs:
-        raise Exception("Cluster version parameter not found.")
-    elif "hosts" not in marker.kwargs:
-        raise Exception("Cluster hosts parameter not found.")
-    else:
-        version = marker.kwargs["version"]
-        hosts = marker.kwargs["hosts"]
+    name = (
+        Path(request.fixturename).stem
+        + "_"
+        + "".join(random.choices(string.ascii_lowercase, k=6))
+    )
+    cdh_version = "7.1.9"
 
     cluster_api = ClustersResourceApi(cm_api_client)
+    parcels_api = ParcelsResourceApi(cm_api_client)
     parcel_api = ParcelResourceApi(cm_api_client)
+    host_api = HostsResourceApi(cm_api_client)
 
     try:
-        config = ApiCluster(
-            name=request.node.name,
-            full_version=version,
-        )
-        # Create the cluster
-        clusters = cluster_api.create_clusters(body=ApiClusterList(items=[config]))
+        # TODO Query for the latest version available - is this possible?
 
-        # Activate the parcel(s)
-        from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
-            Parcel,
+        # Create the initial cluster
+        config = ApiCluster(
+            name=name,
+            full_version=cdh_version,
         )
+
+        cluster_api.create_clusters(body=ApiClusterList(items=[config]))
+
+        # Get first free host and assign to the cluster
+        all_hosts = host_api.read_hosts()
+        host = next((h for h in all_hosts.items if not h.cluster_ref), None)
+
+        if host is None:
+            # Roll back the cluster and then raise an error
+            cluster_api.delete_cluster(cluster_name=name)
+            raise Exception("No available hosts to allocate to new cluster")
+        else:
+            cluster_api.add_hosts(
+                cluster_name=name,
+                body=ApiHostRefList(items=[ApiHostRef(host_id=host.host_id)]),
+            )
+
+        # Find the first CDH parcel version and activate it
+        parcels = parcels_api.read_parcels(cluster_name=name)
+        cdh_parcel = next((p for p in parcels.items if p.product == "CDH"))
 
         parcel = Parcel(
             parcel_api=parcel_api,
-            product="CDH",
-            version=version,
-            cluster=request.node.name,
+            product=cdh_parcel.product,
+            version=cdh_parcel.version,
+            cluster=name,
         )
 
-        cluster_api.add_hosts(
-            cluster_name=request.node.name,
-            body=ApiHostRefList(items=[ApiHostRef(hostname=h) for h in hosts]),
-        )
-        yield clusters.items[0]
-        cluster_api.delete_cluster(cluster_name=request.node.name)
+        parcel.activate()
+
+        # Reread and return the cluster
+        yield cluster_api.read_cluster(cluster_name=name)
+
+        # Deprovision the cluster
+        cluster_api.delete_cluster(cluster_name=name)
     except ApiException as ae:
         raise Exception(str(ae))
 
 
-@pytest.mark.skip
-def test_wip_cluster(prep_cluster):
-    results = prep_cluster
-    print(results)
-
-
 def wait_for_command(
-    api_client: ApiClient, command: ApiCommand, polling: int = 10, delay: int = 5
+    api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 5
 ):
     poll_count = 0
     while command.active:
@@ -184,7 +199,7 @@ def wait_for_command(
 
 
 @pytest.fixture(scope="module")
-def target_service(cm_api_client, request):
+def target_service(cm_api_client, target_cluster, request):
     api = ServicesResourceApi(cm_api_client)
     cluster_api = ClustersResourceApi(cm_api_client)
 
@@ -195,17 +210,20 @@ def target_service(cm_api_client, request):
         type="ZOOKEEPER",
     )
 
-    api.create_services(cluster_name="TestOne", body=ApiServiceList(items=[service]))
-    cluster_api.auto_assign_roles(cluster_name="TestOne")
+    api.create_services(
+        cluster_name=target_cluster.name, body=ApiServiceList(items=[service])
+    )
+    cluster_api.auto_assign_roles(cluster_name=target_cluster.name)
 
-    # configure = cluster_api.auto_configure(cluster_name="TestOne")
+    # configure = cluster_api.auto_configure(cluster_name=target_cluster.name)
     wait_for_command(
-        cm_api_client, api.first_run(cluster_name="TestOne", service_name=name)
+        cm_api_client,
+        api.first_run(cluster_name=target_cluster.name, service_name=name),
     )
 
-    yield api.read_service(cluster_name="TestOne", service_name=name)
+    yield api.read_service(cluster_name=target_cluster.name, service_name=name)
 
-    api.delete_service(cluster_name="TestOne", service_name=name)
+    api.delete_service(cluster_name=target_cluster.name, service_name=name)
 
 
 @pytest.fixture
