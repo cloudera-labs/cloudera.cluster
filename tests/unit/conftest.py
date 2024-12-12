@@ -145,18 +145,23 @@ def cm_api_client(conn):
         config.host = str(conn["url"]).rstrip(" /")
     else:
         rest = RESTClientObject()
+        url = f"{conn['host']}:{conn['port']}"
 
         # Handle redirects
-        url = rest.GET(conn["host"]).urllib3_response.geturl()
+        redirect = rest.GET(url).urllib3_response.geturl()
+        if redirect != "/":
+            url = redirect
+
+        url = url.rstrip(" /")
 
         # Get version
         auth = config.auth_settings().get("basic")
         version = rest.GET(
-            f"{url}api/version", headers={auth["key"]: auth["value"]}
+            f"{url}/api/version", headers={auth["key"]: auth["value"]}
         ).data
 
         # Set host
-        config.host = f"{url}api/{version}"
+        config.host = f"{url}/api/{version}"
 
     client = ApiClient()
     client.user_agent = "pytest"
