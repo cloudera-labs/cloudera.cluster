@@ -127,7 +127,7 @@ def conn():
 
 
 @pytest.fixture(scope="session")
-def cm_api_client(conn):
+def cm_api_client(conn) -> ApiClient:
     """Create a Cloudera Manager API client, resolving HTTP/S and version URL.
 
     Args:
@@ -172,68 +172,74 @@ def cm_api_client(conn):
 def target_cluster(cm_api_client, request):
     """Create a test cluster."""
 
-    if os.getenv("CDH_VERSION", None):
-        cdh_version = os.getenv("CDH_VERSION")
-    else:
-        raise Exception("No CDH_VERSION found. Please set this environment variable.")
-
-    name = (
-        Path(request.fixturename).stem
-        + "_"
-        + "".join(random.choices(string.ascii_lowercase, k=6))
-    )
-
     cluster_api = ClustersResourceApi(cm_api_client)
-    parcels_api = ParcelsResourceApi(cm_api_client)
-    parcel_api = ParcelResourceApi(cm_api_client)
-    host_api = HostsResourceApi(cm_api_client)
 
-    try:
-        # Create the initial cluster
-        config = ApiCluster(
-            name=name,
-            full_version=cdh_version,
-        )
-
-        cluster_api.create_clusters(body=ApiClusterList(items=[config]))
-
-        # Get first free host and assign to the cluster
-        all_hosts = host_api.read_hosts()
-        host = next((h for h in all_hosts.items if not h.cluster_ref), None)
-
-        if host is None:
-            # Roll back the cluster and then raise an error
-            cluster_api.delete_cluster(cluster_name=name)
-            raise Exception("No available hosts to allocate to new cluster")
+    if os.getenv("CM_CLUSTER_NAME", None):
+        yield cluster_api.read_cluster(cluster_name=os.getenv("CM_CLUSTER_NAME"))
+    else:
+        if os.getenv("CDH_VERSION", None):
+            cdh_version = os.getenv("CDH_VERSION")
         else:
-            cluster_api.add_hosts(
-                cluster_name=name,
-                body=ApiHostRefList(items=[ApiHostRef(host_id=host.host_id)]),
+            raise Exception(
+                "No CDH_VERSION found. Please set this environment variable."
             )
 
-        # Find the first CDH parcel version and activate it
-        parcels = parcels_api.read_parcels(cluster_name=name)
-        cdh_parcel = next(
-            (
-                p
-                for p in parcels.items
-                if p.product == "CDH" and p.version.startswith(cdh_version)
+        name = (
+            Path(request.fixturename).stem
+            + "_"
+            + "".join(random.choices(string.ascii_lowercase, k=6))
+        )
+
+        parcels_api = ParcelsResourceApi(cm_api_client)
+        parcel_api = ParcelResourceApi(cm_api_client)
+        host_api = HostsResourceApi(cm_api_client)
+
+        try:
+            # Create the initial cluster
+            config = ApiCluster(
+                name=name,
+                full_version=cdh_version,
             )
-        )
 
-        parcel = Parcel(
-            parcel_api=parcel_api,
-            product=cdh_parcel.product,
-            version=cdh_parcel.version,
-            cluster=name,
-        )
+            cluster_api.create_clusters(body=ApiClusterList(items=[config]))
 
-        parcel.activate()
+            # Get first free host and assign to the cluster
+            all_hosts = host_api.read_hosts()
+            host = next((h for h in all_hosts.items if not h.cluster_ref), None)
 
-        # Reread and return the cluster
-        yield cluster_api.read_cluster(cluster_name=name)
+            if host is None:
+                # Roll back the cluster and then raise an error
+                cluster_api.delete_cluster(cluster_name=name)
+                raise Exception("No available hosts to allocate to new cluster")
+            else:
+                cluster_api.add_hosts(
+                    cluster_name=name,
+                    body=ApiHostRefList(items=[ApiHostRef(host_id=host.host_id)]),
+                )
 
-        # Deprovision the cluster
-        cluster_api.delete_cluster(cluster_name=name)
-    except ApiException as ae:
-        raise Exception(str(ae))
+            # Find the first CDH parcel version and activate it
+            parcels = parcels_api.read_parcels(cluster_name=name)
+            cdh_parcel = next(
+                (
+                    p
+                    for p in parcels.items
+                    if p.product == "CDH" and p.version.startswith(cdh_version)
+                )
+            )
+
+            parcel = Parcel(
+                parcel_api=parcel_api,
+                product=cdh_parcel.product,
+                version=cdh_parcel.version,
+                cluster=name,
+            )
+
+            parcel.activate()
+
+            # Reread and return the cluster
+            yield cluster_api.read_cluster(cluster_name=name)
+
+            # Deprovision the cluster
+            cluster_api.delete_cluster(cluster_name=name)
+        except ApiException as ae:
+            raise Exception(str(ae))

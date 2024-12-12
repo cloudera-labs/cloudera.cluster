@@ -19,6 +19,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import logging
+import os
 import pytest
 
 from pathlib import Path
@@ -47,29 +48,34 @@ LOG = logging.getLogger(__name__)
 @pytest.fixture(scope="module")
 def target_service(cm_api_client, target_cluster, request):
     api = ServicesResourceApi(cm_api_client)
-    cluster_api = ClustersResourceApi(cm_api_client)
 
-    name = Path(request.node.name).stem + "_zookeeper"
+    if os.getenv("CM_SERVICE_NAME", None):
+        yield api.read_service(
+            cluster_name=target_cluster.name, service_name=os.getenv("CM_SERVICE_NAME")
+        )
+    else:
+        cluster_api = ClustersResourceApi(cm_api_client)
+        name = Path(request.node.name).stem + "_zookeeper"
 
-    service = ApiService(
-        name=name,
-        type="ZOOKEEPER",
-    )
+        service = ApiService(
+            name=name,
+            type="ZOOKEEPER",
+        )
 
-    api.create_services(
-        cluster_name=target_cluster.name, body=ApiServiceList(items=[service])
-    )
-    cluster_api.auto_assign_roles(cluster_name=target_cluster.name)
+        api.create_services(
+            cluster_name=target_cluster.name, body=ApiServiceList(items=[service])
+        )
+        cluster_api.auto_assign_roles(cluster_name=target_cluster.name)
 
-    # configure = cluster_api.auto_configure(cluster_name=target_cluster.name)
-    wait_for_command(
-        cm_api_client,
-        api.first_run(cluster_name=target_cluster.name, service_name=name),
-    )
+        # configure = cluster_api.auto_configure(cluster_name=target_cluster.name)
+        wait_for_command(
+            cm_api_client,
+            api.first_run(cluster_name=target_cluster.name, service_name=name),
+        )
 
-    yield api.read_service(cluster_name=target_cluster.name, service_name=name)
+        yield api.read_service(cluster_name=target_cluster.name, service_name=name)
 
-    api.delete_service(cluster_name=target_cluster.name, service_name=name)
+        api.delete_service(cluster_name=target_cluster.name, service_name=name)
 
 
 @pytest.fixture
@@ -83,7 +89,13 @@ def target_service_config(cm_api_client, target_service, request):
 
     service_api = ServicesResourceApi(cm_api_client)
 
-    # Set the parameter(s)
+    # Retrieve all of the pre-setup configurations
+    pre = service_api.read_service_config(
+        cluster_name=target_service.cluster_ref.cluster_name,
+        service_name=target_service.name,
+    )
+
+    # Set the test configurations
     # Do so serially, since a failed update due to defaults (see ApiException) will cause remaining
     # configuration entries to not run. Long-term solution is to check-and-set, which is
     # what the Ansible modules do...
@@ -102,18 +114,30 @@ def target_service_config(cm_api_client, target_service, request):
     # Return the targeted service and go run the test
     yield target_service
 
-    # Reset the parameter
-    for k, v in marker.kwargs["service_config"].items():
-        try:
-            service_api.update_service_config(
-                cluster_name=target_service.cluster_ref.cluster_name,
-                service_name=target_service.name,
-                message=f"test_service_config::{request.node.name}::reset",
-                body=ApiServiceConfig(items=[ApiConfig(name=k, value=v)]),
-            )
-        except ApiException as ae:
-            if ae.status != 400 or "delete with template" not in str(ae.body):
-                raise Exception(str(ae))
+    # Retrieve all of the post-setup configurations
+    post = service_api.read_service_config(
+        cluster_name=target_service.cluster_ref.cluster_name,
+        service_name=target_service.name,
+    )
+
+    # Reconcile the configurations
+    pre_set = set([c.name for c in pre.items])
+
+    reconciled = pre.items.copy()
+    reconciled.extend(
+        [
+            ApiConfig(name=k.name, value=None)
+            for k in post.items
+            if k.name not in pre_set
+        ]
+    )
+
+    service_api.update_service_config(
+        cluster_name=target_service.cluster_ref.cluster_name,
+        service_name=target_service.name,
+        message=f"test_service_config::{request.node.name}::reset",
+        body=ApiServiceConfig(items=reconciled),
+    )
 
 
 def test_missing_required(conn, module_args):
@@ -202,24 +226,20 @@ def test_set_parameters(conn, module_args, target_service_config):
         }
     )
 
+    expected = dict(autopurgeSnapRetainCount="9", tickTime="1111")
+
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
     assert e.value.changed == True
-    assert {c["name"]: c["value"] for c in e.value.config}[
-        "autopurgeSnapRetainCount"
-    ] == "9"
-    assert len(e.value.config) == 2
+    assert expected.items() <= {c["name"]: c["value"] for c in e.value.config}.items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
     assert e.value.changed == False
-    assert {c["name"]: c["value"] for c in e.value.config}[
-        "autopurgeSnapRetainCount"
-    ] == "9"
-    assert len(e.value.config) == 2
+    assert expected.items() <= {c["name"]: c["value"] for c in e.value.config}.items()
 
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=7, tickTime=1111))
@@ -234,13 +254,15 @@ def test_unset_parameters(conn, module_args, target_service_config):
         }
     )
 
+    expected = dict(tickTime="1111")
+
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
     assert e.value.changed == True
     results = {c["name"]: c["value"] for c in e.value.config}
     assert "autopurgeSnapRetainCount" not in results
-    assert len(e.value.config) == 1
+    assert expected.items() <= results.items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
@@ -249,7 +271,7 @@ def test_unset_parameters(conn, module_args, target_service_config):
     assert e.value.changed == False
     results = {c["name"]: c["value"] for c in e.value.config}
     assert "autopurgeSnapRetainCount" not in results
-    assert len(e.value.config) == 1
+    assert expected.items() <= results.items()
 
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=7, tickTime=1111))
@@ -267,23 +289,19 @@ def test_set_parameters_with_purge(conn, module_args, target_service_config):
         }
     )
 
+    expected = dict(autopurgeSnapRetainCount="9")
+
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
     assert e.value.changed == True
-    assert {c["name"]: c["value"] for c in e.value.config}[
-        "autopurgeSnapRetainCount"
-    ] == "9"
-    assert len(e.value.config) == 1
+    assert expected.items() <= {c["name"]: c["value"] for c in e.value.config}.items()
 
     with pytest.raises(AnsibleExitJson) as e:
         service_config.main()
 
     assert e.value.changed == False
-    assert {c["name"]: c["value"] for c in e.value.config}[
-        "autopurgeSnapRetainCount"
-    ] == "9"
-    assert len(e.value.config) == 1
+    assert expected.items() <= {c["name"]: c["value"] for c in e.value.config}.items()
 
 
 @pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=8, tickTime=2222))
