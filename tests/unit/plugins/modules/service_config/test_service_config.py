@@ -21,6 +21,8 @@ __metaclass__ = type
 import logging
 import os
 import pytest
+import random
+import string
 
 from pathlib import Path
 
@@ -40,18 +42,57 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
     wait_for_command,
+    provision_service,
+    service_wide_config,
 )
 
 LOG = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-def target_service(cm_api_client, target_cluster, request):
+def zk_service(cm_api_client, base_cluster, request):
+    if os.getenv("CM_SERVICE_ZOOKEEPER", None):
+        api = ServicesResourceApi(cm_api_client)
+        yield api.read_service(
+            cluster_name=base_cluster.name,
+            service_name=os.getenv("CM_SERVICE_ZOOKEEPER"),
+        )
+    else:
+        name = (
+            Path(request.fixturename).stem
+            + "_"
+            + "".join(random.choices(string.ascii_lowercase, k=6))
+        )
+        yield from provision_service(
+            api_client=cm_api_client,
+            cluster=base_cluster,
+            service_name=name,
+            service_type="ZOOKEEPER",
+        )
+
+
+@pytest.fixture(scope="function")
+def zk_service_config(cm_api_client, zk_service, request):
+    marker = request.node.get_closest_marker("service_config")
+
+    if marker is None:
+        raise Exception("No service_config marker found.")
+
+    yield from service_wide_config(
+        api_client=cm_api_client,
+        service=zk_service,
+        params=marker.args[0],
+        message=f"test_service_config::{request.node.name}",
+    )
+
+
+@pytest.fixture(scope="module")
+def target_service(cm_api_client, base_cluster, request):
     api = ServicesResourceApi(cm_api_client)
 
     if os.getenv("CM_SERVICE_NAME", None):
         yield api.read_service(
-            cluster_name=target_cluster.name, service_name=os.getenv("CM_SERVICE_NAME")
+            cluster_name=base_cluster.name, service_name=os.getenv("CM_SERVICE_NAME")
         )
     else:
         cluster_api = ClustersResourceApi(cm_api_client)
@@ -63,19 +104,19 @@ def target_service(cm_api_client, target_cluster, request):
         )
 
         api.create_services(
-            cluster_name=target_cluster.name, body=ApiServiceList(items=[service])
+            cluster_name=base_cluster.name, body=ApiServiceList(items=[service])
         )
-        cluster_api.auto_assign_roles(cluster_name=target_cluster.name)
+        cluster_api.auto_assign_roles(cluster_name=base_cluster.name)
 
         # configure = cluster_api.auto_configure(cluster_name=target_cluster.name)
         wait_for_command(
             cm_api_client,
-            api.first_run(cluster_name=target_cluster.name, service_name=name),
+            api.first_run(cluster_name=base_cluster.name, service_name=name),
         )
 
-        yield api.read_service(cluster_name=target_cluster.name, service_name=name)
+        yield api.read_service(cluster_name=base_cluster.name, service_name=name)
 
-        api.delete_service(cluster_name=target_cluster.name, service_name=name)
+        api.delete_service(cluster_name=base_cluster.name, service_name=name)
 
 
 @pytest.fixture
@@ -212,13 +253,13 @@ def test_present_invalid_parameter(conn, module_args, target_service):
         service_config.main()
 
 
-@pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=None, tickTime=1111))
-def test_set_parameters(conn, module_args, target_service_config):
+@pytest.mark.service_config(dict(autopurgeSnapRetainCount=None, tickTime=1111))
+def test_set_parameters(conn, module_args, zk_service_config):
     module_args(
         {
             **conn,
-            "cluster": target_service_config.cluster_ref.cluster_name,
-            "service": target_service_config.name,
+            "cluster": zk_service_config.cluster_ref.cluster_name,
+            "service": zk_service_config.name,
             "parameters": dict(autopurgeSnapRetainCount=9),
             "message": "test_service_config::test_set_parameters",
             # "_ansible_check_mode": True,
@@ -242,13 +283,13 @@ def test_set_parameters(conn, module_args, target_service_config):
     assert expected.items() <= {c["name"]: c["value"] for c in e.value.config}.items()
 
 
-@pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=7, tickTime=1111))
-def test_unset_parameters(conn, module_args, target_service_config):
+@pytest.mark.service_config(dict(autopurgeSnapRetainCount=7, tickTime=1111))
+def test_unset_parameters(conn, module_args, zk_service_config):
     module_args(
         {
             **conn,
-            "cluster": target_service_config.cluster_ref.cluster_name,
-            "service": target_service_config.name,
+            "cluster": zk_service_config.cluster_ref.cluster_name,
+            "service": zk_service_config.name,
             "parameters": dict(autopurgeSnapRetainCount=None),
             "message": "test_service_config::test_unset_parameters",
         }
@@ -274,13 +315,13 @@ def test_unset_parameters(conn, module_args, target_service_config):
     assert expected.items() <= results.items()
 
 
-@pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=7, tickTime=1111))
-def test_set_parameters_with_purge(conn, module_args, target_service_config):
+@pytest.mark.service_config(dict(autopurgeSnapRetainCount=7, tickTime=1111))
+def test_set_parameters_with_purge(conn, module_args, zk_service_config):
     module_args(
         {
             **conn,
-            "cluster": target_service_config.cluster_ref.cluster_name,
-            "service": target_service_config.name,
+            "cluster": zk_service_config.cluster_ref.cluster_name,
+            "service": zk_service_config.name,
             "parameters": dict(autopurgeSnapRetainCount=9),
             "purge": True,
             "message": "test_service_config::test_set_parameters_with_purge",
@@ -304,13 +345,13 @@ def test_set_parameters_with_purge(conn, module_args, target_service_config):
     assert expected.items() <= {c["name"]: c["value"] for c in e.value.config}.items()
 
 
-@pytest.mark.prepare(service_config=dict(autopurgeSnapRetainCount=8, tickTime=2222))
-def test_purge_all_parameters(conn, module_args, target_service_config):
+@pytest.mark.service_config(dict(autopurgeSnapRetainCount=8, tickTime=2222))
+def test_purge_all_parameters(conn, module_args, zk_service_config):
     module_args(
         {
             **conn,
-            "cluster": target_service_config.cluster_ref.cluster_name,
-            "service": target_service_config.name,
+            "cluster": zk_service_config.cluster_ref.cluster_name,
+            "service": zk_service_config.name,
             "parameters": dict(),
             "purge": True,
             "message": "test_service_config::test_purge_all_parameters",
