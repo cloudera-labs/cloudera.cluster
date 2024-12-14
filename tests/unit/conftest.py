@@ -169,13 +169,13 @@ def cm_api_client(conn) -> ApiClient:
 
 
 @pytest.fixture(scope="session")
-def target_cluster(cm_api_client, request):
-    """Create a test cluster."""
+def base_cluster(cm_api_client, request):
+    """Provision a CDH Base cluster."""
 
     cluster_api = ClustersResourceApi(cm_api_client)
 
-    if os.getenv("CM_CLUSTER_NAME", None):
-        yield cluster_api.read_cluster(cluster_name=os.getenv("CM_CLUSTER_NAME"))
+    if os.getenv("CM_CLUSTER", None):
+        yield cluster_api.read_cluster(cluster_name=os.getenv("CM_CLUSTER"))
     else:
         if os.getenv("CDH_VERSION", None):
             cdh_version = os.getenv("CDH_VERSION")
