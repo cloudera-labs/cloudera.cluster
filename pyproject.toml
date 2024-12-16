@@ -1,0 +1,61 @@
+[project]
+name = "cluster"
+dynamic = ["version"]
+description = "cloudera.cluster Ansible collection"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "Apache-2.0"
+keywords = []
+authors = [
+  { name = "Webster Mudge", email = "wmudge@cloudera.com" },
+]
+classifiers = []
+dependencies = []
+
+[tool.hatch.version]
+path = "galaxy.yml"
+pattern = "version:\\s+(?P<version>[\\d\\.]+)"
+
+[tool.hatch.envs.default]
+python = "3.12"
+skip-install = true
+dependencies = [
+  "pre-commit",
+  "coverage[toml]",
+  "pytest",
+  "pytest-mock",
+  # "pytest-cov",
+  "molecule",
+  "molecule-plugins",
+  "molecule-plugins[ec2]",
+  "tox-ansible",
+  "ansible-core<2.17", # For RHEL 8 support
+  "jmespath",
+  "cm-client",
+]
+
+[tool.hatch.envs.lint]
+python = "3.12"
+skip-install = true
+extra-dependencies = [
+  "ansible-lint",
+]
+
+[tool.hatch.envs.lint.scripts]
+run = "pre-commit run -a"
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+]
+filterwarnings = [
+  "ignore:AnsibleCollectionFinder has already been configured",
+  "ignore:'crypt' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+]
+markers = [
+  "prepare: Prepare Cloudera Manager and resources for tests",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
