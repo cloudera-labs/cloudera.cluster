@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
@@ -14,33 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_parameter_updates,
-)
-
-from cm_client import (
-    ApiConfig,
-    ApiServiceConfig,
-    ClustersResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_config
-short_description: Manage a service configuration in cluster
+short_description: Manage a cluster service configuration
 description:
-  - Manage a service configuration (service-wide) in a cluster.
+  - Manage a configuration (service-wide) for a cluster service.
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
@@ -216,6 +195,22 @@ config:
       returned: when supported
 """
 
+import json
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
+    ServiceConfigUpdates,
+)
+
+
+from cm_client import (
+    ClustersResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
+
 
 class ClusterServiceConfig(ClouderaManagerMutableModule):
     def __init__(self, module):
@@ -257,32 +252,22 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
             else:
                 raise ex
 
-        current = {r.name: r.value for r in existing.items}
-        incoming = {k: str(v) if v is not None else v for k, v in self.params.items()}
+        updates = ServiceConfigUpdates(existing, self.params, self.purge)
 
-        change_set = resolve_parameter_updates(current, incoming, self.purge)
-
-        if change_set:
+        if updates.changed:
             self.changed = True
 
             if self.module._diff:
-                self.diff = dict(
-                    before={
-                        k: current[k] if k in current else None
-                        for k in change_set.keys()
-                    },
-                    after=change_set,
-                )
+                self.diff = updates.diff
 
             if not self.module.check_mode:
-                body = ApiServiceConfig(
-                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
-                )
-
                 self.config = [
                     p.to_dict()
                     for p in api_instance.update_service_config(
-                        self.cluster, self.service, message=self.message, body=body
+                        self.cluster,
+                        self.service,
+                        message=self.message,
+                        body=updates.config,
                     ).items
                 ]
 
