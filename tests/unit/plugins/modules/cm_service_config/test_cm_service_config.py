@@ -49,7 +49,9 @@ def test_present_invalid_parameter(conn, module_args):
         cm_service_config.main()
 
 
-@pytest.mark.service_config(dict(log_event_retry_frequency=10))
+@pytest.mark.service_config(
+    dict(mgmt_emit_sensitive_data_in_stderr=False, log_event_retry_frequency=10)
+)
 def test_set_parameters(conn, module_args, cms_service_config):
     module_args(
         {
