@@ -16,6 +16,9 @@
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
     parse_role_config_group_result,
 )
 

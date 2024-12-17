@@ -16,8 +16,10 @@
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    parse_role_result,
     resolve_tag_updates,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    parse_role_result,
 )
 
 from cm_client import (
@@ -33,6 +35,7 @@ from cm_client import (
     ServicesResourceApi,
 )
 from cm_client.rest import ApiException
+
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",

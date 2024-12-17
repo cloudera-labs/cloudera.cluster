@@ -17,7 +17,7 @@ A common functions for service management
 """
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    _parse_output,
+    normalize_output,
     resolve_parameter_updates,
 )
 
@@ -47,8 +47,13 @@ SERVICE_OUTPUT = [
 def parse_service_result(service: ApiService) -> dict:
     # Retrieve only the cluster_name
     output = dict(cluster_name=service.cluster_ref.cluster_name)
-    output.update(_parse_output(service.to_dict(), SERVICE_OUTPUT))
+    output.update(normalize_output(service.to_dict(), SERVICE_OUTPUT))
     return output
+
+
+def parse_cm_service_result(service: ApiService) -> dict:
+    # Ignore cluster_name
+    return normalize_output(service.to_dict(), SERVICE_OUTPUT)
 
 
 class ServiceConfigUpdates(object):

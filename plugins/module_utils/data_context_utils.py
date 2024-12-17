@@ -17,7 +17,7 @@ A common functions for Cloudera Manager service management
 """
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    _parse_output,
+    normalize_output,
 )
 from cm_client import ApiDataContextList
 
@@ -38,9 +38,9 @@ DATA_CONTEXT_OUTPUT = [
 ]
 
 
-def _parse_output(data: dict, keys: list) -> dict:
+def normalize_output(data: dict, keys: list) -> dict:
     return {key: data[key] for key in keys if key in data}
 
 
 def parse_data_context_result(data_contexts: ApiDataContextList) -> list:
-    return [_parse_output(item, DATA_CONTEXT_OUTPUT) for item in data_contexts.items]
+    return [normalize_output(item, DATA_CONTEXT_OUTPUT) for item in data_contexts.items]

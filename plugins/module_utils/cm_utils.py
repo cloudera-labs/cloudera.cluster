@@ -35,8 +35,6 @@ from cm_client import (
     ApiClient,
     ApiCommand,
     ApiConfigList,
-    ApiRole,
-    ApiRoleConfigGroup,
     Configuration,
 )
 from cm_client.rest import ApiException, RESTClientObject
@@ -47,34 +45,8 @@ from cm_client.apis.commands_resource_api import CommandsResourceApi
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
 
-ROLE_OUTPUT = [
-    "commission_state",
-    "config_staleness_status",
-    "ha_status",
-    "health_checks",
-    "health_summary",
-    # "host_ref",
-    "maintenance_mode",
-    "maintenance_owners",
-    "name",
-    # "role_config_group_ref",
-    "role_state",
-    # "service_ref",
-    "tags",
-    "type",
-    "zoo_keeper_server_mode",
-]
 
-ROLE_CONFIG_GROUP = [
-    "name",
-    "role_type",
-    "base",
-    "display_name",
-    # "service_ref",
-]
-
-
-def _parse_output(entity: dict, filter: list) -> dict:
+def normalize_output(entity: dict, filter: list) -> dict:
     output = {}
     for k in filter:
         if k == "tags":
@@ -82,24 +54,6 @@ def _parse_output(entity: dict, filter: list) -> dict:
         else:
             output[k] = entity[k]
 
-    return output
-
-
-def parse_role_result(role: ApiRole) -> dict:
-    # Retrieve only the host_id, role_config_group, and service identifiers
-    output = dict(
-        host_id=role.host_ref.host_id,
-        role_config_group_name=role.role_config_group_ref.role_config_group_name,
-        service_name=role.service_ref.service_name,
-    )
-    output.update(_parse_output(role.to_dict(), ROLE_OUTPUT))
-    return output
-
-
-def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dict:
-    # Retrieve only the service identifier
-    output = dict(service_name=role_config_group.service_ref.service_name)
-    output.update(_parse_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
     return output
 
 
