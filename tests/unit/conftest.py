@@ -295,7 +295,7 @@ def cms_service_config(cm_api_client, cms, request):
     for k, v in marker.args[0].items():
         try:
             api.update_service_config(
-                message=f"{request.node.name}::set",
+                message=f"{Path(request.node.parent.name).stem}::{request.node.name}::set",
                 body=ApiServiceConfig(items=[ApiConfig(name=k, value=v)]),
             )
         except ApiException as ae:
@@ -321,6 +321,6 @@ def cms_service_config(cm_api_client, cms, request):
     )
 
     api.update_service_config(
-        message=f"{request.node.name}::reset",
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}::reset",
         body=ApiServiceConfig(items=reconciled),
     )
