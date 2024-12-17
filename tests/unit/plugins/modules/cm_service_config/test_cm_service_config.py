@@ -38,10 +38,12 @@ def test_missing_required(conn, module_args):
 
 
 def test_present_invalid_parameter(conn, module_args):
-    conn.update(
-        parameters=dict(example="Example"),
+    module_args(
+        {
+            **conn,
+            "parameters": dict(example="Example"),
+        }
     )
-    module_args(conn)
 
     with pytest.raises(
         AnsibleFailJson, match="Unknown configuration attribute 'example'"
