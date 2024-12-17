@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from cm_client.rest import ApiException
-from cm_client import MgmtRolesResourceApi
-from cm_client import MgmtServiceResourceApi
-from cm_client import MgmtRoleCommandsResourceApi
-from cm_client import HostsResourceApi
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_service
 short_description: Manage Cloudera Manager service roles
 description:
@@ -68,7 +54,6 @@ requirements:
 """
 
 EXAMPLES = r"""
----
 - name: Start Cloudera Manager service roles
   cloudera.cluster.cm_version:
     host: "10.10.10.10"
@@ -114,8 +99,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
-cloudera_manager:
+service:
     description: List of Cloudera Manager roles
     type: dict
     contains:
@@ -185,241 +169,325 @@ cloudera_manager:
             returned: optional
 """
 
+import json
 
-class ClouderaService(ClouderaManagerModule):
+from cm_client import (
+    HostsResourceApi,
+    MgmtRolesResourceApi,
+    MgmtRoleConfigGroupsResourceApi,
+    MgmtRoleCommandsResourceApi,
+    MgmtServiceResourceApi,
+)
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
+    ServiceConfigUpdates,
+    parse_cm_service_result,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    parse_role_result,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    parse_role_config_group_result,
+)
+
+
+class ClouderaManagerService(ClouderaManagerMutableModule):
     def __init__(self, module):
-        super(ClouderaService, self).__init__(module)
+        super(ClouderaManagerService, self).__init__(module)
 
-        self.role = self.get_param("role")
+        # Set the parameters
+        self.params = self.get_param("parameters")
+        self.roles = self.get_param("roles")
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
+        self.view = self.get_param("view")
+
+        # Initialize the return value
+        self.changed = False
+        self.cm_service = {}
+
+        if self.module._diff:
+            self.diff = dict(before=dict(), after=dict())
+        else:
+            self.diff = {}
+
+        # Execute the logic
         self.process()
 
-    @ClouderaManagerModule.handle_process
+    @ClouderaManagerMutableModule.handle_process
     def process(self):
-        try:
-            api_instance = MgmtServiceResourceApi(self.api_client)
-            role_api_instance = MgmtRolesResourceApi(self.api_client)
-            role_cmd_api_instance = MgmtRoleCommandsResourceApi(self.api_client)
-            mgmt_service_api_instance = MgmtServiceResourceApi(self.api_client)
-            host_api_instance = HostsResourceApi(self.api_client)
 
-            get_host_infomation = host_api_instance.read_hosts().to_dict()
-            for item in get_host_infomation["items"]:
-                if self.host == item["hostname"]:
-                    host_id = item["host_id"]
+        service_api = MgmtServiceResourceApi(self.api_client)
+        role_api = MgmtRolesResourceApi(self.api_client)
+        role_cmd_api = MgmtRoleCommandsResourceApi(self.api_client)
+        rcg_api = MgmtRoleConfigGroupsResourceApi(self.api_client)
+        host_api = HostsResourceApi(self.api_client)
 
-            if not self.purge:
-                available_roles_info = role_api_instance.read_roles().to_dict()
-                existing_roles = []
-                for item in available_roles_info["items"]:
-                    existing_roles.append(item["type"])
+        # Manage service-wide configurations
+        if self.params or self.purge:
+            try:
+                existing_params = service_api.read_service_config()
+            except ApiException as ex:
+                if ex.status == 404:
+                    self.module.fail_json(msg=json.loads(ex.body)["message"])
+                else:
+                    raise ex
 
-                if self.state in ["present"]:
-                    not_existing_roles = []
-                    for role in self.role:
-                        if role not in existing_roles:
-                            not_existing_roles.append(role)
-                    if not_existing_roles:
-                        body = {
-                            "items": [
-                                {"type": role, "hostRef": {"hostId": host_id}}
-                                for role in not_existing_roles
-                            ]
-                        }
-                        role_api_instance.create_roles(body=body)
-                    self.cm_service_output = role_api_instance.read_roles().to_dict()
-                    self.changed = True
+            service_wide = ServiceConfigUpdates(
+                existing_params, self.params, self.purge
+            )
 
-                elif self.state in ["absent"]:
-                    roles_to_remove = [
-                        role for role in self.role if role in existing_roles
-                    ]
-                    roles_to_remove_extended_info = []
-                    for role in roles_to_remove:
-                        for item in available_roles_info["items"]:
-                            if role == item["type"]:
-                                roles_to_remove_extended_info.append(item["name"])
-                    if not roles_to_remove_extended_info:
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
-                        )
-                        self.changed = False
-                    else:
-                        for role in roles_to_remove_extended_info:
-                            role_api_instance.delete_role(role_name=role)
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
+            if service_wide.changed:
+                self.changed = True
+
+                if self.module._diff:
+                    self.diff["before"].update(params=service_wide.diff["before"])
+                    self.diff["after"].update(params=service_wide.diff["after"])
+
+                if not self.module.check_mode:
+                    service_api.update_service_config(
+                        message=self.message, body=service_wide.config
+                    )
+
+        # Manage roles
+        if self.roles:
+            try:
+                # Get a list of all host and find itself
+                # This is hardcoded, so needs to be broken into host
+                # assignment per-role
+                hosts = host_api.read_hosts()
+                for h in hosts.items():
+                    if self.host == h.hostname:
+                        host_id = h.host_id
+
+                # CHECK MODE
+                if not self.purge:
+                    available_roles_info = role_api.read_roles().to_dict()
+                    existing_roles = []
+                    for item in available_roles_info["items"]:
+                        existing_roles.append(item["type"])
+
+                    if self.state in ["present"]:
+                        not_existing_roles = []
+                        for role in self.roles:
+                            if role not in existing_roles:
+                                not_existing_roles.append(role)
+                        if not_existing_roles:
+                            body = {
+                                "items": [
+                                    {"type": role, "hostRef": {"hostId": host_id}}
+                                    for role in not_existing_roles
+                                ]
+                            }
+                            role_api.create_roles(body=body)
+                        self.cm_service = parse_cm_service_result(
+                            service_api.read_service()
                         )
                         self.changed = True
 
-                elif self.state in ["started"]:
-
-                    matching_roles = []
-                    new_roles = []
-                    for role in self.role:
-                        if role in existing_roles:
-                            matching_roles.append(role)
+                    elif self.state in ["absent"]:
+                        roles_to_remove = [
+                            role for role in self.roles if role in existing_roles
+                        ]
+                        roles_to_remove_extended_info = []
+                        for role in roles_to_remove:
+                            for item in available_roles_info["items"]:
+                                if role == item["type"]:
+                                    roles_to_remove_extended_info.append(item["name"])
+                        if not roles_to_remove_extended_info:
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = False
                         else:
-                            new_roles.append(role)
+                            for role in roles_to_remove_extended_info:
+                                role_api.delete_role(role_name=role)
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = True
 
-                    new_roles_to_start = []
-                    if new_roles:
-                        body = {
-                            "items": [
-                                {"type": role, "hostRef": {"hostId": host_id}}
-                                for role in new_roles
-                            ]
-                        }
-                        newly_added_roles = role_api_instance.create_roles(
-                            body=body
-                        ).to_dict()
+                    elif self.state in ["started"]:
 
-                        for role in newly_added_roles["items"]:
-                            new_roles_to_start.append(role["name"])
-                        body = {"items": new_roles_to_start}
+                        matching_roles = []
+                        new_roles = []
+                        for role in self.roles:
+                            if role in existing_roles:
+                                matching_roles.append(role)
+                            else:
+                                new_roles.append(role)
 
-                    existing_roles_state = []
-                    for role in matching_roles:
-                        for item in available_roles_info["items"]:
-                            if role == item["type"]:
-                                existing_roles_state.append(
-                                    {
-                                        "type": item["type"],
-                                        "role_state": item["role_state"].lower(),
-                                        "name": item["name"],
-                                    }
-                                )
+                        new_roles_to_start = []
+                        if new_roles:
+                            body = {
+                                "items": [
+                                    {"type": role, "hostRef": {"hostId": host_id}}
+                                    for role in new_roles
+                                ]
+                            }
+                            newly_added_roles = role_api.create_roles(
+                                body=body
+                            ).to_dict()
 
-                    existing_roles_to_start = []
-                    for role in existing_roles_state:
-                        if role["role_state"] == "stopped":
-                            existing_roles_to_start.append(role["name"])
+                            for role in newly_added_roles["items"]:
+                                new_roles_to_start.append(role["name"])
+                            body = {"items": new_roles_to_start}
 
-                    all_roles_to_start = new_roles_to_start + existing_roles_to_start
-                    body = {"items": all_roles_to_start}
+                        existing_roles_state = []
+                        for role in matching_roles:
+                            for item in available_roles_info["items"]:
+                                if role == item["type"]:
+                                    existing_roles_state.append(
+                                        {
+                                            "type": item["type"],
+                                            "role_state": item["role_state"].lower(),
+                                            "name": item["name"],
+                                        }
+                                    )
 
-                    if all_roles_to_start:
-                        start_roles_request = role_cmd_api_instance.start_command(
-                            body=body
-                        ).to_dict()
-                        command_id = start_roles_request["items"][0]["id"]
+                        existing_roles_to_start = []
+                        for role in existing_roles_state:
+                            if role["role_state"] == "stopped":
+                                existing_roles_to_start.append(role["name"])
+
+                        all_roles_to_start = (
+                            new_roles_to_start + existing_roles_to_start
+                        )
+                        body = {"items": all_roles_to_start}
+
+                        if all_roles_to_start:
+                            start_roles_request = role_cmd_api.start_command(
+                                body=body
+                            ).to_dict()
+                            command_id = start_roles_request["items"][0]["id"]
+                            self.wait_for_command_state(
+                                command_id=command_id, polling_interval=5
+                            )
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = True
+                        else:
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = False
+
+                    elif self.state in ["stopped"]:
+                        matching_roles = []
+                        for role in self.roles:
+                            if role in existing_roles:
+                                matching_roles.append(role)
+
+                        matching_roles_state = []
+                        for role in matching_roles:
+                            for item in available_roles_info["items"]:
+                                if role == item["type"]:
+                                    matching_roles_state.append(
+                                        {
+                                            "type": item["type"],
+                                            "role_state": item["role_state"].lower(),
+                                            "name": item["name"],
+                                        }
+                                    )
+
+                        roles_to_stop = []
+                        for role in matching_roles_state:
+                            if role["role_state"] == "started":
+                                roles_to_stop.append(role["name"])
+                        body = {"items": roles_to_stop}
+
+                        if roles_to_stop:
+                            role_cmd_api.stop_command(body=body)
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = True
+                        else:
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = False
+
+                    elif self.state in ["restarted"]:
+                        matching_roles = []
+                        for role in self.roles:
+                            if role in existing_roles:
+                                matching_roles.append(role)
+
+                        matching_roles_state = []
+                        for role in matching_roles:
+                            for item in available_roles_info["items"]:
+                                if role == item["type"]:
+                                    matching_roles_state.append(
+                                        {
+                                            "type": item["type"],
+                                            "role_state": item["role_state"].lower(),
+                                            "name": item["name"],
+                                        }
+                                    )
+
+                        roles_to_restart = []
+                        for role in matching_roles_state:
+                            roles_to_restart.append(role["name"])
+                        body = {"items": roles_to_restart}
+
+                        if roles_to_restart:
+                            role_cmd_api.restart_command(body=body)
+                            self.cm_service = role_api.read_roles().to_dict()
+                            self.changed = True
+
+                if self.purge:
+                    service_api.delete_cms()
+                    body = {"roles": [{"type": role} for role in self.roles]}
+                    service_api.setup_cms(body=body)
+                    self.cm_service = role_api.read_roles().to_dict()
+
+                    if self.state in ["started"]:
+                        start_roles_request = service_api.start_command().to_dict()
+                        command_id = start_roles_request["id"]
                         self.wait_for_command_state(
                             command_id=command_id, polling_interval=5
                         )
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
+                        self.cm_service = role_api.read_roles().to_dict()
+                    self.changed = True
+            except ApiException as e:
+                if e.status == 404 or 400:
+                    roles_dict = {"roles": [{"type": role} for role in self.roles]}
+                    service_api.setup_cms(body=roles_dict)
+
+                    if self.state in ["started"]:
+                        start_roles_request = service_api.start_command().to_dict()
+                        command_id = start_roles_request["id"]
+                        self.wait_for_command_state(
+                            command_id=command_id, polling_interval=5
                         )
-                        self.changed = True
+                        self.cm_service = role_api.read_roles().to_dict()
                     else:
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
-                        )
-                        self.changed = False
+                        self.cm_service = role_api.read_roles().to_dict()
+                    self.changed = True
 
-                elif self.state in ["stopped"]:
-                    matching_roles = []
-                    for role in self.role:
-                        if role in existing_roles:
-                            matching_roles.append(role)
-
-                    matching_roles_state = []
-                    for role in matching_roles:
-                        for item in available_roles_info["items"]:
-                            if role == item["type"]:
-                                matching_roles_state.append(
-                                    {
-                                        "type": item["type"],
-                                        "role_state": item["role_state"].lower(),
-                                        "name": item["name"],
-                                    }
-                                )
-
-                    roles_to_stop = []
-                    for role in matching_roles_state:
-                        if role["role_state"] == "started":
-                            roles_to_stop.append(role["name"])
-                    body = {"items": roles_to_stop}
-
-                    if roles_to_stop:
-                        role_cmd_api_instance.stop_command(body=body)
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
-                        )
-                        self.changed = True
-                    else:
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
-                        )
-                        self.changed = False
-
-                elif self.state in ["restarted"]:
-                    matching_roles = []
-                    for role in self.role:
-                        if role in existing_roles:
-                            matching_roles.append(role)
-
-                    matching_roles_state = []
-                    for role in matching_roles:
-                        for item in available_roles_info["items"]:
-                            if role == item["type"]:
-                                matching_roles_state.append(
-                                    {
-                                        "type": item["type"],
-                                        "role_state": item["role_state"].lower(),
-                                        "name": item["name"],
-                                    }
-                                )
-
-                    roles_to_restart = []
-                    for role in matching_roles_state:
-                        roles_to_restart.append(role["name"])
-                    body = {"items": roles_to_restart}
-
-                    if roles_to_restart:
-                        role_cmd_api_instance.restart_command(body=body)
-                        self.cm_service_output = (
-                            role_api_instance.read_roles().to_dict()
-                        )
-                        self.changed = True
-
-            if self.purge:
-                mgmt_service_api_instance.delete_cms()
-                body = {"roles": [{"type": role} for role in self.role]}
-                mgmt_service_api_instance.setup_cms(body=body)
-                self.cm_service_output = role_api_instance.read_roles().to_dict()
-
-                if self.state in ["started"]:
-                    start_roles_request = api_instance.start_command().to_dict()
-                    command_id = start_roles_request["id"]
-                    self.wait_for_command_state(
-                        command_id=command_id, polling_interval=5
-                    )
-                    self.cm_service_output = role_api_instance.read_roles().to_dict()
-                self.changed = True
-
-        except ApiException as e:
-            if e.status == 404 or 400:
-                roles_dict = {"roles": [{"type": role} for role in self.role]}
-                api_instance.setup_cms(body=roles_dict)
-
-                if self.state in ["started"]:
-                    start_roles_request = api_instance.start_command().to_dict()
-                    command_id = start_roles_request["id"]
-                    self.wait_for_command_state(
-                        command_id=command_id, polling_interval=5
-                    )
-                    self.cm_service_output = role_api_instance.read_roles().to_dict()
-                else:
-                    self.cm_service_output = role_api_instance.read_roles().to_dict()
-                self.changed = True
+        # Read and generate payload for Cloudera Manager Service
+        self.cm_service = parse_cm_service_result(service_api.read_service())
+        self.cm_service.update(
+            config=[
+                c.to_dict()
+                for c in service_api.read_service_config(view=self.view).items
+            ]
+        )
+        self.cm_service.update(
+            roles=[parse_role_result(r) for r in role_api.read_roles().items]
+        )
+        self.cm_service.update(
+            role_config_groups=[
+                parse_role_config_group_result(rcg)
+                for rcg in rcg_api.read_role_config_groups().items
+            ]
+        )
 
 
 def main():
-    module = ClouderaManagerModule.ansible_module(
+    module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            role=dict(required=True, type="list"),
-            purge=dict(required=False, type="bool", default=False),
+            parameters=dict(type="dict", aliases=["params"]),
+            roles=dict(type="list"),
+            purge=dict(type="bool", default=False),
+            view=dict(
+                default="summary",
+                choices=["summary", "full"],
+            ),
             state=dict(
                 type="str",
                 default="started",
@@ -429,13 +497,13 @@ def main():
         supports_check_mode=False,
     )
 
-    result = ClouderaService(module)
+    result = ClouderaManagerService(module)
 
     changed = result.changed
 
     output = dict(
         changed=changed,
-        cloudera_manager=result.cm_service_output,
+        service=result.cm_service,
     )
 
     if result.debug:
