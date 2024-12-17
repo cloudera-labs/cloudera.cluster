@@ -17,7 +17,7 @@
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
-import os
+
 import logging
 import pytest
 
@@ -30,23 +30,144 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-def test_pytest_cm_service(module_args):
+def test_minimal(conn, module_args, cms):
+    module_args(conn)
+
+    with pytest.raises(AnsibleExitJson):
+        cm_service.main()
+
+
+@pytest.mark.service_config(dict(log_event_retry_frequency=10))
+def test_set_parameters(conn, module_args, cms_service_config):
     module_args(
         {
-            "username": os.getenv("CM_USERNAME"),
-            "password": os.getenv("CM_PASSWORD"),
-            "host": os.getenv("CM_HOST"),
-            "port": "7180",
-            "verify_tls": "no",
-            "debug": "yes",
-            "state": "started",
-            "role": ["SERVICEMONITOR", "HOSTMONITOR", "EVENTSERVER", "ALERTPUBLISHER"],
+            **conn,
+            "parameters": dict(mgmt_emit_sensitive_data_in_stderr=True),
+            "message": "test_cm_service::test_set_parameters",
+            # _ansible_check_mode=True,
+            # _ansible_diff=True,
         }
     )
 
-    # with pytest.raises(AnsibleFailJson, match=r"boom") as e:
+    expected = dict(
+        mgmt_emit_sensitive_data_in_stderr="True", log_event_retry_frequency="10"
+    )
+
     with pytest.raises(AnsibleExitJson) as e:
         cm_service.main()
 
-    # LOG.info(str(e.value))
-    LOG.info(str(e.value.cloudera_manager))
+    assert e.value.changed == True
+    assert (
+        expected.items()
+        <= {c["name"]: c["value"] for c in e.value.service["config"]}.items()
+    )
+
+    # Idempotency
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == False
+    assert (
+        expected.items()
+        <= {c["name"]: c["value"] for c in e.value.service["config"]}.items()
+    )
+
+
+@pytest.mark.service_config(
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+)
+def test_unset_parameters(conn, module_args, cms_service_config):
+    module_args(
+        {
+            **conn,
+            "parameters": dict(mgmt_emit_sensitive_data_in_stderr=None),
+            "message": "test_cm_service::test_unset_parameters",
+        }
+    )
+
+    expected = dict(log_event_retry_frequency="10")
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == True
+    assert (
+        expected.items()
+        <= {c["name"]: c["value"] for c in e.value.service["config"]}.items()
+    )
+
+    # Idempotency
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == False
+    assert (
+        expected.items()
+        <= {c["name"]: c["value"] for c in e.value.service["config"]}.items()
+    )
+
+
+@pytest.mark.service_config(
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+)
+def test_set_parameters_with_purge(conn, module_args, cms_service_config):
+    module_args(
+        {
+            **conn,
+            "parameters": dict(mgmt_emit_sensitive_data_in_stderr=True),
+            "purge": True,
+            "message": "test_cm_service::test_set_parameters_with_purge",
+            # _ansible_check_mode=True,
+            # _ansible_diff=True,
+        }
+    )
+
+    expected = dict(mgmt_emit_sensitive_data_in_stderr="True")
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == True
+    assert (
+        expected.items()
+        <= {c["name"]: c["value"] for c in e.value.service["config"]}.items()
+    )
+
+    # Idempotency
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == False
+    assert (
+        expected.items()
+        <= {c["name"]: c["value"] for c in e.value.service["config"]}.items()
+    )
+
+
+@pytest.mark.service_config(
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+)
+def test_purge_all_parameters(conn, module_args, cms_service_config):
+    module_args(
+        {
+            **conn,
+            "parameters": dict(),
+            "purge": True,
+            "message": "test_cm_service::test_purge_all_parameters",
+            # _ansible_check_mode=True,
+            # _ansible_diff=True,
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == True
+    assert len(e.value.service["config"]) == 0
+
+    # Idempotency
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service.main()
+
+    assert e.value.changed == False
+    assert len(e.value.service["config"]) == 0
