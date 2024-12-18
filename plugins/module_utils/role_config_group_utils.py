@@ -16,8 +16,12 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
 )
 
-from cm_client import ApiRoleConfigGroup
-
+from cm_client import (
+    ApiClient,
+    ApiRoleConfigGroup,
+    RoleConfigGroupsResourceApi,
+    MgmtRoleConfigGroupsResourceApi,
+)
 
 ROLE_CONFIG_GROUP = [
     "name",
@@ -28,8 +32,42 @@ ROLE_CONFIG_GROUP = [
 ]
 
 
+class BaseRoleConfigGroupDiscoveryException(Exception):
+    pass
+
+
 def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dict:
     # Retrieve only the service identifier
     output = dict(service_name=role_config_group.service_ref.service_name)
     output.update(normalize_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
     return output
+
+
+def get_base_role_config_group(
+    api_client: ApiClient, cluster_name: str, service_name: str, role_type: str
+) -> ApiRoleConfigGroup:
+    rcg_api = RoleConfigGroupsResourceApi(api_client)
+    rcgs = [
+        r
+        for r in rcg_api.read_role_config_groups(cluster_name, service_name).items
+        if r.role_type == role_type and r.base
+    ]
+    if len(rcgs) != 1:
+        raise BaseRoleConfigGroupDiscoveryException(role_count=len(rcgs))
+    else:
+        return rcgs[0]
+
+
+def get_mgmt_base_role_config_group(
+    api_client: ApiClient, role_type: str
+) -> ApiRoleConfigGroup:
+    rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
+    rcgs = [
+        r
+        for r in rcg_api.read_role_config_groups().items
+        if r.role_type == role_type and r.base
+    ]
+    if len(rcgs) != 1:
+        raise BaseRoleConfigGroupDiscoveryException(role_count=len(rcgs))
+    else:
+        return rcgs[0]
