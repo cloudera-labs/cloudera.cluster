@@ -24,6 +24,7 @@ from cm_client import (
     ApiConfig,
     ApiConfigList,
     ApiRole,
+    ApiRoleConfigGroup,
     ApiRoleList,
     ApiService,
     ApiServiceConfig,
@@ -31,6 +32,7 @@ from cm_client import (
     ClustersResourceApi,
     CommandsResourceApi,
     MgmtRolesResourceApi,
+    MgmtRoleConfigGroupsResourceApi,
     ServicesResourceApi,
 )
 from cm_client.rest import ApiException
@@ -260,6 +262,73 @@ def cm_role_config(
 
     role_api.update_role_config(
         role_name=role.name,
+        message=f"{message}::reset",
+        body=ApiConfigList(items=reconciled),
+    )
+
+
+def set_cm_role_config_group_config(
+    api_client: ApiClient,
+    role_config_group: ApiRoleConfigGroup,
+    params: dict,
+    message: str,
+) -> Generator[ApiRoleConfigGroup]:
+    """Update a configuration for a given Cloudera Manager Service role config group.
+       Yields the role config group, resetting the configuration to its prior state.
+       Use with 'yield from' within a pytest fixture.
+
+    Args:
+        api_client (ApiClient): _description_
+        role_config_group (ApiRoleConfigGroup): _description_
+        params (dict): _description_
+        message (str): _description_
+
+    Raises:
+        Exception: _description_
+
+    Yields:
+        ApiRoleConfigGroup: _description_
+    """
+    rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
+
+    # Retrieve all of the pre-setup configurations
+    pre = rcg_api.read_config(role_config_group.name)
+
+    # Set the test configurations
+    # Do so serially, since a failed update due to defaults (see ApiException) will cause remaining
+    # configuration entries to not run. Long-term solution is to check-and-set, which is
+    # what the Ansible modules do...
+    for k, v in params.items():
+        try:
+            rcg_api.update_config(
+                role_config_group.name,
+                message=f"{message}::set",
+                body=ApiConfigList(items=[ApiConfig(name=k, value=v)]),
+            )
+        except ApiException as ae:
+            if ae.status != 400 or "delete with template" not in str(ae.body):
+                raise Exception(str(ae))
+
+    # Yield the targeted role
+    yield rcg_api.read_role_config_group(role_config_group.name)
+
+    # Retrieve all of the post-setup configurations
+    post = rcg_api.read_config(role_config_group.name)
+
+    # Reconcile the configurations
+    pre_set = set([c.name for c in pre.items])
+
+    reconciled = pre.items.copy()
+    reconciled.extend(
+        [
+            ApiConfig(name=k.name, value=None)
+            for k in post.items
+            if k.name not in pre_set
+        ]
+    )
+
+    rcg_api.update_config(
+        role_config_group.name,
         message=f"{message}::reset",
         body=ApiConfigList(items=reconciled),
     )
