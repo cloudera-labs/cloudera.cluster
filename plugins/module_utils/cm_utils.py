@@ -34,6 +34,7 @@ from time import sleep
 from cm_client import (
     ApiClient,
     ApiCommand,
+    ApiConfig,
     ApiConfigList,
     Configuration,
 )
@@ -143,6 +144,25 @@ def resolve_tag_updates(
             delta_del = {k: v for k, v in diff[1].items() if k in diff[0]}
 
     return (delta_add, delta_del)
+
+
+class ConfigListUpdates(object):
+    def __init__(self, existing: ApiConfigList, updates: dict, purge: bool) -> None:
+        current = {r.name: r.value for r in existing.items}
+        changeset = resolve_parameter_updates(current, updates, purge)
+
+        self.diff = dict(
+            before={k: current[k] if k in current else None for k in changeset.keys()},
+            after=changeset,
+        )
+
+        self.config = ApiConfigList(
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+        )
+
+    @property
+    def changed(self) -> bool:
+        return bool(self.config.items)
 
 
 class ClusterTemplate(object):
