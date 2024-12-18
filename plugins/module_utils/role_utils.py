@@ -16,6 +16,12 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
 )
 
+from cm_client import (
+    ApiClient,
+    ApiRoleList,
+    RolesResourceApi,
+    MgmtRolesResourceApi,
+)
 from cm_client import ApiRole
 
 ROLE_OUTPUT = [
@@ -46,3 +52,23 @@ def parse_role_result(role: ApiRole) -> dict:
     )
     output.update(normalize_output(role.to_dict(), ROLE_OUTPUT))
     return output
+
+
+def get_mgmt_roles(api_client: ApiClient, role_type: str) -> ApiRoleList:
+    role_api = MgmtRolesResourceApi(api_client)
+    return ApiRoleList(
+        items=[r for r in role_api.read_roles().items if r.type == role_type]
+    )
+
+
+def get_roles(
+    api_client: ApiClient, cluster_name: str, service_name: str, role_type: str
+) -> ApiRoleList:
+    role_api = RolesResourceApi(api_client)
+    return ApiRoleList(
+        items=[
+            r
+            for r in role_api.read_roles(cluster_name, service_name).items
+            if r.type == role_type
+        ]
+    )
