@@ -26,6 +26,7 @@ import string
 import sys
 import yaml
 
+from collections.abc import Generator
 from pathlib import Path
 
 from cm_client import (
@@ -40,6 +41,7 @@ from cm_client import (
     ClustersResourceApi,
     Configuration,
     HostsResourceApi,
+    MgmtRolesResourceApi,
     MgmtServiceResourceApi,
     ParcelResourceApi,
     ParcelsResourceApi,
@@ -250,7 +252,7 @@ def base_cluster(cm_api_client, request):
 
 
 @pytest.fixture(scope="session")
-def cms(cm_api_client, request):
+def cms(cm_api_client, request) -> Generator[ApiService]:
     """Provisions Cloudera Manager Service."""
 
     api = MgmtServiceResourceApi(cm_api_client)
@@ -275,7 +277,7 @@ def cms(cm_api_client, request):
 
 
 @pytest.fixture(scope="function")
-def cms_service_config(cm_api_client, cms, request):
+def cms_config(cm_api_client, cms, request) -> Generator[ApiService]:
     """Configures service-wide configurations for the Cloudera Manager Service"""
 
     marker = request.node.get_closest_marker("service_config")

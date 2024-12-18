@@ -51,9 +51,12 @@ testpaths = [
 filterwarnings = [
   "ignore:AnsibleCollectionFinder has already been configured",
   "ignore:'crypt' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+  "ignore:URLs without a scheme:DeprecationWarning",
+  "ignore:HTTPResponse.getheaders():DeprecationWarning",
 ]
 markers = [
   "service_config: Prepare service-wide configurations for tests",
+  "role_config: Prepare role override configurations for tests",
 ]
 
 [build-system]
