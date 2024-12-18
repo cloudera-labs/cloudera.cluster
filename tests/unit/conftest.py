@@ -32,11 +32,15 @@ from cm_client import (
     ApiClient,
     ApiClusterList,
     ApiCluster,
+    ApiConfig,
     ApiHostRef,
     ApiHostRefList,
+    ApiService,
+    ApiServiceConfig,
     ClustersResourceApi,
     Configuration,
     HostsResourceApi,
+    MgmtServiceResourceApi,
     ParcelResourceApi,
     ParcelsResourceApi,
 )
@@ -243,3 +247,80 @@ def base_cluster(cm_api_client, request):
             cluster_api.delete_cluster(cluster_name=name)
         except ApiException as ae:
             raise Exception(str(ae))
+
+
+@pytest.fixture(scope="session")
+def cms(cm_api_client, request):
+    """Provisions Cloudera Manager Service."""
+
+    api = MgmtServiceResourceApi(cm_api_client)
+
+    # Return if the Cloudera Manager Service is already present
+    try:
+        yield api.read_service()
+        return
+    except ApiException as ae:
+        if ae.status != 404 or "Cannot find management service." not in str(ae.body):
+            raise Exception(str(ae))
+
+    # Provision the Cloudera Manager Service
+    service = ApiService(
+        name=request.fixturename,
+        type="MGMT",
+    )
+
+    yield api.setup_cms(body=service)
+
+    api.delete_cms()
+
+
+@pytest.fixture(scope="function")
+def cms_service_config(cm_api_client, cms, request):
+    """Configures service-wide configurations for the Cloudera Manager Service"""
+
+    marker = request.node.get_closest_marker("service_config")
+
+    if marker is None:
+        raise Exception("No service_config marker found.")
+
+    api = MgmtServiceResourceApi(cm_api_client)
+
+    # Retrieve all of the pre-setup configurations
+    pre = api.read_service_config()
+
+    # Set the test configurations
+    # Do so serially, since a failed update due to defaults (see ApiException) will cause remaining
+    # configuration entries to not run. Long-term solution is to check-and-set, which is
+    # what the Ansible modules do...
+    for k, v in marker.args[0].items():
+        try:
+            api.update_service_config(
+                message=f"{request.node.name}::set",
+                body=ApiServiceConfig(items=[ApiConfig(name=k, value=v)]),
+            )
+        except ApiException as ae:
+            if ae.status != 400 or "delete with template" not in str(ae.body):
+                raise Exception(str(ae))
+
+    # Yield the Cloudera Manager Service
+    yield cms
+
+    # Retrieve all of the post-setup configurations
+    post = api.read_service_config()
+
+    # Reconcile the configurations
+    pre_set = set([c.name for c in pre.items])
+
+    reconciled = pre.items.copy()
+    reconciled.extend(
+        [
+            ApiConfig(name=k.name, value=None)
+            for k in post.items
+            if k.name not in pre_set
+        ]
+    )
+
+    api.update_service_config(
+        message=f"{request.node.name}::reset",
+        body=ApiServiceConfig(items=reconciled),
+    )

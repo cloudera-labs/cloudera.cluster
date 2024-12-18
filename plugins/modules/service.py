@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
@@ -13,29 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_tag_updates,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
-    parse_service_result,
-)
-
-from cm_client import (
-    ApiEntityTag,
-    ApiService,
-    ApiServiceList,
-    ClustersResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 module: service
@@ -314,6 +292,23 @@ service:
       type: str
       returned: when supported
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    resolve_tag_updates,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
+    parse_service_result,
+)
+
+from cm_client import (
+    ApiEntityTag,
+    ApiService,
+    ApiServiceList,
+    ClustersResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
 
 
 class ClusterService(ClouderaManagerMutableModule):

@@ -16,30 +16,15 @@
 # limitations under the License.
 
 DOCUMENTATION = r"""
-module: service_config
-short_description: Manage a cluster service configuration
+module: cm_service_config
+short_description: Manage the Cloudera Manager service configuration
 description:
-  - Manage a configuration (service-wide) for a cluster service.
+  - Manage a configuration (service-wide) for the Cloudera Manager service.
 author:
   - "Webster Mudge (@wmudge)"
 requirements:
   - cm-client
 options:
-  cluster:
-    description:
-      - The associated cluster.
-    type: str
-    required: yes
-    aliases:
-      - cluster_name
-  service:
-    description:
-      - The service to manage.
-    type: str
-    required: yes
-    aliases:
-      - service_name
-      - name
   parameters:
     description:
       - The service-wide configuration to set.
@@ -73,28 +58,24 @@ attributes:
 
 EXAMPLES = r"""
 - name: Update (append) several service-wide parameters
-  cloudera.cluster.service_config:
+  cloudera.cluster.cm_service_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-service
     parameters:
       a_configuration: "schema://host:port"
       another_configuration: 234
 
 - name: Reset a service-wide parameter
-  cloudera.cluster.service_config:
+  cloudera.cluster.cm_service_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-service
     parameters:
       some_conf: None
 
 - name: Update (purge) service-wide parameters
-  cloudera.cluster.service_config:
+  cloudera.cluster.cm_service_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -106,7 +87,7 @@ EXAMPLES = r"""
     purge: yes
 
 - name: Reset all service-wide parameters
-  cloudera.cluster.service_config:
+  cloudera.cluster.cm_service_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -118,7 +99,7 @@ EXAMPLES = r"""
 
 RETURN = r"""
 config:
-  description: Service-wide configuration details about a cluster service.
+  description: Service-wide configuration details for the Cloudera Manager service.
   type: list
   elements: dict
   contains:
@@ -206,19 +187,16 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils imp
 
 
 from cm_client import (
-    ClustersResourceApi,
-    ServicesResourceApi,
+    MgmtServiceResourceApi,
 )
 from cm_client.rest import ApiException
 
 
-class ClusterServiceConfig(ClouderaManagerMutableModule):
+class ClouderaManagerServiceConfig(ClouderaManagerMutableModule):
     def __init__(self, module):
-        super(ClusterServiceConfig, self).__init__(module)
+        super(ClouderaManagerServiceConfig, self).__init__(module)
 
         # Set the parameters
-        self.cluster = self.get_param("cluster")
-        self.service = self.get_param("service")
         self.params = self.get_param("parameters")
         self.purge = self.get_param("purge")
         self.view = self.get_param("view")
@@ -233,19 +211,11 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
-        try:
-            ClustersResourceApi(self.api_client).read_cluster(self.cluster)
-        except ApiException as ex:
-            if ex.status == 404:
-                self.module.fail_json(msg="Cluster does not exist: " + self.cluster)
-            else:
-                raise ex
-
         refresh = True
-        api_instance = ServicesResourceApi(self.api_client)
+        api_instance = MgmtServiceResourceApi(self.api_client)
 
         try:
-            existing = api_instance.read_service_config(self.cluster, self.service)
+            existing = api_instance.read_service_config()
         except ApiException as ex:
             if ex.status == 404:
                 self.module.fail_json(msg=json.loads(ex.body)["message"])
@@ -264,10 +234,7 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
                 self.config = [
                     p.to_dict()
                     for p in api_instance.update_service_config(
-                        self.cluster,
-                        self.service,
-                        message=self.message,
-                        body=updates.config,
+                        message=self.message, body=updates.config
                     ).items
                 ]
 
@@ -277,17 +244,13 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
         if refresh:
             self.config = [
                 p.to_dict()
-                for p in api_instance.read_service_config(
-                    self.cluster, self.service, view=self.view
-                ).items
+                for p in api_instance.read_service_config(view=self.view).items
             ]
 
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            cluster=dict(required=True, aliases=["cluster_name"]),
-            service=dict(required=True, aliases=["service_name", "name"]),
             parameters=dict(type="dict", required=True, aliases=["params"]),
             purge=dict(type="bool", default=False),
             view=dict(
@@ -298,7 +261,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterServiceConfig(module)
+    result = ClouderaManagerServiceConfig(module)
 
     output = dict(
         changed=result.changed,
