@@ -57,6 +57,7 @@ filterwarnings = [
 markers = [
   "service_config: Prepare service-wide configurations for tests",
   "role_config: Prepare role override configurations for tests",
+  "role_config_group_config: Prepare role config group configurations for tests",
 ]
 
 [build-system]
