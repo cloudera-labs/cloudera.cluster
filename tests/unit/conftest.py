@@ -36,11 +36,14 @@ from cm_client import (
     ApiConfig,
     ApiHostRef,
     ApiHostRefList,
+    ApiRole,
+    ApiRoleConfigGroup,
     ApiService,
     ApiServiceConfig,
     ClustersResourceApi,
     Configuration,
     HostsResourceApi,
+    MgmtRoleConfigGroupsResourceApi,
     MgmtRolesResourceApi,
     MgmtServiceResourceApi,
     ParcelResourceApi,
@@ -58,6 +61,8 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils impo
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
     AnsibleExitJson,
+    provision_cm_role,
+    set_cm_role_config_group,
 )
 
 
@@ -325,4 +330,52 @@ def cms_config(cm_api_client, cms, request) -> Generator[ApiService]:
     api.update_service_config(
         message=f"{Path(request.node.parent.name).stem}::{request.node.name}::reset",
         body=ApiServiceConfig(items=reconciled),
+    )
+
+
+@pytest.fixture(scope="module")
+def host_monitor(cm_api_client, cms, request) -> Generator[ApiRole]:
+    api = MgmtRolesResourceApi(cm_api_client)
+
+    hm = next(
+        iter([r for r in api.read_roles().items if r.type == "HOSTMONITOR"]), None
+    )
+
+    if hm is not None:
+        yield hm
+    else:
+        cluster_api = ClustersResourceApi(cm_api_client)
+
+        # Get first host of the cluster
+        hosts = cluster_api.list_hosts(cluster_name=cms.cluster_ref.cluster_name)
+
+        if not hosts.items:
+            raise Exception(
+                "No available hosts to assign the Cloudera Manager Service role."
+            )
+        else:
+            name = Path(request.fixturename).stem
+            yield from provision_cm_role(
+                cm_api_client, name, "HOSTMONITOR", hosts.items[0].hostId
+            )
+
+
+@pytest.fixture(scope="function")
+def host_monitor_config(
+    cm_api_client, host_monitor, request
+) -> Generator[ApiRoleConfigGroup]:
+    marker = request.node.get_closest_marker("role_config_group")
+
+    if marker is None:
+        raise Exception("No role_config_group marker found.")
+
+    rcg_api = MgmtRoleConfigGroupsResourceApi(cm_api_client)
+
+    yield from set_cm_role_config_group(
+        api_client=cm_api_client,
+        role_config_group=rcg_api.read_role_config_group(
+            host_monitor.role_config_group_ref.role_config_group_name
+        ),
+        update=marker.args[0],
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
     )
