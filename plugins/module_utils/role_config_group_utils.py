@@ -37,9 +37,25 @@ class BaseRoleConfigGroupDiscoveryException(Exception):
 
 
 def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dict:
+    """Parse a Role Config Group into a normalized dictionary.
+
+    Returns the following:
+    - name (str)
+    - role_type (str)
+    - base (bool)
+    - display_name (str)
+    - config (dict)
+
+    Args:
+        role_config_group (ApiRoleConfigGroup): Role Config Group
+
+    Returns:
+        dict: Normalized dictionary of returned values
+    """
     # Retrieve only the service identifier
     output = dict(service_name=role_config_group.service_ref.service_name)
     output.update(normalize_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
+    output.update(config={c.name: c.value for c in role_config_group.config.items})
     return output
 
 
