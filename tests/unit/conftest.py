@@ -28,21 +28,29 @@ import yaml
 
 from collections.abc import Generator
 from pathlib import Path
+from time import sleep
 
 from cm_client import (
+    ApiBulkCommandList,
     ApiClient,
     ApiClusterList,
     ApiCluster,
+    ApiCommand,
     ApiConfig,
+    ApiConfigList,
     ApiHostRef,
     ApiHostRefList,
     ApiRole,
     ApiRoleConfigGroup,
+    ApiRoleNameList,
+    ApiRoleState,
     ApiService,
     ApiServiceConfig,
     ClustersResourceApi,
+    CommandsResourceApi,
     Configuration,
     HostsResourceApi,
+    MgmtRoleCommandsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
     MgmtRolesResourceApi,
     MgmtServiceResourceApi,
@@ -334,7 +342,7 @@ def cms_config(cm_api_client, cms, request) -> Generator[ApiService]:
 
 
 @pytest.fixture(scope="module")
-def host_monitor(cm_api_client, cms, request) -> Generator[ApiRole]:
+def host_monitor_role(cm_api_client, cms, request) -> Generator[ApiRole]:
     api = MgmtRolesResourceApi(cm_api_client)
 
     hm = next(
@@ -361,21 +369,141 @@ def host_monitor(cm_api_client, cms, request) -> Generator[ApiRole]:
 
 
 @pytest.fixture(scope="function")
-def host_monitor_config(
-    cm_api_client, host_monitor, request
+def host_monitor_role_group_config(
+    cm_api_client, host_monitor_role, request
 ) -> Generator[ApiRoleConfigGroup]:
     marker = request.node.get_closest_marker("role_config_group")
 
     if marker is None:
-        raise Exception("No role_config_group marker found.")
+        raise Exception("No 'role_config_group' marker found.")
 
     rcg_api = MgmtRoleConfigGroupsResourceApi(cm_api_client)
 
     yield from set_cm_role_config_group(
         api_client=cm_api_client,
         role_config_group=rcg_api.read_role_config_group(
-            host_monitor.role_config_group_ref.role_config_group_name
+            host_monitor_role.role_config_group_ref.role_config_group_name
         ),
         update=marker.args[0],
         message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
     )
+
+
+@pytest.fixture(scope="function")
+def host_monitor_state(cm_api_client, host_monitor_role, request) -> Generator[ApiRole]:
+    marker = request.node.get_closest_marker("role")
+
+    if marker is None:
+        raise Exception("No 'role' marker found.")
+
+    role = marker.args[0]
+
+    role_api = MgmtRolesResourceApi(cm_api_client)
+    cmd_api = MgmtRoleCommandsResourceApi(cm_api_client)
+
+    # Get the current state
+    pre_role = role_api.read_role(host_monitor_role.name)
+    pre_role.config = role_api.read_role_config(host_monitor_role.name)
+
+    # Set config
+    for c in role.config.items:
+        try:
+            role_api.update_role_config(
+                role_name=host_monitor_role.name,
+                message=f"{Path(request.node.parent.name).stem}::{request.node.name}::set",
+                body=ApiConfigList(items=[c]),
+            )
+        except ApiException as ae:
+            if ae.status != 400 or "delete with template" not in str(ae.body):
+                raise Exception(str(ae))
+
+    # Update maintenance
+    if role.maintenance_mode:
+        role_api.enter_maintenance_mode(host_monitor_role.name)
+    else:
+        role_api.exit_maintenance_mode(host_monitor_role.name)
+
+    # Update state
+    if role.role_state is not None:
+        if role.role_state in [ApiRoleState.STARTED]:
+            handle_commands(
+                cmd_api.stop_command(
+                    body=ApiRoleNameList(items=[host_monitor_role.name])
+                )
+            )
+        elif role.role_state in [ApiRoleState.STOPPED]:
+            handle_commands(
+                cmd_api.start_command(
+                    body=ApiRoleNameList(items=[host_monitor_role.name])
+                )
+            )
+
+    # Yield the role
+    current_role = role_api.read_role(host_monitor_role.name)
+    current_role.config = role_api.read_role_config(host_monitor_role.name)
+    yield current_role
+
+    # Retrieve the test changes
+    post_role = role_api.read_role(role_name=host_monitor_role.name)
+    post_role.config = role_api.read_role_config(role_name=host_monitor_role.name)
+
+    # Reset state
+    if pre_role.role_state != post_role.role_state:
+        if pre_role.role_state in [ApiRoleState.STARTED]:
+            handle_commands(
+                cmd_api.start_command(
+                    body=ApiRoleNameList(items=[host_monitor_role.name])
+                )
+            )
+        elif pre_role.role_state in [ApiRoleState.STOPPED]:
+            handle_commands(
+                cmd_api.stop_command(
+                    body=ApiRoleNameList(items=[host_monitor_role.name])
+                )
+            )
+
+    # Reset maintenance
+    if pre_role.maintenance_mode != post_role.maintenance_mode:
+        if pre_role.maintenance_mode:
+            role_api.enter_maintenance_mode(host_monitor_role.name)
+        else:
+            role_api.exit_maintenance_mode(host_monitor_role.name)
+
+    # Reset config
+    pre_role_config_set = set([c.name for c in pre_role.config.items])
+
+    reconciled = pre_role.config.items.copy()
+    config_reset = [
+        c for c in post_role.config.items if c.name not in pre_role_config_set
+    ]
+    reconciled.extend([ApiConfig(c.name, None) for c in config_reset])
+
+    role_api.update_role_config(
+        role_name=host_monitor_role.name,
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}::reset",
+        body=ApiConfigList(items=reconciled),
+    )
+
+
+def handle_commands(api_client: ApiClient, commands: ApiBulkCommandList):
+    if commands.errors:
+        error_msg = "\n".join(commands.errors)
+        raise Exception(error_msg)
+
+    for cmd in commands.items:
+        # Serial monitoring
+        monitor_command(api_client, cmd)
+
+
+def monitor_command(
+    api_client: ApiClient, command: ApiCommand, polling: int = 10, delay: int = 15
+):
+    poll_count = 0
+    while command.active:
+        if poll_count > polling:
+            raise Exception("Command timeout: " + str(command.id))
+        sleep(delay)
+        poll_count += 1
+        command = CommandsResourceApi(api_client).read_command(command.id)
+    if not command.success:
+        raise Exception(command.result_message)

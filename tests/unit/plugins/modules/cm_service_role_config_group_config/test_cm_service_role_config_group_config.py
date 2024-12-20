@@ -60,11 +60,11 @@ def test_missing_required_if(conn, module_args):
         cm_service_role_config_group_config.main()
 
 
-def test_present_invalid_parameter(conn, module_args, host_monitor):
+def test_present_invalid_parameter(conn, module_args, host_monitor_role):
     module_args(
         {
             **conn,
-            "name": host_monitor.role_config_group_ref.role_config_group_name,
+            "name": host_monitor_role.role_config_group_ref.role_config_group_name,
             "parameters": dict(example="Example"),
         }
     )

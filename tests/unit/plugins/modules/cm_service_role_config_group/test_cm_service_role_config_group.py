@@ -54,12 +54,12 @@ LOG = logging.getLogger(__name__)
     )
 )
 def test_cm_role_config_group_config_set(
-    conn, module_args, host_monitor_config, request
+    conn, module_args, host_monitor_role_group_config, request
 ):
     module_args(
         {
             **conn,
-            "type": host_monitor_config.role_type,
+            "type": host_monitor_role_group_config.role_type,
             "parameters": dict(mgmt_num_descriptor_fetch_tries=32),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -96,12 +96,12 @@ def test_cm_role_config_group_config_set(
     )
 )
 def test_cm_role_config_group_config_unset(
-    conn, module_args, host_monitor_config, request
+    conn, module_args, host_monitor_role_group_config, request
 ):
     module_args(
         {
             **conn,
-            "type": host_monitor_config.role_type,
+            "type": host_monitor_role_group_config.role_type,
             "parameters": dict(mgmt_num_descriptor_fetch_tries=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -138,12 +138,12 @@ def test_cm_role_config_group_config_unset(
     )
 )
 def test_cm_role_config_group_config_set_purge(
-    conn, module_args, host_monitor_config, request
+    conn, module_args, host_monitor_role_group_config, request
 ):
     module_args(
         {
             **conn,
-            "type": host_monitor_config.role_type,
+            "type": host_monitor_role_group_config.role_type,
             "parameters": dict(mgmt_num_descriptor_fetch_tries=32),
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
@@ -181,12 +181,12 @@ def test_cm_role_config_group_config_set_purge(
     )
 )
 def test_cm_role_config_group_config_purge_all(
-    conn, module_args, host_monitor_config, request
+    conn, module_args, host_monitor_role_group_config, request
 ):
     module_args(
         {
             **conn,
-            "type": host_monitor_config.role_type,
+            "type": host_monitor_role_group_config.role_type,
             "parameters": dict(),
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
@@ -213,14 +213,14 @@ def test_cm_role_config_group_config_purge_all(
 
 @pytest.mark.role_config_group(ApiRoleConfigGroup(display_name="Test"))
 def test_cm_role_config_group_display_name_set(
-    conn, module_args, host_monitor_config, request
+    conn, module_args, host_monitor_role_group_config, request
 ):
     expected = "Updated Test"
 
     module_args(
         {
             **conn,
-            "type": host_monitor_config.role_type,
+            "type": host_monitor_role_group_config.role_type,
             "display_name": expected,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
