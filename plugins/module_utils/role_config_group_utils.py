@@ -19,6 +19,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 from cm_client import (
     ApiClient,
     ApiRoleConfigGroup,
+    ApiRoleConfigGroupRef,
     RoleConfigGroupsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
 )
@@ -33,6 +34,10 @@ ROLE_CONFIG_GROUP = [
 
 
 class BaseRoleConfigGroupDiscoveryException(Exception):
+    pass
+
+
+class RoleConfigGroupDiscoveryException(Exception):
     pass
 
 
@@ -87,3 +92,16 @@ def get_mgmt_base_role_config_group(
         raise BaseRoleConfigGroupDiscoveryException(role_count=len(rcgs))
     else:
         return rcgs[0]
+
+
+def get_role_config_group(
+    api_client: ApiClient, cluster_name: str, service_name: str, name: str
+) -> ApiRoleConfigGroup:
+    rcg_api = RoleConfigGroupsResourceApi(api_client)
+
+    rcg = rcg_api.read_role_config_group(cluster_name, name, service_name)
+
+    if rcg is None:
+        raise RoleConfigGroupDiscoveryException(name)
+    else:
+        return rcg
