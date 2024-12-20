@@ -15,10 +15,19 @@
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
 )
+from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
+    get_host_ref,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    get_role_config_group,
+)
 
 from cm_client import (
     ApiClient,
+    ApiConfig,
+    ApiConfigList,
     ApiRoleList,
+    ApiRoleConfigGroupRef,
     RolesResourceApi,
     MgmtRolesResourceApi,
 )
@@ -51,6 +60,7 @@ def parse_role_result(role: ApiRole) -> dict:
         service_name=role.service_ref.service_name,
     )
     output.update(normalize_output(role.to_dict(), ROLE_OUTPUT))
+    output.update(config={c.name: c.value for c in role.config.items})
     return output
 
 
@@ -72,3 +82,51 @@ def get_roles(
             if r.type == role_type
         ]
     )
+
+
+class RoleHostNotFoundException(Exception):
+    pass
+
+
+def create_role(
+    api_client: ApiClient,
+    role_type: str,
+    hostname: str,
+    host_id: str,
+    name: str = None,
+    config: dict = None,
+    cluster_name: str = None,
+    service_name: str = None,
+    role_config_group: str = None,
+) -> ApiRole:
+    # Set up the role
+    role = ApiRole(type=str(role_type).upper())
+
+    # Name
+    if name:
+        role.name = name  # No name allows auto-generation
+
+    # Host assignment
+    host_ref = get_host_ref(api_client, hostname, host_id)
+    if host_ref is None:
+        raise RoleHostNotFoundException(
+            f"Host not found: hostname='{hostname}', host_id='{host_id}'"
+        )
+    else:
+        role.host_ref = host_ref
+
+    # Role config group
+    if role_config_group:
+        role.role_config_group_ref = ApiRoleConfigGroupRef(
+            get_role_config_group(
+                api_client, cluster_name, service_name, role_config_group
+            ).name
+        )
+
+    # Role override configurations
+    if config:
+        role.config = ApiConfigList(
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+        )
+
+    return role
