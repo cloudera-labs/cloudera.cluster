@@ -59,6 +59,7 @@ markers = [
   "role_config: Prepare role override configurations for tests",
   "role_config_group_config: Prepare role config group configurations for tests",
   "role_config_group: Prepare a role config group for tests.",
+  "role: Prepare a role for tests.",
 ]
 
 [build-system]
