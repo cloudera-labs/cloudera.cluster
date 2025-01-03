@@ -21,21 +21,12 @@ __metaclass__ = type
 import logging
 import pytest
 
-from collections.abc import Generator
 from pathlib import Path
-
-from cm_client import (
-    ApiRole,
-    ClustersResourceApi,
-    MgmtRolesResourceApi,
-)
 
 from ansible_collections.cloudera.cluster.plugins.modules import cm_service_role_config
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
-    provision_cm_role,
-    cm_role_config,
 )
 
 LOG = logging.getLogger(__name__)
