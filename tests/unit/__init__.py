@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2024 Cloudera, Inc.
+# Copyright 2025 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,16 +26,26 @@ from cm_client import (
     ApiRole,
     ApiRoleConfigGroup,
     ApiRoleList,
+    ApiRoleNameList,
+    ApiRoleState,
     ApiService,
     ApiServiceConfig,
     ApiServiceList,
     ClustersResourceApi,
     CommandsResourceApi,
     MgmtRolesResourceApi,
+    MgmtRoleCommandsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
     ServicesResourceApi,
 )
 from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
+    get_host_ref,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    get_mgmt_roles,
+)
 
 
 class AnsibleExitJson(Exception):
@@ -213,6 +223,86 @@ def provision_cm_role(
     yield next(iter(api.create_roles(body=ApiRoleList(items=[role])).items), None)
 
     api.delete_role(role_name=role_name)
+
+
+def set_cm_role(
+    api_client: ApiClient, cluster: ApiCluster, role: ApiRole
+) -> Generator[ApiRole]:
+    """Set a net-new Cloudera Manager Service role. Yields the new role,
+    resetting to any existing role upon completion. Use with 'yield from'
+    within a pytest fixture.
+    """
+    role_api = MgmtRolesResourceApi(api_client)
+    role_cmd_api = MgmtRoleCommandsResourceApi(api_client)
+
+    # Check for existing management role
+    pre_role = next(
+        iter([r for r in get_mgmt_roles(api_client, role.type).items]), None
+    )
+
+    if pre_role is not None:
+        # Get the current state
+        pre_role.config = role_api.read_role_config(role_name=pre_role.name)
+
+        # Remove the prior role
+        role_api.delete_role(role_name=pre_role.name)
+
+    if not role.host_ref:
+        cluster_api = ClustersResourceApi(api_client)
+
+        # Get first host of the cluster
+        hosts = cluster_api.list_hosts(cluster_name=cluster.name)
+
+        if not hosts.items:
+            raise Exception(
+                "No available hosts to assign the Cloudera Manager Service role."
+            )
+
+        role.host_ref = get_host_ref(api_client, host_id=hosts.items[0].host_id)
+
+    # Create the role under test
+    current_role = next(
+        iter(role_api.create_roles(body=ApiRoleList(items=[role])).items), None
+    )
+    current_role.config = role_api.read_role_config(role_name=current_role.name)
+
+    if role.maintenance_mode:
+        role_api.enter_maintenance_mode(role_name=current_role.name)
+
+    if role.role_state in [ApiRoleState.STARTING, ApiRoleState.STARTED]:
+        start_cmds = role_cmd_api.start_command(
+            body=ApiRoleNameList(items=[current_role.name])
+        )
+        if start_cmds.errors:
+            error_msg = "\n".join(start_cmds.errors)
+            raise Exception(error_msg)
+
+        for cmd in start_cmds.items:
+            # Serial monitoring
+            wait_for_command(api_client=api_client, command=cmd)
+
+    # Yield the role under test
+    yield current_role
+
+    # Remove the role under test
+    current_role = role_api.delete_role(role_name=current_role.name)
+
+    # Reinstate the previous role
+    if pre_role is not None:
+        role_api.create_roles(body=ApiRoleList(items=[pre_role]))
+        if pre_role.maintenance_mode:
+            role_api.enter_maintenance_mode(pre_role.name)
+        if pre_role.role_state in [ApiRoleState.STARTED, ApiRoleState.STARTING]:
+            restart_cmds = role_cmd_api.restart_command(
+                body=ApiRoleNameList(items=[pre_role.name])
+            )
+            if restart_cmds.errors:
+                error_msg = "\n".join(restart_cmds.errors)
+                raise Exception(error_msg)
+
+            for cmd in restart_cmds.items:
+                # Serial monitoring
+                wait_for_command(api_client=api_client, command=cmd)
 
 
 def set_cm_role_config(

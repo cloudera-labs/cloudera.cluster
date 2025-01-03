@@ -42,6 +42,7 @@ from cm_client import (
     ApiHostRefList,
     ApiRole,
     ApiRoleConfigGroup,
+    ApiRoleList,
     ApiRoleNameList,
     ApiRoleState,
     ApiService,
@@ -64,6 +65,10 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
     Parcel,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    get_mgmt_roles,
 )
 
 from ansible_collections.cloudera.cluster.tests.unit import (
@@ -194,7 +199,23 @@ def cm_api_client(conn) -> ApiClient:
 
 @pytest.fixture(scope="session")
 def base_cluster(cm_api_client, request):
-    """Provision a CDH Base cluster."""
+    """Provision a CDH Base cluster. If the variable 'CM_CLUSTER' is present,
+       will attempt to read and yield a reference to this cluster. Otherwise,
+       will yield a new base cluster with a single host, deleting the cluster
+       once completed.
+
+    Args:
+        cm_api_client (_type_): _description_
+        request (_type_): _description_
+
+    Raises:
+        Exception: _description_
+        Exception: _description_
+        Exception: _description_
+
+    Yields:
+        _type_: _description_
+    """
 
     cluster_api = ClustersResourceApi(cm_api_client)
 
@@ -270,14 +291,32 @@ def base_cluster(cm_api_client, request):
 
 
 @pytest.fixture(scope="session")
-def cms(cm_api_client, request) -> Generator[ApiService]:
-    """Provisions Cloudera Manager Service."""
+def cms(cm_api_client: ApiClient, request) -> Generator[ApiService]:
+    """Provisions Cloudera Manager Service. If the Cloudera Manager Service
+       is present, will read and yield this reference. Otherwise, will
+       yield a new Cloudera Manager Service, deleting it after use.
 
-    api = MgmtServiceResourceApi(cm_api_client)
+       NOTE! A new Cloudera Manager Service will _not_ be provisioned if
+       there are any existing clusters within the deployment! Therefore,
+       you must only run this fixture to provision a net-new Cloudera Manager
+       Service on a bare deployment, i.e. Cloudera Manager and hosts only.
+
+    Args:
+        cm_api_client (ApiClient): _description_
+        request (_type_): _description_
+
+    Raises:
+        Exception: _description_
+
+    Yields:
+        Generator[ApiService]: _description_
+    """
+
+    cms_api = MgmtServiceResourceApi(cm_api_client)
 
     # Return if the Cloudera Manager Service is already present
     try:
-        yield api.read_service()
+        yield cms_api.read_service()
         return
     except ApiException as ae:
         if ae.status != 404 or "Cannot find management service." not in str(ae.body):
@@ -289,9 +328,12 @@ def cms(cm_api_client, request) -> Generator[ApiService]:
         type="MGMT",
     )
 
-    yield api.setup_cms(body=service)
+    cm_service = cms_api.setup_cms(body=service)
+    cms_api.auto_assign_roles()
 
-    api.delete_cms()
+    yield cm_service
+
+    cms_api.delete_cms()
 
 
 @pytest.fixture(scope="function")
@@ -419,6 +461,7 @@ def host_monitor_role(cm_api_client, cms, request) -> Generator[ApiRole]:
 def host_monitor_role_group_config(
     cm_api_client, host_monitor_role, request
 ) -> Generator[ApiRoleConfigGroup]:
+    """Configures the base Role Config Group for the Host Monitor role of a Cloudera Manager Service."""
     marker = request.node.get_closest_marker("role_config_group")
 
     if marker is None:
@@ -530,6 +573,38 @@ def host_monitor_state(cm_api_client, host_monitor_role, request) -> Generator[A
         message=f"{Path(request.node.parent.name).stem}::{request.node.name}::reset",
         body=ApiConfigList(items=reconciled),
     )
+
+
+@pytest.fixture(scope="function")
+def host_monitor_cleared(cm_api_client, cms) -> Generator[None]:
+    role_api = MgmtRolesResourceApi(cm_api_client)
+    role_cmd_api = MgmtRoleCommandsResourceApi(cm_api_client)
+
+    # Check for existing management role
+    pre_role = next(
+        iter([r for r in get_mgmt_roles(cm_api_client, "HOSTMONITOR").items]), None
+    )
+
+    if pre_role is not None:
+        # Get the current state
+        pre_role.config = role_api.read_role_config(role_name=pre_role.name)
+
+        # Remove the prior role
+        role_api.delete_role(role_name=pre_role.name)
+
+    # Yield now that the role has been removed
+    yield
+
+    # Reinstate the previous role
+    if pre_role is not None:
+        role_api.create_roles(body=ApiRoleList(items=[pre_role]))
+        if pre_role.maintenance_mode:
+            role_api.enter_maintenance_mode(pre_role.name)
+        if pre_role.role_state in [ApiRoleState.STARTED, ApiRoleState.STARTING]:
+            restart_cmds = role_cmd_api.restart_command(
+                body=ApiRoleNameList(items=[pre_role.name])
+            )
+            handle_commands(api_client=cm_api_client, commands=restart_cmds)
 
 
 def handle_commands(api_client: ApiClient, commands: ApiBulkCommandList):

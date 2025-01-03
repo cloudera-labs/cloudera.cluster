@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,30 +25,25 @@ author:
 requirements:
   - cm-client
 options:
-  cms_hostname:
+  cluster_hostname:
     description:
       - The hostname of a cluster instance for the role.
+      - If the hostname is different that the existing host for the I(type), the role will be destroyed and rebuilt on the declared host.
       - Mutually exclusive with I(cluster_host_id).
     type: str
     aliases:
       - cluster_host
-  cms_host_id:
+  cluster_host_id:
     description:
       - The host ID of a cluster instance for the role.
+      - If the host ID is different that the existing host for the I(type), the role will be destroyed and rebuilt on the declared host.
       - Mutually exclusive with I(cluster_hostname).
     type: str
   type:
     description:
       - A role type for the role.
-      - Required if the I(state) creates a new role.
     type: str
-    aliases:
-      - role_type
-  role_config_group:
-    description:
-      - A role type for the role.
-      - Required if the I(state) creates a new role.
-    type: str
+    required: True
     aliases:
       - role_type
   config:
@@ -65,21 +60,17 @@ options:
     type: bool
     aliases:
       - maintenance_mode
-  tags:
-    description:
-      - A set of tags applied to the role.
-      - To unset a tag, use C(None) as its value.
-    type: dict
   purge:
     description:
-      - Flag for whether the declared role tags should append or overwrite any existing tags.
-      - To clear all tags, set I(tags={}), i.e. an empty dictionary, and I(purge=True).
+      - Flag for whether the declared role configurations should append or overwrite any existing configurations.
+      - To clear all role configurations, set I(config={}), i.e. an empty dictionary, or omit entirely, and set I(purge=True).
     type: bool
     default: False
   state:
     description:
       - The state of the role.
-      - Note, if the declared state is invalid for the role, for example, the role is a C(HDFS GATEWAY), the module will return an error.
+      - Note, if the declared state is invalid for the role, the module will return an error.
+      - Note, I(restarted) is always force a change of state of the role.
     type: str
     default: present
     choices:
@@ -101,139 +92,101 @@ attributes:
 """
 
 EXAMPLES = r"""
-- name: Establish a service role (auto-generated name)
-  cloudera.cluster.service_role:
+- name: Establish a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    type: GATEWAY
+    type: HOSTMONITOR
     cluster_hostname: worker-01.cloudera.internal
 
-- name: Establish a service role (defined name)
-  cloudera.cluster.service_role:
+- name: Set a Cloudera Manager Service role to maintenance mode
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    type: GATEWAY
-    name: example-gateway
-    cluster_hostname: worker-01.cloudera.internal
-
-- name: Set a service role to maintenance mode
-  cloudera.cluster.service_role:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
+    type: HOSTMONITOR
     maintenance: yes
 
-- name: Update (append) tags to a service role
-  cloudera.cluster.service_role:
+- name: Update (append) role configurations to a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
-    tags:
-      tag_one: value_one
-      tag_two: value_two
+    type: HOSTMONITOR
+    config:
+      some_config: value_one
+      another_config: value_two
 
-- name: Set (purge) tags to a service role
-  cloudera.cluster.service_role:
+- name: Set (purge) role configurations to a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
-    tags:
-      tag_three: value_three
+    type: HOSTMONITOR
+    config:
+      yet_another_config: value_three
     purge: yes
 
-- name: Remove all tags on a service role
-  cloudera.cluster.service_role:
+- name: Remove all role configurations on a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
-    tags: {}
+    type: HOSTMONITOR
     purge: yes
 
-- name: Start a service role
-  cloudera.cluster.service_role:
+- name: Start a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
+    type: HOSTMONITOR
     state: started
 
-- name: Force a restart to a service role
-  cloudera.cluster.service_role:
+- name: Force a restart to a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
+    type: HOSTMONITOR
     state: restarted
 
-- name: Start a service role
-  cloudera.cluster.service_role:
+- name: Remove a Cloudera Manager Service role
+  cloudera.cluster.cm_service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
-    state: started
-
-- name: Remove a service role
-  cloudera.cluster.service_role:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
+    type: HOSTMONITOR
     state: absent
 """
 
 RETURN = r"""
 role:
-  description: Details about the service role.
+  description: Details about the Cloudera Manager Service role.
   type: dict
   contains:
     name:
-      description: The cluster service role name.
+      description:
+        - The Cloudera Manager Service role name.
+        - Note, this is an auto-generated name and cannot be changed.
       type: str
       returned: always
     type:
-      description: The cluster service role type.
+      description: The Cloudera Manager Service role type.
       type: str
       returned: always
       sample:
-        - NAMENODE
-        - DATANODE
-        - TASKTRACKER
+        - HOSTMONITOR
     host_id:
       description: The unique ID of the cluster host.
       type: str
       returned: always
     service_name:
-      description: The name of the cluster service, which uniquely identifies it in a cluster.
+      description: The name of the Cloudera Manager Service, which uniquely identifies it in a deployment.
       type: str
-      returned: always
+      returned: when supported
     role_state:
-      description: State of the cluster service role.
+      description: State of the Cloudera Manager Service role.
       type: str
       returned: always
       sample:
@@ -245,11 +198,11 @@ role:
         - STOPPED
         - NA
     commission_state:
-      description: Commission state of the cluster service role.
+      description: Commission state of the Cloudera Manager Service role.
       type: str
       returned: always
     health_summary:
-      description: The high-level health status of the cluster service role.
+      description: The high-level health status of the Cloudera Manager Service role.
       type: str
       returned: always
       sample:
@@ -260,7 +213,7 @@ role:
         - CONCERNING
         - BAD
     config_staleness_status:
-      description: Status of configuration staleness for the cluster service role.
+      description: Status of configuration staleness for the Cloudera Manager Service role.
       type: str
       returned: always
       sample:
@@ -268,7 +221,7 @@ role:
         - STALE_REFRESHABLE
         - STALE
     health_checks:
-      description: Lists all available health checks for cluster service role.
+      description: Lists all available health checks for Cloudera Manager Service role.
       type: list
       elements: dict
       returned: when supported
@@ -299,7 +252,7 @@ role:
           type: bool
           returned: when supported
     maintenance_mode:
-      description: Whether the cluster service role is in maintenance mode.
+      description: Whether the Cloudera Manager Service role is in maintenance mode.
       type: bool
       returned: when supported
     maintenance_owners:
@@ -314,16 +267,16 @@ role:
         - HOST
         - CONTROL_PLANE
     role_config_group_name:
-      description: The name of the cluster service role config group, which uniquely identifies it in a Cloudera Manager installation.
+      description: The name of the Cloudera Manager Service role config group, which uniquely identifies it in a Cloudera Manager installation.
       type: str
       returned: when supported
     tags:
-      description: The dictionary of tags for the cluster service role.
+      description: The dictionary of tags for the Cloudera Manager Service role.
       type: dict
       returned: when supported
     zoo_keeper_server_mode:
       description:
-        - The Zookeeper server mode for this cluster service role.
+        - The Zookeeper server mode for this Cloudera Manager Service role.
         - Note that for non-Zookeeper Server roles, this will be C(null).
       type: str
       returned: when supported
@@ -397,7 +350,8 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                 ),
                 None,
             )
-            current.config = self.role_api.read_role_config(current.name)
+            if current is not None:
+                current.config = self.role_api.read_role_config(current.name)
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
@@ -419,16 +373,27 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                     config=self.config,
                 )
                 current = self.provision_role(new_role)
-            # # If it exists, but the type has changed, destroy and rebuild completely
-            # elif self.type and self.type != current.type:
-            #     new_role = create_role(
-            #         api_client=self.api_client,
-            #         role_type=self.type,
-            #         hostname=current.host_ref.hostname,
-            #         host_id=current.host_ref.host_id,
-            #         config=self.config
-            #     )
-            #     current = self.reprovision_role(current, new_role)
+            # If it exists, but the host has changed, destroy and rebuild completely
+            elif (
+                self.cluster_hostname is not None
+                and self.cluster_hostname != current.host_ref.hostname
+            ) or (
+                self.cluster_host_id is not None
+                and self.cluster_host_id != current.host_ref.host_id
+            ):
+                if self.config:
+                    new_config = self.config
+                else:
+                    new_config = {c.name: c.value for c in current.config.items}
+
+                new_role = create_role(
+                    api_client=self.api_client,
+                    role_type=current.type,
+                    hostname=self.cluster_hostname,
+                    host_id=self.cluster_host_id,
+                    config=new_config,
+                )
+                current = self.reprovision_role(current, new_role)
             # Else it exists, so address any changes
             else:
                 # Handle role override configurations
@@ -560,6 +525,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                 self.module.fail_json(
                     msg="Unable to create new role", role=to_native(role.to_dict())
                 )
+            return created_role
 
     def reprovision_role(self, existing_role: ApiRole, new_role: ApiRole) -> ApiRole:
         self.changed = True
@@ -588,8 +554,11 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                     msg="Unable to recreate role, " + existing_role.name,
                     role=to_native(rebuilt_role.to_dict()),
                 )
+            return rebuilt_role
+        else:
+            return existing_role
 
-    def deprovision_role(self, role: ApiRole):
+    def deprovision_role(self, role: ApiRole) -> None:
         self.changed = True
 
         if self.module._diff:
@@ -597,97 +566,6 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
 
         if not self.module.check_mode:
             self.role_api.delete_role(role.name)
-
-    # def xxxcreate_role(self) -> ApiRole:
-    #     # Check for required creation parameters
-    #     missing_params = []
-
-    #     if self.type is None:
-    #         missing_params.append("type")
-
-    #     if self.cluster_hostname is None and self.cluster_host_id is None:
-    #         missing_params += ["cluster_hostname", "cluster_host_id"]
-
-    #     if missing_params:
-    #         self.module.fail_json(
-    #             msg=f"Unable to create new role, missing required arguments: {', '.join(sorted(missing_params)) }"
-    #         )
-
-    #     # Set up the role
-    #     payload = ApiRole(type=str(self.type).upper())
-
-    #     # Name
-    #     if self.name:
-    #         payload.name = self.name # No name allows auto-generation
-
-    #     # Host assignment
-    #     host_ref = get_host_ref(self.api_client, self.cluster_hostname, self.cluster_host_id)
-
-    #     if host_ref is None:
-    #         self.module.fail_json(msg="Invalid host reference")
-    #     else:
-    #         payload.host_ref = host_ref
-
-    #     # Role override configurations
-    #     if self.config:
-    #         payload.config = ApiConfigList(items=[ApiConfig(name=k, value=v) for k, v in self.config.items()])
-
-    #     # Execute the creation
-    #     self.changed = True
-
-    #     if self.module._diff:
-    #         self.diff = dict(
-    #             before={},
-    #             after=payload.to_dict(),
-    #         )
-
-    #     if not self.module.check_mode:
-    #         created_role = next(
-    #             (
-    #                 iter(
-    #                     self.role_api.create_roles(
-    #                         body=ApiRoleList(items=[payload]),
-    #                     ).items
-    #                 )
-    #             ),
-    #             {},
-    #         )
-
-    # # Maintenance
-    # if self.maintenance:
-    #     if self.module._diff:
-    #         self.diff["after"].update(maintenance_mode=True)
-
-    #     maintenance_cmd = self.role_api.enter_maintenance_mode(
-    #         created_role.name
-    #     )
-
-    #     if maintenance_cmd.success is False:
-    #         self.module.fail_json(
-    #             msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
-    #         )
-
-    # if self.state in ["started", "restarted"]:
-    #     self.handle_commands(MgmtRoleCommandsResourceApi(self.api_client).start_command(
-    #         body=ApiRoleNameList(items=[created_role.name]),
-    #     ))
-
-    # elif self.state == "stopped":
-    #     self.handle_commands(MgmtRoleCommandsResourceApi(self.api_client).stop_command(
-    #         body=ApiRoleNameList(items=[created_role.name]),
-    #     ))
-
-    # if refresh:
-    #     self.output = parse_role_result(
-    #         self.role_api.read_role(
-    #             self.cluster,
-    #             created_role.name,
-    #             self.service,
-    #             view="full",
-    #         )
-    #     )
-    # else:
-    #     self.output = parse_role_result(created_role)
 
     def handle_commands(self, commands: ApiBulkCommandList):
         if commands.errors:
@@ -707,7 +585,7 @@ def main():
             maintenance=dict(type="bool", aliases=["maintenance_mode"]),
             config=dict(type="dict", aliases=["params", "parameters"]),
             purge=dict(type="bool", default=False),
-            type=dict(required=True),
+            type=dict(required=True, aliases=["role_type"]),
             state=dict(
                 default="present",
                 choices=["present", "absent", "restarted", "started", "stopped"],
