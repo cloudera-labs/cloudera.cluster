@@ -38,7 +38,7 @@ def test_minimal(conn, module_args, cms):
 
 
 @pytest.mark.service_config(dict(log_event_retry_frequency=10))
-def test_set_parameters(conn, module_args, cms_service_config):
+def test_set_parameters(conn, module_args, cms_config):
     module_args(
         {
             **conn,
@@ -76,7 +76,7 @@ def test_set_parameters(conn, module_args, cms_service_config):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
 )
-def test_unset_parameters(conn, module_args, cms_service_config):
+def test_unset_parameters(conn, module_args, cms_config):
     module_args(
         {
             **conn,
@@ -110,7 +110,7 @@ def test_unset_parameters(conn, module_args, cms_service_config):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
 )
-def test_set_parameters_with_purge(conn, module_args, cms_service_config):
+def test_set_parameters_with_purge(conn, module_args, cms_config):
     module_args(
         {
             **conn,
@@ -147,7 +147,7 @@ def test_set_parameters_with_purge(conn, module_args, cms_service_config):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
 )
-def test_purge_all_parameters(conn, module_args, cms_service_config):
+def test_purge_all_parameters(conn, module_args, cms_config):
     module_args(
         {
             **conn,

@@ -128,11 +128,11 @@ def test_present_invalid_cluster(conn, module_args):
         service_config.main()
 
 
-def test_present_invalid_service(conn, module_args, target_service):
+def test_present_invalid_service(conn, module_args, zk_service):
     module_args(
         {
             **conn,
-            "cluster": target_service.cluster_ref.cluster_name,
+            "cluster": zk_service.cluster_ref.cluster_name,
             "service": "example",
             "parameters": dict(example="Example"),
         }
@@ -142,12 +142,12 @@ def test_present_invalid_service(conn, module_args, target_service):
         service_config.main()
 
 
-def test_present_invalid_parameter(conn, module_args, target_service):
+def test_present_invalid_parameter(conn, module_args, zk_service):
     module_args(
         {
             **conn,
-            "cluster": target_service.cluster_ref.cluster_name,
-            "service": target_service.name,
+            "cluster": zk_service.cluster_ref.cluster_name,
+            "service": zk_service.name,
             "parameters": dict(example="Example"),
         }
     )
