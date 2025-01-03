@@ -61,7 +61,7 @@ class AnsibleFailJson(Exception):
 def wait_for_command(
     api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 5
 ):
-    """Polls Cloudera Manager to wait for a Command to complete."""
+    """Polls Cloudera Manager to wait for given Command to succeed or fail."""
 
     poll_count = 0
     while command.active:
@@ -90,7 +90,7 @@ def provision_service(
         Exception: _description_
 
     Yields:
-        ApiService: _description_
+        Generator[ApiService]: _description_
     """
 
     api = ServicesResourceApi(api_client)
@@ -132,7 +132,7 @@ def service_wide_config(
         Exception: _description_
 
     Yields:
-        ApiService: _description_
+        Generator[ApiService]: _description_
     """
     service_api = ServicesResourceApi(api_client)
 
@@ -190,6 +190,18 @@ def service_wide_config(
 def provision_cm_role(
     api_client: ApiClient, role_name: str, role_type: str, host_id: str
 ) -> Generator[ApiRole]:
+    """Yield a newly-created Cloudera Manager Service role, deleting the
+       role after use. Use with 'yield from' within a pytest fixture.
+
+    Args:
+        api_client (ApiClient): _description_
+        role_name (str): _description_
+        role_type (str): _description_
+        host_id (str): _description_
+
+    Yields:
+        Generator[ApiRole]: _description_
+    """
     api = MgmtRolesResourceApi(api_client)
 
     role = ApiRole(
@@ -203,7 +215,7 @@ def provision_cm_role(
     api.delete_role(role_name=role_name)
 
 
-def cm_role_config(
+def set_cm_role_config(
     api_client: ApiClient, role: ApiRole, params: dict, message: str
 ) -> Generator[ApiRole]:
     """Update a role configuration for a given role. Yields the
@@ -220,7 +232,7 @@ def cm_role_config(
         Exception: _description_
 
     Yields:
-        ApiRole: _description_
+        Generator[ApiRole]: _description_
     """
     role_api = MgmtRolesResourceApi(api_client)
 
@@ -273,11 +285,10 @@ def set_cm_role_config_group(
     update: ApiRoleConfigGroup,
     message: str,
 ) -> Generator[ApiRoleConfigGroup]:
-    """
-    Update a configuration for a given Cloudera Manager Service role config group.
-    Yields the role config group and upon returning control, will reset the
-    configuration to its prior state.
-    Use with 'yield from' within a pytest fixture.
+    """Update a configuration for a given Cloudera Manager Service role config group.
+       Yields the role config group and upon returning control, will reset the
+       configuration to its prior state.
+       Use with 'yield from' within a pytest fixture.
 
     Args:
         api_client (ApiClient): CM API client
@@ -286,7 +297,7 @@ def set_cm_role_config_group(
         message (str): Transaction descriptor; will be appended with '::[re]set'
 
     Yields:
-        ApiRoleConfigGroup: The updated Role Config Group
+        Generator[ApiRoleConfigGroup]: The updated Role Config Group
     """
     rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
 

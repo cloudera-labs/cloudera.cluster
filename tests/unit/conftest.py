@@ -70,6 +70,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
     AnsibleExitJson,
     provision_cm_role,
+    set_cm_role_config,
     set_cm_role_config_group,
 )
 
@@ -379,7 +380,7 @@ def host_monitor_config(cm_api_client, host_monitor, request) -> Generator[ApiRo
     if marker is None:
         raise Exception("No role_config marker found.")
 
-    yield from cm_role_config(
+    yield from set_cm_role_config(
         api_client=cm_api_client,
         role=host_monitor,
         params=marker.args[0],
