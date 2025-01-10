@@ -23,6 +23,7 @@ from cm_client import (
     ApiCommand,
     ApiConfig,
     ApiConfigList,
+    ApiHostRef,
     ApiRole,
     ApiRoleConfigGroup,
     ApiRoleList,
@@ -40,6 +41,9 @@ from cm_client import (
 )
 from cm_client.rest import ApiException
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    resolve_parameter_updates,
+)
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
     get_host_ref,
 )
@@ -217,12 +221,20 @@ def provision_cm_role(
     role = ApiRole(
         name=role_name,
         type=role_type,
-        host_ref=dict(hostId=host_id),
+        host_ref=ApiHostRef(host_id=host_id),
     )
 
-    yield next(iter(api.create_roles(body=ApiRoleList(items=[role])).items), None)
+    provisioned_role = next(
+        iter(api.create_roles(body=ApiRoleList(items=[role])).items), None
+    )
 
-    api.delete_role(role_name=role_name)
+    yield provisioned_role
+
+    try:
+        api.delete_role(role_name=provisioned_role.name)
+    except ApiException as ae:
+        if ae.status != 404:
+            raise ae
 
 
 def set_cm_role(
@@ -391,12 +403,31 @@ def set_cm_role_config_group(
     """
     rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
 
-    pre = rcg_api.read_role_config_group(role_config_group.name)
+    # Ensure the modification (not a replacement) of the existing role config group
+    update.name = role_config_group.name
 
-    yield rcg_api.update_role_config_group(
+    # Update the role config group
+    pre_rcg = rcg_api.update_role_config_group(
         role_config_group.name, message=f"{message}::set", body=update
     )
 
-    rcg_api.update_role_config_group(
-        role_config_group.name, message=f"{message}::reset", body=pre
+    yield pre_rcg
+
+    # Reread the role config group
+    post_rcg = rcg_api.read_role_config_group(role_config_group_name=pre_rcg.name)
+
+    # Revert the changes
+    config_revert = resolve_parameter_updates(
+        {c.name: c.value for c in post_rcg.config.items},
+        {c.name: c.value for c in role_config_group.config.items},
+        True,
     )
+
+    if config_revert:
+        role_config_group.config = ApiConfigList(
+            items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
+        )
+
+        rcg_api.update_role_config_group(
+            role_config_group.name, message=f"{message}::reset", body=role_config_group
+        )
