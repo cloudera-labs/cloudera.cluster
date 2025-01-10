@@ -104,6 +104,11 @@ def resolve_parameter_updates(
     diff = recursive_diff(current, normalize_values(incoming))
 
     if diff is not None:
+        # TODO Lookup default for v=None to avoid issues with CM
+        # CM sometimes fails to find the default value for a parameter
+        # However, a view=full will return the default, so if we can
+        # change this method's signature to include that reference, we
+        # can short-circuit CM's problematic lookup of the default value.
         updates = {
             k: v
             for k, v in diff[1].items()
