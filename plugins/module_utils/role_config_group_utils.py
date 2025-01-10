@@ -19,7 +19,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 from cm_client import (
     ApiClient,
     ApiRoleConfigGroup,
-    ApiRoleConfigGroupRef,
     RoleConfigGroupsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
 )
@@ -105,3 +104,9 @@ def get_role_config_group(
         raise RoleConfigGroupDiscoveryException(name)
     else:
         return rcg
+
+
+def reconcile_role_config_group(
+    api_client: ApiClient, existing: ApiRoleConfigGroup, updates: dict
+):
+    pass
