@@ -1,4 +1,4 @@
-# Copyright 2024 Cloudera, Inc.
+# Copyright 2025 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,9 +104,3 @@ def get_role_config_group(
         raise RoleConfigGroupDiscoveryException(name)
     else:
         return rcg
-
-
-def reconcile_role_config_group(
-    api_client: ApiClient, existing: ApiRoleConfigGroup, updates: dict
-):
-    pass
