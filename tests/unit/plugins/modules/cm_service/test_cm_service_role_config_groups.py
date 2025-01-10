@@ -32,7 +32,6 @@ from cm_client import (
 from ansible_collections.cloudera.cluster.plugins.modules import cm_service
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
-    AnsibleFailJson,
 )
 
 LOG = logging.getLogger(__name__)
