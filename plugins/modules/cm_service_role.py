@@ -415,6 +415,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                             )
 
             # Handle maintenance mode
+            # TODO Move first
             if (
                 self.maintenance is not None
                 and self.maintenance != current.maintenance_mode
@@ -490,7 +491,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                         )
                     )
 
-            # If there are changes, get a refresh read
+            # If there are changes, get a fresh read
             if self.changed:
                 refresh = self.role_api.read_role(current.name)
                 refresh.config = self.role_api.read_role_config(current.name)
@@ -562,7 +563,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         self.changed = True
 
         if self.module._diff:
-            self.diff = dict(before=role.to_dict(), after=dict())
+            self.diff = dict(before=parse_role_result(role), after=dict())
 
         if not self.module.check_mode:
             self.role_api.delete_role(role.name)
