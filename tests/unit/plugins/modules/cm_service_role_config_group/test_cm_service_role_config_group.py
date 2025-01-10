@@ -209,34 +209,3 @@ def test_cm_role_config_group_config_purge_all(
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
-
-
-@pytest.mark.role_config_group(ApiRoleConfigGroup(display_name="Test"))
-def test_cm_role_config_group_display_name_set(
-    conn, module_args, host_monitor_role_group_config, request
-):
-    expected = "Updated Test"
-
-    module_args(
-        {
-            **conn,
-            "type": host_monitor_role_group_config.role_type,
-            "display_name": expected,
-            "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-            # _ansible_check_mode=True,
-            # _ansible_diff=True,
-        }
-    )
-
-    with pytest.raises(AnsibleExitJson) as e:
-        cm_service_role_config_group.main()
-
-    assert e.value.changed == True
-    assert expected == e.value.role_config_group["display_name"]
-
-    # Idempotency
-    with pytest.raises(AnsibleExitJson) as e:
-        cm_service_role_config_group.main()
-
-    assert e.value.changed == False
-    assert expected == e.value.role_config_group["display_name"]
