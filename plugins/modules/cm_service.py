@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -169,29 +169,38 @@ service:
             returned: optional
 """
 
-import json
+from collections.abc import Callable
 
 from cm_client import (
-    HostsResourceApi,
+    ApiBulkCommandList,
+    ApiCommand,
+    ApiConfigList,
+    ApiRoleList,
+    ApiRoleConfigGroup,
+    ApiService,
+    ApiServiceState,
     MgmtRolesResourceApi,
     MgmtRoleConfigGroupsResourceApi,
-    MgmtRoleCommandsResourceApi,
     MgmtServiceResourceApi,
 )
 from cm_client.rest import ApiException
 
+from ansible.module_utils.common.text.converters import to_native
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
+    ConfigListUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
     ServiceConfigUpdates,
-    parse_cm_service_result,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    parse_role_result,
+    parse_service_result,
+    read_cm_service,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    parse_role_config_group_result,
+    get_mgmt_base_role_config_group,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    create_role,
 )
 
 
@@ -200,20 +209,24 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
         super(ClouderaManagerService, self).__init__(module)
 
         # Set the parameters
-        self.params = self.get_param("parameters")
+        self.maintenance = self.get_param("maintenance")
+        self.config = self.get_param("config")
+        self.role_config_groups = self.get_param("role_config_groups")
         self.roles = self.get_param("roles")
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
-        self.view = self.get_param("view")
+        # self.view = self.get_param("view")
 
         # Initialize the return value
         self.changed = False
-        self.cm_service = {}
+        self.output = dict()
 
         if self.module._diff:
             self.diff = dict(before=dict(), after=dict())
+            self.before = dict()
+            self.after = dict()
         else:
-            self.diff = {}
+            self.diff = dict()
 
         # Execute the logic
         self.process()
@@ -223,287 +236,451 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
         service_api = MgmtServiceResourceApi(self.api_client)
         role_api = MgmtRolesResourceApi(self.api_client)
-        role_cmd_api = MgmtRoleCommandsResourceApi(self.api_client)
         rcg_api = MgmtRoleConfigGroupsResourceApi(self.api_client)
-        host_api = HostsResourceApi(self.api_client)
 
-        # Manage service-wide configurations
-        if self.params or self.purge:
-            try:
-                existing_params = service_api.read_service_config()
-            except ApiException as ex:
-                if ex.status == 404:
-                    self.module.fail_json(msg=json.loads(ex.body)["message"])
-                else:
-                    raise ex
+        current = None
 
-            service_wide = ServiceConfigUpdates(
-                existing_params, self.params, self.purge
-            )
+        # Discover the CM service and retrieve its configured dependents
+        try:
+            # TODO This is only used once... so revert
+            current = read_cm_service(self.api_client)
+            # current = service_api.read_service()
+            # if current is not None:
+            #     # Gather the service-wide configuration
+            #     current.config = service_api.read_service_config()
 
-            if service_wide.changed:
+            #     # Gather each role config group configuration
+            #     for rcg in current.role_config_groups:
+            #         rcg.config = rcg_api.read_config(role_config_group_name=rcg.name)
+
+            #     # Gather each role configuration
+            #     for role in current.roles:
+            #         role.config = role_api.read_role_config(role_name=role.name)
+
+        except ApiException as ex:
+            if ex.status != 404:
+                raise ex
+
+        # If deleting, do so and exit
+        if self.state == "absent":
+            if current:
                 self.changed = True
 
                 if self.module._diff:
-                    self.diff["before"].update(params=service_wide.diff["before"])
-                    self.diff["after"].update(params=service_wide.diff["after"])
+                    self.before = parse_service_result(current)
 
                 if not self.module.check_mode:
-                    service_api.update_service_config(
-                        message=self.message, body=service_wide.config
+                    service_api.delete_cms()
+
+        # Otherwise, manage the configurations of the service, its role config
+        # groups, its roles, and its state
+        elif self.state in ["present", "restarted", "started", "stopped"]:
+            # If it is a new service, create the initial service
+            if not current:
+                self.changed = True
+                new_service = ApiService(type="MGMT")
+                current = service_api.setup_cms(body=new_service)
+                current.config = service_api.read_service_config()
+                current.role_config_groups = []
+                current.roles = []
+
+            # Handle maintenance mode
+            if (
+                self.maintenance is not None
+                and self.maintenance != current.maintenance_mode
+            ):
+                self.changed = True
+
+                if self.module._diff:
+                    self.before.update(maintenance_mode=current.maintenance_mode)
+                    self.after.update(maintenance_mode=self.maintenance_mode)
+
+                if not self.module.check_mode:
+                    if self.maintenance:
+                        maintenance_cmd = service_api.enter_maintenance_mode()
+                    else:
+                        maintenance_cmd = service_api.exit_maintenance_mode()
+
+                if maintenance_cmd.success is False:
+                    self.module.fail_json(
+                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
                     )
 
-        # Manage roles
-        if self.roles:
-            try:
-                # Get a list of all host and find itself
-                # This is hardcoded, so needs to be broken into host
-                # assignment per-role
-                hosts = host_api.read_hosts()
-                for h in hosts.items():
-                    if self.host == h.hostname:
-                        host_id = h.host_id
+            # Handle service-wide changes
+            if self.config or self.purge:
+                if self.config is None:
+                    self.config = dict()
 
-                # CHECK MODE
-                if not self.purge:
-                    available_roles_info = role_api.read_roles().to_dict()
-                    existing_roles = []
-                    for item in available_roles_info["items"]:
-                        existing_roles.append(item["type"])
+                updates = ServiceConfigUpdates(current.config, self.config, self.purge)
 
-                    if self.state in ["present"]:
-                        not_existing_roles = []
-                        for role in self.roles:
-                            if role not in existing_roles:
-                                not_existing_roles.append(role)
-                        if not_existing_roles:
-                            body = {
-                                "items": [
-                                    {"type": role, "hostRef": {"hostId": host_id}}
-                                    for role in not_existing_roles
-                                ]
-                            }
-                            role_api.create_roles(body=body)
-                        self.cm_service = parse_cm_service_result(
-                            service_api.read_service()
+                if updates.changed:
+                    self.changed = True
+
+                    if self.module._diff:
+                        self.before.update(config=updates.before)
+                        self.after.update(config=updates.after)
+
+                    if not self.module.check_mode:
+                        service_api.update_service_config(
+                            message=self.message, body=updates.config
                         )
+
+            # Manage role config groups (base only)
+            if self.role_config_groups or self.purge:
+                # Get existing role config groups (ApiRoleConfigGroup)
+                current_rcgs_map = {
+                    rcg.role_type: rcg for rcg in current.role_config_groups
+                }
+
+                # Get the incoming role config groups (dict)
+                if self.role_config_groups is None:
+                    incoming_rcgs_map = dict()
+                else:
+                    incoming_rcgs_map = {
+                        rcg["type"]: rcg for rcg in self.role_config_groups
+                    }
+
+                # Create sets of each role config group by type
+                current_set = set(current_rcgs_map.keys())
+                incoming_set = set(incoming_rcgs_map.keys())
+
+                # Update any existing role config groups
+                for rcg_type in current_set & incoming_set:
+                    existing_rcg = current_rcgs_map[rcg_type]
+                    incoming_rcg = incoming_rcgs_map[rcg_type]
+
+                    if incoming_rcg["config"] is None:
+                        incoming_rcg["config"] = dict()
+
+                    # TODO Consolidate into util function; see cm_service_role_config_group:279-302
+                    payload = ApiRoleConfigGroup()
+
+                    # Update display name
+                    incoming_display_name = incoming_rcg.get("display_name")
+                    if (
+                        incoming_display_name is not None
+                        and incoming_display_name != existing_rcg.display_name
+                    ):
+                        self.changed = True
+                        payload.display_name = incoming_display_name
+
+                    # Reconcile configurations
+                    if existing_rcg.config or self.purge:
+                        updates = ConfigListUpdates(
+                            existing_rcg.config, incoming_rcg["config"], self.purge
+                        )
+
+                        if updates.changed:
+                            self.changed = True
+
+                            if self.module._diff:
+                                rcg_diff["before"].update(config=updates.diff["before"])
+                                rcg_diff["after"].update(config=updates.diff["after"])
+
+                            payload.config = updates.config
+
+                    # Execute changes if needed
+                    if (
+                        payload.display_name is not None or payload.config is not None
+                    ) and not self.module.check_mode:
+                        rcg_api.update_role_config_group(
+                            existing_rcg.name, message=self.message, body=payload
+                        )
+
+                # Add any new role config groups
+                for rcg_type in incoming_set - current_set:
+                    self.changed = True
+
+                    if self.module._diff:
+                        rcg_diff = dict(before=dict(), after=dict())
+
+                    existing_rcg = get_mgmt_base_role_config_group(
+                        self.api_client, rcg_type
+                    )
+                    incoming_rcg = incoming_rcgs_map[rcg_type]
+
+                    payload = ApiRoleConfigGroup()
+
+                    incoming_display_name = incoming_rcg.get("display_name")
+                    if incoming_display_name is not None:
+                        if self.module._diff:
+                            rcg_diff["before"].update(
+                                display_name=existing_rcg.display_name
+                            )
+                            rcg_diff["after"].update(display_name=incoming_display_name)
+                        payload.display_name = incoming_display_name
+
+                    incoming_rcg_config = incoming_rcg.get("config")
+                    if incoming_rcg_config:
+                        updates = ConfigListUpdates(
+                            existing_rcg.config, incoming_rcg_config, self.purge
+                        )
+
+                        if self.module._diff:
+                            rcg_diff["before"].update(config=updates.diff["before"])
+                            rcg_diff["after"].update(config=updates.diff["after"])
+
+                        payload.config = updates.config
+                    else:
+                        payload.config = ApiConfigList()
+
+                    if not self.module.check_mode:
+                        rcg_api.update_role_config_group(
+                            existing_rcg.name, message=self.message, body=payload
+                        )
+
+                # Remove any undeclared role config groups
+                if self.purge:
+                    for rcg_type in current_set - incoming_set:
                         self.changed = True
 
-                    elif self.state in ["absent"]:
-                        roles_to_remove = [
-                            role for role in self.roles if role in existing_roles
-                        ]
-                        roles_to_remove_extended_info = []
-                        for role in roles_to_remove:
-                            for item in available_roles_info["items"]:
-                                if role == item["type"]:
-                                    roles_to_remove_extended_info.append(item["name"])
-                        if not roles_to_remove_extended_info:
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = False
-                        else:
-                            for role in roles_to_remove_extended_info:
-                                role_api.delete_role(role_name=role)
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = True
+                        if self.module._diff:
+                            rcg_diff = dict(before=dict(), after=dict())
 
-                    elif self.state in ["started"]:
-
-                        matching_roles = []
-                        new_roles = []
-                        for role in self.roles:
-                            if role in existing_roles:
-                                matching_roles.append(role)
-                            else:
-                                new_roles.append(role)
-
-                        new_roles_to_start = []
-                        if new_roles:
-                            body = {
-                                "items": [
-                                    {"type": role, "hostRef": {"hostId": host_id}}
-                                    for role in new_roles
-                                ]
-                            }
-                            newly_added_roles = role_api.create_roles(
-                                body=body
-                            ).to_dict()
-
-                            for role in newly_added_roles["items"]:
-                                new_roles_to_start.append(role["name"])
-                            body = {"items": new_roles_to_start}
-
-                        existing_roles_state = []
-                        for role in matching_roles:
-                            for item in available_roles_info["items"]:
-                                if role == item["type"]:
-                                    existing_roles_state.append(
-                                        {
-                                            "type": item["type"],
-                                            "role_state": item["role_state"].lower(),
-                                            "name": item["name"],
-                                        }
-                                    )
-
-                        existing_roles_to_start = []
-                        for role in existing_roles_state:
-                            if role["role_state"] == "stopped":
-                                existing_roles_to_start.append(role["name"])
-
-                        all_roles_to_start = (
-                            new_roles_to_start + existing_roles_to_start
+                        existing_rcg = get_mgmt_base_role_config_group(
+                            self.api_client, rcg_type
                         )
-                        body = {"items": all_roles_to_start}
 
-                        if all_roles_to_start:
-                            start_roles_request = role_cmd_api.start_command(
-                                body=body
-                            ).to_dict()
-                            command_id = start_roles_request["items"][0]["id"]
-                            self.wait_for_command_state(
-                                command_id=command_id, polling_interval=5
+                        payload = ApiRoleConfigGroup(
+                            display_name=f"mgmt-{rcg_type}-BASE"
+                        )
+
+                        updates = ConfigListUpdates(
+                            existing_rcg.config, dict(), self.purge
+                        )
+
+                        if self.module._diff:
+                            rcg_diff["before"].update(config=updates.diff["before"])
+                            rcg_diff["after"].update(config=updates.diff["after"])
+
+                        payload.config = updates.config
+
+                        if not self.module.check_mode:
+                            rcg_api.update_role_config_group(
+                                existing_rcg.name, message=self.message, body=payload
                             )
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = True
-                        else:
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = False
 
-                    elif self.state in ["stopped"]:
-                        matching_roles = []
-                        for role in self.roles:
-                            if role in existing_roles:
-                                matching_roles.append(role)
+            # Manage roles
+            if self.roles or self.purge:
+                # Get existing roles (ApiRole)
+                current_roles_map = {r.type: r for r in current.roles}
 
-                        matching_roles_state = []
-                        for role in matching_roles:
-                            for item in available_roles_info["items"]:
-                                if role == item["type"]:
-                                    matching_roles_state.append(
-                                        {
-                                            "type": item["type"],
-                                            "role_state": item["role_state"].lower(),
-                                            "name": item["name"],
-                                        }
-                                    )
+                # Get incoming roles (dict)
+                if self.roles is None:
+                    incoming_roles_map = dict()
+                else:
+                    incoming_roles_map = {r["type"]: r for r in self.roles}
 
-                        roles_to_stop = []
-                        for role in matching_roles_state:
-                            if role["role_state"] == "started":
-                                roles_to_stop.append(role["name"])
-                        body = {"items": roles_to_stop}
+                # Create sets of the roles
+                current_set = set(current_roles_map.keys())
+                incoming_set = set(incoming_roles_map.keys())
 
-                        if roles_to_stop:
-                            role_cmd_api.stop_command(body=body)
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = True
-                        else:
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = False
+                # Update any existing roles
+                for role_type in current_set & incoming_set:
+                    existing_role = current_roles_map[role_type]
+                    incoming_role = incoming_roles_map[role_type]
 
-                    elif self.state in ["restarted"]:
-                        matching_roles = []
-                        for role in self.roles:
-                            if role in existing_roles:
-                                matching_roles.append(role)
+                    if incoming_role["config"] is None:
+                        incoming_role["config"] = dict()
 
-                        matching_roles_state = []
-                        for role in matching_roles:
-                            for item in available_roles_info["items"]:
-                                if role == item["type"]:
-                                    matching_roles_state.append(
-                                        {
-                                            "type": item["type"],
-                                            "role_state": item["role_state"].lower(),
-                                            "name": item["name"],
-                                        }
-                                    )
+                    # If the host has changed, destroy and rebuild completely
+                    incoming_hostname = incoming_role.get("cluster_hostname")
+                    incoming_host_id = incoming_role.get("cluster_host_id")
+                    if (
+                        incoming_hostname is not None
+                        and incoming_hostname != existing_role.host_ref.hostname
+                    ) or (
+                        incoming_host_id is not None
+                        and incoming_host_id != existing_role.host_ref.host_id
+                    ):
+                        self.changed = True
 
-                        roles_to_restart = []
-                        for role in matching_roles_state:
-                            roles_to_restart.append(role["name"])
-                        body = {"items": roles_to_restart}
-
-                        if roles_to_restart:
-                            role_cmd_api.restart_command(body=body)
-                            self.cm_service = role_api.read_roles().to_dict()
-                            self.changed = True
-
-                if self.purge:
-                    service_api.delete_cms()
-                    body = {"roles": [{"type": role} for role in self.roles]}
-                    service_api.setup_cms(body=body)
-                    self.cm_service = role_api.read_roles().to_dict()
-
-                    if self.state in ["started"]:
-                        start_roles_request = service_api.start_command().to_dict()
-                        command_id = start_roles_request["id"]
-                        self.wait_for_command_state(
-                            command_id=command_id, polling_interval=5
+                        # Use the new configuration or copy from the existing
+                        new_config = (
+                            incoming_role["config"]
+                            if incoming_role["config"]
+                            else {c.name: c.value for c in existing_role.config.items}
                         )
-                        self.cm_service = role_api.read_roles().to_dict()
-                    self.changed = True
-            except ApiException as e:
-                if e.status == 404 or 400:
-                    roles_dict = {"roles": [{"type": role} for role in self.roles]}
-                    service_api.setup_cms(body=roles_dict)
 
-                    if self.state in ["started"]:
-                        start_roles_request = service_api.start_command().to_dict()
-                        command_id = start_roles_request["id"]
-                        self.wait_for_command_state(
-                            command_id=command_id, polling_interval=5
+                        new_role = create_role(
+                            api_client=self.api_client,
+                            role_type=existing_role.type,
+                            hostname=incoming_hostname,
+                            host_id=incoming_host_id,
+                            config=new_config,
                         )
-                        self.cm_service = role_api.read_roles().to_dict()
+
+                        if not self.module.check_mode:
+                            role_api.delete_role(existing_role.name)
+
+                            rebuilt_role = next(
+                                (
+                                    iter(
+                                        role_api.create_roles(
+                                            body=ApiRoleList(items=[new_role])
+                                        ).items
+                                    )
+                                ),
+                                {},
+                            )
+                            if not rebuilt_role:
+                                self.module.fail_json(
+                                    msg="Unable to recreate role, "
+                                    + existing_role.name,
+                                    role=to_native(rebuilt_role.to_dict()),
+                                )
+
+                    # Else address any updates
                     else:
-                        self.cm_service = role_api.read_roles().to_dict()
+                        updates = ConfigListUpdates(
+                            existing_role.config,
+                            incoming_role["config"],
+                            self.purge,
+                        )
+
+                        if updates.changed:
+                            self.changed = True
+
+                            if not self.module.check_mode:
+                                role_api.update_role_config(
+                                    role_name=existing_role.name,
+                                    message=self.message,
+                                    body=updates.config,
+                                )
+
+                # Add any new roles
+                for role_type in incoming_set - current_set:
                     self.changed = True
 
-        # Read and generate payload for Cloudera Manager Service
-        self.cm_service = parse_cm_service_result(service_api.read_service())
-        self.cm_service.update(
-            config=[
-                c.to_dict()
-                for c in service_api.read_service_config(view=self.view).items
-            ]
-        )
-        self.cm_service.update(
-            roles=[parse_role_result(r) for r in role_api.read_roles().items]
-        )
-        self.cm_service.update(
-            role_config_groups=[
-                parse_role_config_group_result(rcg)
-                for rcg in rcg_api.read_role_config_groups().items
-            ]
-        )
+                    incoming_role = incoming_roles_map[role_type]
+
+                    new_role = create_role(
+                        api_client=self.api_client,
+                        role_type=incoming_role.get("type"),
+                        hostname=incoming_role.get("cluster_hostname"),
+                        host_id=incoming_role.get("cluster_host_id"),
+                        config=incoming_role.get("config"),
+                    )
+
+                    if not self.module.check_mode:
+                        created_role = next(
+                            (
+                                iter(
+                                    role_api.create_roles(
+                                        body=ApiRoleList(items=[new_role])
+                                    ).items
+                                )
+                            ),
+                            {},
+                        )
+                        if not created_role:
+                            self.module.fail_json(
+                                msg="Unable to create new role",
+                                role=to_native(new_role.to_dict()),
+                            )
+
+                # Remove any undeclared roles if directed
+                if self.purge:
+                    for role_type in current_set - incoming_set:
+                        self.changed = True
+
+                        existing_role = current_roles_map[role_type]
+
+                        if not self.module.check_mode:
+                            role_api.delete_role(existing_role.name)
+
+            # Handle various states
+            if self.state == "started" and current.service_state not in [
+                ApiServiceState.STARTED
+            ]:
+                self.exec_service_command(
+                    current, ApiServiceState.STARTED, service_api.start_command
+                )
+            elif self.state == "stopped" and current.service_state not in [
+                ApiServiceState.STOPPED,
+                ApiServiceState.NA,
+            ]:
+                self.exec_service_command(
+                    current, ApiServiceState.STOPPED, service_api.stop_command
+                )
+            elif self.state == "restarted":
+                self.exec_service_command(
+                    current, ApiServiceState.STARTED, service_api.restart_command
+                )
+
+            # If there are changes, get a fresh read
+            if self.changed:
+                refresh = read_cm_service(self.api_client)
+                self.output = parse_service_result(refresh)
+            # Otherwise, return the existing
+            else:
+                self.output = parse_service_result(current)
+        else:
+            self.module.fail_json(msg=f"Invalid state: {self.state}")
+
+    def exec_service_command(
+        self, service: ApiService, value: str, cmd: Callable[[None], ApiCommand]
+    ):
+        self.changed = True
+        if self.module._diff:
+            self.diff["before"].update(service_state=service.service_state)
+            self.diff["after"].update(service_state=value)
+
+        if not self.module.check_mode:
+            self.wait_command(cmd())
+
+    def handle_commands(self, commands: ApiBulkCommandList):
+        if commands.errors:
+            error_msg = "\n".join(commands.errors)
+            self.module.fail_json(msg=error_msg)
+
+        for c in commands.items:
+            # Not in parallel, but should only be a single command
+            self.wait_command(c)
 
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            parameters=dict(type="dict", aliases=["params"]),
-            roles=dict(type="list"),
-            purge=dict(type="bool", default=False),
-            view=dict(
-                default="summary",
-                choices=["summary", "full"],
+            config=dict(type="dict", aliases=["params", "parameters"]),
+            role_config_groups=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    display_name=dict(),  # TODO Remove display_name as an option
+                    type=dict(required=True, aliases=["role_type"]),
+                    config=dict(
+                        required=True, type="dict", aliases=["params", "parameters"]
+                    ),
+                ),
             ),
+            roles=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    cluster_hostname=dict(aliases=["cluster_host"]),
+                    cluster_host_id=dict(),
+                    config=dict(type="dict", aliases=["params", "parameters"]),
+                    type=dict(required=True, aliases=["role_type"]),
+                ),
+                mutually_exclusive=[["cluster_hostname", "cluster_host_id"]],
+            ),
+            maintenance=dict(type="bool", aliases=["maintenance_mode"]),
+            purge=dict(type="bool", default=False),
             state=dict(
                 type="str",
-                default="started",
+                default="present",
                 choices=["started", "stopped", "absent", "present", "restarted"],
             ),
         ),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     result = ClouderaManagerService(module)
 
-    changed = result.changed
-
     output = dict(
-        changed=changed,
-        service=result.cm_service,
+        changed=result.changed,
+        service=result.output,
     )
 
     if result.debug:
