@@ -1,4 +1,7 @@
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,34 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from cm_client import MgmtServiceResourceApi
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_service_info
-short_description: Retrieve information about the Cloudera Management Services
+short_description: Retrieve information about the Cloudera Management service
 description:
   - Gather information about the Cloudera Manager service.
 author:
-  - "Ronald Suplina (@rsuplina)"
+  - Ronald Suplina (@rsuplina)
+  - Webster Mudge (@wmudge)
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+attributes:
+  check_mode:
+    support: full
 requirements:
-  - cm_client
+  - cm-client
+seealso:
+  - module: cloudera.cluster.cm_service
+  - module: cloudera.cluster.cm_service_role
+  - module: cloudera.cluster.cm_service_role_config_group
 """
 
 EXAMPLES = r"""
----
-- name: Gather details using an host
-  cloudera.cluster.cm_version:
+- name: Gather details of the Cloudera Manager service
+  cloudera.cluster.cm_service_info:
     host: "example.cloudera.host"
     username: "will_jordan"
     password: "S&peR4Ec*re"
@@ -47,100 +47,307 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
-cloudera_manager:
-    description: Details about Cloudera Manager Service
-    type: dict
-    contains:
+service:
+  description: The Cloudera Manager service.
+  type: dict
+  contains:
+    client_config_staleness_status:
+      description: Status of client configuration for the Cloudera Manager service.
+      type: str
+      returned: optional
+    cluster_name:
+      description: The associated cluster name.
+      type: str
+      returned: optional
+    config:
+      description: Service-wide configuration for the Cloudera Manager service.
+      type: dict
+      returned: optional
+    config_staleness_status:
+      description: Status of configuration staleness for the Cloudera Manager service.
+      type: str
+      returned: optional
+      sample:
+        - FRESH
+        - STALE_REFRESHABLE
+        - STALE
+    display_name:
+      description: Display name of the Cloudera Manager service.
+      type: str
+      returned: always
+    health_checks:
+      description: Lists all available health checks for the Cloudera Manager service.
+      type: list
+      elements: dict
+      returned: optional
+      contains:
+        explanation:
+          description: A descriptor for the health check.
+          type: str
+          returned: optional
         name:
-            description: The Cloudera Manager service name.
-            type: str
-            returned: optional
-        type:
-            description: The Cloudera Manager service type.
-            type: str
-            returned: optional
-        cluster_ref:
-            description: Reference to a cluster.
-            type: str
-            returned: optional
-        service_state:
-            description: State of the Cloudera Manager Service.
-            type: str
-            returned: optional
-        health_summary:
-            description: Health of the Cloudera Manager Service.
-            type: str
-            returned: optional
-        config_stale:
-            description: Configuration state of Cloudera Manager Service.
-            type: str
-            returned: optional
-        config_staleness_status:
-            description: Status of configuration staleness for Cloudera Manager Service.
-            type: str
-            returned: optional
-        client_config_staleness_status:
-            description: Status of Client configuration for Cloudera Manager Service.
-            type: str
-            returned: optional
-        health_checks:
-            description: Lists all available health checks for Cloudera Manager Service.
-            type: dict
-            returned: optional
-        service_url:
-            description: Service url for Cloudera Manager Service.
-            type: str
-            returned: optional
-        role_instances_url:
-            description: Role instance url for Cloudera Manager Service.
-            type: str
-            returned: optional
-        maintenance_mode:
-            description: Maintance mode of Cloudera Manager Service.
-            type: bool
-            returned: optional
-        maintenance_owners:
-            description: List of Maintance owners for Cloudera Manager Service.
-            type: list
-            returned: optional
+          description: Unique name fore the health check.
+          type: str
+          returned: always
+        summary:
+          description: The summary status of the health check.
+          type: str
+          returned: always
+          sample:
+            - DISABLED
+            - HISTORY_NOT_AVAILABLE
+            - NOT_AVAILABLE
+            - GOOD
+            - CONCERNING
+            - BAD
+        suppressed:
+          description:
+            - Whether the health check is suppressed.
+            - A suppressed health check is not considered when computing the overall health.
+          type: bool
+          returned: always
+    health_summary:
+      description: Health of the Cloudera Manager service.
+      type: str
+      returned: always
+      sample:
+        - DISABLED
+        - HISTORY_NOT_AVAILABLE
+        - NOT_AVAILABLE
+        - GOOD
+        - CONCERNING
+        - BAD
+    maintenance_mode:
+      description: Whether maintance mode is enabled for the Cloudera Manager service.
+      type: bool
+      returned: always
+    maintenance_owners:
+      description: List of objects that trigger the Cloudera Manager service to be in maintenance mode.
+      type: list
+      elements: str
+      returned: optional
+      sample:
+        - CLUSTER
+        - SERVICE
+        - ROLE
+        - HOST
+        - CONTROL_PLANE
+    name:
+      description: Name (identifier) of the Cloudera Manager service.
+      type: str
+      returned: always
+    role_config_groups:
+      description: List of role configuration groups for Cloudera Manager service.
+      type: list
+      elements: dict
+      returned: optional
+      contains:
+        base:
+          description: Whether the role config group is a base (default) group.
+          type: bool
+          returned: always
         config:
-            description: Configuration details for Cloudera Manager Service.
-            type: dict
-            returned: optional
-        roles:
-            description: Role list of Cloudera Manager Service.
-            type: dict
-            returned: optional
+          description: Configuration for the role config group.
+          type: dict
+          returned: optional
         display_name:
-            description: Display name of Cloudera Manager Service.
-            type: dict
-            returned: optional
-        role_config_groups:
-            description: List of role configuration groups for Cloudera Manager Service.
-            type: list
-            returned: optional
-        replication_schedules:
-            description: List of replication schedules for Cloudera Manager Service.
-            type: list
-            returned: optional
-        snapshot_policies:
-            description: Snapshot policy for Cloudera Manager Service.
-            type: str
-            returned: optional
-        entity_status:
-            description: Health status of entities for Cloudera Manager Service.
-            type: str
-            returned: optional
+          description: Display name for the role config group.
+          type: str
+          returned: always
+        name:
+          description: Name (identifier) of the role config group.
+          type: str
+          returned: always
+        role_type:
+          description: The type of roles in this group.
+          type: str
+          returned: always
+        service_name:
+          description: Name (identifier) of the associated service of the role config group.
+          type: str
+          returned: always
+    roles:
+      description: List of role instances for Cloudera Manager service.
+      type: list
+      elements: dict
+      returned: optional
+      contains:
+        commission_state:
+          description: Commission state of the Cloudera Manager service role.
+          type: str
+          returned: always
+          sample:
+            - COMMISSIONED
+            - DECOMMISSIONING
+            - DECOMMISSIONED
+            - UNKNOWN
+            - OFFLINING
+            - OFFLINED
+        config:
+          description: Role override configuration for the Cloudera Manager service.
+          type: dict
+          returned: optional
+        config_staleness_status:
+          description: Status of configuration staleness for the Cloudera Manager service role.
+          type: str
+          returned: always
+          sample:
+            - FRESH
+            - STALE_REFRESHABLE
+            - STALE
+        ha_status:
+          description: High-availability status for the Cloudera Manager service.
+          type: str
+          returned: optional
+          sample:
+            - ACTIVE
+            - STANDBY
+            - UNKNOWN
+        health_checks:
+          description: List of all available health checks for Cloudera Manager service role.
+          type: list
+          elements: dict
+          returned: optional
+          contains:
+            explanation:
+              description: The explanation of this health check.
+              type: str
+              returned: optional
+            name:
+              description: Unique name of this health check.
+              type: str
+              returned: always
+            summary:
+              description: The high-level health status of the health check.
+              type: str
+              returned: always
+              sample:
+                - DISABLED
+                - HISTORY_NOT_AVAILABLE
+                - NOT_AVAILABLE
+                - GOOD
+                - CONCERNING
+                - BAD
+            suppressed:
+              description:
+                - Whether this health check is suppressed.
+                - A suppressed health check is not considered when computing the role's overall health.
+              type: bool
+              returned: optional
+        health_summary:
+          description: The high-level health status of the Cloudera Manager service role.
+          type: str
+          returned: always
+          sample:
+            - DISABLED
+            - HISTORY_NOT_AVAILABLE
+            - NOT_AVAILABLE
+            - GOOD
+            - CONCERNING
+            - BAD
+        host_id:
+          description: The unique ID of the cluster host.
+          type: str
+          returned: always
+        maintenance_mode:
+          description: Whether the Cloudera Manager service role is in maintenance mode.
+          type: bool
+          returned: always
+        maintenance_owners:
+          description: List of objects that trigger the Cloudera Manager service role to be in maintenance mode.
+          type: list
+          elements: str
+          returned: optional
+          sample:
+            - CLUSTER
+            - SERVICE
+            - ROLE
+            - HOST
+            - CONTROL_PLANE
+        name:
+          description:
+            - The Cloudera Manager service role name.
+            - Note, this is an auto-generated name and cannot be changed.
+          type: str
+          returned: always
+        role_config_group_name:
+          description: The name of the Cloudera Manager Service role config group, which uniquely identifies it in a Cloudera Manager installation.
+          type: str
+          returned: always
+        role_state:
+          description: State of the Cloudera Manager service role.
+          type: str
+          returned: always
+          sample:
+            - HISTORY_NOT_AVAILABLE
+            - UNKNOWN
+            - STARTING
+            - STARTED
+            - STOPPING
+            - STOPPED
+            - NA
+        service_name:
+          description: The name of the Cloudera Manager service, which uniquely identifies it in a deployment.
+          type: str
+          returned: always
         tags:
-            description: List of tags for Cloudera Manager Service.
-            type: list
-            returned: optional
-        service_version:
-            description: Version of Cloudera Manager Service.
-            type: str
-            returned: optional
+          description: Set of tags for the Cloudera Manager service role.
+          type: dict
+          returned: optional
+        type:
+          description: The Cloudera Manager service role type.
+          type: str
+          returned: always
+          sample:
+            - HOSTMONITOR
+            - ALERTPUBLISHER
+            - SERVICEMONITOR
+            - REPORTSMANAGER
+            - EVENTSERVER
+        zoo_keeper_server_mode:
+          description:
+            - The Zookeeper server mode for this Cloudera Manager service role.
+            - Note that for non-Zookeeper Server roles, this will be V(null).
+          type: str
+          returned: optional
+    service_state:
+      description: Run state of the Cloudera Manager service.
+      type: str
+      returned: always
+      sample:
+        - HISTORY_NOT_AVAILABLE
+        - UNKNOWN
+        - STARTING
+        - STARTED
+        - STOPPING
+        - STOPPED
+        - NA
+    service_version:
+      description: Version of Cloudera Manager service.
+      type: str
+      returned: always
+    tags:
+      description: List of tags for Cloudera Manager service.
+      type: list
+      returned: optional
+    type:
+      description: Type of the Cloudera Manager service, i.e. MGMT.
+      type: str
+      returned: always
+      sample:
+        - MGMT
 """
+
+
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
+    parse_service_result,
+    read_cm_service,
+)
 
 
 class ClouderaServiceInfo(ClouderaManagerModule):
@@ -148,15 +355,20 @@ class ClouderaServiceInfo(ClouderaManagerModule):
         super(ClouderaServiceInfo, self).__init__(module)
 
         # Initialize the return values
-        self.cm_service_info = dict()
+        self.output = dict()
 
         # Execute the logic
         self.process()
 
     @ClouderaManagerModule.handle_process
     def process(self):
-        api_instance = MgmtServiceResourceApi(self.api_client)
-        self.cm_service_info = api_instance.read_service().to_dict()
+        try:
+            current = read_cm_service(self.api_client)
+        except ApiException as ex:
+            if ex.status != 404:
+                raise ex
+
+        self.output = parse_service_result(current)
 
 
 def main():
@@ -166,7 +378,7 @@ def main():
 
     output = dict(
         changed=False,
-        cloudera_manager=result.cm_service_info,
+        service=result.output,
     )
 
     if result.debug:

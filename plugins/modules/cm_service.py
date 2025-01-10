@@ -618,21 +618,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
         # Discover the CM service and retrieve its configured dependents
         try:
-            # TODO This is only used once... so revert
             current = read_cm_service(self.api_client)
-            # current = service_api.read_service()
-            # if current is not None:
-            #     # Gather the service-wide configuration
-            #     current.config = service_api.read_service_config()
-
-            #     # Gather each role config group configuration
-            #     for rcg in current.role_config_groups:
-            #         rcg.config = rcg_api.read_config(role_config_group_name=rcg.name)
-
-            #     # Gather each role configuration
-            #     for role in current.roles:
-            #         role.config = role_api.read_role_config(role_name=role.name)
-
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
