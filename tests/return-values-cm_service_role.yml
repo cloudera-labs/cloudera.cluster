@@ -1,0 +1,157 @@
+# Copyright 2025 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+role:
+  description: Details about the Cloudera Manager service role.
+  type: dict
+  returned: always
+  contains:
+    commission_state:
+      description: Commission state of the Cloudera Manager service role.
+      type: str
+      returned: always
+      sample:
+        - COMMISSIONED
+        - DECOMMISSIONING
+        - DECOMMISSIONED
+        - UNKNOWN
+        - OFFLINING
+        - OFFLINED
+    config:
+      description: Role override configuration for the Cloudera Manager service.
+      type: dict
+      returned: optional
+    config_staleness_status:
+      description: Status of configuration staleness for the Cloudera Manager service role.
+      type: str
+      returned: always
+      sample:
+        - FRESH
+        - STALE_REFRESHABLE
+        - STALE
+    ha_status:
+      description: High-availability status for the Cloudera Manager service.
+      type: str
+      returned: optional
+      sample:
+        - ACTIVE
+        - STANDBY
+        - UNKNOWN
+    health_checks:
+      description: List of all available health checks for Cloudera Manager service role.
+      type: list
+      elements: dict
+      returned: optional
+      contains:
+        explanation:
+          description: The explanation of this health check.
+          type: str
+          returned: optional
+        name:
+          description: Unique name of this health check.
+          type: str
+          returned: always
+        summary:
+          description: The high-level health status of the health check.
+          type: str
+          returned: always
+          sample:
+            - DISABLED
+            - HISTORY_NOT_AVAILABLE
+            - NOT_AVAILABLE
+            - GOOD
+            - CONCERNING
+            - BAD
+        suppressed:
+          description:
+            - Whether this health check is suppressed.
+            - A suppressed health check is not considered when computing the role's overall health.
+          type: bool
+          returned: optional
+    health_summary:
+      description: The high-level health status of the Cloudera Manager service role.
+      type: str
+      returned: always
+      sample:
+        - DISABLED
+        - HISTORY_NOT_AVAILABLE
+        - NOT_AVAILABLE
+        - GOOD
+        - CONCERNING
+        - BAD
+    host_id:
+      description: The unique ID of the cluster host.
+      type: str
+      returned: always
+    maintenance_mode:
+      description: Whether the Cloudera Manager service role is in maintenance mode.
+      type: bool
+      returned: always
+    maintenance_owners:
+      description: List of objects that trigger the Cloudera Manager service role to be in maintenance mode.
+      type: list
+      elements: str
+      returned: optional
+      sample:
+        - CLUSTER
+        - SERVICE
+        - ROLE
+        - HOST
+        - CONTROL_PLANE
+    name:
+      description:
+        - The Cloudera Manager service role name.
+        - Note, this is an auto-generated name and cannot be changed.
+      type: str
+      returned: always
+    role_config_group_name:
+      description: The name of the Cloudera Manager Service role config group, which uniquely identifies it in a Cloudera Manager installation.
+      type: str
+      returned: always
+    role_state:
+      description: State of the Cloudera Manager service role.
+      type: str
+      returned: always
+      sample:
+        - HISTORY_NOT_AVAILABLE
+        - UNKNOWN
+        - STARTING
+        - STARTED
+        - STOPPING
+        - STOPPED
+        - NA
+    service_name:
+      description: The name of the Cloudera Manager service, which uniquely identifies it in a deployment.
+      type: str
+      returned: always
+    tags:
+      description: Set of tags for the Cloudera Manager service role.
+      type: dict
+      returned: optional
+    type:
+      description: The Cloudera Manager service role type.
+      type: str
+      returned: always
+      sample:
+        - HOSTMONITOR
+        - ALERTPUBLISHER
+        - SERVICEMONITOR
+        - REPORTSMANAGER
+        - EVENTSERVER
+    zoo_keeper_server_mode:
+      description:
+        - The Zookeeper server mode for this Cloudera Manager service role.
+        - Note that for non-Zookeeper Server roles, this will be V(null).
+      type: str
+      returned: optional
