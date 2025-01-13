@@ -141,7 +141,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ConfigListUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    BaseRoleConfigGroupDiscoveryException,
     parse_role_config_group_result,
     get_mgmt_base_role_config_group,
 )
@@ -180,13 +179,13 @@ class ClouderaManagerServiceRoleConfigGroup(ClouderaManagerMutableModule):
         # Retrieve the base RCG (the _only_ RCG for CMS roles)
         try:
             current = get_mgmt_base_role_config_group(self.api_client, self.type)
+            if current is None:
+                self.module.fail_json(
+                    msg=f"Unable to find Cloudera Manager service base role config group for role type '{self.type}'"
+                )
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
-        except BaseRoleConfigGroupDiscoveryException as be:
-            self.module.fail_json(
-                msg=f"Unable to find Cloudera Manager service base role config group for role type '{self.type}'"
-            )
 
         # Reconcile configurations
         if self.config or self.purge:

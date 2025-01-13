@@ -108,7 +108,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    BaseRoleConfigGroupDiscoveryException,
     parse_role_config_group_result,
     get_mgmt_base_role_config_group,
 )
@@ -147,16 +146,13 @@ class ClouderaServiceRoleConfigGroupInfo(ClouderaManagerModule):
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
-            except BaseRoleConfigGroupDiscoveryException as be:
-                self.module.fail_json(
-                    msg=f"Unable to find Cloudera Manager service base role config group for role type '{self.type}'"
-                )
 
-            result = parse_role_config_group_result(current)
-            result.update(
-                role_names=[r.name for r in rcg_api.read_roles(current.name).items]
-            )
-            self.output.append(result)
+            if current is not None:
+                result = parse_role_config_group_result(current)
+                result.update(
+                    role_names=[r.name for r in rcg_api.read_roles(current.name).items]
+                )
+                self.output.append(result)
         else:
 
             def process_result(rcg: ApiRoleConfigGroup) -> dict:
