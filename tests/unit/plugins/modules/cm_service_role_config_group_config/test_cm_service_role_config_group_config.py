@@ -60,11 +60,11 @@ def test_missing_required_if(conn, module_args):
         cm_service_role_config_group_config.main()
 
 
-def test_present_invalid_parameter(conn, module_args, host_monitor_role):
+def test_present_invalid_parameter(conn, module_args, host_monitor):
     module_args(
         {
             **conn,
-            "name": host_monitor_role.role_config_group_ref.role_config_group_name,
+            "name": host_monitor.role_config_group_ref.role_config_group_name,
             "parameters": dict(example="Example"),
         }
     )
@@ -87,11 +87,11 @@ def test_present_invalid_parameter(conn, module_args, host_monitor_role):
         )
     )
 )
-def test_set_parameters(conn, module_args, host_monitor_config, request):
+def test_set_parameters(conn, module_args, host_monitor_role_group_config, request):
     module_args(
         {
             **conn,
-            "name": host_monitor_config.name,
+            "name": host_monitor_role_group_config.name,
             "parameters": dict(mgmt_num_descriptor_fetch_tries=32),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
