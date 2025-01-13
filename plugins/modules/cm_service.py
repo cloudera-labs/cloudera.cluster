@@ -595,7 +595,6 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
         self.roles = self.get_param("roles")
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
-        # self.view = self.get_param("view")
 
         # Initialize the return value
         self.changed = False
