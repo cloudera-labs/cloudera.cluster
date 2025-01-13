@@ -19,25 +19,23 @@ DOCUMENTATION = r"""
 module: cm_service_role
 short_description: Manage a Cloudera Manager Service role
 description:
-  - Manage a Cloudera Manager Service role
+  - Manage a Cloudera Manager Service role.
 author:
-  - "Webster Mudge (@wmudge)"
-requirements:
-  - cm-client
+  - Webster Mudge (@wmudge)
 options:
   cluster_hostname:
     description:
-      - The hostname of a cluster instance for the role.
-      - If the hostname is different that the existing host for the I(type), the role will be destroyed and rebuilt on the declared host.
-      - Mutually exclusive with I(cluster_host_id).
+      - The hostname of an instance for the role.
+      - If the hostname is different that the existing host for the O(type), the role will be destroyed and rebuilt on the declared host.
+      - Mutually exclusive with O(cluster_host_id).
     type: str
     aliases:
       - cluster_host
   cluster_host_id:
     description:
-      - The host ID of a cluster instance for the role.
-      - If the host ID is different that the existing host for the I(type), the role will be destroyed and rebuilt on the declared host.
-      - Mutually exclusive with I(cluster_hostname).
+      - The host ID of an instance for the role.
+      - If the host ID is different that the existing host for the O(type), the role will be destroyed and rebuilt on the declared host.
+      - Mutually exclusive with O(cluster_hostname).
     type: str
   type:
     description:
@@ -48,8 +46,8 @@ options:
       - role_type
   config:
     description:
-      - The role configuration to set, i.e. overrides.
-      - To unset a parameter, use C(None) as the value.
+      - The role configuration to set, i.e. role overrides, for the instance.
+      - To unset a parameter, use V(None) as the value.
     type: dict
     aliases:
       - params
@@ -63,14 +61,14 @@ options:
   purge:
     description:
       - Flag for whether the declared role configurations should append or overwrite any existing configurations.
-      - To clear all role configurations, set I(config={}), i.e. an empty dictionary, or omit entirely, and set I(purge=True).
+      - To clear all role configurations, set O(config={}), i.e. an empty dictionary, or omit entirely, and set O(purge=True).
     type: bool
     default: False
   state:
     description:
       - The state of the role.
       - Note, if the declared state is invalid for the role, the module will return an error.
-      - Note, I(restarted) is always force a change of state of the role.
+      - Note, V(restarted) is always force a change of state of the role.
     type: str
     default: present
     choices:
@@ -82,6 +80,7 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.message
 attributes:
   check_mode:
     support: full
@@ -89,6 +88,11 @@ attributes:
     support: full
   platform:
     platforms: all
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.cm_service
+  - module: cloudera.cluster.cm_service_role_config_group
 """
 
 EXAMPLES = r"""
@@ -162,70 +166,51 @@ EXAMPLES = r"""
 
 RETURN = r"""
 role:
-  description: Details about the Cloudera Manager Service role.
+  description: Details about the Cloudera Manager service role.
   type: dict
+  returned: always
   contains:
-    name:
-      description:
-        - The Cloudera Manager Service role name.
-        - Note, this is an auto-generated name and cannot be changed.
-      type: str
-      returned: always
-    type:
-      description: The Cloudera Manager Service role type.
-      type: str
-      returned: always
-      sample:
-        - HOSTMONITOR
-    host_id:
-      description: The unique ID of the cluster host.
-      type: str
-      returned: always
-    service_name:
-      description: The name of the Cloudera Manager Service, which uniquely identifies it in a deployment.
-      type: str
-      returned: when supported
-    role_state:
-      description: State of the Cloudera Manager Service role.
-      type: str
-      returned: always
-      sample:
-        - HISTORY_NOT_AVAILABLE
-        - UNKNOWN
-        - STARTING
-        - STARTED
-        - STOPPING
-        - STOPPED
-        - NA
     commission_state:
-      description: Commission state of the Cloudera Manager Service role.
-      type: str
-      returned: always
-    health_summary:
-      description: The high-level health status of the Cloudera Manager Service role.
+      description: Commission state of the Cloudera Manager service role.
       type: str
       returned: always
       sample:
-        - DISABLED
-        - HISTORY_NOT_AVAILABLE
-        - NOT_AVAILABLE
-        - GOOD
-        - CONCERNING
-        - BAD
+        - COMMISSIONED
+        - DECOMMISSIONING
+        - DECOMMISSIONED
+        - UNKNOWN
+        - OFFLINING
+        - OFFLINED
+    config:
+      description: Role override configuration for the Cloudera Manager service.
+      type: dict
+      returned: optional
     config_staleness_status:
-      description: Status of configuration staleness for the Cloudera Manager Service role.
+      description: Status of configuration staleness for the Cloudera Manager service role.
       type: str
       returned: always
       sample:
         - FRESH
         - STALE_REFRESHABLE
         - STALE
+    ha_status:
+      description: High-availability status for the Cloudera Manager service.
+      type: str
+      returned: optional
+      sample:
+        - ACTIVE
+        - STANDBY
+        - UNKNOWN
     health_checks:
-      description: Lists all available health checks for Cloudera Manager Service role.
+      description: List of all available health checks for Cloudera Manager service role.
       type: list
       elements: dict
-      returned: when supported
+      returned: optional
       contains:
+        explanation:
+          description: The explanation of this health check.
+          type: str
+          returned: optional
         name:
           description: Unique name of this health check.
           type: str
@@ -241,46 +226,104 @@ role:
             - GOOD
             - CONCERNING
             - BAD
-        explanation:
-          description: The explanation of this health check.
-          type: str
-          returned: when supported
         suppressed:
           description:
             - Whether this health check is suppressed.
             - A suppressed health check is not considered when computing the role's overall health.
           type: bool
-          returned: when supported
+          returned: optional
+    health_summary:
+      description: The high-level health status of the Cloudera Manager service role.
+      type: str
+      returned: always
+      sample:
+        - DISABLED
+        - HISTORY_NOT_AVAILABLE
+        - NOT_AVAILABLE
+        - GOOD
+        - CONCERNING
+        - BAD
+    host_id:
+      description: The unique ID of the cluster host.
+      type: str
+      returned: always
     maintenance_mode:
-      description: Whether the Cloudera Manager Service role is in maintenance mode.
+      description: Whether the Cloudera Manager service role is in maintenance mode.
       type: bool
-      returned: when supported
+      returned: always
     maintenance_owners:
-      description: The list of objects that trigger this service to be in maintenance mode.
+      description: List of objects that trigger the Cloudera Manager service role to be in maintenance mode.
       type: list
       elements: str
-      returned: when supported
+      returned: optional
       sample:
         - CLUSTER
         - SERVICE
         - ROLE
         - HOST
         - CONTROL_PLANE
+    name:
+      description:
+        - The Cloudera Manager service role name.
+        - Note, this is an auto-generated name and cannot be changed.
+      type: str
+      returned: always
     role_config_group_name:
       description: The name of the Cloudera Manager Service role config group, which uniquely identifies it in a Cloudera Manager installation.
       type: str
-      returned: when supported
+      returned: always
+    role_state:
+      description: State of the Cloudera Manager service role.
+      type: str
+      returned: always
+      sample:
+        - HISTORY_NOT_AVAILABLE
+        - UNKNOWN
+        - STARTING
+        - STARTED
+        - STOPPING
+        - STOPPED
+        - NA
+    service_name:
+      description: The name of the Cloudera Manager service, which uniquely identifies it in a deployment.
+      type: str
+      returned: always
     tags:
-      description: The dictionary of tags for the Cloudera Manager Service role.
+      description: Set of tags for the Cloudera Manager service role.
       type: dict
-      returned: when supported
+      returned: optional
+    type:
+      description: The Cloudera Manager service role type.
+      type: str
+      returned: always
+      sample:
+        - HOSTMONITOR
+        - ALERTPUBLISHER
+        - SERVICEMONITOR
+        - REPORTSMANAGER
+        - EVENTSERVER
     zoo_keeper_server_mode:
       description:
-        - The Zookeeper server mode for this Cloudera Manager Service role.
-        - Note that for non-Zookeeper Server roles, this will be C(null).
+        - The Zookeeper server mode for this Cloudera Manager service role.
+        - Note that for non-Zookeeper Server roles, this will be V(null).
       type: str
-      returned: when supported
+      returned: optional
 """
+
+from collections.abc import Callable
+
+from cm_client import (
+    ApiBulkCommandList,
+    ApiCommand,
+    ApiRole,
+    ApiRoleList,
+    ApiRoleNameList,
+    ApiRoleState,
+    MgmtRolesResourceApi,
+    MgmtRoleCommandsResourceApi,
+    MgmtServiceResourceApi,
+)
+from cm_client.rest import ApiException
 
 from ansible.module_utils.common.text.converters import to_native
 
@@ -291,19 +334,8 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     create_role,
     parse_role_result,
+    read_cm_role,
 )
-
-from cm_client import (
-    ApiBulkCommandList,
-    ApiRole,
-    ApiRoleList,
-    ApiRoleNameList,
-    ApiRoleState,
-    MgmtRolesResourceApi,
-    MgmtRoleCommandsResourceApi,
-    MgmtServiceResourceApi,
-)
-from cm_client.rest import ApiException
 
 
 class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
@@ -322,36 +354,32 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         # Initialize the return values
         self.changed = False
         self.diff = dict(before={}, after={})
-        self.output = {}
+        self.output = dict()
 
         # Execute the logic
         self.process()
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
+
+        service_api = MgmtServiceResourceApi(self.api_client)
+        role_api = MgmtRolesResourceApi(self.api_client)
+        role_cmd_api = MgmtRoleCommandsResourceApi(self.api_client)
+
         # Confirm that CMS is present
         try:
-            MgmtServiceResourceApi(self.api_client).read_service()
+            service_api.read_service()
         except ApiException as ex:
             if ex.status == 404:
-                self.module.fail_json(msg="Cloudera Management Service does not exist")
+                self.module.fail_json(msg="Cloudera Management service does not exist")
             else:
                 raise ex
-
-        self.role_api = MgmtRolesResourceApi(self.api_client)
 
         current = None
 
         # Discover the role by its type
         try:
-            current = next(
-                iter(
-                    [r for r in self.role_api.read_roles().items if r.type == self.type]
-                ),
-                None,
-            )
-            if current is not None:
-                current.config = self.role_api.read_role_config(current.name)
+            current = read_cm_role(api_client=self.api_client, role_type=self.type)
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
@@ -359,7 +387,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         # If deleting, do so and exit
         if self.state == "absent":
             if current:
-                self.deprovision_role(current)
+                self.deprovision_role(role_api, current)
 
         # Otherwise, manage the configuration and state
         elif self.state in ["present", "restarted", "started", "stopped"]:
@@ -372,14 +400,19 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                     host_id=self.cluster_host_id,
                     config=self.config,
                 )
-                current = self.provision_role(new_role)
-            # If it exists, but the host has changed, destroy and rebuild completely
+                current = self.provision_role(role_api, new_role)
+                self.handle_maintenance(role_api, current)
+            # Else if it exists, but the host has changed, destroy and rebuild completely
             elif (
-                self.cluster_hostname is not None
-                and self.cluster_hostname != current.host_ref.hostname
-            ) or (
-                self.cluster_host_id is not None
-                and self.cluster_host_id != current.host_ref.host_id
+                current
+                and (
+                    self.cluster_hostname is not None
+                    and self.cluster_hostname != current.host_ref.hostname
+                )
+                or (
+                    self.cluster_host_id is not None
+                    and self.cluster_host_id != current.host_ref.host_id
+                )
             ):
                 if self.config:
                     new_config = self.config
@@ -393,11 +426,17 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                     host_id=self.cluster_host_id,
                     config=new_config,
                 )
-                current = self.reprovision_role(current, new_role)
+                current = self.reprovision_role(role_api, current, new_role)
+                self.handle_maintenance(role_api, current)
             # Else it exists, so address any changes
             else:
+                self.handle_maintenance(role_api, current)
+
                 # Handle role override configurations
                 if self.config or self.purge:
+                    if self.config is None:
+                        self.config = dict()
+
                     updates = ConfigListUpdates(current.config, self.config, self.purge)
 
                     if updates.changed:
@@ -408,93 +447,35 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                             self.diff["after"].update(config=updates.diff["after"])
 
                         if not self.module.check_mode:
-                            self.role_api.update_role_config(
+                            role_api.update_role_config(
                                 current.name,
                                 message=self.message,
                                 body=updates.config,
                             )
 
-            # Handle maintenance mode
-            # TODO Move first
-            if (
-                self.maintenance is not None
-                and self.maintenance != current.maintenance_mode
-            ):
-                self.changed = True
-
-                if self.module._diff:
-                    self.diff["before"].update(
-                        maintenance_mode=current.maintenance_mode
-                    )
-                    self.diff["after"].update(maintenance_mode=self.maintenance)
-
-                if not self.module.check_mode:
-                    if self.maintenance:
-                        maintenance_cmd = self.role_api.enter_maintenance_mode(
-                            current.name
-                        )
-                    else:
-                        maintenance_cmd = self.role_api.exit_maintenance_mode(
-                            current.name
-                        )
-
-                    if maintenance_cmd.success is False:
-                        self.module.fail_json(
-                            msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
-                        )
-
             # Handle the various states
             if self.state == "started" and current.role_state not in [
                 ApiRoleState.STARTED
             ]:
-                self.changed = True
-
-                if self.module._diff:
-                    self.diff["before"].update(role_state=current.role_state)
-                    self.diff["after"].update(role_state="STARTED")
-
-                if not self.module.check_mode:
-                    self.handle_commands(
-                        MgmtRoleCommandsResourceApi(self.api_client).start_command(
-                            body=ApiRoleNameList(items=[current.name]),
-                        )
-                    )
-
+                self.exec_role_command(
+                    current, ApiRoleState.STARTED, role_cmd_api.start_command
+                )
             elif self.state == "stopped" and current.role_state not in [
                 ApiRoleState.STOPPED,
                 ApiRoleState.NA,
             ]:
-                self.changed = True
-
-                if self.module._diff:
-                    self.diff["before"].update(role_state=current.role_state)
-                    self.diff["after"].update(role_state="STOPPED")
-
-                if not self.module.check_mode:
-                    self.handle_commands(
-                        MgmtRoleCommandsResourceApi(self.api_client).stop_command(
-                            body=ApiRoleNameList(items=[current.name]),
-                        )
-                    )
-
+                self.exec_role_command(
+                    current, ApiRoleState.STOPPED, role_cmd_api.stop_command
+                )
             elif self.state == "restarted":
-                self.changed = True
-
-                if self.module._diff:
-                    self.diff["before"].update(role_state=current.role_state)
-                    self.diff["after"].update(role_state="STARTED")
-
-                if not self.module.check_mode:
-                    self.handle_commands(
-                        MgmtRoleCommandsResourceApi(self.api_client).restart_command(
-                            body=ApiRoleNameList(items=[current.name]),
-                        )
-                    )
+                self.exec_role_command(
+                    current, ApiRoleState.STARTED, role_cmd_api.restart_command
+                )
 
             # If there are changes, get a fresh read
             if self.changed:
-                refresh = self.role_api.read_role(current.name)
-                refresh.config = self.role_api.read_role_config(current.name)
+                refresh = role_api.read_role(current.name)
+                refresh.config = role_api.read_role_config(current.name)
                 self.output = parse_role_result(refresh)
             # Otherwise return the existing
             else:
@@ -502,7 +483,37 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         else:
             self.module.fail_json(msg=f"Invalid state: {self.state}")
 
-    def provision_role(self, role: ApiRole) -> ApiRole:
+    def exec_role_command(
+        self, role: ApiRole, value: str, cmd: Callable[[ApiRoleNameList], ApiCommand]
+    ):
+        self.changed = True
+        if self.module._diff:
+            self.diff["before"].update(role_state=role.role_state)
+            self.diff["after"].update(role_state=value)
+
+        if not self.module.check_mode:
+            self.handle_commands(cmd(body=ApiRoleNameList(items=[role.name])))
+
+    def handle_maintenance(self, role_api: MgmtRolesResourceApi, role: ApiRole) -> None:
+        if self.maintenance is not None and self.maintenance != role.maintenance_mode:
+            self.changed = True
+
+            if self.module._diff:
+                self.diff["before"].update(maintenance_mode=role.maintenance_mode)
+                self.diff["after"].update(maintenance_mode=self.maintenance)
+
+            if not self.module.check_mode:
+                if self.maintenance:
+                    maintenance_cmd = role_api.enter_maintenance_mode(role.name)
+                else:
+                    maintenance_cmd = role_api.exit_maintenance_mode(role.name)
+
+                if maintenance_cmd.success is False:
+                    self.module.fail_json(
+                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
+                    )
+
+    def provision_role(self, role_api: MgmtRolesResourceApi, role: ApiRole) -> ApiRole:
         self.changed = True
 
         if self.module._diff:
@@ -515,7 +526,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
             created_role = next(
                 (
                     iter(
-                        self.role_api.create_roles(
+                        role_api.create_roles(
                             body=ApiRoleList(items=[role]),
                         ).items
                     )
@@ -528,7 +539,9 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                 )
             return created_role
 
-    def reprovision_role(self, existing_role: ApiRole, new_role: ApiRole) -> ApiRole:
+    def reprovision_role(
+        self, role_api: MgmtRolesResourceApi, existing_role: ApiRole, new_role: ApiRole
+    ) -> ApiRole:
         self.changed = True
 
         if self.module._diff:
@@ -538,12 +551,12 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
             )
 
         if not self.module.check_mode:
-            self.role_api.delete_role(existing_role.name)
+            role_api.delete_role(existing_role.name)
 
             rebuilt_role = next(
                 (
                     iter(
-                        self.role_api.create_roles(
+                        role_api.create_roles(
                             body=ApiRoleList(items=[new_role]),
                         ).items
                     )
@@ -559,14 +572,14 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         else:
             return existing_role
 
-    def deprovision_role(self, role: ApiRole) -> None:
+    def deprovision_role(self, role_api: MgmtRolesResourceApi, role: ApiRole) -> None:
         self.changed = True
 
         if self.module._diff:
             self.diff = dict(before=parse_role_result(role), after=dict())
 
         if not self.module.check_mode:
-            self.role_api.delete_role(role.name)
+            role_api.delete_role(role.name)
 
     def handle_commands(self, commands: ApiBulkCommandList):
         if commands.errors:
