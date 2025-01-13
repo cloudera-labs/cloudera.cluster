@@ -32,14 +32,6 @@ ROLE_CONFIG_GROUP = [
 ]
 
 
-class BaseRoleConfigGroupDiscoveryException(Exception):
-    pass
-
-
-class RoleConfigGroupDiscoveryException(Exception):
-    pass
-
-
 def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dict:
     """Parse a Role Config Group into a normalized dictionary.
 
@@ -67,40 +59,31 @@ def get_base_role_config_group(
     api_client: ApiClient, cluster_name: str, service_name: str, role_type: str
 ) -> ApiRoleConfigGroup:
     rcg_api = RoleConfigGroupsResourceApi(api_client)
-    rcgs = [
-        r
-        for r in rcg_api.read_role_config_groups(cluster_name, service_name).items
-        if r.role_type == role_type and r.base
-    ]
-    if len(rcgs) != 1:
-        raise BaseRoleConfigGroupDiscoveryException(role_count=len(rcgs))
-    else:
-        return rcgs[0]
+    return next(
+        iter(
+            [
+                r
+                for r in rcg_api.read_role_config_groups(
+                    cluster_name, service_name
+                ).items
+                if r.role_type == role_type and r.base
+            ]
+        ),
+        None,
+    )
 
 
 def get_mgmt_base_role_config_group(
     api_client: ApiClient, role_type: str
 ) -> ApiRoleConfigGroup:
     rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
-    rcgs = [
-        r
-        for r in rcg_api.read_role_config_groups().items
-        if r.role_type == role_type and r.base
-    ]
-    if len(rcgs) != 1:
-        raise BaseRoleConfigGroupDiscoveryException(role_count=len(rcgs))
-    else:
-        return rcgs[0]
-
-
-def get_role_config_group(
-    api_client: ApiClient, cluster_name: str, service_name: str, name: str
-) -> ApiRoleConfigGroup:
-    rcg_api = RoleConfigGroupsResourceApi(api_client)
-
-    rcg = rcg_api.read_role_config_group(cluster_name, name, service_name)
-
-    if rcg is None:
-        raise RoleConfigGroupDiscoveryException(name)
-    else:
-        return rcg
+    return next(
+        iter(
+            [
+                r
+                for r in rcg_api.read_role_config_groups().items
+                if r.role_type == role_type and r.base
+            ]
+        ),
+        None,
+    )
