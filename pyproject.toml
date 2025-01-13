@@ -61,6 +61,7 @@ markers = [
   "role_config_group_config: Prepare role config group configurations for tests",
   "role_config_group: Prepare a role config group for tests.",
   "role: Prepare a role for tests.",
+  "role_state: Prepare a role state for tests.",
 ]
 
 [build-system]
