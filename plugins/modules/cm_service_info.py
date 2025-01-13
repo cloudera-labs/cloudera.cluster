@@ -362,13 +362,15 @@ class ClouderaServiceInfo(ClouderaManagerModule):
 
     @ClouderaManagerModule.handle_process
     def process(self):
+        result = None
         try:
-            current = read_cm_service(self.api_client)
+            result = read_cm_service(self.api_client)
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
 
-        self.output = parse_service_result(current)
+        if result is not None:
+            self.output = parse_service_result(result)
 
 
 def main():
