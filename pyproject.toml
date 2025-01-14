@@ -6,11 +6,12 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "Apache-2.0"
 keywords = []
-authors = [
-  { name = "Webster Mudge", email = "wmudge@cloudera.com" },
-]
+authors = [{ name = "Webster Mudge", email = "wmudge@cloudera.com" }]
 classifiers = []
 dependencies = []
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
 
 [tool.hatch.version]
 path = "galaxy.yml"
@@ -29,7 +30,7 @@ dependencies = [
   "molecule-plugins",
   "molecule-plugins[ec2]",
   "tox-ansible",
-  "ansible-core<2.17", # For RHEL 8 support
+  "ansible-core<2.17",     # For RHEL 8 support
   "jmespath",
   "cm-client",
 ]
@@ -37,23 +38,30 @@ dependencies = [
 [tool.hatch.envs.lint]
 python = "3.12"
 skip-install = true
-extra-dependencies = [
-  "ansible-lint",
-]
+extra-dependencies = ["ansible-lint"]
 
 [tool.hatch.envs.lint.scripts]
 run = "pre-commit run -a"
 
 [tool.pytest.ini_options]
-testpaths = [
-  "tests",
-]
+# addopts = [
+#     "--lf",
+#     "--nf",
+# ]
+testpaths = ["tests"]
 filterwarnings = [
   "ignore:AnsibleCollectionFinder has already been configured",
   "ignore:'crypt' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+  "ignore:URLs without a scheme:DeprecationWarning",
+  "ignore:HTTPResponse.getheaders():DeprecationWarning",
 ]
 markers = [
-  "prepare: Prepare Cloudera Manager and resources for tests",
+  "service_config: Prepare service-wide configurations for tests",
+  "role_config: Prepare role override configurations for tests",
+  "role_config_group_config: Prepare role config group configurations for tests",
+  "role_config_group: Prepare a role config group for tests.",
+  "role: Prepare a role for tests.",
+  "role_state: Prepare a role state for tests.",
 ]
 
 [build-system]

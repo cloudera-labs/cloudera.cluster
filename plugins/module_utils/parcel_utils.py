@@ -23,7 +23,7 @@ from enum import IntEnum
 from cm_client import ApiParcel, ParcelResourceApi
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    _parse_output,
+    normalize_output,
 )
 
 
@@ -138,5 +138,5 @@ PARCEL = [
 def parse_parcel_result(parcel: ApiParcel) -> dict:
     # Retrieve only the cluster identifier
     output = dict(cluster_name=parcel.cluster_ref.cluster_name)
-    output.update(_parse_output(parcel.to_dict(), PARCEL))
+    output.update(normalize_output(parcel.to_dict(), PARCEL))
     return output

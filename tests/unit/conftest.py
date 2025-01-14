@@ -26,20 +26,34 @@ import string
 import sys
 import yaml
 
+from collections.abc import Generator
 from pathlib import Path
+from time import sleep
 
 from cm_client import (
+    ApiBulkCommandList,
     ApiClient,
     ApiClusterList,
     ApiCluster,
+    ApiCommand,
     ApiConfig,
     ApiHostRef,
     ApiHostRefList,
+    ApiRole,
+    ApiRoleConfigGroup,
+    ApiRoleList,
+    ApiRoleNameList,
+    ApiRoleState,
     ApiService,
     ApiServiceConfig,
+    ApiServiceState,
     ClustersResourceApi,
+    CommandsResourceApi,
     Configuration,
     HostsResourceApi,
+    MgmtRoleCommandsResourceApi,
+    MgmtRoleConfigGroupsResourceApi,
+    MgmtRolesResourceApi,
     MgmtServiceResourceApi,
     ParcelResourceApi,
     ParcelsResourceApi,
@@ -53,9 +67,16 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils impo
     Parcel,
 )
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    get_mgmt_roles,
+)
+
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
     AnsibleExitJson,
+    provision_cm_role,
+    set_cm_role_config,
+    set_cm_role_config_group,
 )
 
 
@@ -153,6 +174,10 @@ def cm_api_client(conn) -> ApiClient:
 
         # Handle redirects
         redirect = rest.GET(url).urllib3_response.geturl()
+
+        if redirect == None:
+            raise Exception("Unable to establish connection to Cloudera Manager")
+
         if redirect != "/":
             url = redirect
 
@@ -174,7 +199,23 @@ def cm_api_client(conn) -> ApiClient:
 
 @pytest.fixture(scope="session")
 def base_cluster(cm_api_client, request):
-    """Provision a CDH Base cluster."""
+    """Provision a CDH Base cluster. If the variable 'CM_CLUSTER' is present,
+       will attempt to read and yield a reference to this cluster. Otherwise,
+       will yield a new base cluster with a single host, deleting the cluster
+       once completed.
+
+    Args:
+        cm_api_client (_type_): _description_
+        request (_type_): _description_
+
+    Raises:
+        Exception: _description_
+        Exception: _description_
+        Exception: _description_
+
+    Yields:
+        _type_: _description_
+    """
 
     cluster_api = ClustersResourceApi(cm_api_client)
 
@@ -250,14 +291,32 @@ def base_cluster(cm_api_client, request):
 
 
 @pytest.fixture(scope="session")
-def cms(cm_api_client, request):
-    """Provisions Cloudera Manager Service."""
+def cms(cm_api_client: ApiClient, request) -> Generator[ApiService]:
+    """Provisions Cloudera Manager Service. If the Cloudera Manager Service
+       is present, will read and yield this reference. Otherwise, will
+       yield a new Cloudera Manager Service, deleting it after use.
 
-    api = MgmtServiceResourceApi(cm_api_client)
+       NOTE! A new Cloudera Manager Service will _not_ be provisioned if
+       there are any existing clusters within the deployment! Therefore,
+       you must only run this fixture to provision a net-new Cloudera Manager
+       Service on a bare deployment, i.e. Cloudera Manager and hosts only.
+
+    Args:
+        cm_api_client (ApiClient): _description_
+        request (_type_): _description_
+
+    Raises:
+        Exception: _description_
+
+    Yields:
+        Generator[ApiService]: _description_
+    """
+
+    cms_api = MgmtServiceResourceApi(cm_api_client)
 
     # Return if the Cloudera Manager Service is already present
     try:
-        yield api.read_service()
+        yield cms_api.read_service()
         return
     except ApiException as ae:
         if ae.status != 404 or "Cannot find management service." not in str(ae.body):
@@ -269,13 +328,174 @@ def cms(cm_api_client, request):
         type="MGMT",
     )
 
-    yield api.setup_cms(body=service)
+    cm_service = cms_api.setup_cms(body=service)
 
-    api.delete_cms()
+    # Do not set up any roles -- just the CMS service itself
+    # cms_api.auto_assign_roles()
+
+    yield cm_service
+
+    cms_api.delete_cms()
 
 
 @pytest.fixture(scope="function")
-def cms_service_config(cm_api_client, cms, request):
+def cms_cleared(cm_api_client) -> Generator[None]:
+    """Clears any existing Cloudera Manager Service, yields, and upon
+       return, removes any new service and reinstates the existing service,
+       if present.
+
+    Args:
+        cm_api_client (_type_): _description_
+
+    Raises:
+        ae: _description_
+
+    Yields:
+        Generator[None]: _description_
+    """
+    service_api = MgmtServiceResourceApi(cm_api_client)
+    rcg_api = MgmtRoleConfigGroupsResourceApi(cm_api_client)
+    role_api = MgmtRolesResourceApi(cm_api_client)
+
+    pre_service = None
+
+    try:
+        pre_service = service_api.read_service()
+    except ApiException as ae:
+        if ae.status != 404:
+            raise ae
+
+    if pre_service is not None:
+        # Get the current state
+        pre_service.config = service_api.read_service_config()
+
+        # Get the role config groups' state
+        if pre_service.role_config_groups is not None:
+            for rcg in pre_service.role_config_groups:
+                rcg.config = rcg_api.read_config(rcg.name)
+
+        # Get each of its roles' state
+        if pre_service.roles is not None:
+            for r in pre_service.roles:
+                r.config = role_api.read_role_config(role_name=r.name)
+
+        # Remove the prior CMS
+        service_api.delete_cms()
+
+    # Yield now that the prior CMS has been removed
+    yield
+
+    # Remove any created CMS
+    try:
+        service_api.delete_cms()
+    except ApiException as ae:
+        if ae.status != 404:
+            raise ae
+
+    # Reinstate the prior CMS
+    if pre_service is not None:
+        service_api.setup_cms(body=pre_service)
+        if pre_service.maintenance_mode:
+            maintenance_cmd = service_api.enter_maintenance_mode()
+            monitor_command(api_client=cm_api_client, command=maintenance_cmd)
+        if pre_service.service_state in [
+            ApiServiceState.STARTED,
+            ApiServiceState.STARTING,
+        ]:
+            restart_cmd = service_api.restart_command()
+            monitor_command(api_client=cm_api_client, command=restart_cmd)
+
+
+@pytest.fixture(scope="function")
+def cms_auto(cm_api_client, cms_cleared) -> Generator[ApiService]:
+    """Create a new Cloudera Manager Service on the first available host and auto-configures
+    the following roles:
+         - HOSTMONITOR
+         - SERVICEMONITOR
+         - EVENTSERVER
+         - ALERTPUBLISHER
+
+    It starts this Cloudera Manager Service, yields, and will remove this service if the tests
+    do not. (This fixture delegates to the 'cms_cleared' fixture.)
+
+    Args:
+        cm_api_client (_type_): _description_
+        cms_cleared (_type_): _description_
+
+    Yields:
+        Generator[ApiService]: _description_
+    """
+    service_api = MgmtServiceResourceApi(cm_api_client)
+    host_api = HostsResourceApi(cm_api_client)
+
+    host = next((h for h in host_api.read_hosts().items if not h.cluster_ref), None)
+
+    if host is None:
+        raise Exception("No available hosts to assign Cloudera Manager Service roles")
+
+    service_api.setup_cms(
+        body=ApiService(
+            type="MGMT",
+            roles=[
+                ApiRole(type="HOSTMONITOR"),
+                ApiRole(type="SERVICEMONITOR"),
+                ApiRole(type="EVENTSERVER"),
+                ApiRole(type="ALERTPUBLISHER"),
+            ],
+        )
+    )
+    service_api.auto_configure()
+
+    monitor_command(cm_api_client, service_api.start_command())
+
+    yield service_api.read_service()
+
+
+@pytest.fixture(scope="function")
+def cms_auto_no_start(cm_api_client, cms_cleared) -> Generator[ApiService]:
+    """Create a new Cloudera Manager Service on the first available host and auto-configures
+    the following roles:
+         - HOSTMONITOR
+         - SERVICEMONITOR
+         - EVENTSERVER
+         - ALERTPUBLISHER
+
+    It does not start this Cloudera Manager Service, yields, and will remove this service if
+    the tests do not. (This fixture delegates to the 'cms_cleared' fixture.)
+
+    Args:
+        cm_api_client (_type_): _description_
+        cms_cleared (_type_): _description_
+
+    Yields:
+        Generator[ApiService]: _description_
+    """
+    service_api = MgmtServiceResourceApi(cm_api_client)
+    host_api = HostsResourceApi(cm_api_client)
+
+    host = next((h for h in host_api.read_hosts().items if not h.cluster_ref), None)
+
+    if host is None:
+        raise Exception("No available hosts to assign Cloudera Manager Service roles")
+
+    service_api.setup_cms(
+        body=ApiService(
+            type="MGMT",
+            roles=[
+                ApiRole(type="HOSTMONITOR"),
+                ApiRole(type="SERVICEMONITOR"),
+                ApiRole(type="EVENTSERVER"),
+                ApiRole(type="ALERTPUBLISHER"),
+            ],
+        )
+    )
+    service_api.auto_configure()
+
+    yield service_api.read_service()
+
+
+@pytest.fixture(scope="function")
+def cms_config(cm_api_client, cms, request) -> Generator[ApiService]:
     """Configures service-wide configurations for the Cloudera Manager Service"""
 
     marker = request.node.get_closest_marker("service_config")
@@ -295,7 +515,7 @@ def cms_service_config(cm_api_client, cms, request):
     for k, v in marker.args[0].items():
         try:
             api.update_service_config(
-                message=f"{request.node.name}::set",
+                message=f"{Path(request.node.parent.name).stem}::{request.node.name}::set",
                 body=ApiServiceConfig(items=[ApiConfig(name=k, value=v)]),
             )
         except ApiException as ae:
@@ -321,6 +541,187 @@ def cms_service_config(cm_api_client, cms, request):
     )
 
     api.update_service_config(
-        message=f"{request.node.name}::reset",
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}::reset",
         body=ApiServiceConfig(items=reconciled),
     )
+
+
+@pytest.fixture(scope="function")
+def host_monitor(cm_api_client, cms, request) -> Generator[ApiRole]:
+    api = MgmtRolesResourceApi(cm_api_client)
+
+    hm = next(
+        iter([r for r in api.read_roles().items if r.type == "HOSTMONITOR"]), None
+    )
+
+    if hm is not None:
+        yield hm
+    else:
+        host_api = HostsResourceApi(cm_api_client)
+        host = next((h for h in host_api.read_hosts().items if not h.cluster_ref), None)
+
+        if host is None:
+            raise Exception(
+                "No available hosts to assign Cloudera Manager Service role"
+            )
+        else:
+            name = Path(request.fixturename).stem
+            yield from provision_cm_role(
+                cm_api_client, name, "HOSTMONITOR", host.host_id
+            )
+
+
+@pytest.fixture(scope="function")
+def host_monitor_config(cm_api_client, host_monitor, request) -> Generator[ApiRole]:
+    marker = request.node.get_closest_marker("role_config")
+
+    if marker is None:
+        raise Exception("No role_config marker found.")
+
+    yield from set_cm_role_config(
+        api_client=cm_api_client,
+        role=host_monitor,
+        params=marker.args[0],
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
+    )
+
+
+@pytest.fixture(scope="function")
+def host_monitor_role_group_config(
+    cm_api_client, host_monitor, request
+) -> Generator[ApiRoleConfigGroup]:
+    """Configures the base Role Config Group for the Host Monitor role of a Cloudera Manager Service."""
+    marker = request.node.get_closest_marker("role_config_group")
+
+    if marker is None:
+        raise Exception("No 'role_config_group' marker found.")
+
+    rcg_api = MgmtRoleConfigGroupsResourceApi(cm_api_client)
+    rcg = rcg_api.read_role_config_group(
+        host_monitor.role_config_group_ref.role_config_group_name
+    )
+    rcg.config = rcg_api.read_config(role_config_group_name=rcg.name)
+
+    yield from set_cm_role_config_group(
+        api_client=cm_api_client,
+        role_config_group=rcg,
+        update=marker.args[0],
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
+    )
+
+
+@pytest.fixture(scope="function")
+def host_monitor_cleared(cm_api_client, cms) -> Generator[None]:
+    role_api = MgmtRolesResourceApi(cm_api_client)
+    role_cmd_api = MgmtRoleCommandsResourceApi(cm_api_client)
+
+    # Check for existing management role
+    pre_role = next(
+        iter([r for r in get_mgmt_roles(cm_api_client, "HOSTMONITOR").items]), None
+    )
+
+    if pre_role is not None:
+        # Get the current state
+        pre_role.config = role_api.read_role_config(role_name=pre_role.name)
+
+        # Remove the prior role
+        role_api.delete_role(role_name=pre_role.name)
+
+    # Yield now that the role has been removed
+    yield
+
+    # Reinstate the previous role
+    if pre_role is not None:
+        role_api.create_roles(body=ApiRoleList(items=[pre_role]))
+        if pre_role.maintenance_mode:
+            role_api.enter_maintenance_mode(pre_role.name)
+        if pre_role.role_state in [ApiRoleState.STARTED, ApiRoleState.STARTING]:
+            restart_cmds = role_cmd_api.restart_command(
+                body=ApiRoleNameList(items=[pre_role.name])
+            )
+            handle_commands(api_client=cm_api_client, commands=restart_cmds)
+
+
+@pytest.fixture(scope="function")
+def host_monitor_state(
+    cm_api_client, host_monitor, request
+) -> Generator[ApiRoleConfigGroup]:
+    marker = request.node.get_closest_marker("role_state")
+
+    if marker is None:
+        raise Exception("No 'role_state' marker found.")
+
+    role_state = marker.args[0]
+
+    role_api = MgmtRolesResourceApi(cm_api_client)
+    cmd_api = MgmtRoleCommandsResourceApi(cm_api_client)
+
+    # Get the current state
+    pre_role = role_api.read_role(host_monitor.name)
+
+    # Set the role state
+    if pre_role.role_state != role_state:
+        if role_state in [ApiRoleState.STARTED]:
+            handle_commands(
+                api_client=cm_api_client,
+                commands=cmd_api.start_command(
+                    body=ApiRoleNameList(items=[host_monitor.name])
+                ),
+            )
+        elif role_state in [ApiRoleState.STOPPED]:
+            handle_commands(
+                api_client=cm_api_client,
+                commands=cmd_api.stop_command(
+                    body=ApiRoleNameList(items=[host_monitor.name])
+                ),
+            )
+
+    # Yield the role
+    current_role = role_api.read_role(host_monitor.name)
+    current_role.config = role_api.read_role_config(host_monitor.name)
+    yield current_role
+
+    # Retrieve the test changes
+    post_role = role_api.read_role(role_name=host_monitor.name)
+    post_role.config = role_api.read_role_config(role_name=host_monitor.name)
+
+    # Reset state
+    if pre_role.role_state != post_role.role_state:
+        if pre_role.role_state in [ApiRoleState.STARTED]:
+            handle_commands(
+                api_client=cm_api_client,
+                commands=cmd_api.start_command(
+                    body=ApiRoleNameList(items=[host_monitor.name])
+                ),
+            )
+        elif pre_role.role_state in [ApiRoleState.STOPPED]:
+            handle_commands(
+                api_client=cm_api_client,
+                commands=cmd_api.stop_command(
+                    body=ApiRoleNameList(items=[host_monitor.name])
+                ),
+            )
+
+
+def handle_commands(api_client: ApiClient, commands: ApiBulkCommandList):
+    if commands.errors:
+        error_msg = "\n".join(commands.errors)
+        raise Exception(error_msg)
+
+    for cmd in commands.items:
+        # Serial monitoring
+        monitor_command(api_client, cmd)
+
+
+def monitor_command(
+    api_client: ApiClient, command: ApiCommand, polling: int = 10, delay: int = 15
+):
+    poll_count = 0
+    while command.active:
+        if poll_count > polling:
+            raise Exception("Command timeout: " + str(command.id))
+        sleep(delay)
+        poll_count += 1
+        command = CommandsResourceApi(api_client).read_command(command.id)
+    if not command.success:
+        raise Exception(command.result_message)

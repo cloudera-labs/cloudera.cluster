@@ -38,10 +38,12 @@ def test_missing_required(conn, module_args):
 
 
 def test_present_invalid_parameter(conn, module_args):
-    conn.update(
-        parameters=dict(example="Example"),
+    module_args(
+        {
+            **conn,
+            "parameters": dict(example="Example"),
+        }
     )
-    module_args(conn)
 
     with pytest.raises(
         AnsibleFailJson, match="Unknown configuration attribute 'example'"
@@ -52,7 +54,7 @@ def test_present_invalid_parameter(conn, module_args):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=False, log_event_retry_frequency=10)
 )
-def test_set_parameters(conn, module_args, cms_service_config):
+def test_set_parameters(conn, module_args, cms_config):
     module_args(
         {
             **conn,
@@ -84,7 +86,7 @@ def test_set_parameters(conn, module_args, cms_service_config):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
 )
-def test_unset_parameters(conn, module_args, cms_service_config):
+def test_unset_parameters(conn, module_args, cms_config):
     module_args(
         {
             **conn,
@@ -112,7 +114,7 @@ def test_unset_parameters(conn, module_args, cms_service_config):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
 )
-def test_set_parameters_with_purge(conn, module_args, cms_service_config):
+def test_set_parameters_with_purge(conn, module_args, cms_config):
     module_args(
         {
             **conn,
@@ -143,7 +145,7 @@ def test_set_parameters_with_purge(conn, module_args, cms_service_config):
 @pytest.mark.service_config(
     dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
 )
-def test_purge_all_parameters(conn, module_args, cms_service_config):
+def test_purge_all_parameters(conn, module_args, cms_config):
     module_args(
         {
             **conn,

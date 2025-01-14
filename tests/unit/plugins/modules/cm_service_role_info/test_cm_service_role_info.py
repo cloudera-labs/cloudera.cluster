@@ -22,28 +22,58 @@ import logging
 import pytest
 
 
-from ansible_collections.cloudera.cluster.plugins.modules import cm_service_info
+from ansible_collections.cloudera.cluster.plugins.modules import cm_service_role_info
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
+    AnsibleFailJson,
 )
 
 LOG = logging.getLogger(__name__)
 
 
-def test_read_service(conn, module_args, cms_auto):
+def test_read_roles(conn, module_args, cms_auto):
     module_args({**conn})
 
     with pytest.raises(AnsibleExitJson) as e:
-        cm_service_info.main()
+        cm_service_role_info.main()
 
     assert e.value.changed == False
-    assert cms_auto.name == e.value.service["name"]
+    assert len(e.value.roles) == 4
+
+
+def test_read_role(conn, module_args, cms_auto):
+    module_args(
+        {
+            **conn,
+            "type": "HOSTMONITOR",
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service_role_info.main()
+
+    assert e.value.changed == False
+    assert len(e.value.roles) == 1
+
+
+def test_read_role_nonexistent(conn, module_args, cms_auto):
+    module_args(
+        {
+            **conn,
+            "type": "DOESNOTEXIST",
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        cm_service_role_info.main()
+
+    assert len(e.value.roles) == 0
 
 
 def test_read_service_nonexistent(conn, module_args):
     module_args({**conn})
 
-    with pytest.raises(AnsibleExitJson) as e:
-        cm_service_info.main()
-
-    assert not e.value.service
+    with pytest.raises(
+        AnsibleFailJson, match="Cloudera Management service does not exist"
+    ) as e:
+        cm_service_role_info.main()

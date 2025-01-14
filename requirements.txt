@@ -16,4 +16,4 @@
 jmespath
 
 # For cm_service lookup
-cm_client
+cm-client

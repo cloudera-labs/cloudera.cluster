@@ -1,13 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# Copyright 2025 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,38 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DOCUMENTATION = r"""
-module: cm_service_info
-short_description: Retrieve information about the Cloudera Management service
-description:
-  - Gather information about the Cloudera Manager service.
-author:
-  - Ronald Suplina (@rsuplina)
-  - Webster Mudge (@wmudge)
-extends_documentation_fragment:
-  - cloudera.cluster.cm_options
-  - cloudera.cluster.cm_endpoint
-attributes:
-  check_mode:
-    support: full
-requirements:
-  - cm-client
-seealso:
-  - module: cloudera.cluster.cm_service
-  - module: cloudera.cluster.cm_service_role
-  - module: cloudera.cluster.cm_service_role_config_group
-"""
-
-EXAMPLES = r"""
-- name: Gather details of the Cloudera Manager service
-  cloudera.cluster.cm_service_info:
-    host: "example.cloudera.host"
-    username: "will_jordan"
-    password: "S&peR4Ec*re"
-  register: cm_output
-"""
-
-RETURN = r"""
 service:
   description: The Cloudera Manager service.
   type: dict
@@ -336,59 +301,3 @@ service:
       returned: always
       sample:
         - MGMT
-"""
-
-
-from cm_client.rest import ApiException
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
-    parse_service_result,
-    read_cm_service,
-)
-
-
-class ClouderaServiceInfo(ClouderaManagerModule):
-    def __init__(self, module):
-        super(ClouderaServiceInfo, self).__init__(module)
-
-        # Initialize the return values
-        self.output = dict()
-
-        # Execute the logic
-        self.process()
-
-    @ClouderaManagerModule.handle_process
-    def process(self):
-        result = None
-        try:
-            result = read_cm_service(self.api_client)
-        except ApiException as ex:
-            if ex.status != 404:
-                raise ex
-
-        if result is not None:
-            self.output = parse_service_result(result)
-
-
-def main():
-    module = ClouderaManagerModule.ansible_module(supports_check_mode=True)
-
-    result = ClouderaServiceInfo(module)
-
-    output = dict(
-        changed=False,
-        service=result.output,
-    )
-
-    if result.debug:
-        log = result.log_capture.getvalue()
-        output.update(debug=log, debug_lines=log.split("\n"))
-
-    module.exit_json(**output)
-
-
-if __name__ == "__main__":
-    main()

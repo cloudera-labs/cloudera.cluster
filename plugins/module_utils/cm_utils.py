@@ -34,9 +34,8 @@ from time import sleep
 from cm_client import (
     ApiClient,
     ApiCommand,
+    ApiConfig,
     ApiConfigList,
-    ApiRole,
-    ApiRoleConfigGroup,
     Configuration,
 )
 from cm_client.rest import ApiException, RESTClientObject
@@ -47,34 +46,8 @@ from cm_client.apis.commands_resource_api import CommandsResourceApi
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
 
-ROLE_OUTPUT = [
-    "commission_state",
-    "config_staleness_status",
-    "ha_status",
-    "health_checks",
-    "health_summary",
-    # "host_ref",
-    "maintenance_mode",
-    "maintenance_owners",
-    "name",
-    # "role_config_group_ref",
-    "role_state",
-    # "service_ref",
-    "tags",
-    "type",
-    "zoo_keeper_server_mode",
-]
 
-ROLE_CONFIG_GROUP = [
-    "name",
-    "role_type",
-    "base",
-    "display_name",
-    # "service_ref",
-]
-
-
-def _parse_output(entity: dict, filter: list) -> dict:
+def normalize_output(entity: dict, filter: list) -> dict:
     output = {}
     for k in filter:
         if k == "tags":
@@ -82,24 +55,6 @@ def _parse_output(entity: dict, filter: list) -> dict:
         else:
             output[k] = entity[k]
 
-    return output
-
-
-def parse_role_result(role: ApiRole) -> dict:
-    # Retrieve only the host_id, role_config_group, and service identifiers
-    output = dict(
-        host_id=role.host_ref.host_id,
-        role_config_group_name=role.role_config_group_ref.role_config_group_name,
-        service_name=role.service_ref.service_name,
-    )
-    output.update(_parse_output(role.to_dict(), ROLE_OUTPUT))
-    return output
-
-
-def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dict:
-    # Retrieve only the service identifier
-    output = dict(service_name=role_config_group.service_ref.service_name)
-    output.update(_parse_output(role_config_group.to_dict(), ROLE_CONFIG_GROUP))
     return output
 
 
@@ -149,6 +104,11 @@ def resolve_parameter_updates(
     diff = recursive_diff(current, normalize_values(incoming))
 
     if diff is not None:
+        # TODO Lookup default for v=None to avoid issues with CM
+        # CM sometimes fails to find the default value for a parameter
+        # However, a view=full will return the default, so if we can
+        # change this method's signature to include that reference, we
+        # can short-circuit CM's problematic lookup of the default value.
         updates = {
             k: v
             for k, v in diff[1].items()
@@ -189,6 +149,25 @@ def resolve_tag_updates(
             delta_del = {k: v for k, v in diff[1].items() if k in diff[0]}
 
     return (delta_add, delta_del)
+
+
+class ConfigListUpdates(object):
+    def __init__(self, existing: ApiConfigList, updates: dict, purge: bool) -> None:
+        current = {r.name: r.value for r in existing.items}
+        changeset = resolve_parameter_updates(current, updates, purge)
+
+        self.diff = dict(
+            before={k: current[k] if k in current else None for k in changeset.keys()},
+            after=changeset,
+        )
+
+        self.config = ApiConfigList(
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+        )
+
+    @property
+    def changed(self) -> bool:
+        return bool(self.config.items)
 
 
 class ClusterTemplate(object):

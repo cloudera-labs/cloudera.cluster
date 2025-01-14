@@ -12,4 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cm-client
+pre-commit
+pytest
+pytest-mock
+ansible-core<2.17 # For RHEL 8 support
+molecule
+molecule-plugins
+molecule-plugins[ec2]
+tox-ansible

@@ -17,7 +17,7 @@ A common functions for Cloudera Manager cluster management
 """
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    _parse_output,
+    normalize_output,
 )
 
 from cm_client import ApiCluster
@@ -42,5 +42,5 @@ CLUSTER_OUTPUT = [
 def parse_cluster_result(cluster: ApiCluster) -> dict:
     # Retrieve full_version as version
     output = dict(version=cluster.full_version)
-    output.update(_parse_output(cluster.to_dict(), CLUSTER_OUTPUT))
+    output.update(normalize_output(cluster.to_dict(), CLUSTER_OUTPUT))
     return output
