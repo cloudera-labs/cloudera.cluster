@@ -24,9 +24,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 DOCUMENTATION = r"""
 ---
 module: external_auth_info
-short_description: Retrieves external authorizations details.
+short_description: Dictionary of external authorization configurations.
 description:
-  - Retrieves configuration details and external authorization settings for FreeIPA and Kerberos.
+  - Retrieves external authorization configuration details about FreeIPA and Kerberos.
 author:
   - "Ronald Suplina (@rsuplina)"
 options:

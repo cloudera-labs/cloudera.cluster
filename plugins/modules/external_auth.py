@@ -33,7 +33,7 @@ options:
     description:
       - The type of the external configurations to configure.
     type: str
-    required: no
+    required: yes
     choices:
       - freeipa
       - kerberos
@@ -223,7 +223,7 @@ def main():
             ),
             type=dict(
                 type="str",
-                required=False,
+                required=True,
                 choices=["freeipa", "kerberos"],
             ),
         ),
