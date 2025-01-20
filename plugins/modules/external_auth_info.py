@@ -72,7 +72,7 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 external_auth_info:
-    description: A dictionary containing external authentication configuration details. 
+    description: A dictionary containing external authentication configuration details.
     type: dict
     returned: always
 

@@ -13,24 +13,23 @@
 # limitations under the License.
 
 
-
 FREEIPA_EXTERNAL_CONFIGS = [
-        "LDAP_URL",
-        "AUTH_BACKEND_ORDER",
-        "LDAP_TYPE",
-        "LDAP_BIND_PW",
-        "LDAP_BIND_DN",
-        "LDAP_USER_SEARCH_FILTER",
-        "LDAP_USER_SEARCH_BASE",
-        "LDAP_GROUP_SEARCH_FILTER",
-        "LDAP_GROUP_SEARCH_BASE",
-    ]
+    "LDAP_URL",
+    "AUTH_BACKEND_ORDER",
+    "LDAP_TYPE",
+    "LDAP_BIND_PW",
+    "LDAP_BIND_DN",
+    "LDAP_USER_SEARCH_FILTER",
+    "LDAP_USER_SEARCH_BASE",
+    "LDAP_GROUP_SEARCH_FILTER",
+    "LDAP_GROUP_SEARCH_BASE",
+]
 
 KERBEROS_EXTERNAL_CONFIGS = [
-        "KDC_HOST",
-        "KDC_ADMIN_HOST",
-        "KRB_ENC_TYPES",
-        "KDC_TYPE",
-        "SECURITY_REALM",
-        "PUBLIC_CLOUD_STATUS",
+    "KDC_HOST",
+    "KDC_ADMIN_HOST",
+    "KRB_ENC_TYPES",
+    "KDC_TYPE",
+    "SECURITY_REALM",
+    "PUBLIC_CLOUD_STATUS",
 ]
