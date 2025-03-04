@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# 
+#
 # Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -171,7 +171,7 @@ notes:
   - Using the C(cm_config) with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
   - Requires C(cm_client).
 seealso:
-  - module: cloudera.cluster.cm_config      
+  - module: cloudera.cluster.cm_config
 """
 
 EXAMPLES = r"""
@@ -265,6 +265,7 @@ cm_config:
       returned: when supported
 """
 
+
 class ClouderaManagerAutoTLS(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaManagerAutoTLS, self).__init__(module)
@@ -292,7 +293,7 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
         # # Initialize the return values
         self.cm_config = []
         self.changed = False
-        
+
         if self.module._diff:
             self.diff = dict(before=dict(), after=dict())
             self.before = dict()
@@ -311,15 +312,11 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
 
         # Retrieve the cm configuration
         existing = [r.to_dict() for r in self.get_cm_config()]
-        self.cm_config = existing # initialize return value
+        self.cm_config = existing  # initialize return value
 
         # We'll use the AUTO_TLS_TYPE config to determine if AutoTLS is already enabled
         auto_tls_setting = next(
-            (
-                item["value"]
-                for item in existing
-                if item["name"] == "AUTO_TLS_TYPE"
-            ),
+            (item["value"] for item in existing if item["name"] == "AUTO_TLS_TYPE"),
             None,
         )
 

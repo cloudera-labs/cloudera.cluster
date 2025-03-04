@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# 
+#
 # Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ notes:
   - Using the C(cm_config_info) module will return similar settings.
   - Requires C(cm_client).
 seealso:
-  - module: cloudera.cluster.cm_config_info   
+  - module: cloudera.cluster.cm_config_info
 """
 
 EXAMPLES = r"""
@@ -126,13 +126,14 @@ cm_config:
       returned: when supported
 """
 
+
 class ClouderaManagerAutoTLSInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaManagerAutoTLSInfo, self).__init__(module)
 
         # Initialize the return values
         self.config = []
-        
+
         # Execute the logic
         self.process()
 
@@ -140,18 +141,22 @@ class ClouderaManagerAutoTLSInfo(ClouderaManagerModule):
     def process(self):
 
         autotls_settings = [
-            "auto_tls_type","agent_tls",
-            "auto_tls_keystore_password", "auto_tls_truststore_password"
-            "host_cert_generator", "keystore_password", 
-            "keystore_path", "need_agent_validation",
-            "truststore_password", "truststore_path", "web_tls"
+            "auto_tls_type",
+            "agent_tls",
+            "auto_tls_keystore_password",
+            "auto_tls_truststore_password" "host_cert_generator",
+            "keystore_password",
+            "keystore_path",
+            "need_agent_validation",
+            "truststore_password",
+            "truststore_path",
+            "web_tls",
         ]
 
         # Retrieve the cm configuration
-        cm_config = [r.to_dict() for r in self.get_cm_config(scope='full')]
-        self.config = [
-            r for r in cm_config if r["name"].lower() in autotls_settings
-            ]
+        cm_config = [r.to_dict() for r in self.get_cm_config(scope="full")]
+        self.config = [r for r in cm_config if r["name"].lower() in autotls_settings]
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(

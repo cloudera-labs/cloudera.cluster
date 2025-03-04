@@ -29,6 +29,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+
 def test_pytest_enable_auto_tls(module_args, conn):
 
     if os.getenv("AUTOTLS_CXN_USER", None):
@@ -47,6 +48,7 @@ def test_pytest_enable_auto_tls(module_args, conn):
         cm_autotls.main()
 
     assert e.value.changed == True
+
 
 def test_enable_invalid_ssh(module_args, conn):
 
@@ -68,15 +70,12 @@ def test_enable_invalid_ssh(module_args, conn):
 
     # Update parameters to enable with invalid ssh key
     module_args(
-        {
-            **conn, 
-            "connection_private_key": "invalid-ssh-key", 
-            "state": "present"
-        }
+        {**conn, "connection_private_key": "invalid-ssh-key", "state": "present"}
     )
 
     with pytest.raises(AnsibleFailJson, match="Could not authenticate"):
         cm_autotls.main()
+
 
 def test_force_enable_auto_tls(module_args, conn):
 
@@ -106,7 +105,7 @@ def test_force_enable_auto_tls(module_args, conn):
 
 
 def test_pytest_disable_auto_tls(module_args, conn):
-    
+
     module_args({**conn, "state": "absent"})
 
     with pytest.raises(AnsibleExitJson) as e:
