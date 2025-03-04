@@ -272,7 +272,9 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                             name=self.name,
                             display_name=self.name,
                             type_name=self.type,
-                            account_configs={key: value for key, value in self.params.items()},
+                            account_configs={
+                                key: value for key, value in self.params.items()
+                            },
                         )
                         if self.before != self.after:
                             self.diff["before"].update(self.before)
@@ -300,7 +302,9 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                             "name": self.name,
                             "display_name": self.name,
                             "type_name": self.type,
-                            "account_configs": {key: value for key, value in self.params.items()},
+                            "account_configs": {
+                                key: value for key, value in self.params.items()
+                            },
                         }
                     if not self.module.check_mode:
                         self.external_account = api_instance.create_account(

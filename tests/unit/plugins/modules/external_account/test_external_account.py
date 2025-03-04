@@ -50,6 +50,7 @@ def test_create_aws_keys(module_args, conn, request):
     assert e.value.changed == True
     LOG.info(str(e.value.external_account))
 
+
 def test_create_aws_role(module_args, conn, request):
     module_args(
         {
@@ -89,7 +90,6 @@ def test_create_azure_credentials(module_args, conn, request):
     LOG.info(str(e.value.external_account))
 
 
-
 def test_create_external_basic_user(module_args, conn, request):
     module_args(
         {
@@ -124,7 +124,6 @@ def test_update_aws_keys_diff_enabled(module_args, conn, request):
             },
             "state": "present",
             "_ansible_diff": True,
-
         }
     )
 
@@ -147,7 +146,6 @@ def test_update_aws_keys(module_args, conn, request):
                 "aws_secret_key": "22222222",
             },
             "state": "present",
-
         }
     )
 
@@ -156,7 +154,6 @@ def test_update_aws_keys(module_args, conn, request):
 
     assert e.value.changed == True
     LOG.info(str(e.value.external_account))
-
 
 
 def test_remove_external_basic_user(module_args, conn, request):
@@ -172,4 +169,3 @@ def test_remove_external_basic_user(module_args, conn, request):
 
     assert e.value.changed == True
     LOG.info(str(e.value.external_account))
-
