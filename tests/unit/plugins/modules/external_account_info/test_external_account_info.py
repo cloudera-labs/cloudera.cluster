@@ -1,6 +1,7 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +18,6 @@
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
-import os
 import logging
 import pytest
 
@@ -30,54 +30,31 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-@pytest.fixture
-def conn():
-    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
+def test_get_spcific_aws_type(module_args, conn):
+    module_args({**conn, "type": "AWS_ACCESS_KEY_AUTH"})
 
-    if os.getenv("CM_HOST", None):
-        conn.update(host=os.getenv("CM_HOST"))
+    with pytest.raises(AnsibleExitJson) as e:
+        external_account_info.main()
 
-    if os.getenv("CM_PORT", None):
-        conn.update(port=os.getenv("CM_PORT"))
-
-    if os.getenv("CM_ENDPOINT", None):
-        conn.update(url=os.getenv("CM_ENDPOINT"))
-
-    if os.getenv("CM_PROXY", None):
-        conn.update(proxy=os.getenv("CM_PROXY"))
-
-    return {
-        **conn,
-        "verify_tls": "no",
-        "debug": "no",
-    }
+    assert e.value.changed == False
+    LOG.info(str(e.value.external_accounts))
 
 
 def test_list_all_external_accounts(module_args, conn):
-    conn.update()
-    module_args(conn)
+    module_args({**conn})
 
     with pytest.raises(AnsibleExitJson) as e:
         external_account_info.main()
 
-    LOG.info(str(e.value.external_account_info_output))
-
-
-def test_list_all_aws_accounts(module_args, conn):
-    conn.update(type="AWS_ACCESS_KEY_AUTH")
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        external_account_info.main()
-
-    LOG.info(str(e.value.external_account_info_output))
+    assert e.value.changed == False
+    LOG.info(str(e.value.external_accounts))
 
 
 def test_get_specific_aws_account(module_args, conn):
-    conn.update(name="aws_test_key")
-    module_args(conn)
+    module_args({**conn, "name": "aws_test_key"})
 
     with pytest.raises(AnsibleExitJson) as e:
         external_account_info.main()
 
-    LOG.info(str(e.value.external_account_info_output))
+    assert e.value.changed == False
+    LOG.info(str(e.value.external_accounts))

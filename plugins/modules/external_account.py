@@ -1,4 +1,7 @@
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,11 +27,6 @@ from cm_client import (
 )
 import json
 
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 ---
@@ -121,9 +119,17 @@ options:
         description:
           - The password for BASIC_AUTH.
         type: str
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.message
 attributes:
   check_mode:
     support: full
+  diff_mode:
+    support: full
+requirements:
+  - cm-client
 """
 EXAMPLES = r"""
 ---
@@ -192,23 +198,23 @@ external_account:
             description: Represents the initial name of the account.
             type: str
             returned: always
-        displayName:
+        display_name:
             description: A modifiable label to identify this account for user-visible purposes.
             type: str
             returned: always
-        createdTime:
+        created_time:
             description: The time of creation for this account.
             type: str
             returned: always
-        lastModifiedTime:
+        last_modified_time:
             description: The last modification time for this account.
             type: str
             returned: always
-        typeName:
+        type_name:
             description: The Type ID of a supported external account type.
             type: str
             returned: always
-        accountConfigs:
+        account_configs:
             description: The configuration options for this account.
             type: list
             elements: dict
@@ -228,8 +234,16 @@ class ClouderaExternalAccount(ClouderaManagerModule):
         self.state = self.get_param("state")
 
         # Initialize the return values
-        self.external_account_output = []
+        self.external_account = []
         self.changed = False
+
+        if self.module._diff:
+            self.diff = dict(before=dict(), after=dict())
+            self.before = dict()
+            self.after = dict()
+        else:
+            self.diff = dict()
+
         # Execute the logic
         self.process()
 
@@ -251,8 +265,21 @@ class ClouderaExternalAccount(ClouderaManagerModule):
         if self.state == "present":
             try:
                 if existing:
+
+                    if self.module._diff:
+                        self.before.update(existing)
+                        self.after.update(
+                            name=self.name,
+                            display_name=self.name,
+                            type_name=self.type,
+                            account_configs={key: value for key, value in self.params.items()},
+                        )
+                        if self.before != self.after:
+                            self.diff["before"].update(self.before)
+                            self.diff["after"].update(self.after)
+
                     if not self.module.check_mode:
-                        self.external_account_output = api_instance.update_account(
+                        self.external_account = api_instance.update_account(
                             body=ApiExternalAccount(
                                 name=self.name,
                                 display_name=self.name,
@@ -267,8 +294,16 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                         )
                         self.changed = True
                 else:
+                    if self.module._diff:
+                        self.diff["before"] = {}
+                        self.diff["after"] = {
+                            "name": self.name,
+                            "display_name": self.name,
+                            "type_name": self.type,
+                            "account_configs": {key: value for key, value in self.params.items()},
+                        }
                     if not self.module.check_mode:
-                        self.external_account_output = api_instance.create_account(
+                        self.external_account = api_instance.create_account(
                             body=ApiExternalAccount(
                                 name=self.name,
                                 display_name=self.name,
@@ -290,16 +325,17 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                     raise ex
 
         if self.state == "absent":
-            if existing:
-                self.external_account_output = api_instance.delete_account(self.name)
-                self.changed = True
+            if not self.module.check_mode:
+                if existing:
+                    self.external_account = api_instance.delete_account(self.name)
+                    self.changed = True
 
 
 def main():
 
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=False, type="str"),
+            name=dict(required=True, type="str"),
             category=dict(
                 type="str",
                 required=False,
@@ -367,7 +403,7 @@ def main():
 
     output = dict(
         changed=result.changed,
-        external_account_output=result.external_account_output,
+        external_account=result.external_account,
     )
 
     if result.debug:

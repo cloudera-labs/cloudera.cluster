@@ -1,4 +1,7 @@
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,11 +23,6 @@ from cm_client import (
     ExternalAccountsResourceApi,
 )
 
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 ---
@@ -53,6 +51,15 @@ options:
       - ALTUS_ACCESS_KEY_AUTH
       - ADLS_AD_SVC_PRINC_AUTH
       - BASIC_AUTH
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.message
+attributes:
+  check_mode:
+    support: full
+requirements:
+  - cm-client
 """
 
 EXAMPLES = r"""
@@ -84,7 +91,7 @@ EXAMPLES = r"""
 
 RETURN = r"""
 ---
-external_account:
+external_accounts:
     description:
         - List of one or more external accounts within the cluster.
     type: list
@@ -95,23 +102,23 @@ external_account:
             description: Represents the initial name of the account.
             type: str
             returned: always
-        displayName:
+        display_name:
             description: A modifiable label to identify this account for user-visible purposes.
             type: str
             returned: always
-        createdTime:
+        created_time:
             description: The time of creation for this account.
             type: str
             returned: always
-        lastModifiedTime:
+        last_modified_time:
             description: The last modification time for this account.
             type: str
             returned: always
-        typeName:
+        type_name:
             description: The Type ID of a supported external account type.
             type: str
             returned: always
-        accountConfigs:
+        account_configs:
             description: The configuration options for this account.
             type: list
             elements: dict
@@ -128,7 +135,7 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
         self.type = self.get_param("type")
 
         # Initialize the return values
-        self.external_account_info_output = []
+        self.external_accounts = []
         self.changed = False
 
         # Execute the logic
@@ -146,18 +153,18 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
         ]
         try:
             if self.name:
-                self.external_account_info_output = [
+                self.external_accounts = [
                     api_instance.read_account(self.name).to_dict()
                 ]
 
             elif self.type:
-                self.external_account_info_output = (
+                self.external_accounts = (
                     api_instance.read_accounts(self.type).to_dict().get("items", [])
                 )
 
             else:
 
-                self.external_account_info_output = api_instance.read_accounts(
+                self.external_accounts = api_instance.read_accounts(
                     type_name="AWS_ACCESS_KEY_AUTH"
                 ).to_dict()["items"]
                 all_accounts = []
@@ -168,12 +175,12 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
                         .get("items", [])
                     )
                     all_accounts.extend(accounts)
-                self.external_account_info_output = all_accounts
+                self.external_accounts = all_accounts
 
         except ApiException as e:
             if e.status == 404:
                 self.cm_cluster_info = f"Account {self.name} does not exist."
-                self.module.fail_json(msg=str(self.external_account_info_output))
+                self.module.fail_json(msg=str(self.external_accounts))
 
 
 def main():
@@ -199,7 +206,7 @@ def main():
 
     output = dict(
         changed=False,
-        external_account_info_output=result.external_account_info_output,
+        external_accounts=result.external_accounts,
     )
 
     if result.debug:
