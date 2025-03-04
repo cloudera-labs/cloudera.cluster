@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# 
 # Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +18,6 @@
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
 )
-from cm_client.rest import ApiException
 from cm_client import (
     ClouderaManagerResourceApi,
     ApiGenerateCmcaArguments,
@@ -23,14 +25,7 @@ from cm_client import (
     ApiConfig,
 )
 
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_autotls
 short_description: Manage and configure Auto-TLS and Cloudera Manager CA
 description:
@@ -55,28 +50,28 @@ options:
   force:
     description:
       - Forces enabling Auto-TLS even if it is already determined to be enabled.
-      - Applicable only when I(state) is C(true).
+      - Applicable only when O(state) is V(true).
     type: bool
     required: false
     default: false
   custom_ca:
     description:
-      - Whether to generate an internal CMCA C(false) or use user-provided certificates C(true).
-      - When C(true), the following parameters must be given - I(cm_host_cert), I(cm_host_key), I(ca_cert), I(keystore_passwd) and I(truststore_passwd).
+      - Whether to generate an internal CMCA V(false) or use user-provided certificates V(true).
+      - When V(true), the following parameters must be given - O(cm_host_cert), O(cm_host_key), O(ca_cert), O(keystore_passwd) and O(truststore_passwd).
     type: bool
     required: false
     default: false
   interpret_as_filenames:
     description:
       - Whether specific parameters are interpreted as filenames local to the Cloudera Manager host.
-      - When C(true), the following parameter are filenames - I(cm_host_cert), I(cm_host_key), I(ca_cert), I(keystore_passwd), I(truststore_passwd), I(trusted_ca_certs), I(host_certs.host_cert) and I(host_certs.host_key).
+      - When V(true), the following parameter are filenames - O(cm_host_cert), O(cm_host_key), O(ca_cert), O(keystore_passwd), O(truststore_passwd), O(trusted_ca_certs), O(host_certs.host_cert) and O(host_certs.host_key).
     type: bool
     required: false
     default: true
   configure_all_services:
     description:
       - Whether to configure all existing services to use Auto-TLS.
-      - If C(false), only MGMT services will be configured to use Auto-TLS.
+      - If V(false), only MGMT services will be configured to use Auto-TLS.
       - All future services will be configured to use Auto-TLS regardless of this setting.
     type: bool
     required: false
@@ -95,12 +90,12 @@ options:
   connection_password:
     description:
       - The password used to authenticate with the hosts.
-      - Specify either this or a C(connection_password_private_key).
+      - Specify either this or a O(connection_password_private_key).
     type: str
   connection_private_key:
     description:
       - The private key to authenticate with the hosts.
-      - Specify either this or a C(connection_password).
+      - Specify either this or a O(connection_password).
       - The private key, if specified, needs to be a standard PEM-encoded key as a single string, with all line breaks replaced with the line-feed control character I('\n').
     type: str
   connection_passphrase:
@@ -115,27 +110,27 @@ options:
   cm_host_cert:
     description:
       - The certificate for the CM host in PEM format.
-      - Required and only used if C(custom_ca) is I(True).
+      - Required and only used if O(custom_ca) is V(True).
     type: str
   cm_host_key:
     description:
       - The private key for the CM host in PEM format.
-      - Required and only used if C(custom_ca) is I(True).
+      - Required and only used if O(custom_ca) is V(True).
     type: str
   ca_cert:
     description:
       - The certificate for the user-provided certificate authority in PEM format.
-      - Required and only used if C(custom_ca) is I(True).
+      - Required and only used if O(custom_ca) is V(True).
     type: str
   keystore_passwd:
     description:
       - The password used for all Auto-TLS keystores.
-      - Required and only used if C(custom_ca) is I(True).
+      - Required and only used if O(custom_ca) is V(True).
     type: str
   truststore_passwd:
     description:
       - The password used for all Auto-TLS truststores.
-      - Required and only used if C(custom_ca) is I(True).
+      - Required and only used if O(custom_ca) is V(True).
     type: str
   trusted_ca_certs:
     description:
@@ -145,7 +140,7 @@ options:
     description:
       - A list of cert objects for each host.
       - This associates a hostname with the corresponding certificate and private key.
-      - Only used if C(custom_ca) is I(True).
+      - Only used if O(custom_ca) is V(True).
     type: list
     elements: dict
     suboptions:
@@ -172,6 +167,11 @@ attributes:
     support: full
   platform:
     platforms: all
+notes:
+  - Using the C(cm_config) with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
+  - Requires C(cm_client).
+seealso:
+  - module: cloudera.cluster.cm_config      
 """
 
 EXAMPLES = r"""
@@ -194,7 +194,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 cm_config:
   description:
     - Cloudera Manager Server configurations with Auto-TLS settings where available.
@@ -218,31 +217,26 @@ cm_config:
       description:
         - Whether this configuration is required for the object.
         - If any required configuration is not set, operations on the object may not work.
-        - Requires I(full) view.
       type: bool
       returned: when supported
     default:
       description:
         - The default value.
-        - Requires I(full) view.
       type: str
       returned: when supported
     display_name:
       description:
         - A user-friendly name of the parameters, as would have been shown in the web UI.
-        - Requires I(full) view.
       type: str
       returned: when supported
     description:
       description:
         - A textual description of the parameter.
-        - Requires I(full) view.
       type: str
       returned: when supported
     related_name:
       description:
         - If applicable, contains the related configuration variable used by the source project.
-        - Requires I(full) view.
       type: str
       returned: when supported
     sensitive:
@@ -255,13 +249,11 @@ cm_config:
       description:
         - State of the configuration parameter after validation.
         - For example, C(OK), C(WARNING), and C(ERROR).
-        - Requires I(full) view.
       type: str
       returned: when supported
     validation_message:
       description:
         - A message explaining the parameter's validation state.
-        - Requires I(full) view.
       type: str
       returned: when supported
     validation_warnings_suppressed:
@@ -269,11 +261,9 @@ cm_config:
         - Whether validation warnings associated with this parameter are suppressed.
         - In general, suppressed validation warnings are hidden in the Cloudera Manager UI.
         - Configurations that do not produce warnings will not contain this field.
-        - Requires I(full) view.
       type: bool
       returned: when supported
 """
-
 
 class ClouderaManagerAutoTLS(ClouderaManagerModule):
     def __init__(self, module):
@@ -302,7 +292,13 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
         # # Initialize the return values
         self.cm_config = []
         self.changed = False
-        self.diff = {}
+        
+        if self.module._diff:
+            self.diff = dict(before=dict(), after=dict())
+            self.before = dict()
+            self.after = dict()
+        else:
+            self.diff = dict()
 
         # Execute the logic
         self.process()
@@ -314,12 +310,14 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
         cm_api_instance = ClouderaManagerResourceApi(self.api_client)
 
         # Retrieve the cm configuration
-        self.cm_config = [r.to_dict() for r in self.get_cm_config()]
+        existing = [r.to_dict() for r in self.get_cm_config()]
+        self.cm_config = existing # initialize return value
+
         # We'll use the AUTO_TLS_TYPE config to determine if AutoTLS is already enabled
-        existing = next(
+        auto_tls_setting = next(
             (
                 item["value"]
-                for item in self.cm_config
+                for item in existing
                 if item["name"] == "AUTO_TLS_TYPE"
             ),
             None,
@@ -328,7 +326,7 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
         if self.state == "present":
 
             # Enable AutoTLS if not already enabled
-            if existing in [None, "NONE"] or self.force:
+            if auto_tls_setting in [None, "NONE"] or self.force:
                 if not self.module.check_mode:
                     cmca_result = cm_api_instance.generate_cmca(
                         body=ApiGenerateCmcaArguments(
@@ -351,16 +349,21 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                         )
                     )
 
-                    # Retrieve cm_config again after enabling TLS
-                    self.cm_config = [r.to_dict() for r in self.get_cm_config()]
-
                     if cmca_result.success is False:
                         self.module.fail_json(
                             msg=f"Unable to enable AutoTLS: {cmca_result.result_message}"
                         )
+
+                    # Retrieve cm_config again after enabling TLS
+                    self.cm_config = [r.to_dict() for r in self.get_cm_config()]
+
                     self.changed = True
 
-        if self.state == "absent":
+                if self.module._diff:
+                    self.before.update(cm_config=existing)
+                    self.after.update(cm_config=self.cm_config)
+
+        elif self.state == "absent":
             # Below CM configuration parameters need to be reset
             reset_params = dict(
                 auto_tls_type="NONE",
@@ -376,7 +379,7 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                 web_tls=False,
             )
 
-            if existing not in [None, "NONE"]:
+            if auto_tls_setting not in [None, "NONE"]:
                 if not self.module.check_mode:
                     body = ApiConfigList(
                         items=[
@@ -389,6 +392,10 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                     # Retrieve cm_config again after disabling TLS
                     self.cm_config = [r.to_dict() for r in self.get_cm_config()]
                     self.changed = True
+
+                    if self.module._diff:
+                        self.before.update(cm_config=existing)
+                        self.after.update(cm_config=self.cm_config)
 
 
 def main():
