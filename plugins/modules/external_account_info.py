@@ -151,7 +151,9 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
                 ]
 
             elif self.type:
-                self.external_account_info_output = api_instance.read_accounts(self.type).to_dict().get("items", [])
+                self.external_account_info_output = (
+                    api_instance.read_accounts(self.type).to_dict().get("items", [])
+                )
 
             else:
 

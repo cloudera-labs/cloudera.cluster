@@ -53,37 +53,31 @@ def conn():
     }
 
 
-
-
 def test_list_all_external_accounts(module_args, conn):
-    conn.update(
-    )
+    conn.update()
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         external_account_info.main()
 
     LOG.info(str(e.value.external_account_info_output))
+
 
 def test_list_all_aws_accounts(module_args, conn):
-    conn.update(
-        type="AWS_ACCESS_KEY_AUTH"
-    )
+    conn.update(type="AWS_ACCESS_KEY_AUTH")
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         external_account_info.main()
 
     LOG.info(str(e.value.external_account_info_output))
+
 
 def test_get_specific_aws_account(module_args, conn):
-    conn.update(
-        name="aws_test_key"
-    )
+    conn.update(name="aws_test_key")
     module_args(conn)
 
     with pytest.raises(AnsibleExitJson) as e:
         external_account_info.main()
 
     LOG.info(str(e.value.external_account_info_output))
-

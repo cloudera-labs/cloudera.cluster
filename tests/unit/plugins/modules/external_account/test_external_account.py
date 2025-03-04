@@ -53,8 +53,6 @@ def conn():
     }
 
 
-
-
 def test_create_aws_keys(module_args, conn):
     conn.update(
         name="aws_test_key",
@@ -92,7 +90,7 @@ def test_create_aws_role(module_args, conn):
 def test_create_azure_credentials(module_args, conn):
     conn.update(
         name="azure_test",
-        category = 'AZURE',
+        category="AZURE",
         type="ADLS_AD_SVC_PRINC_AUTH",
         params={
             "adls_client_id": "Client_test",
@@ -112,7 +110,7 @@ def test_create_azure_credentials(module_args, conn):
 def test_create_external_basic_user(module_args, conn):
     conn.update(
         name="John",
-        category = 'BASICAUTH',
+        category="BASICAUTH",
         type="BASIC_AUTH",
         params={"username": "John", "password": "123456"},
         state="present",
@@ -123,6 +121,7 @@ def test_create_external_basic_user(module_args, conn):
         external_account.main()
 
     LOG.info(str(e.value.external_account_output))
+
 
 def test_update_aws_keys(module_args, conn):
     conn.update(
@@ -142,10 +141,11 @@ def test_update_aws_keys(module_args, conn):
 
     LOG.info(str(e.value.external_account_output))
 
+
 def test_update_external_basic_user(module_args, conn):
     conn.update(
         name="John",
-        category = 'BASICAUTH',
+        category="BASICAUTH",
         type="BASIC_AUTH",
         params={"username": "John01", "password": "AAAAA"},
         state="present",
@@ -156,6 +156,7 @@ def test_update_external_basic_user(module_args, conn):
         external_account.main()
 
     LOG.info(str(e.value.external_account_output))
+
 
 def test_remove_external_basic_user(module_args, conn):
     conn.update(

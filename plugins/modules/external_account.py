@@ -233,7 +233,6 @@ class ClouderaExternalAccount(ClouderaManagerModule):
         # Execute the logic
         self.process()
 
-
     @ClouderaManagerModule.handle_process
     def process(self):
         api_instance = ExternalAccountsResourceApi(self.api_client)
@@ -380,4 +379,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
