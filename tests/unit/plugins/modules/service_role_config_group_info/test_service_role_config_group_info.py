@@ -24,6 +24,9 @@ import pytest
 from ansible_collections.cloudera.cluster.plugins.modules import (
     service_role_config_group_info,
 )
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    get_base_role_config_group,
+)
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
@@ -108,13 +111,22 @@ def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
     assert e.value.role_config_groups[0]["base"] == True
 
 
-def test_name_role_config_group(conn, module_args, base_cluster, zk_auto):
+def test_name_role_config_group(
+    conn, module_args, cm_api_client, base_cluster, zk_auto
+):
+    base_rcg = get_base_role_config_group(
+        api_client=cm_api_client,
+        cluster_name=base_cluster.name,
+        service_name=zk_auto.name,
+        role_type="SERVER",
+    )
+
     module_args(
         {
             **conn,
             "cluster": base_cluster.name,
             "service": zk_auto.name,
-            "name": "zookeeper-SERVER-BASE",
+            "name": base_rcg.name,
         }
     )
 
