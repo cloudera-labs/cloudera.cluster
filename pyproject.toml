@@ -19,17 +19,15 @@ pattern = "version:\\s+(?P<version>[\\d\\.]+)"
 
 [tool.hatch.envs.default]
 python = "3.12"
-skip-install = true
+detached = true
 dependencies = [
   "pre-commit",
   "coverage[toml]",
   "pytest",
   "pytest-mock",
-  # "pytest-cov",
   "molecule",
   "molecule-plugins",
   "molecule-plugins[ec2]",
-  "tox-ansible",
   "ansible-core<2.17",     # For RHEL 8 support
   "jmespath",
   "cm-client",
@@ -37,17 +35,13 @@ dependencies = [
 
 [tool.hatch.envs.lint]
 python = "3.12"
-skip-install = true
+detached = true
 extra-dependencies = ["ansible-lint"]
 
 [tool.hatch.envs.lint.scripts]
 run = "pre-commit run -a"
 
 [tool.pytest.ini_options]
-# addopts = [
-#     "--lf",
-#     "--nf",
-# ]
 testpaths = ["tests"]
 filterwarnings = [
   "ignore:AnsibleCollectionFinder has already been configured",
