@@ -191,8 +191,8 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
             except ApiException as e:
                 if e.status != 404:
                     raise e
-        # If given a RCG type
-        if self.type:
+        # Else if given a RCG type
+        elif self.type:
             results = [
                 r
                 for r in rcg_api.read_role_config_groups(
