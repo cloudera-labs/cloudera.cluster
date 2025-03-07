@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import logging
-import os
 import pytest
 
 from ansible_collections.cloudera.cluster.plugins.modules import (
     service_role_config_group_info,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    get_base_role_config_group,
 )
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
@@ -31,29 +33,6 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 )
 
 LOG = logging.getLogger(__name__)
-
-
-@pytest.fixture()
-def conn():
-    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
-
-    if os.getenv("CM_HOST", None):
-        conn.update(host=os.getenv("CM_HOST"))
-
-    if os.getenv("CM_PORT", None):
-        conn.update(port=os.getenv("CM_PORT"))
-
-    if os.getenv("CM_ENDPOINT", None):
-        conn.update(url=os.getenv("CM_ENDPOINT"))
-
-    if os.getenv("CM_PROXY", None):
-        conn.update(proxy=os.getenv("CM_PROXY"))
-
-    return {
-        **conn,
-        "verify_tls": "no",
-        "debug": "no",
-    }
 
 
 def test_missing_required(conn, module_args):
@@ -71,11 +50,11 @@ def test_missing_cluster(conn, module_args):
         service_role_config_group_info.main()
 
 
-def test_invalid_service(conn, module_args):
+def test_invalid_service(conn, module_args, base_cluster):
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
+            "cluster": base_cluster.name,
             "service": "BOOM",
         }
     )
@@ -84,12 +63,12 @@ def test_invalid_service(conn, module_args):
         service_role_config_group_info.main()
 
 
-def test_invalid_cluster(conn, module_args):
+def test_invalid_cluster(conn, module_args, base_cluster):
     module_args(
         {
             **conn,
             "cluster": "BOOM",
-            "service": os.getenv("CM_SERVICE"),
+            "service": "ShouldNotReach",
         }
     )
 
@@ -97,66 +76,63 @@ def test_invalid_cluster(conn, module_args):
         service_role_config_group_info.main()
 
 
-def test_view_all_role_config_groups(conn, module_args):
+def test_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
+            "cluster": base_cluster.name,
+            "service": zk_auto.name,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_config_group_info.main()
 
-    assert len(e.value.role_config_groups) > 0
-
-
-def test_view_service_role(conn, module_args):
-    module_args(
-        {
-            **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "name": "hdfs-GATEWAY-BASE",
-        }
-    )
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
-
+    # Should be only one BASE for the SERVER
     assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == True
 
 
-@pytest.mark.skip("Requires hostname")
-def test_view_service_roles_by_hostname(conn, module_args):
+def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "cluster_hostname": "test07-worker-01.cldr.internal",
+            "cluster": base_cluster.name,
+            "service": zk_auto.name,
+            "type": "SERVER",
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_config_group_info.main()
 
-    assert len(e.value.roles) == 2
+    # Should be only one BASE for the SERVER
+    assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == True
 
 
-@pytest.mark.skip("Requires host ID")
-def test_view_service_roles_by_host_id(conn, module_args):
+def test_name_role_config_group(
+    conn, module_args, cm_api_client, base_cluster, zk_auto
+):
+    base_rcg = get_base_role_config_group(
+        api_client=cm_api_client,
+        cluster_name=base_cluster.name,
+        service_name=zk_auto.name,
+        role_type="SERVER",
+    )
+
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "cluster_host_id": "0b5fa17e-e316-4c86-8812-3108eb55b83d",
+            "cluster": base_cluster.name,
+            "service": zk_auto.name,
+            "name": base_rcg.name,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_config_group_info.main()
 
-    assert len(e.value.roles) == 4
+    # Should be only one BASE for the SERVER
+    assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == True

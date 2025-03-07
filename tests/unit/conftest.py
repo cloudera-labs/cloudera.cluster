@@ -46,6 +46,7 @@ from cm_client import (
     ApiRoleState,
     ApiService,
     ApiServiceConfig,
+    ApiServiceList,
     ApiServiceState,
     ClustersResourceApi,
     CommandsResourceApi,
@@ -57,6 +58,7 @@ from cm_client import (
     MgmtServiceResourceApi,
     ParcelResourceApi,
     ParcelsResourceApi,
+    ServicesResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
 
@@ -78,6 +80,14 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     set_cm_role_config,
     set_cm_role_config_group,
 )
+
+
+class NoHostsFoundException(Exception):
+    pass
+
+
+class ParcelNotFoundException(Exception):
+    pass
 
 
 @pytest.fixture(autouse=True)
@@ -198,15 +208,83 @@ def cm_api_client(conn) -> ApiClient:
 
 
 @pytest.fixture(scope="session")
-def base_cluster(cm_api_client, request):
-    """Provision a CDH Base cluster. If the variable 'CM_CLUSTER' is present,
-       will attempt to read and yield a reference to this cluster. Otherwise,
-       will yield a new base cluster with a single host, deleting the cluster
-       once completed.
+def cms_session(cm_api_client) -> Generator[ApiService]:
+    """
+    Provisions the Cloudera Manager Service. If the Cloudera Manager Service
+    is present, will read and yield this reference. Otherwise, will
+    yield a new Cloudera Manager Service, deleting it after use.
+
+    If it does create a new Cloudera Manager Service, it will do so on the
+    first available host and will auto-configure the following roles:
+        - HOSTMONITOR
+        - SERVICEMONITOR
+        - EVENTSERVER
+        - ALERTPUBLISHER
+
+    It starts this Cloudera Manager Service, yields, and will remove this
+    service if it has created it.
 
     Args:
-        cm_api_client (_type_): _description_
-        request (_type_): _description_
+        cm_api_client (ApiClient): CM API client
+
+    Yields:
+        Generator[ApiService]: Cloudera Manager Service
+    """
+
+    cms_api = MgmtServiceResourceApi(cm_api_client)
+
+    try:
+        # Return if the Cloudera Manager Service is already present
+        yield cms_api.read_service()
+
+        # Do nothing on teardown
+        return
+    except ApiException as ae:
+        if ae.status != 404 or "Cannot find management service." not in str(ae.body):
+            raise Exception(str(ae))
+
+    service_api = MgmtServiceResourceApi(cm_api_client)
+    host_api = HostsResourceApi(cm_api_client)
+
+    host = next((h for h in host_api.read_hosts().items if not h.cluster_ref), None)
+
+    if host is None:
+        raise Exception("No available hosts to assign Cloudera Manager Service roles")
+
+    name = "pytest-" + "".join(random.choices(string.ascii_lowercase, k=6))
+
+    service_api.setup_cms(
+        body=ApiService(
+            name=name,
+            type="MGMT",
+            roles=[
+                ApiRole(type="HOSTMONITOR"),
+                ApiRole(type="SERVICEMONITOR"),
+                ApiRole(type="EVENTSERVER"),
+                ApiRole(type="ALERTPUBLISHER"),
+            ],
+        )
+    )
+    service_api.auto_configure()
+
+    monitor_command(cm_api_client, service_api.start_command())
+
+    # Return the newly-minted CMS
+    yield service_api.read_service()
+
+    # Delete the created CMS
+    cms_api.delete_cms()
+
+
+@pytest.fixture(scope="session")
+def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
+    """Provision a Cloudera on premise base cluster for the session.
+       If the variable 'CM_CLUSTER' is present, will attempt to read and yield
+       a reference to this cluster. Otherwise, will yield a new base cluster
+       with a single host, deleting the cluster once completed.
+
+    Args:
+        cm_api_client (ApiClient): CM API client
 
     Raises:
         Exception: _description_
@@ -214,7 +292,7 @@ def base_cluster(cm_api_client, request):
         Exception: _description_
 
     Yields:
-        _type_: _description_
+        ApiCluster: The base cluster
     """
 
     cluster_api = ClustersResourceApi(cm_api_client)
@@ -230,7 +308,7 @@ def base_cluster(cm_api_client, request):
             )
 
         name = (
-            Path(request.fixturename).stem
+            cms_session.name
             + "_"
             + "".join(random.choices(string.ascii_lowercase, k=6))
         )
@@ -269,8 +347,16 @@ def base_cluster(cm_api_client, request):
                     p
                     for p in parcels.items
                     if p.product == "CDH" and p.version.startswith(cdh_version)
-                )
+                ),
+                None,
             )
+
+            if cdh_parcel is None:
+                # Roll back the cluster and then raise an error
+                cluster_api.delete_cluster(cluster_name=name)
+                raise ParcelNotFoundException(
+                    f"CDH Version {cdh_version} not found. Please check your parcel repo configuration."
+                )
 
             parcel = Parcel(
                 parcel_api=parcel_api,
@@ -288,6 +374,67 @@ def base_cluster(cm_api_client, request):
             cluster_api.delete_cluster(cluster_name=name)
         except ApiException as ae:
             raise Exception(str(ae))
+
+
+@pytest.fixture(scope="function")
+def zk_auto(cm_api_client, base_cluster, request) -> Generator[ApiService]:
+    """Create a new ZooKeeper service on the provided base cluster.
+    It starts this service, yields, and will remove this service if the tests
+    do not.
+
+    Args:
+        cm_api_client (ApiClient): CM API client
+        base_cluster (ApiCluster): Provided base cluster
+        request (FixtureRequest): Fixture request
+
+    Yields:
+        Generator[ApiService]: The instantiated ZooKeeper service
+    """
+
+    service_api = ServicesResourceApi(cm_api_client)
+    cm_api = ClustersResourceApi(cm_api_client)
+
+    host = next(
+        (h for h in cm_api.list_hosts(cluster_name=base_cluster.name).items), None
+    )
+
+    if host is None:
+        raise NoHostsFoundException(
+            "No available hosts to assign ZooKeeper service roles"
+        )
+
+    payload = ApiService(
+        name="-".join(["zk", request.node.name]),
+        type="ZOOKEEPER",
+        roles=[
+            ApiRole(
+                type="SERVER",
+                host_ref=ApiHostRef(host.host_id, host.hostname),
+            ),
+        ],
+    )
+
+    service_results = service_api.create_services(
+        cluster_name=base_cluster.name, body=ApiServiceList(items=[payload])
+    )
+
+    first_run_cmd = service_api.first_run(
+        cluster_name=base_cluster.name,
+        service_name=service_results.items[0].name,
+    )
+
+    monitor_command(cm_api_client, first_run_cmd)
+
+    zk_service = service_api.read_service(
+        cluster_name=base_cluster.name, service_name=service_results.items[0].name
+    )
+
+    yield zk_service
+
+    service_api.delete_service(
+        cluster_name=base_cluster.name,
+        service_name=zk_service.name,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -714,7 +861,7 @@ def handle_commands(api_client: ApiClient, commands: ApiBulkCommandList):
 
 
 def monitor_command(
-    api_client: ApiClient, command: ApiCommand, polling: int = 10, delay: int = 15
+    api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 10
 ):
     poll_count = 0
     while command.active:
