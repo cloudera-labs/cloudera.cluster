@@ -449,6 +449,17 @@ class ClouderaManagerModule(object):
         self.api_client.cookie = self.api_client.last_response.getheader("Set-Cookie")
 
     def wait_for_command_state(self, command_id, polling_interval):
+        """
+        Waits for a command to complete by polling the its state until it completes.
+        A wait for the specified interval is done between each check.
+
+        Inputs:
+            command_id : The identifier of the command to monitor.
+            polling_interval: The time (in seconds) to wait between polling attempts.
+
+        Return:
+            tuple: The full response from `read_command_with_http_info`, containing command details.
+        """
         command_api_instance = CommandsResourceApi(self.api_client)
         while True:
             get_command_state = command_api_instance.read_command_with_http_info(
@@ -458,7 +469,7 @@ class ClouderaManagerModule(object):
             if not state:
                 break
             sleep(polling_interval)
-        return True
+        return get_command_state
 
     def call_api(self, path, method, query=None, field="items", body=None):
         """Wrapper to call a CM API endpoint path directly."""
@@ -491,6 +502,22 @@ class ClouderaManagerModule(object):
         return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
 
     def wait_command(self, command: ApiCommand, polling: int = 10, delay: int = 5):
+        """
+        Waits for a specified command to complete, polling its status at regular intervals.
+        If the command exceeds the polling limit, it fails with a timeout error.
+        If the command completes unsuccessfully, it fails with the command's result message.
+
+        Inputs:
+            command (ApiCommand): The command object to monitor.
+            polling (int, optional): The maximum number of polling attempts before timing out. Default is 10.
+            delay (int, optional): The time (in seconds) to wait between polling attempts. Default is 5.
+
+        Raises:
+            module.fail_json: If the command times out or fails.
+
+        Return:
+            None: The function returns successfully if the command completes and is marked as successful.
+        """
         poll_count = 0
         while command.active:
             if poll_count > polling:
