@@ -1,6 +1,7 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,38 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    parse_role_config_group_result,
-)
-
-from cm_client import (
-    ClustersResourceApi,
-    RoleConfigGroupsResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
-
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_role_config_group_info
 short_description: Retrieve information about a cluster service role config group or groups
 description:
   - Gather details about a role config group or groups of a service in a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
-requirements:
-  - cm_client
 options:
   cluster:
     description:
@@ -61,23 +37,35 @@ options:
     required: yes
     aliases:
       - service_name
-  role_config_group:
+  type:
+    description:
+      - The role type defining the role config group(s).
+      - If specified, will return all role config groups for the type.
+      - Mutually exclusive with O(name).
+    type: str
+    aliases:
+      - role_type
+  name:
     description:
       - The role config group to examine.
-      - If undefined, the module will return all role config groups for the service.
+      - If defined, the module will return the role config group.
       - If the role config group does not exist, the module will return an empty result.
     type: str
-    required: yes
     aliases:
       - role_config_group
-      - name
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+attributes:
+  check_mode:
+    support: full
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.service_role_config_group
 """
 
 EXAMPLES = r"""
----
 - name: Gather the configuration details for a cluster service role
   cloudera.cluster.service_role_config_info:
     host: "example.cloudera.internal"
@@ -99,46 +87,55 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 role_config_groups:
   description:
-    - List of service role config groups.
+    - List of cluster service role config groups.
   type: list
   elements: dict
   returned: always
   contains:
     name:
-      description:
-        - The unique name of this role config group.
+      description: Name (identifier) of the role config group.
       type: str
       returned: always
     role_type:
-      description:
-        - The type of the roles in this group.
+      description: The type of the roles in this role config group.
       type: str
       returned: always
     base:
-      description:
-        - Flag indicating whether this is a base group.
+      description: Flag indicating whether this is a base role config group.
       type: bool
       returned: always
     display_name:
-      description:
-        - A user-friendly name of the role config group, as would have been shown in the web UI.
+      description: A user-friendly name of the role config group, as would have been shown in the web UI.
       type: str
       returned: when supported
     service_name:
-      description:
-        - The service name associated with this role config group.
+      description: The service name associated with this role config group.
       type: str
       returned: always
     role_names:
-      description:
-        - List of role names associated with this role config group.
+      description: List of role names (identifiers) associated with this role config group.
       type: list
       elements: str
       returned: when supported
 """
+
+from cm_client import (
+    ClustersResourceApi,
+    RoleConfigGroupsResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    parse_role_config_group_result,
+    get_base_role_config_group,
+)
 
 
 class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
@@ -148,6 +145,7 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
         # Set the parameters
         self.cluster = self.get_param("cluster")
         self.service = self.get_param("service")
+        self.type = self.get_param("type")
         self.role_config_group = self.get_param("role_config_group")
 
         # Initialize the return values
@@ -176,30 +174,43 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
             else:
                 raise ex
 
-        api_instance = RoleConfigGroupsResourceApi(self.api_client)
+        rcg_api = RoleConfigGroupsResourceApi(self.api_client)
 
         results = []
-        if self.role_config_group:
+
+        # If given a specific RCG
+        if self.name:
             try:
                 results = [
-                    api_instance.read_role_config_group(
+                    rcg_api.read_role_config_group(
                         cluster_name=self.cluster,
-                        role_config_group_name=self.role_config_group,
+                        role_config_group_name=self.name,
                         service_name=self.service,
                     )
                 ]
             except ApiException as e:
                 if e.status != 404:
                     raise e
+        # If given a RCG type
+        if self.type:
+            results = [
+                r
+                for r in rcg_api.read_role_config_groups(
+                    cluster_name=self.cluster,
+                    service_name=self.service,
+                ).items
+                if r.role_type == self.type
+            ]
+        # Else get all RCG entries for the given service
         else:
-            results = api_instance.read_role_config_groups(
+            results = rcg_api.read_role_config_groups(
                 cluster_name=self.cluster,
                 service_name=self.service,
             ).items
 
+        # Get role membership
         for r in results:
-            # Get role membership
-            roles = api_instance.read_roles(
+            roles = rcg_api.read_roles(
                 cluster_name=self.cluster,
                 service_name=self.service,
                 role_config_group_name=r.name,
@@ -218,8 +229,10 @@ def main():
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name"]),
-            role_config_group=dict(aliases=["role_config_group", "name"]),
+            type=dict(aliases=["role_type"]),
+            name=dict(aliases=["role_config_group"]),
         ),
+        mutually_exclusive=[["type", "name"]],
         supports_check_mode=True,
     )
 

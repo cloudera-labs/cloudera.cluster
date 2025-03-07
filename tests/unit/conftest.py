@@ -46,6 +46,7 @@ from cm_client import (
     ApiRoleState,
     ApiService,
     ApiServiceConfig,
+    ApiServiceList,
     ApiServiceState,
     ClustersResourceApi,
     CommandsResourceApi,
@@ -57,6 +58,7 @@ from cm_client import (
     MgmtServiceResourceApi,
     ParcelResourceApi,
     ParcelsResourceApi,
+    ServicesResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
 
@@ -78,6 +80,10 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     set_cm_role_config,
     set_cm_role_config_group,
 )
+
+
+class NoHostsFoundException(Exception):
+    pass
 
 
 @pytest.fixture(autouse=True)
@@ -198,15 +204,15 @@ def cm_api_client(conn) -> ApiClient:
 
 
 @pytest.fixture(scope="session")
-def base_cluster(cm_api_client, request):
-    """Provision a CDH Base cluster. If the variable 'CM_CLUSTER' is present,
-       will attempt to read and yield a reference to this cluster. Otherwise,
-       will yield a new base cluster with a single host, deleting the cluster
-       once completed.
+def base_cluster(cm_api_client, request) -> Generator[ApiCluster]:
+    """Provision a Cloudera on premise base cluster for the session.
+       If the variable 'CM_CLUSTER' is present, will attempt to read and yield
+       a reference to this cluster. Otherwise, will yield a new base cluster
+       with a single host, deleting the cluster once completed.
 
     Args:
-        cm_api_client (_type_): _description_
-        request (_type_): _description_
+        cm_api_client (ApiClient): CM API client
+        request (FixtureRequest): Fixture request
 
     Raises:
         Exception: _description_
@@ -214,7 +220,7 @@ def base_cluster(cm_api_client, request):
         Exception: _description_
 
     Yields:
-        _type_: _description_
+        ApiCluster: The base cluster
     """
 
     cluster_api = ClustersResourceApi(cm_api_client)
@@ -288,6 +294,65 @@ def base_cluster(cm_api_client, request):
             cluster_api.delete_cluster(cluster_name=name)
         except ApiException as ae:
             raise Exception(str(ae))
+
+
+@pytest.fixture(scope="function")
+def zk_auto(cm_api_client, base_cluster, request) -> Generator[ApiService]:
+    """Create a new ZooKeeper service on the provided base cluster.
+    It starts this service, yields, and will remove this service if the tests
+    do not.
+
+    Args:
+        cm_api_client (ApiClient): CM API client
+        base_cluster (ApiCluster): Provided base cluster
+        request (FixtureRequest): Fixture request
+
+    Yields:
+        Generator[ApiService]: The instantiated ZooKeeper service
+    """
+
+    service_api = ServicesResourceApi(cm_api_client)
+    host_api = HostsResourceApi(cm_api_client)
+
+    host = next((h for h in host_api.read_hosts().items if not h.cluster_ref), None)
+
+    if host is None:
+        raise NoHostsFoundException(
+            "No available hosts to assign Cloudera Manager Service roles"
+        )
+
+    payload = ApiService(
+        name=f"zk-{Path(request.node.parent.name).stem}",
+        type="ZOOKEEPER",
+        roles=[
+            ApiRole(
+                type="ZOOKEEPER",
+                host_ref=ApiHostRef(host.host_id, host.hostname),
+            ),
+        ],
+    )
+
+    service_results = service_api.create_services(
+        cluster_name=base_cluster.name, body=ApiServiceList(items=[payload])
+    )
+
+    first_run_cmd = service_api.first_run(
+        cluster_name=base_cluster.name,
+        service_name=service_results.items[0].name,
+    )
+
+    monitor_command(cm_api_client, first_run_cmd)
+
+    zk_service = service_api.read_service(
+        cluster_name=base_cluster.name, service_name=service_results.items[0].name
+    )
+
+    yield zk_service
+
+    service_api.delete_service(
+        cluster_name=base_cluster.name,
+        service_name=zk_service.name,
+    )
 
 
 @pytest.fixture(scope="session")
