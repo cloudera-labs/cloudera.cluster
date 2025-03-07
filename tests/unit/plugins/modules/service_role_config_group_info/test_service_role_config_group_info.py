@@ -63,7 +63,7 @@ def test_invalid_service(conn, module_args, base_cluster):
         service_role_config_group_info.main()
 
 
-def test_invalid_cluster(conn, module_args, base_cluster):
+def test_invalid_cluster(conn, module_args, cms_session):
     module_args(
         {
             **conn,
@@ -76,12 +76,12 @@ def test_invalid_cluster(conn, module_args, base_cluster):
         service_role_config_group_info.main()
 
 
-def test_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
+def test_all_role_config_groups(conn, module_args, base_cluster, zk_session):
     module_args(
         {
             **conn,
             "cluster": base_cluster.name,
-            "service": zk_auto.name,
+            "service": zk_session.name,
         }
     )
 
@@ -93,12 +93,12 @@ def test_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
     assert e.value.role_config_groups[0]["base"] == True
 
 
-def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
+def test_type_role_config_group(conn, module_args, base_cluster, zk_session):
     module_args(
         {
             **conn,
             "cluster": base_cluster.name,
-            "service": zk_auto.name,
+            "service": zk_session.name,
             "type": "SERVER",
         }
     )
@@ -112,12 +112,12 @@ def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
 
 
 def test_name_role_config_group(
-    conn, module_args, cm_api_client, base_cluster, zk_auto
+    conn, module_args, cm_api_client, base_cluster, zk_session
 ):
     base_rcg = get_base_role_config_group(
         api_client=cm_api_client,
         cluster_name=base_cluster.name,
-        service_name=zk_auto.name,
+        service_name=zk_session.name,
         role_type="SERVER",
     )
 
@@ -125,7 +125,7 @@ def test_name_role_config_group(
         {
             **conn,
             "cluster": base_cluster.name,
-            "service": zk_auto.name,
+            "service": zk_session.name,
             "name": base_rcg.name,
         }
     )
