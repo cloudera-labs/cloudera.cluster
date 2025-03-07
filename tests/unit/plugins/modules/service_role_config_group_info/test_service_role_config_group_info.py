@@ -60,12 +60,12 @@ def test_invalid_service(conn, module_args, base_cluster):
         service_role_config_group_info.main()
 
 
-def test_invalid_cluster(conn, module_args, base_cluster, zk_auto):
+def test_invalid_cluster(conn, module_args, base_cluster):
     module_args(
         {
             **conn,
             "cluster": "BOOM",
-            "service": zk_auto.name,
+            "service": "ShouldNotReach",
         }
     )
 
@@ -73,7 +73,7 @@ def test_invalid_cluster(conn, module_args, base_cluster, zk_auto):
         service_role_config_group_info.main()
 
 
-def test_view_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
+def test_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
     module_args(
         {
             **conn,
@@ -85,20 +85,42 @@ def test_view_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
     with pytest.raises(AnsibleExitJson) as e:
         service_role_config_group_info.main()
 
-    assert len(e.value.role_config_groups) > 0
-
-
-def test_view_service_role(conn, module_args, base_cluster, zk_auto):
-    module_args(
-        {
-            **conn,
-            "cluster": base_cluster.name,
-            "service": zk_auto.name,
-            "name": "hdfs-GATEWAY-BASE",
-        }
-    )
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
-
+    # Should be only one BASE for the SERVER
     assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == True
+
+
+def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
+    module_args(
+        {
+            **conn,
+            "cluster": base_cluster.name,
+            "service": zk_auto.name,
+            "type": "SERVER",
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        service_role_config_group_info.main()
+
+    # Should be only one BASE for the SERVER
+    assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == True
+
+
+def test_name_role_config_group(conn, module_args, base_cluster, zk_auto):
+    module_args(
+        {
+            **conn,
+            "cluster": base_cluster.name,
+            "service": zk_auto.name,
+            "name": "zookeeper-SERVER-BASE",
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        service_role_config_group_info.main()
+
+    # Should be only one BASE for the SERVER
+    assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == True
