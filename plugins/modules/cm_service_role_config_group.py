@@ -45,7 +45,7 @@ options:
     description:
       - Whether to reset configuration parameters to only the declared entries.
     type: bool
-    default: no
+    default: False
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -61,6 +61,8 @@ requirements:
   - cm-client
 seealso:
   - module: cloudera.cluster.cm_service
+  - module: cloudera.cluster.cm_service_role
+  - module: cloudera.cluster.cm_service_role_config_group_info
 """
 
 EXAMPLES = r"""
