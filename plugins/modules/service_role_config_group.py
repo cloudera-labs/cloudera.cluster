@@ -1,6 +1,7 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,40 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    parse_role_config_group_result,
-)
-
-from cm_client import (
-    ApiRoleConfigGroup,
-    ApiRoleConfigGroupList,
-    ApiRoleNameList,
-    ClustersResourceApi,
-    RoleConfigGroupsResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_role_config_group
 short_description: Manage a cluster service role config group.
 description:
   - Manage a cluster service role config group.
 author:
   - "Webster Mudge (@wmudge)"
-requirements:
-  - cm-client
 options:
   cluster:
     description:
@@ -63,57 +37,48 @@ options:
     required: True
     aliases:
       - service_name
-  role_config_group:
+  name:
     description:
       - A role config group to manage.
+      - If not defined, the module will target the I(base) role config group associated with the O(role_type).
     type: str
-    required: True
     aliases:
       - role_config_group_name
-      - name
+      - role_config_group
   role_type:
     description:
       - The role type defining the role config group.
-      - I(role_type) is only valid during creation.
       - To change the I(role_type) of an existing role config group, you must explicitly delete and recreate the role config group.
     type: str
-    required: False
     aliases:
       - type
   display_name:
     description:
       - The display name for this role config group in the Cloudera Manager UI.
+  config:
+    description:
+      - The role config group configuration to set.
+      - To unset a parameter, use V(None) as the value.
+    type: dict
+    aliases:
+      - params
+      - parameters
   purge:
     description:
-      - Flag indicating whether to reset role associations to only the declared roles.
+      - Whether to reset configuration parameters to only the declared entries.
     type: bool
-    required: False
     default: False
-  roles:
-    description:
-      - A list of roles associated, i.e. using, the role config group.
-      - If I(purge=False), any new roles will be moved to use the role config group.
-      - If I(purge=True), any roles not specified in the list will be reset to the C(base) role config group for the service.
-    type: list
-    elements: str
-    required: False
-    aliases:
-      - role_association
-      - role_membership
-      - membership
   state:
     description:
       - The presence or absence of the role config group.
-      - On I(state=absent), any associated role will be moved to the service's default group, i.e. the C(base) role config group.
+      - If any I(roles) are associated with role config group, you are not able to delete the group.
       - "NOTE: you cannot remove a C(base) role config group."
     type: str
-    required: False
     choices:
       - present
       - absent
     default: present
 extends_documentation_fragment:
-  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
@@ -124,80 +89,66 @@ attributes:
     support: full
   platform:
     platforms: all
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.cluster
+  - module: cloudera.cluster.service
+  - module: cloudera.cluster.service_role
+  - module: cloudera.cluster.service_role_config_group_info
 """
 
 EXAMPLES = r"""
----
-- name: Create a role config group
+- name: Create or update a role config group
   cloudera.cluster.service_role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
-    service: HDFS
-    role_config_group: Example-DATANODE
-    type: DATANODE
+    service: ZooKeeper
+    name: Example-ZK-Server
+    type: SERVER
+    config:
+      tickTime: 2500
 
-- name: Create or update a role config group with role associations
+- name: Create or update a role config group, purging undeclared parameters
   cloudera.cluster.service_role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
-    service: HDFS
-    type: DATANODE
-    role_config_group: Example-DATANODE
-    roles:
-      - hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1
-
-- name: Append a role association to a role config group
-  cloudera.cluster.cluster_service_role_config:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-service
-    role_config_group: Example-DATANODE
-    roles:
-      - hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac # Now two roles
-
-- name: Update (purge) role associations to a role config group
-  cloudera.cluster.cluster_service_role_config:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-service
-    role_config_group: Example-DATANODE
-    roles:
-      - hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac # Now only one role
+    service: ZooKeeper
+    name: Example-ZK-Server
+    type: SERVER
+    config:
+      another_parameter: 12345
     purge: yes
 
-- name: Reset all role associations to a role config group
-  cloudera.cluster.cluster_service_role_config:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-service
-    role_config_group: Example-DATANODE
-    roles: []
-    purge: yes
-
-- name: Remove a role config group
+- name: Update the base role config group for a role type
   cloudera.cluster.service_role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
-    service: HDFS
-    role_config_group: Example-DATANODE
-    state: absent
--
+    service: ZooKeeper
+    # name: Leave blank to target the base role config group
+    type: SERVER
+    config:
+      tickTime: 3500
+
+- name: Reset the configuration of a role config group
+  cloudera.cluster.service_role_config_group:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example-cluster
+    service: ZooKeeper
+    name: Example-ZK-Server
+    type: SERVER
+    purge: yes
 """
 
 RETURN = r"""
----
 role_config_group:
   description:
     - A service role config group.
@@ -229,6 +180,15 @@ role_config_group:
         - The service name associated with this role config group.
       type: str
       returned: always
+    cluster_name:
+      description:
+        - The cluster name associated with the service of the role config group.
+      type: str
+      returned: always
+    config:
+      description: Set of configurations for the role config group.
+      type: dict
+      returned: when supported
     role_names:
       description:
         - List of role names associated with this role config group.
@@ -236,6 +196,27 @@ role_config_group:
       elements: str
       returned: when supported
 """
+
+from cm_client import (
+    ApiConfigList,
+    ApiRoleConfigGroup,
+    ApiRoleConfigGroupList,
+    ApiRoleNameList,
+    ClustersResourceApi,
+    RoleConfigGroupsResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    ConfigListUpdates,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    parse_role_config_group_result,
+    get_base_role_config_group,
+)
 
 
 class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
@@ -245,16 +226,16 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
         # Set the parameters
         self.cluster = self.get_param("cluster")
         self.service = self.get_param("service")
-        self.role_config_group = self.get_param("role_config_group")
+        self.name = self.get_param("name")
         self.role_type = self.get_param("role_type")
         self.display_name = self.get_param("display_name")
-        self.roles = self.get_param("roles")
+        self.config = self.get_param("config")
         self.purge = self.get_param("purge")
         self.state = self.get_param("state")
 
         # Initialize the return value
         self.changed = False
-        self.diff = {}
+        self.diff = dict(before=dict(), after=dict())
         self.output = {}
 
         # Execute the logic
@@ -262,6 +243,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
+        # Confirm the presence of the cluster and service
         try:
             ClustersResourceApi(self.api_client).read_cluster(self.cluster)
         except ApiException as ex:
@@ -280,167 +262,161 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
             else:
                 raise ex
 
-        api_instance = RoleConfigGroupsResourceApi(self.api_client)
-        existing = None
-        existing_roles = []
+        rcg_api = RoleConfigGroupsResourceApi(self.api_client)
+        current = None
+        current_roles = []
 
+        # Retrieve the RCG and any associated roles
         try:
-            existing = api_instance.read_role_config_group(
+            if self.name:
+                current = rcg_api.read_role_config_group(
+                    cluster_name=self.cluster,
+                    service_name=self.service,
+                    role_config_group_name=self.name,
+                )
+            else:
+                current = get_base_role_config_group(
+                    self.api_client, self.cluster, self.service, self.role_type
+                )
+
+            current_roles = rcg_api.read_roles(
                 cluster_name=self.cluster,
-                role_config_group_name=self.role_config_group,
                 service_name=self.service,
-            )
-            existing_roles = api_instance.read_roles(
-                cluster_name=self.cluster,
-                role_config_group_name=self.role_config_group,
-                service_name=self.service,
-            )
+                role_config_group_name=current.name,
+            ).items
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
 
         if self.state == "absent":
-            if existing:
+            if current:
                 self.changed = True
+
+                if current.base:
+                    self.module.fail_json(
+                        msg="Deletion failed. Role config group is a base (default) group."
+                    )
+
+                if current_roles:
+                    self.module.fail_json(
+                        msg="Deletion failed. Role config group has existing role associations."
+                    )
 
                 if self.module._diff:
                     self.diff = dict(
-                        before=dict(roles=[r.name for r in existing_roles.items]),
+                        before=dict(
+                            **parse_role_config_group_result(current),
+                        ),
                         after={},
                     )
 
                 if not self.module.check_mode:
-                    if existing_roles:
-                        api_instance.move_roles_to_base_group(
-                            cluster_name=self.cluster,
-                            service_name=self.service,
-                            body=ApiRoleNameList(
-                                [r.name for r in existing_roles.items]
-                            ),
-                        )
-
-                    api_instance.delete_role_config_group(
+                    rcg_api.delete_role_config_group(
                         cluster_name=self.cluster,
-                        role_config_group_name=self.role_config_group,
+                        role_config_group_name=current.name,
                         service_name=self.service,
                     )
 
         elif self.state == "present":
-            if existing:
-                if self.role_type and self.role_type != existing.role_type:
+            if current:
+                # Check for role type changes
+                if self.role_type and self.role_type != current.role_type:
                     self.module.fail_json(
                         msg="Invalid role type. To change the role type of an existing role config group, please destroy and recreate the role config group with the designated role type."
                     )
 
-                if self.display_name and self.display_name != existing.display_name:
+                payload = ApiRoleConfigGroup(
+                    name=current.name, role_type=current.role_type
+                )
+
+                # Check for display name changes
+                if self.display_name and self.display_name != current.display_name:
                     self.changed = True
 
                     if self.module._diff:
-                        self.diff["before"].update(display_name=existing.display_name)
+                        self.diff["before"].update(display_name=current.display_name)
                         self.diff["after"].update(display_name=self.display_name)
 
-                    if not self.module.check_mode:
-                        api_instance.update_role_config_group(
-                            cluster_name=self.cluster,
-                            role_config_group_name=self.role_config_group,
-                            service_name=self.service,
-                            message=self.message,
-                            body=ApiRoleConfigGroup(display_name=self.display_name),
-                        )
+                    payload.display_name = self.display_name
 
-                if self.roles is not None:
-                    existing_role_names = set([r.name for r in existing_roles.items])
-                    roles_add = set(self.roles) - existing_role_names
+                # Reconcile configurations
+                if self.config or self.purge:
+                    if self.config is None:
+                        self.config = dict()
 
-                    if self.purge:
-                        roles_del = existing_role_names - set(self.roles)
-                    else:
-                        roles_del = []
+                    updates = ConfigListUpdates(current.config, self.config, self.purge)
 
-                    if self.module._diff:
-                        self.diff["before"].update(roles=existing_role_names)
-                        self.diff["after"].update(roles=roles_add)
-
-                    if roles_add:
+                    if updates.changed:
                         self.changed = True
-                        if not self.module.check_mode:
-                            api_instance.move_roles(
-                                cluster_name=self.cluster,
-                                role_config_group_name=self.role_config_group,
-                                service_name=self.service,
-                                body=ApiRoleNameList(list(roles_add)),
-                            )
 
-                    if roles_del:
-                        self.changed = True
-                        if not self.module.check_mode:
-                            api_instance.move_roles_to_base_group(
-                                cluster_name=self.cluster,
-                                service_name=self.service,
-                                body=ApiRoleNameList(list(roles_del)),
-                            )
+                        if self.module._diff:
+                            self.diff["before"].update(config=updates.diff["before"])
+                            self.diff["after"].update(config=updates.diff["after"])
 
+                        payload.config = updates.config
+
+                # Execute changes if needed
+                if self.changed and not self.module.check_mode:
+                    current = rcg_api.update_role_config_group(
+                        cluster_name=self.cluster,
+                        service_name=self.service,
+                        role_config_group_name=current.name,
+                        message=self.message,
+                        body=payload,
+                    )
             else:
+                if self.role_type is None:
+                    self.module.fail_json(
+                        msg="Role config group needs to be created, but is missing required arguments: role_type"
+                    )
+
                 self.changed = True
 
-                if self.role_type is None:
-                    self.module.fail_json(msg="missing required arguments: role_type")
+                # Create the RCG
+                payload = ApiRoleConfigGroup(
+                    name=self.name,
+                    role_type=self.role_type,
+                )
+
+                if self.display_name:
+                    payload.display_name = self.display_name
+
+                # Set the configuration
+                if self.config:
+                    payload.config = ConfigListUpdates(
+                        ApiConfigList(items=[]), self.config, self.purge
+                    ).config
 
                 if self.module._diff:
                     self.diff = dict(
                         before={},
-                        after=dict(roles=self.roles),
+                        after=dict(
+                            **parse_role_config_group_result(payload),
+                        ),
                     )
 
                 if not self.module.check_mode:
-                    payload = ApiRoleConfigGroup(
-                        name=self.role_config_group,
-                        role_type=self.role_type,
-                    )
-
-                    if self.display_name:
-                        payload.display_name = self.display_name
-
-                    api_instance.create_role_config_groups(
+                    current = rcg_api.create_role_config_groups(
                         cluster_name=self.cluster,
                         service_name=self.service,
                         body=ApiRoleConfigGroupList([payload]),
-                    )
+                    ).items[0]
 
-                    if self.roles:
-                        api_instance.move_roles(
-                            cluster_name=self.cluster,
-                            role_config_group_name=self.role_config_group,
-                            service_name=self.service,
-                            body=ApiRoleNameList(self.roles),
-                        )
-
+            # Prepare output
             if self.changed:
                 self.output = parse_role_config_group_result(
-                    api_instance.read_role_config_group(
+                    rcg_api.read_role_config_group(
                         cluster_name=self.cluster,
-                        role_config_group_name=self.role_config_group,
                         service_name=self.service,
+                        role_config_group_name=current.name,
                     )
                 )
-
-                self.output.update(
-                    role_names=[
-                        r.name
-                        for r in api_instance.read_roles(
-                            cluster_name=self.cluster,
-                            role_config_group_name=self.role_config_group,
-                            service_name=self.service,
-                        ).items
-                    ]
-                )
-
             else:
-                self.output = {
-                    **parse_role_config_group_result(existing),
-                    "role_names": [r.name for r in existing_roles.items],
-                }
+                self.output = parse_role_config_group_result(current)
 
+            self.output.update(
+                role_names=[r.name for r in current_roles],
+            )
         else:
             self.module.fail_json(msg="Invalid state: " + self.state)
 
@@ -450,19 +426,16 @@ def main():
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name"]),
-            role_config_group=dict(
-                required=True, aliases=["role_config_group_name", "name"]
-            ),
+            name=dict(aliases=["role_config_group_name", "role_config_group"]),
             display_name=dict(),
             role_type=dict(aliases=["type"]),
-            roles=dict(
-                type="list",
-                elements="str",
-                aliases=["role_association", "role_membership", "membership"],
-            ),
+            config=dict(type="dict", aliases=["params", "parameters"]),
             purge=dict(type="bool", default=False),
             state=dict(choices=["present", "absent"], default="present"),
         ),
+        required_one_of=[
+            ["name", "role_type"],
+        ],
         supports_check_mode=True,
     )
 
