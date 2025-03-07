@@ -146,7 +146,7 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
         self.cluster = self.get_param("cluster")
         self.service = self.get_param("service")
         self.type = self.get_param("type")
-        self.role_config_group = self.get_param("role_config_group")
+        self.name = self.get_param("name")
 
         # Initialize the return values
         self.output = []
