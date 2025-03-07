@@ -28,6 +28,8 @@ from cm_client import (
     ApiConfig,
     ApiConfigList,
     ApiRoleConfigGroup,
+    ApiRoleNameList,
+    RoleConfigGroupsResourceApi,
 )
 
 from ansible_collections.cloudera.cluster.plugins.modules import (
@@ -46,7 +48,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-def test_role_config_group_missing_required(conn, module_args):
+def test_missing_required(conn, module_args):
     module_args(
         {
             **conn,
@@ -61,6 +63,34 @@ def test_role_config_group_missing_required(conn, module_args):
         service_role_config_group.main()
 
 
+def test_invalid_service(conn, module_args, base_cluster):
+    module_args(
+        {
+            **conn,
+            "cluster": base_cluster.name,
+            "service": "BOOM",
+            "type": "BOOM",
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
+        service_role_config_group.main()
+
+
+def test_invalid_cluster(conn, module_args, cms_session):
+    module_args(
+        {
+            **conn,
+            "cluster": "BOOM",
+            "service": "BOOM",
+            "type": "BOOM",
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
+        service_role_config_group.main()
+
+
 @pytest.mark.role_config_group(
     ApiRoleConfigGroup(
         config=ApiConfigList(
@@ -71,15 +101,13 @@ def test_role_config_group_missing_required(conn, module_args):
         )
     )
 )
-def test_base_role_config_group_set(
-    conn, module_args, zk_base_role_config_group, request
-):
+def test_base_role_config_group_set(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "type": zk_base_role_config_group.role_type,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "type": zk_role_config_group.role_type,
             "parameters": dict(minSessionTimeout=3000),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -113,15 +141,13 @@ def test_base_role_config_group_set(
         )
     )
 )
-def test_base_role_config_group_unset(
-    conn, module_args, zk_base_role_config_group, request
-):
+def test_base_role_config_group_unset(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "type": zk_base_role_config_group.role_type,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "type": zk_role_config_group.role_type,
             "parameters": dict(minSessionTimeout=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -155,15 +181,13 @@ def test_base_role_config_group_unset(
         )
     )
 )
-def test_base_role_config_group_purge(
-    conn, module_args, zk_base_role_config_group, request
-):
+def test_base_role_config_group_purge(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "type": zk_base_role_config_group.role_type,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "type": zk_role_config_group.role_type,
             "parameters": dict(minSessionTimeout=2701),
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
@@ -199,14 +223,14 @@ def test_base_role_config_group_purge(
     )
 )
 def test_base_role_config_group_purge_all(
-    conn, module_args, zk_base_role_config_group, request
+    conn, module_args, zk_role_config_group, request
 ):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "type": zk_base_role_config_group.role_type,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "type": zk_role_config_group.role_type,
             "parameters": dict(),
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
@@ -304,13 +328,13 @@ def test_role_config_group_create(conn, module_args, zk_session, request):
         ),
     )
 )
-def test_role_config_group_set(conn, module_args, zk_base_role_config_group, request):
+def test_role_config_group_set(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "name": zk_base_role_config_group.name,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": zk_role_config_group.name,
             "parameters": dict(minSessionTimeout=3000),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -346,13 +370,13 @@ def test_role_config_group_set(conn, module_args, zk_base_role_config_group, req
         ),
     )
 )
-def test_role_config_group_unset(conn, module_args, zk_base_role_config_group, request):
+def test_role_config_group_unset(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "name": zk_base_role_config_group.name,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": zk_role_config_group.name,
             "parameters": dict(minSessionTimeout=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -388,13 +412,13 @@ def test_role_config_group_unset(conn, module_args, zk_base_role_config_group, r
         ),
     )
 )
-def test_role_config_group_purge(conn, module_args, zk_base_role_config_group, request):
+def test_role_config_group_purge(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "name": zk_base_role_config_group.name,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": zk_role_config_group.name,
             "parameters": dict(minSessionTimeout=3000),
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
@@ -431,15 +455,13 @@ def test_role_config_group_purge(conn, module_args, zk_base_role_config_group, r
         ),
     )
 )
-def test_role_config_group_purge_all(
-    conn, module_args, zk_base_role_config_group, request
-):
+def test_role_config_group_purge_all(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "name": zk_base_role_config_group.name,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": zk_role_config_group.name,
             "parameters": dict(),
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
@@ -476,15 +498,13 @@ def test_role_config_group_purge_all(
         ),
     )
 )
-def test_role_config_group_absent(
-    conn, module_args, zk_base_role_config_group, request
-):
+def test_role_config_group_absent(conn, module_args, zk_role_config_group, request):
     module_args(
         {
             **conn,
-            "cluster": zk_base_role_config_group.service_ref.cluster_name,
-            "service": zk_base_role_config_group.service_ref.service_name,
-            "name": zk_base_role_config_group.name,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": zk_role_config_group.name,
             "state": "absent",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
@@ -504,3 +524,111 @@ def test_role_config_group_absent(
 
     assert e.value.changed == False
     assert not e.value.role_config_group
+
+
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest Invalid Type",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_role_config_group_invalid_type(
+    conn, module_args, zk_role_config_group, request
+):
+    module_args(
+        {
+            **conn,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": "Pytest Invalid Type",
+            "type": "INVALID",
+            "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
+            # _ansible_check_mode=True,
+            # _ansible_diff=True,
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="Invalid role type") as e:
+        service_role_config_group.main()
+
+
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest Invalid Configuration",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_role_config_group_invalid_config(
+    conn, module_args, zk_role_config_group, request
+):
+    module_args(
+        {
+            **conn,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": "Pytest Invalid Configuration",
+            "config": dict(invalid_configuration_parameter="BOOM"),
+            "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
+            # _ansible_check_mode=True,
+            # _ansible_diff=True,
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="Unknown configuration attribute") as e:
+        service_role_config_group.main()
+
+
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest Absent",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_role_config_group_existing_roles(
+    conn, module_args, cm_api_client, zk_role_config_group, request
+):
+    base_rcg = get_base_role_config_group(
+        api_client=cm_api_client,
+        cluster_name=zk_role_config_group.service_ref.cluster_name,
+        service_name=zk_role_config_group.service_ref.service_name,
+        role_type="SERVER",
+    )
+
+    rcg_api = RoleConfigGroupsResourceApi(cm_api_client)
+    role_list = rcg_api.read_roles(
+        cluster_name=zk_role_config_group.service_ref.cluster_name,
+        service_name=zk_role_config_group.service_ref.service_name,
+        role_config_group_name=base_rcg.name,
+    )
+
+    rcg_api.move_roles(
+        cluster_name=zk_role_config_group.service_ref.cluster_name,
+        service_name=zk_role_config_group.service_ref.service_name,
+        role_config_group_name="Pytest Absent",
+        body=ApiRoleNameList(items=[role_list.items[0].name]),
+    )
+
+    module_args(
+        {
+            **conn,
+            "cluster": zk_role_config_group.service_ref.cluster_name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": "Pytest Absent",
+            "state": "absent",
+            "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
+            # _ansible_check_mode=True,
+            # _ansible_diff=True,
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="existing role associations") as e:
+        service_role_config_group.main()
+
+    rcg_api.move_roles_to_base_group(
+        cluster_name=zk_role_config_group.service_ref.cluster_name,
+        service_name=zk_role_config_group.service_ref.service_name,
+        body=ApiRoleNameList(items=[role_list.items[0].name]),
+    )
