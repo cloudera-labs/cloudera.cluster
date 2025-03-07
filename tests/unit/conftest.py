@@ -86,6 +86,10 @@ class NoHostsFoundException(Exception):
     pass
 
 
+class ParcelNotFoundException(Exception):
+    pass
+
+
 @pytest.fixture(autouse=True)
 def skip_python():
     if sys.version_info < (3, 6):
@@ -343,8 +347,16 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
                     p
                     for p in parcels.items
                     if p.product == "CDH" and p.version.startswith(cdh_version)
-                )
+                ),
+                None,
             )
+
+            if cdh_parcel is None:
+                # Roll back the cluster and then raise an error
+                cluster_api.delete_cluster(cluster_name=name)
+                raise ParcelNotFoundException(
+                    f"CDH Version {cdh_version} not found. Please check your parcel repo configuration."
+                )
 
             parcel = Parcel(
                 parcel_api=parcel_api,
@@ -380,9 +392,11 @@ def zk_auto(cm_api_client, base_cluster, request) -> Generator[ApiService]:
     """
 
     service_api = ServicesResourceApi(cm_api_client)
-    host_api = HostsResourceApi(cm_api_client)
+    cm_api = ClustersResourceApi(cm_api_client)
 
-    host = next((h for h in host_api.read_hosts().items if h.cluster_ref), None)
+    host = next(
+        (h for h in cm_api.list_hosts(cluster_name=base_cluster.name).items), None
+    )
 
     if host is None:
         raise NoHostsFoundException(
