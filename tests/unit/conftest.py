@@ -922,10 +922,12 @@ def host_monitor_state(
 
 
 @pytest.fixture(scope="function")
-def zk_base_role_config_group(
+def zk_role_config_group(
     cm_api_client, zk_session, request
 ) -> Generator[ApiRoleConfigGroup]:
-    """Configures the base Role Config Group for the SERVER role of a ZooKeeper service."""
+    """
+    Creates or updates a Role Config Group of a ZooKeeper service, i.e. a SERVER role type group.
+    """
     marker = request.node.get_closest_marker("role_config_group")
 
     if marker is None:
