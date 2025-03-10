@@ -17,3 +17,7 @@ jmespath
 
 # For cm_service lookup
 cm-client
+
+# For cm_license lookup
+
+python-gnupg
