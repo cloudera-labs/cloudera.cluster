@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2025 Cloudera, Inc. All Rights Reserved.
@@ -46,8 +47,18 @@ options:
     aliases:
       - role_type
   name:
+  type:
+    description:
+      - The role type defining the role config group(s).
+      - If specified, will return all role config groups for the type.
+      - Mutually exclusive with O(name).
+    type: str
+    aliases:
+      - role_type
+  name:
     description:
       - The role config group to examine.
+      - If defined, the module will return the role config group.
       - If defined, the module will return the role config group.
       - If the role config group does not exist, the module will return an empty result.
     type: str
@@ -56,6 +67,13 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+attributes:
+  check_mode:
+    support: full
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.service_role_config_group
 attributes:
   check_mode:
     support: full
@@ -90,23 +108,28 @@ RETURN = r"""
 role_config_groups:
   description:
     - List of cluster service role config groups.
+    - List of cluster service role config groups.
   type: list
   elements: dict
   returned: always
   contains:
     name:
       description: Name (identifier) of the role config group.
+      description: Name (identifier) of the role config group.
       type: str
       returned: always
     role_type:
+      description: The type of the roles in this role config group.
       description: The type of the roles in this role config group.
       type: str
       returned: always
     base:
       description: Flag indicating whether this is a base role config group.
+      description: Flag indicating whether this is a base role config group.
       type: bool
       returned: always
     display_name:
+      description: A user-friendly name of the role config group, as would have been shown in the web UI.
       description: A user-friendly name of the role config group, as would have been shown in the web UI.
       type: str
       returned: when supported

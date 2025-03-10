@@ -21,6 +21,11 @@ __metaclass__ = type
 import logging
 import pytest
 
+from cm_client import (
+    ApiConfigList,
+    ApiRoleConfigGroup,
+)
+
 from ansible_collections.cloudera.cluster.plugins.modules import (
     service_role_config_group_info,
 )
@@ -43,10 +48,16 @@ def test_missing_required(conn, module_args):
 
 
 def test_missing_cluster(conn, module_args):
-    conn.update(service="example")
-    module_args(conn)
+    module_args({**conn, "service": "example"})
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
+        service_role_config_group_info.main()
+
+
+def test_missing_service(conn, module_args, base_cluster):
+    module_args({**conn, "cluster": base_cluster.name})
+
+    with pytest.raises(AnsibleFailJson, match="service"):
         service_role_config_group_info.main()
 
 
@@ -63,7 +74,7 @@ def test_invalid_service(conn, module_args, base_cluster):
         service_role_config_group_info.main()
 
 
-def test_invalid_cluster(conn, module_args, base_cluster):
+def test_invalid_cluster(conn, module_args, cms_session):
     module_args(
         {
             **conn,
@@ -76,29 +87,41 @@ def test_invalid_cluster(conn, module_args, base_cluster):
         service_role_config_group_info.main()
 
 
-def test_all_role_config_groups(conn, module_args, base_cluster, zk_auto):
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest All",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_all_role_config_groups(conn, module_args, base_cluster, zk_role_config_group):
     module_args(
         {
             **conn,
             "cluster": base_cluster.name,
-            "service": zk_auto.name,
+            "service": zk_role_config_group.service_ref.service_name,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_config_group_info.main()
 
-    # Should be only one BASE for the SERVER
-    assert len(e.value.role_config_groups) == 1
-    assert e.value.role_config_groups[0]["base"] == True
+    assert len(e.value.role_config_groups) == 2
 
 
-def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest Type",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_type_role_config_group(conn, module_args, base_cluster, zk_role_config_group):
     module_args(
         {
             **conn,
             "cluster": base_cluster.name,
-            "service": zk_auto.name,
+            "service": zk_role_config_group.service_ref.service_name,
             "type": "SERVER",
         }
     )
@@ -106,18 +129,23 @@ def test_type_role_config_group(conn, module_args, base_cluster, zk_auto):
     with pytest.raises(AnsibleExitJson) as e:
         service_role_config_group_info.main()
 
-    # Should be only one BASE for the SERVER
-    assert len(e.value.role_config_groups) == 1
-    assert e.value.role_config_groups[0]["base"] == True
+    assert len(e.value.role_config_groups) == 2
 
 
-def test_name_role_config_group(
-    conn, module_args, cm_api_client, base_cluster, zk_auto
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest Base",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_name_base_role_config_group(
+    conn, module_args, cm_api_client, base_cluster, zk_role_config_group
 ):
     base_rcg = get_base_role_config_group(
         api_client=cm_api_client,
         cluster_name=base_cluster.name,
-        service_name=zk_auto.name,
+        service_name=zk_role_config_group.service_ref.service_name,
         role_type="SERVER",
     )
 
@@ -125,7 +153,7 @@ def test_name_role_config_group(
         {
             **conn,
             "cluster": base_cluster.name,
-            "service": zk_auto.name,
+            "service": zk_role_config_group.name,
             "name": base_rcg.name,
         }
     )
@@ -136,3 +164,30 @@ def test_name_role_config_group(
     # Should be only one BASE for the SERVER
     assert len(e.value.role_config_groups) == 1
     assert e.value.role_config_groups[0]["base"] == True
+
+
+@pytest.mark.role_config_group(
+    ApiRoleConfigGroup(
+        name="Pytest Non-Base",
+        role_type="SERVER",
+        config=ApiConfigList(items=[]),
+    )
+)
+def test_name_base_role_config_group(
+    conn, module_args, base_cluster, zk_role_config_group
+):
+    module_args(
+        {
+            **conn,
+            "cluster": base_cluster.name,
+            "service": zk_role_config_group.service_ref.service_name,
+            "name": "Pytest Non-Base",
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        service_role_config_group_info.main()
+
+    # Should be only one non-BASE for the SERVER
+    assert len(e.value.role_config_groups) == 1
+    assert e.value.role_config_groups[0]["base"] == False

@@ -37,6 +37,7 @@ from cm_client import (
     MgmtRolesResourceApi,
     MgmtRoleCommandsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
+    RoleConfigGroupsResourceApi,
     ServicesResourceApi,
 )
 from cm_client.rest import ApiException
@@ -430,4 +431,72 @@ def set_cm_role_config_group(
 
         rcg_api.update_role_config_group(
             role_config_group.name, message=f"{message}::reset", body=role_config_group
+        )
+
+
+def set_role_config_group(
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
+    role_config_group: ApiRoleConfigGroup,
+    update: ApiRoleConfigGroup,
+    message: str,
+) -> Generator[ApiRoleConfigGroup]:
+    """Update a configuration for a given service role config group.
+       Yields the role config group and upon returning control, will reset the
+       configuration to its prior state.
+       Use with 'yield from' within a pytest fixture.
+
+    Args:
+        api_client (ApiClient): CM API client
+        cluster_name (str): Name of the cluster
+        service_name (str): Name of the service
+        role_config_group (ApiRoleConfigGroup): The Role Config Group to manage
+        update (ApiRoleConfigGroup): The state to set
+        message (str): Transaction descriptor; will be appended with '::[re]set'
+
+    Yields:
+        Generator[ApiRoleConfigGroup]: The updated Role Config Group
+    """
+    rcg_api = RoleConfigGroupsResourceApi(api_client)
+
+    # Ensure the modification (not a replacement) of the existing role config group
+    update.name = role_config_group.name
+
+    # Update the role config group
+    pre_rcg = rcg_api.update_role_config_group(
+        cluster_name=cluster_name,
+        service_name=service_name,
+        role_config_group_name=role_config_group.name,
+        message=f"{message}::set",
+        body=update,
+    )
+
+    yield pre_rcg
+
+    # Reread the role config group
+    post_rcg = rcg_api.read_role_config_group(
+        cluster_name=cluster_name,
+        service_name=service_name,
+        role_config_group_name=pre_rcg.name,
+    )
+
+    # Revert the changes
+    config_revert = resolve_parameter_updates(
+        {c.name: c.value for c in post_rcg.config.items},
+        {c.name: c.value for c in role_config_group.config.items},
+        True,
+    )
+
+    if config_revert:
+        role_config_group.config = ApiConfigList(
+            items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
+        )
+
+        rcg_api.update_role_config_group(
+            cluster_name=cluster_name,
+            service_name=service_name,
+            role_config_group_name=role_config_group.name,
+            message=f"{message}::reset",
+            body=role_config_group,
         )

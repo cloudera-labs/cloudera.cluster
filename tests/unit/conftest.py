@@ -41,6 +41,7 @@ from cm_client import (
     ApiHostRefList,
     ApiRole,
     ApiRoleConfigGroup,
+    ApiRoleConfigGroupList,
     ApiRoleList,
     ApiRoleNameList,
     ApiRoleState,
@@ -59,6 +60,7 @@ from cm_client import (
     ParcelResourceApi,
     ParcelsResourceApi,
     ServicesResourceApi,
+    RoleConfigGroupsResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
 
@@ -67,6 +69,10 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
     Parcel,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    get_base_role_config_group,
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
@@ -79,6 +85,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     provision_cm_role,
     set_cm_role_config,
     set_cm_role_config_group,
+    set_role_config_group,
 )
 
 
@@ -87,6 +94,10 @@ class NoHostsFoundException(Exception):
 
 
 class ParcelNotFoundException(Exception):
+    pass
+
+
+class ZooKeeperServiceNotFoundException(Exception):
     pass
 
 
@@ -377,7 +388,7 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
 
 
 @pytest.fixture(scope="function")
-def zk_auto(cm_api_client, base_cluster, request) -> Generator[ApiService]:
+def zk_function(cm_api_client, base_cluster, request) -> Generator[ApiService]:
     """Create a new ZooKeeper service on the provided base cluster.
     It starts this service, yields, and will remove this service if the tests
     do not.
@@ -405,6 +416,66 @@ def zk_auto(cm_api_client, base_cluster, request) -> Generator[ApiService]:
 
     payload = ApiService(
         name="-".join(["zk", request.node.name]),
+        type="ZOOKEEPER",
+        roles=[
+            ApiRole(
+                type="SERVER",
+                host_ref=ApiHostRef(host.host_id, host.hostname),
+            ),
+        ],
+    )
+
+    service_results = service_api.create_services(
+        cluster_name=base_cluster.name, body=ApiServiceList(items=[payload])
+    )
+
+    first_run_cmd = service_api.first_run(
+        cluster_name=base_cluster.name,
+        service_name=service_results.items[0].name,
+    )
+
+    monitor_command(cm_api_client, first_run_cmd)
+
+    zk_service = service_api.read_service(
+        cluster_name=base_cluster.name, service_name=service_results.items[0].name
+    )
+
+    yield zk_service
+
+    service_api.delete_service(
+        cluster_name=base_cluster.name,
+        service_name=zk_service.name,
+    )
+
+
+@pytest.fixture(scope="session")
+def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
+    """Create a new ZooKeeper service on the provided base cluster.
+    It starts this service, yields, and will remove this service if the tests
+    do not.
+
+    Args:
+        cm_api_client (ApiClient): CM API client
+        base_cluster (ApiCluster): Provided base cluster
+
+    Yields:
+        Generator[ApiService]: ZooKeeper service
+    """
+
+    service_api = ServicesResourceApi(cm_api_client)
+    cm_api = ClustersResourceApi(cm_api_client)
+
+    host = next(
+        (h for h in cm_api.list_hosts(cluster_name=base_cluster.name).items), None
+    )
+
+    if host is None:
+        raise NoHostsFoundException(
+            "No available hosts to assign ZooKeeper service roles"
+        )
+
+    payload = ApiService(
+        name="zk-session",
         type="ZOOKEEPER",
         roles=[
             ApiRole(
@@ -848,6 +919,80 @@ def host_monitor_state(
                     body=ApiRoleNameList(items=[host_monitor.name])
                 ),
             )
+
+
+@pytest.fixture(scope="function")
+def zk_role_config_group(
+    cm_api_client, zk_session, request
+) -> Generator[ApiRoleConfigGroup]:
+    """
+    Creates or updates a Role Config Group of a ZooKeeper service, i.e. a SERVER role type group.
+    """
+    marker = request.node.get_closest_marker("role_config_group")
+
+    if marker is None:
+        raise Exception("No 'role_config_group' marker found.")
+
+    update_rcg = marker.args[0]
+
+    rcg_api = RoleConfigGroupsResourceApi(cm_api_client)
+
+    rcg = None
+    if update_rcg.name is not None:
+        # If it exists, update it
+        try:
+            rcg = rcg_api.read_role_config_group(
+                cluster_name=zk_session.cluster_ref.cluster_name,
+                service_name=zk_session.name,
+                role_config_group_name=update_rcg.name,
+            )
+        except ApiException as ex:
+            if ex.status != 404:
+                raise ex
+
+        # If it doesn't exist, create, yield, and destroy
+        if rcg is None:
+            rcg = rcg_api.create_role_config_groups(
+                cluster_name=zk_session.cluster_ref.cluster_name,
+                service_name=zk_session.name,
+                body=ApiRoleConfigGroupList(items=[update_rcg]),
+            ).items[0]
+
+            yield rcg
+
+            try:
+                rcg_api.delete_role_config_group(
+                    cluster_name=zk_session.cluster_ref.cluster_name,
+                    service_name=zk_session.name,
+                    role_config_group_name=rcg.name,
+                )
+            except ApiException as ex:
+                if ex.status != 404:
+                    raise ex
+
+            return
+    else:
+        rcg = get_base_role_config_group(
+            api_client=cm_api_client,
+            cluster_name=zk_session.cluster_ref.cluster_name,
+            service_name=zk_session.name,
+            role_type="SERVER",
+        )
+
+    rcg.config = rcg_api.read_config(
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+        role_config_group_name=rcg.name,
+    )
+
+    yield from set_role_config_group(
+        api_client=cm_api_client,
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+        role_config_group=rcg,
+        update=update_rcg,
+        message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
+    )
 
 
 def handle_commands(api_client: ApiClient, commands: ApiBulkCommandList):
