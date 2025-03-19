@@ -31,6 +31,7 @@ dependencies = [
   "ansible-core<2.17",     # For RHEL 8 support
   "jmespath",
   "cm-client",
+  "python-gnupg",
 ]
 
 [tool.hatch.envs.lint]
