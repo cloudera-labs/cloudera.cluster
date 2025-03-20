@@ -99,6 +99,7 @@ def test_pytest_disable_kerberos(module_args, conn):
 
     # assert e.value.changed == True
 
+
 def test_force_enable_kerberos(module_args, conn, request):
 
     if os.getenv("KDC_ADMIN_USER", None):
@@ -117,7 +118,7 @@ def test_force_enable_kerberos(module_args, conn, request):
             **conn,
             "kdc_type": "Red Hat IPA",
             "krb_enc_types": ["aes256-cts", "aes128-cts", "rc4-hmac"],
-            "security_realm": "CLDR.INTERNAL"
+            "security_realm": "CLDR.INTERNAL",
         }
     )
 
