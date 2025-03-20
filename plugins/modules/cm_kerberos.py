@@ -48,6 +48,10 @@ options:
     choices:
       - present
       - absent
+  force:
+    description:
+      - Forces an attempt to generate the KDC Account Manager credentials even if Kerberos is already determined to be enabled.
+      - Applicable only when O(state) is V(present).
   krb_enc_types:
     description:
       - Kerberos Encryption Types supported by the KDC to set in Cloudera Manager configuration.
@@ -57,7 +61,7 @@ options:
   security_realm:
     description:
       - Kerberos Security Realm to set in Cloudera Manager configuration
-      - Changing this setting would clear up all existing credentials and keytabs from Cloudera Manager.
+      - Changing this variable removes existing credentials and keytabs from Cloudera Manager and will attempt to re-generate these credentials.
     type: str
     required: false
   kdc_type:
@@ -253,6 +257,7 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
 
         # Set the parameters
         self.state = self.get_param("state")
+        self.force = self.get_param("force")
         self.krb_enc_types = self.get_param("krb_enc_types")
         self.security_realm = self.get_param("security_realm")
         self.kdc_type = self.get_param("kdc_type")
@@ -352,10 +357,10 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
             # Generate Kerberos credentials
             # Check and create Kerberos credentials if required
             if self.kdc_admin_user and self.kdc_admin_password:
-                # Check 1 - Retrieve CM Kerberos information
+                # Retrieve CM Kerberos information
                 krb_info = cm_api_instance.get_kerberos_info().to_dict()
 
-                if krb_info.get("kerberized") == False:
+                if krb_info.get("kerberized") == False or self.force:
 
                     # Generate credentials
                     if not self.module.check_mode:
@@ -462,6 +467,7 @@ def main():
             kdc_admin_user=dict(required=False, type="str"),
             kdc_admin_password=dict(required=False, type="str"),
             state=dict(type="str", default="present", choices=["present", "absent"]),
+            force=dict(required=False, type="bool", default=False)
         ),
         supports_check_mode=True,
     )
