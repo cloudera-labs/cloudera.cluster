@@ -65,7 +65,6 @@ options:
       - Type of KDC Kerberos key distribution center (KDC) used for authentication.
     type: str
     required: false
-    default: present
     choices:
       - 'MIT KDC'
       - 'Active Directory'
@@ -126,7 +125,7 @@ options:
     description:
       - Custom Kerberos Keytab Retrieval Script.
       - Specify the path to a custom script, or executable, to retrieve a Kerberos keytab.
-      - The script should take two arguments - a destination file to write the keytab to, and the full principal name to retrieve the key for.
+      - The target script should accept two arguments: a destination path for the resulting keytab and the full principal name of the owner of the keytab.
     type: str
     required: false
   kdc_admin_user:
@@ -144,7 +143,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
 notes:
-  - Using the C(cm_config) with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
+  - Using the C(cm_config) module with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
   - Requires C(cm_client).
 seealso:
   - module: cloudera.cluster.cm_config
