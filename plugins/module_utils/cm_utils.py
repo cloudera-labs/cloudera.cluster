@@ -71,11 +71,11 @@ def normalize_values(add: dict) -> dict:
     """
 
     def _normalize(value):
-        if isinstance(value, str):
+        if type(value) is str:
             return value.strip()
-        elif isinstance(value, int):
+        elif type(value) is int:
             return str(value)
-        elif isinstance(value, bool):
+        elif type(value) is bool:
             return str(value).lower()
         else:
             return value
