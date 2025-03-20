@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# 
+#
 # Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,7 +90,7 @@ options:
   ad_account_prefix:
     description:
       - Prefix used in names while creating accounts in Active Directory.
-      - The prefix can be up to 15 characters long and can be set to identify accounts used for authentication by CDH processes. 
+      - The prefix can be up to 15 characters long and can be set to identify accounts used for authentication by CDH processes.
       - Used only if O(kdc_type='Active Directory').
     type: str
     required: false
@@ -103,20 +103,20 @@ options:
   ad_delete_on_regenerate:
     description:
       - Active Directory Delete Accounts on Credential Regeneration.
-      - Set this option to V(true) if regeneration of credentials should automatically delete the associated Active Directory accounts. 
+      - Set this option to V(true) if regeneration of credentials should automatically delete the associated Active Directory accounts.
       - Used only if O(kdc_type='Active Directory').
     type: bool
     required: false
   ad_set_encryption_types:
     description:
-      - Set this V(true) if creation of Active Directory accounts should automatically turn on the associated encryption types represented by the msDS-EncryptionTypes field. 
+      - Set this V(true) if creation of Active Directory accounts should automatically turn on the associated encryption types represented by the msDS-EncryptionTypes field.
       - Used only if O(kdc_type='Active Directory').
     type: bool
     required: false
   kdc_account_creation_host_override:
     description:
       - Active Directory Domain Controller host override.
-      - This parameter should be used when multiple Active Directory Domain Controllers are behind a load-balancer. 
+      - This parameter should be used when multiple Active Directory Domain Controllers are behind a load-balancer.
       - This parameter should be set with the address of one of them AD Domain Controller.
       - This setting is used only while creating accounts. CDH services use the value entered in the O(kdc_host) while authenticating.
       - Only applicable if O(kdc_type='Active Directory')
@@ -125,7 +125,7 @@ options:
   gen_keytab_script:
     description:
       - Custom Kerberos Keytab Retrieval Script.
-      - Specify the path to a custom script, or executable, to retrieve a Kerberos keytab. 
+      - Specify the path to a custom script, or executable, to retrieve a Kerberos keytab.
       - The script should take two arguments - a destination file to write the keytab to, and the full principal name to retrieve the key for.
     type: str
     required: false
@@ -247,6 +247,7 @@ cm_config:
       returned: when supported
 """
 
+
 class ClouderaManagerKerberos(ClouderaManagerMutableModule):
     def __init__(self, module):
         super(ClouderaManagerKerberos, self).__init__(module)
@@ -264,7 +265,8 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
         self.ad_delete_on_regenerate = self.get_param("ad_delete_on_regenerate")
         self.ad_set_encryption_types = self.get_param("ad_set_encryption_types")
         self.kdc_account_creation_host_override = self.get_param(
-            "kdc_account_creation_host_override")
+            "kdc_account_creation_host_override"
+        )
         self.gen_keytab_script = self.get_param("gen_keytab_script")
         self.kdc_admin_user = self.get_param("kdc_admin_user")
         self.kdc_admin_password = self.get_param("kdc_admin_password")
@@ -274,11 +276,11 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
         self.changed = False
         self.diff = {}
 
-        self.delay = 15  # Sleep time between wait for import_admin_credentials cmd to complete
+        self.delay = (
+            15  # Sleep time between wait for import_admin_credentials cmd to complete
+        )
         # List of known acceptable errors in import_admin_credentials cmd
-        self.creds_known_errors = [
-           r"ERROR: user with name.*already exists"
-        ]
+        self.creds_known_errors = [r"ERROR: user with name.*already exists"]
 
         # Execute the logic
         self.process()
@@ -307,81 +309,96 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
         # Check current CM configuration
         existing = self.get_cm_config(scope="full")
         current = {r.name: r.value for r in existing}
-        
+
         # State present
         if self.state == "present":
 
-          # Determine CM configuration changes for Kerberos
-          incoming = {
-              key.upper(): getattr(self, key)
-              for key in [
-                  "krb_enc_types",
-                  "security_realm",
-                  "kdc_type",
-                  "kdc_admin_host",
-                  "kdc_host",
-                  "krb_auth_enable",
-                  "ad_account_prefix",
-                  "ad_kdc_domain",
-                  "ad_delete_on_regenerate",
-                  "ad_set_encryption_types",
-                  "kdc_account_creation_host_override",
-                  "gen_keytab_script",
-              ]
-          }
-          change_set = resolve_parameter_updates(current, incoming)
+            # Determine CM configuration changes for Kerberos
+            incoming = {
+                key.upper(): getattr(self, key)
+                for key in [
+                    "krb_enc_types",
+                    "security_realm",
+                    "kdc_type",
+                    "kdc_admin_host",
+                    "kdc_host",
+                    "krb_auth_enable",
+                    "ad_account_prefix",
+                    "ad_kdc_domain",
+                    "ad_delete_on_regenerate",
+                    "ad_set_encryption_types",
+                    "kdc_account_creation_host_override",
+                    "gen_keytab_script",
+                ]
+            }
+            change_set = resolve_parameter_updates(current, incoming)
 
-          if change_set:
-              self.changed = True
+            if change_set:
+                self.changed = True
 
-              if self.module._diff:
-                  self.diff = dict(
-                      before={k: current[k] for k in change_set.keys()},
-                      after=change_set,
-                  )
-
-              if not self.module.check_mode:
-                body = ApiConfigList(
-                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
-                  )
-                cm_api_instance.update_config(message=self.message, body=body).items
-        
-          # Generate Kerberos credentials
-          # Check and create Kerberos credentials if required
-          if self.kdc_admin_user and self.kdc_admin_password:
-            # Check 1 - Retrieve CM Kerberos information
-            krb_info = cm_api_instance.get_kerberos_info().to_dict()
-
-            if krb_info.get("kerberized") == False:
-            
-              # Generate credentials
-              if not self.module.check_mode:
-                cmd = cm_api_instance.import_admin_credentials(username=self.kdc_admin_user, password=self.kdc_admin_password)
-                creds_cmd_result = next(iter(self.wait_for_command_state(command_id=cmd.id, polling_interval=self.delay)),None)
-
-                if creds_cmd_result.success:
-                  self.changed = True
-                else:
-                  # Check for known, acceptable errors in import_admin_credentials
-                  if not any(re.search(item, creds_cmd_result.result_message) for item in self.creds_known_errors):
-                    self.module.fail_json(
-                        msg="Error during Import KDC Account Manager Credentials command",
-                        error=creds_cmd_result.result_message,
+                if self.module._diff:
+                    self.diff = dict(
+                        before={k: current[k] for k in change_set.keys()},
+                        after=change_set,
                     )
 
-          # Retrieve cm_config again after enabling Kerberos
-          self.output.update(cm_config = [r.to_dict() for r in self.get_cm_config()])
-          
+                if not self.module.check_mode:
+                    body = ApiConfigList(
+                        items=[
+                            ApiConfig(name=k, value=v) for k, v in change_set.items()
+                        ]
+                    )
+                    cm_api_instance.update_config(message=self.message, body=body).items
+
+            # Generate Kerberos credentials
+            # Check and create Kerberos credentials if required
+            if self.kdc_admin_user and self.kdc_admin_password:
+                # Check 1 - Retrieve CM Kerberos information
+                krb_info = cm_api_instance.get_kerberos_info().to_dict()
+
+                if krb_info.get("kerberized") == False:
+
+                    # Generate credentials
+                    if not self.module.check_mode:
+                        cmd = cm_api_instance.import_admin_credentials(
+                            username=self.kdc_admin_user,
+                            password=self.kdc_admin_password,
+                        )
+                        creds_cmd_result = next(
+                            iter(
+                                self.wait_for_command_state(
+                                    command_id=cmd.id, polling_interval=self.delay
+                                )
+                            ),
+                            None,
+                        )
+
+                        if creds_cmd_result.success:
+                            self.changed = True
+                        else:
+                            # Check for known, acceptable errors in import_admin_credentials
+                            if not any(
+                                re.search(item, creds_cmd_result.result_message)
+                                for item in self.creds_known_errors
+                            ):
+                                self.module.fail_json(
+                                    msg="Error during Import KDC Account Manager Credentials command",
+                                    error=creds_cmd_result.result_message,
+                                )
+
+            # Retrieve cm_config again after enabling Kerberos
+            self.output.update(cm_config=[r.to_dict() for r in self.get_cm_config()])
+
         elif self.state == "absent":
 
-          # Remove Kerberos credentials
-          if not self.module.check_mode:
-            krb_info = cm_api_instance.get_kerberos_info().to_dict()
-            if krb_info.get("kerberized") == True:          
-              cm_api_instance.delete_credentials_command()
-        
-          # Reset CM configurations
-          reset_params = dict(
+            # Remove Kerberos credentials
+            if not self.module.check_mode:
+                krb_info = cm_api_instance.get_kerberos_info().to_dict()
+                if krb_info.get("kerberized") == True:
+                    cm_api_instance.delete_credentials_command()
+
+            # Reset CM configurations
+            reset_params = dict(
                 krb_enc_types="aes256-cts",
                 security_realm="HADOOP.COM",
                 kdc_type="MIT KDC",
@@ -393,31 +410,36 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                 ad_delete_on_regenerate=False,
                 ad_set_encryption_types=False,
                 kdc_account_creation_host_override="",
-                gen_keytab_script=""
+                gen_keytab_script="",
             )
-          # NOTE: Change set is always > 0
-          change_set = resolve_parameter_updates(current, {k.upper():v for k,v in reset_params.items()})
+            # NOTE: Change set is always > 0
+            change_set = resolve_parameter_updates(
+                current, {k.upper(): v for k, v in reset_params.items()}
+            )
 
-          if change_set:
-            self.changed = True
+            if change_set:
+                self.changed = True
 
-            if self.module._diff:
-              self.diff = dict(
-                    before={k: current[k] for k in reset_params.keys()},
-                    after=reset_params,
-              )
-                        
-            if not self.module.check_mode:
-              body = ApiConfigList(
+                if self.module._diff:
+                    self.diff = dict(
+                        before={k: current[k] for k in reset_params.keys()},
+                        after=reset_params,
+                    )
+
+                if not self.module.check_mode:
+                    body = ApiConfigList(
                         items=[
                             ApiConfig(name=k, value=v) for k, v in reset_params.items()
                         ]
                     )
-              cm_api_instance.update_config(body=body).items
+                    cm_api_instance.update_config(body=body).items
 
-            # Set output
-            # Retrieve cm_config again after enabling Kerberos
-            self.output.update(cm_config = [r.to_dict() for r in self.get_cm_config()])
+                # Set output
+                # Retrieve cm_config again after enabling Kerberos
+                self.output.update(
+                    cm_config=[r.to_dict() for r in self.get_cm_config()]
+                )
+
 
 def main():
 
@@ -459,6 +481,7 @@ def main():
         output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
+
 
 if __name__ == "__main__":
     main()

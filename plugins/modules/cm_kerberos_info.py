@@ -141,16 +141,25 @@ class ClouderaManagerKerberosInfo(ClouderaManagerModule):
     def process(self):
 
         kerberos_cm_settings = [
-            "krb_enc_types", "security_realm", "kdc_type",
-            "kdc_admin_host", "kdc_host", "krb_auth_enable",
-            "ad_account_prefix", "ad_kdc_domain", "ad_delete_on_regenerate",
-            "ad_set_encryption_types", "kdc_account_creation_host_override",
-            "gen_keytab_script"
+            "krb_enc_types",
+            "security_realm",
+            "kdc_type",
+            "kdc_admin_host",
+            "kdc_host",
+            "krb_auth_enable",
+            "ad_account_prefix",
+            "ad_kdc_domain",
+            "ad_delete_on_regenerate",
+            "ad_set_encryption_types",
+            "kdc_account_creation_host_override",
+            "gen_keytab_script",
         ]
 
         # Retrieve the cm configuration
         cm_config = [r.to_dict() for r in self.get_cm_config(scope="full")]
-        self.config = [r for r in cm_config if r["name"].lower() in kerberos_cm_settings]
+        self.config = [
+            r for r in cm_config if r["name"].lower() in kerberos_cm_settings
+        ]
 
 
 def main():

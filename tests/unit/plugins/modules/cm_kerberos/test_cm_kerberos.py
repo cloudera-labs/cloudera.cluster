@@ -31,8 +31,9 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+
 def test_pytest_enable_kerberos(module_args, conn, request):
-    
+
     if os.getenv("KDC_ADMIN_USER", None):
         conn.update(kdc_admin_user=os.getenv("KDC_ADMIN_USER"))
 
@@ -53,11 +54,12 @@ def test_pytest_enable_kerberos(module_args, conn, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
         }
     )
-   
+
     with pytest.raises(AnsibleExitJson) as e:
         cm_kerberos.main()
 
     assert e.value.changed == True
+
 
 def test_enable_invalid_admin_password(module_args, conn, request):
 
@@ -79,20 +81,19 @@ def test_enable_invalid_admin_password(module_args, conn, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
         }
     )
-   
-    with pytest.raises(AnsibleFailJson, match="Error during Import KDC Account Manager Credentials command") as e:
+
+    with pytest.raises(
+        AnsibleFailJson,
+        match="Error during Import KDC Account Manager Credentials command",
+    ) as e:
         cm_kerberos.main()
         print("At end")
 
+
 def test_pytest_disable_kerberos(module_args, conn):
-    
-    module_args(
-        {
-            **conn,
-            "state": "absent"
-        }
-    )
-   
+
+    module_args({**conn, "state": "absent"})
+
     with pytest.raises(AnsibleExitJson) as e:
         cm_kerberos.main()
 
