@@ -26,6 +26,7 @@ from cm_client import (
     ApiConfigList,
     ApiConfig,
 )
+import re
 
 DOCUMENTATION = r"""
 module: cm_kerberos
@@ -171,7 +172,6 @@ RETURN = r"""
 TODO:
 """
 
-
 class ClouderaManagerKerberos(ClouderaManagerMutableModule):
     def __init__(self, module):
         super(ClouderaManagerKerberos, self).__init__(module)
@@ -198,6 +198,12 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
         self.output = {}
         self.changed = False
         self.diff = {}
+
+        self.delay = 15  # Sleep time between wait for import_admin_credentials cmd to complete
+        # List of known acceptable errors in import_admin_credentials cmd
+        self.creds_known_errors = [
+           r"ERROR: user with name.*already exists"
+        ]
 
         # Execute the logic
         self.process()
@@ -263,30 +269,34 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                 body = ApiConfigList(
                     items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
                   )
-                config = cm_api_instance.update_config(message=self.message, body=body).items
-
-                # Set output
-                self.output.update(cm_config=config)
-              
-                print(config)
+                cm_api_instance.update_config(message=self.message, body=body).items
         
           # Generate Kerberos credentials
           # Check and create Kerberos credentials if required
           if self.kdc_admin_user and self.kdc_admin_password:
             # Check 1 - Retrieve CM Kerberos information
             krb_info = cm_api_instance.get_kerberos_info().to_dict()
-            print(krb_info)
-            if krb_info.get("kerberized") == False:
-              print("Not kerberized")
-              
-              # TODO: Is there another check that we can do if we find kerberized false?
 
+            if krb_info.get("kerberized") == False:
+            
               # Generate credentials
               if not self.module.check_mode:
-                admin_creds = cm_api_instance.import_admin_credentials(username=self.kdc_admin_user, password=self.kdc_admin_password)
+                cmd = cm_api_instance.import_admin_credentials(username=self.kdc_admin_user, password=self.kdc_admin_password)
+                creds_cmd_result = next(iter(self.wait_for_command_state(command_id=cmd.id, polling_interval=self.delay)),None)
 
-                print(admin_creds)
+                if creds_cmd_result.success:
+                  self.changed = True
+                else:
+                  # Check for known, acceptable errors in import_admin_credentials
+                  if not any(re.search(item, creds_cmd_result.result_message) for item in self.creds_known_errors):
+                    self.module.fail_json(
+                        msg="Error during Import KDC Account Manager Credentials command",
+                        error=creds_cmd_result.result_message,
+                    )
 
+          # Retrieve cm_config again after enabling Kerberos
+          self.output.update(cm_config = [r.to_dict() for r in self.get_cm_config()])
+          
         elif self.state == "absent":
 
           # Remove Kerberos credentials
@@ -348,10 +358,11 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                             ApiConfig(name=k, value=v) for k, v in reset_params.items()
                         ]
                     )
-              config = cm_api_instance.update_config(body=body).items
+              cm_api_instance.update_config(body=body).items
 
             # Set output
-            self.output.update(cm_config=config)              
+            # Retrieve cm_config again after enabling Kerberos
+            self.output.update(cm_config = [r.to_dict() for r in self.get_cm_config()])
 
 def main():
 
@@ -381,7 +392,6 @@ def main():
 
     result = ClouderaManagerKerberos(module)
 
-    print(result)
     output = dict(
         changed=result.changed,
         **result.output,
