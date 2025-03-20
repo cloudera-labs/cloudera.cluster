@@ -467,7 +467,7 @@ def main():
             kdc_admin_user=dict(required=False, type="str"),
             kdc_admin_password=dict(required=False, type="str"),
             state=dict(type="str", default="present", choices=["present", "absent"]),
-            force=dict(required=False, type="bool", default=False)
+            force=dict(required=False, type="bool", default=False),
         ),
         supports_check_mode=True,
     )
