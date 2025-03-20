@@ -157,10 +157,17 @@ EXAMPLES = r"""
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
+    security_realm: "CLDR.INTERNAL"
+    kdc_type: "Red Hat IPA"
+    krb_enc_types: "aes256-cts aes128-cts rc4-hmac"
+    kdc_admin_host: "freeipa.cldr.internal"
+    kdc_host: "freeipa.cldr.internal"
+    kdc_admin_user: "admin@CLDR.INTERNAL"
+    kdc_admin_password: "kdcExamplePass"
     state: present
 
 - name: Disable Kerberos
-  cloudera.cluster.cm_autotls:
+  cloudera.cluster.cm_kerberos:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -169,7 +176,75 @@ EXAMPLES = r"""
 
 RETURN = r"""
 ---
-TODO:
+cm_config:
+  description:
+    - Cloudera Manager Server configurations with Kerberos settings where available.
+  type: list
+  elements: dict
+  returned: always
+  contains:
+    name:
+      description:
+        - The canonical name that identifies this configuration parameter.
+      type: str
+      returned: always
+    value:
+      description:
+        - The user-defined value.
+        - When absent, the default value (if any) will be used.
+        - Can also be absent, when enumerating allowed configs.
+      type: str
+      returned: when supported
+    required:
+      description:
+        - Whether this configuration is required for the object.
+        - If any required configuration is not set, operations on the object may not work.
+      type: bool
+      returned: when supported
+    default:
+      description:
+        - The default value.
+      type: str
+      returned: when supported
+    display_name:
+      description:
+        - A user-friendly name of the parameters, as would have been shown in the web UI.
+      type: str
+      returned: when supported
+    description:
+      description:
+        - A textual description of the parameter.
+      type: str
+      returned: when supported
+    related_name:
+      description:
+        - If applicable, contains the related configuration variable used by the source project.
+      type: str
+      returned: when supported
+    sensitive:
+      description:
+        - Whether this configuration is sensitive, i.e. contains information such as passwords.
+        - This parameter might affect how the value of this configuration might be shared by the caller.
+      type: bool
+      returned: when supported
+    validate_state:
+      description:
+        - State of the configuration parameter after validation.
+        - For example, C(OK), C(WARNING), and C(ERROR).
+      type: str
+      returned: when supported
+    validation_message:
+      description:
+        - A message explaining the parameter's validation state.
+      type: str
+      returned: when supported
+    validation_warnings_suppressed:
+      description:
+        - Whether validation warnings associated with this parameter are suppressed.
+        - In general, suppressed validation warnings are hidden in the Cloudera Manager UI.
+        - Configurations that do not produce warnings will not contain this field.
+      type: bool
+      returned: when supported
 """
 
 class ClouderaManagerKerberos(ClouderaManagerMutableModule):
@@ -304,28 +379,8 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
             krb_info = cm_api_instance.get_kerberos_info().to_dict()
             if krb_info.get("kerberized") == True:          
               cm_api_instance.delete_credentials_command()
-          
-          # TODO: Review if this is best approach for absent
-
+        
           # Reset CM configurations
-          # NOTE: 1 Attempt with list and value = None
-          reset_params = [
-            "krb_enc_types", "security_realm", "kdc_type",
-            "kdc_admin_host", "kdc_host", "krb_auth_enable",
-            "ad_account_prefix", "ad_kdc_domain", "ad_delete_on_regenerate",
-            "ad_set_encryption_types", "kdc_account_creation_host_override",
-            "gen_keytab_script"
-          ]
-
-          # if not self.module.check_mode:
-          # #   body = ApiConfigList(
-          # #     items=[
-          # #       ApiConfig(name=k, value=None) for k in reset_params
-          # #       ]
-          # #     )
-            # cm_api_instance.update_config(body=body)
-            
-          # NOTE: 2 Attempt with dict
           reset_params = dict(
                 krb_enc_types="aes256-cts",
                 security_realm="HADOOP.COM",
