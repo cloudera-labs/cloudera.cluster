@@ -15,19 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-    ClouderaManagerMutableModule,
-    resolve_parameter_updates,
-)
-from cm_client.rest import ApiException
-from cm_client import (
-    ClouderaManagerResourceApi,
-    ApiConfigList,
-    ApiConfig,
-)
-import re
-
 DOCUMENTATION = r"""
 module: cm_kerberos
 short_description: Manage and configure Kerberos Authentication for CDP
@@ -154,7 +141,6 @@ seealso:
 """
 
 EXAMPLES = r"""
----
 - name: Enable Kerberos
   cloudera.cluster.cm_kerberos:
     host: example.cloudera.com
@@ -178,7 +164,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 cm_config:
   description:
     - Cloudera Manager Server configurations with Kerberos settings where available.
@@ -249,6 +234,19 @@ cm_config:
       type: bool
       returned: when supported
 """
+
+import re
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    resolve_parameter_updates,
+)
+
+from cm_client import (
+    ClouderaManagerResourceApi,
+    ApiConfigList,
+    ApiConfig,
+)
 
 
 class ClouderaManagerKerberos(ClouderaManagerMutableModule):
