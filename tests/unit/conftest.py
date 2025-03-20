@@ -26,7 +26,7 @@ import string
 import sys
 import yaml
 
-from collections.abc import Generator
+from collections.abc import Generator, Callable
 from pathlib import Path
 from time import sleep
 
@@ -128,7 +128,7 @@ def patch_module(monkeypatch):
 
 
 @pytest.fixture
-def module_args():
+def module_args() -> Callable[[dict], None]:
     """Prepare module arguments"""
 
     def prep_args(args=dict()):
@@ -139,7 +139,7 @@ def module_args():
 
 
 @pytest.fixture
-def yaml_args():
+def yaml_args() -> Callable[[dict], None]:
     """Prepare module arguments from YAML"""
 
     def prep_args(args: str = ""):
@@ -150,7 +150,7 @@ def yaml_args():
 
 
 @pytest.fixture(scope="session")
-def conn():
+def conn() -> dict:
     conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
 
     if os.getenv("CM_HOST", None):
