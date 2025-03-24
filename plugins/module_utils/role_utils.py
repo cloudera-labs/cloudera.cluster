@@ -51,9 +51,10 @@ ROLE_OUTPUT = [
 
 
 def parse_role_result(role: ApiRole) -> dict:
-    # Retrieve only the host_id, role_config_group, and service identifiers
+    # Retrieve only the host_id, hostname, role_config_group, and service identifiers
     output = dict(
         host_id=role.host_ref.host_id,
+        hostname=role.host_ref.hostname,
         role_config_group_name=role.role_config_group_ref.role_config_group_name,
         service_name=role.service_ref.service_name,
     )
@@ -84,17 +85,33 @@ def read_role(
 
 
 def read_roles(
-    api_client: ApiClient, cluster_name: str, service_name: str
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
+    view: str = None,
+    filter: str = None,
 ) -> ApiRoleList:
     role_api = RolesResourceApi(api_client)
-    roles = role_api.read_roles(cluster_name, service_name).items
+
+    payload = dict(
+        cluster_name=cluster_name,
+        service_name=service_name,
+    )
+
+    if view is not None:
+        payload.update(view=view)
+    if filter is not None:
+        payload.update(filter=filter)
+
+    roles = role_api.read_roles(**payload).items
+
+    # Remove filter from core payload
+    payload.pop("filter", None)
+
     for r in roles:
-        r.config = role_api.read_role_config(
-            api_client=api_client,
-            cluster_name=cluster_name,
-            service_name=service_name,
-            role_name=r.name,
-        )
+        payload.update(role_name=r.name)
+        r.config = role_api.read_role_config(**payload)
+
     return ApiRoleList(items=roles)
 
 
@@ -109,7 +126,6 @@ def read_roles_by_type(
     ]
     for r in roles:
         r.config = role_api.read_role_config(
-            api_client=api_client,
             cluster_name=cluster_name,
             service_name=service_name,
             role_name=r.name,
