@@ -465,13 +465,15 @@ def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
     service_api = ServicesResourceApi(cm_api_client)
     cm_api = ClustersResourceApi(cm_api_client)
 
-    host = next(
-        (h for h in cm_api.list_hosts(cluster_name=base_cluster.name).items), None
-    )
+    hosts = [
+        h
+        for i, h in enumerate(cm_api.list_hosts(cluster_name=base_cluster.name).items)
+        if i < 2
+    ]
 
-    if host is None:
+    if len(hosts) != 2:
         raise NoHostsFoundException(
-            "No available hosts to assign ZooKeeper service roles"
+            "Not enough available hosts to assign ZooKeeper service roles"
         )
 
     payload = ApiService(
@@ -480,7 +482,11 @@ def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
         roles=[
             ApiRole(
                 type="SERVER",
-                host_ref=ApiHostRef(host.host_id, host.hostname),
+                host_ref=ApiHostRef(hosts[0].host_id, hosts[0].hostname),
+            ),
+            ApiRole(
+                type="SERVER",
+                host_ref=ApiHostRef(hosts[1].host_id, hosts[1].hostname),
             ),
         ],
     )
