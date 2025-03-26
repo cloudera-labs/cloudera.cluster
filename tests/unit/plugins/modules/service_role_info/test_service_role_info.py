@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,12 @@ import logging
 import os
 import pytest
 
+from cm_client import (
+    ApiClient,
+    ApiRole,
+    RolesResourceApi,
+)
+
 from ansible_collections.cloudera.cluster.plugins.modules import service_role_info
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
@@ -31,49 +37,43 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-@pytest.fixture()
-def conn():
-    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
-
-    if os.getenv("CM_HOST", None):
-        conn.update(host=os.getenv("CM_HOST"))
-
-    if os.getenv("CM_PORT", None):
-        conn.update(port=os.getenv("CM_PORT"))
-
-    if os.getenv("CM_ENDPOINT", None):
-        conn.update(url=os.getenv("CM_ENDPOINT"))
-
-    if os.getenv("CM_PROXY", None):
-        conn.update(proxy=os.getenv("CM_PROXY"))
-
-    return {
-        **conn,
-        "verify_tls": "no",
-        "debug": "no",
-    }
+def read_expected_roles(
+    api_client: ApiClient, cluster_name: str, service_name: str
+) -> list[ApiRole]:
+    return (
+        RolesResourceApi(api_client)
+        .read_roles(
+            cluster_name=cluster_name,
+            service_name=service_name,
+        )
+        .items
+    )
 
 
-def test_missing_required(conn, module_args):
-    module_args(conn)
+def test_service_role_info_missing_required(conn, module_args):
+    module_args({**conn})
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
         service_role_info.main()
 
 
-def test_missing_cluster(conn, module_args):
-    conn.update(service="example")
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="cluster"):
-        service_role_info.main()
-
-
-def test_invalid_service(conn, module_args):
+def test_service_role_info_missing_cluster(conn, module_args):
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
+            "service": "example",
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson, match="cluster"):
+        service_role_info.main()
+
+
+def test_service_role_info_invalid_service(conn, module_args, zk_session):
+    module_args(
+        {
+            **conn,
+            "cluster": zk_session.cluster_ref.cluster_name,
             "service": "BOOM",
         }
     )
@@ -82,12 +82,12 @@ def test_invalid_service(conn, module_args):
         service_role_info.main()
 
 
-def test_invalid_cluster(conn, module_args):
+def test_service_role_info_invalid_cluster(conn, module_args, zk_session):
     module_args(
         {
             **conn,
             "cluster": "BOOM",
-            "service": os.getenv("CM_SERVICE"),
+            "service": zk_session.name,
         }
     )
 
@@ -95,28 +95,62 @@ def test_invalid_cluster(conn, module_args):
         service_role_info.main()
 
 
-def test_view_all_service_roles(conn, module_args):
+def test_service_role_info_all(conn, module_args, cm_api_client, zk_session):
+    roles = read_expected_roles(
+        api_client=cm_api_client,
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+    )
+
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
+            "cluster": zk_session.cluster_ref.cluster_name,
+            "service": zk_session.name,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_info.main()
 
-    assert len(e.value.roles) > 0
+    assert len(e.value.roles) == len(roles)
 
 
-def test_view_service_role(conn, module_args):
+def test_service_role_info_all_ful(conn, module_args, cm_api_client, zk_session):
+    roles = read_expected_roles(
+        api_client=cm_api_client,
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+    )
+
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "role": "yarn-NODEMANAGER-b31d2abaf9e21d6610838c33f4892bf2",
+            "cluster": zk_session.cluster_ref.cluster_name,
+            "service": zk_session.name,
+            "view": "full",
+        }
+    )
+
+    with pytest.raises(AnsibleExitJson) as e:
+        service_role_info.main()
+
+    assert len(e.value.roles) == len(roles)
+
+
+def test_service_role_info_by_name(conn, module_args, cm_api_client, zk_session):
+    roles = read_expected_roles(
+        api_client=cm_api_client,
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+    )
+
+    module_args(
+        {
+            **conn,
+            "cluster": zk_session.cluster_ref.cluster_name,
+            "service": zk_session.name,
+            "role": roles[0].name,
         }
     )
 
@@ -124,53 +158,80 @@ def test_view_service_role(conn, module_args):
         service_role_info.main()
 
     assert len(e.value.roles) == 1
+    assert e.value.roles[0]["name"] == roles[0].name
 
 
-def test_view_service_roles_by_type(conn, module_args):
+def test_service_role_info_by_type(conn, module_args, cm_api_client, zk_session):
+    role_type = "SERVER"
+
+    roles = [
+        r
+        for r in read_expected_roles(
+            api_client=cm_api_client,
+            cluster_name=zk_session.cluster_ref.cluster_name,
+            service_name=zk_session.name,
+        )
+        if r.type == role_type
+    ]
+
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "type": "NODEMANAGER",
+            "cluster": zk_session.cluster_ref.cluster_name,
+            "service": zk_session.name,
+            "type": role_type,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_info.main()
 
-    assert len(e.value.roles) == 3
+    assert len(e.value.roles) == len(roles)
 
 
-@pytest.mark.skip("Requires hostname")
-def test_view_service_roles_by_hostname(conn, module_args):
+def test_service_role_info_by_hostname(conn, module_args, cm_api_client, zk_session):
+    roles = read_expected_roles(
+        api_client=cm_api_client,
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+    )
+
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "cluster_hostname": "test07-worker-01.cldr.internal",
+            "cluster": zk_session.cluster_ref.cluster_name,
+            "service": zk_session.name,
+            "cluster_hostname": roles[0].host_ref.hostname,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_info.main()
 
-    assert len(e.value.roles) == 2
+    assert len(e.value.roles) == 1
+    assert e.value.roles[0]["host_id"] == roles[0].host_ref.host_id
+    assert e.value.roles[0]["hostname"] == roles[0].host_ref.hostname
 
 
-@pytest.mark.skip("Requires host ID")
-def test_view_service_roles_by_host_id(conn, module_args):
+def test_service_role_info_by_host_id(conn, module_args, cm_api_client, zk_session):
+    roles = read_expected_roles(
+        api_client=cm_api_client,
+        cluster_name=zk_session.cluster_ref.cluster_name,
+        service_name=zk_session.name,
+    )
+
     module_args(
         {
             **conn,
-            "cluster": os.getenv("CM_CLUSTER"),
-            "service": os.getenv("CM_SERVICE"),
-            "cluster_host_id": "0b5fa17e-e316-4c86-8812-3108eb55b83d",
+            "cluster": zk_session.cluster_ref.cluster_name,
+            "service": zk_session.name,
+            "cluster_host_id": roles[0].host_ref.host_id,
         }
     )
 
     with pytest.raises(AnsibleExitJson) as e:
         service_role_info.main()
 
-    assert len(e.value.roles) == 4
+    assert len(e.value.roles) == 1
+    assert e.value.roles[0]["host_id"] == roles[0].host_ref.host_id
+    assert e.value.roles[0]["hostname"] == roles[0].host_ref.hostname
