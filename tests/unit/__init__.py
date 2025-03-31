@@ -26,6 +26,7 @@ from cm_client import (
     ApiHostRef,
     ApiRole,
     ApiRoleConfigGroup,
+    ApiRoleConfigGroupList,
     ApiRoleList,
     ApiRoleNameList,
     ApiRoleState,
@@ -52,6 +53,14 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     get_mgmt_roles,
+    provision_service_role,
+    read_role,
+    read_roles,
+    toggle_role_maintenance,
+    toggle_role_state,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    get_base_role_config_group,
 )
 
 
@@ -132,7 +141,7 @@ def yield_service(
     api.delete_service(cluster_name=cluster.name, service_name=service_name)
 
 
-def service_register(
+def register_service(
     api_client: ApiClient,
     registry: list[ApiService],
     cluster: ApiCluster,
@@ -203,7 +212,7 @@ def service_register(
     return created_service
 
 
-def service_deregister(api_client: ApiClient, registry: list[ApiService]) -> None:
+def deregister_service(api_client: ApiClient, registry: list[ApiService]) -> None:
     service_api = ServicesResourceApi(api_client)
 
     # Delete the services
@@ -212,6 +221,190 @@ def service_deregister(api_client: ApiClient, registry: list[ApiService]) -> Non
             cluster_name=s.cluster_ref.cluster_name,
             service_name=s.name,
         )
+
+
+def register_role(
+    api_client: ApiClient, registry: list[ApiRole], service: ApiService, role: ApiRole
+) -> ApiRole:
+    # Create the role
+    created_role = provision_service_role(
+        api_client=api_client,
+        cluster_name=service.cluster_ref.cluster_name,
+        service_name=service.name,
+        role=role,
+    )
+
+    # Record the role
+    registry.append(created_role)
+
+    # Establish the maintenance mode of the role
+    toggle_role_maintenance(
+        api_client=api_client,
+        role=created_role,
+        maintenance=role.maintenance_mode,
+        check_mode=False,
+    )
+
+    # Establish the state the of the role
+    toggle_role_state(
+        api_client=api_client,
+        role=created_role,
+        state="stopped" if role.role_state == ApiRoleState.STOPPED else "started",
+        check_mode=False,
+    )
+
+    # Return the provisioned role
+    return created_role
+
+
+def deregister_role(api_client: ApiClient, registry: list[ApiRole]) -> None:
+    role_api = RolesResourceApi(api_client)
+
+    # Delete the roles
+    for r in registry:
+        # Refresh the role state (and check for existence)
+        refreshed_role = read_role(
+            api_client=api_client,
+            cluster_name=r.service_ref.cluster_name,
+            service_name=r.service_ref.service_name,
+            role_name=r.name,
+        )
+
+        # If it is still around, stop it and then delete the role
+        if refreshed_role is not None:
+            toggle_role_state(
+                api_client=api_client,
+                role=refreshed_role,
+                state="stopped",
+                check_mode=False,
+            )
+
+            role_api.delete_role(
+                cluster_name=refreshed_role.service_ref.cluster_name,
+                service_name=refreshed_role.service_ref.service_name,
+                role_name=refreshed_role.name,
+            )
+
+
+def register_role_config_group(
+    api_client: ApiClient,
+    registry: list[ApiRoleConfigGroup],
+    service: ApiService,
+    role_config_group: ApiRoleConfigGroup,
+    message: str,
+) -> ApiRoleConfigGroup:
+    rcg_api = RoleConfigGroupsResourceApi(api_client)
+
+    # If creating a custom Role Config Group
+    if role_config_group.name is not None:
+        # Create the Role Config Group
+        created_rcg = rcg_api.create_role_config_groups(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+            body=ApiRoleConfigGroupList(items=[role_config_group]),
+        ).items[0]
+
+        # Record the Role Config Group
+        registry.append(created_rcg)
+
+        # Return the Role Config Group
+        return created_rcg
+
+    # Else modify the base Role Config Group
+    else:
+        # Look up the base
+        base_rcg = get_base_role_config_group(
+            api_client=api_client,
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+            role_type=role_config_group.role_type,
+        )
+
+        # Retrieve its current configuration
+        base_rcg.config = rcg_api.read_config(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+            role_config_group_name=base_rcg.name,
+        )
+
+        # Record the state of the current base
+        registry.append(base_rcg)
+
+        # Add the existing base name to the incoming changes
+        role_config_group.name = base_rcg.name
+
+        # Update the configuration
+        updated_base_rcg = rcg_api.update_role_config_group(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+            role_config_group_name=base_rcg.name,  # Use the base RCG's name
+            message=f"{message}::set",
+            body=role_config_group,
+        )
+
+        # Return the updated base Role Config Group
+        return updated_base_rcg
+
+
+def deregister_role_config_group(
+    api_client: ApiClient, registry: list[ApiRoleConfigGroup], message: str
+) -> None:
+    rcg_api = RoleConfigGroupsResourceApi(api_client)
+    for rcg in registry:
+        # Delete the custom role config groups
+        if not rcg.base:
+            existing_roles = rcg_api.read_roles(
+                cluster_name=rcg.service_ref.cluster_name,
+                service_name=rcg.service_ref.service_name,
+                role_config_group_name=rcg.name,
+            ).items
+
+            if existing_roles:
+                rcg_api.move_roles_to_base_group(
+                    cluster_name=rcg.service_ref.cluster_name,
+                    service_name=rcg.service_ref.service_name,
+                    body=ApiRoleNameList([r.name for r in existing_roles]),
+                )
+
+            # The role might already be deleted, so ignore if not found
+            try:
+                rcg_api.delete_role_config_group(
+                    cluster_name=rcg.service_ref.cluster_name,
+                    service_name=rcg.service_ref.service_name,
+                    role_config_group_name=rcg.name,
+                )
+            except ApiException as ex:
+                if ex.status != 404:
+                    raise ex
+
+        # Reset the base Role Config Groups
+        else:
+            # Read the current base
+            current_rcg = rcg_api.read_role_config_group(
+                cluster_name=rcg.service_ref.cluster_name,
+                service_name=rcg.service_ref.service_name,
+                role_config_group_name=rcg.name,
+            )
+
+            # Revert the changes
+            config_revert = resolve_parameter_updates(
+                {c.name: c.value for c in current_rcg.config.items},
+                {c.name: c.value for c in rcg.config.items},
+                True,
+            )
+
+            if config_revert:
+                rcg.config = ApiConfigList(
+                    items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
+                )
+
+                rcg_api.update_role_config_group(
+                    cluster_name=rcg.service_ref.cluster_name,
+                    service_name=rcg.service_ref.service_name,
+                    role_config_group_name=rcg.name,
+                    message=f"{message}::reset",
+                    body=rcg,
+                )
 
 
 def service_wide_config(
