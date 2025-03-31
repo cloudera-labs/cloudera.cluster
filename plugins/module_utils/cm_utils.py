@@ -32,10 +32,13 @@ from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.common.text.converters import to_native, to_text
 from time import sleep
 from cm_client import (
+    ApiBulkCommandList,
     ApiClient,
     ApiCommand,
+    ApiCommandList,
     ApiConfig,
     ApiConfigList,
+    ApiEntityTag,
     Configuration,
 )
 from cm_client.rest import ApiException, RESTClientObject
@@ -45,6 +48,43 @@ from cm_client.apis.commands_resource_api import CommandsResourceApi
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
+
+
+def wait_bulk_commands(
+    api_client: ApiClient,
+    commands: ApiBulkCommandList,
+    polling: int = 120,
+    delay: int = 10,
+):
+    if commands.errors:
+        error_msg = "\n".join(commands.errors)
+        raise Exception(error_msg)
+
+    for cmd in commands.items:
+        # Serial monitoring
+        wait_command(api_client, cmd, polling, delay)
+
+
+def wait_commands(
+    api_client: ApiClient, commands: ApiCommandList, polling: int = 120, delay: int = 10
+):
+    for cmd in commands.items:
+        # Serial monitoring
+        wait_command(api_client, cmd, polling, delay)
+
+
+def wait_command(
+    api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 10
+):
+    poll_count = 0
+    while command.active:
+        if poll_count > polling:
+            raise Exception("Command timeout: " + str(command.id))
+        sleep(delay)
+        poll_count += 1
+        command = CommandsResourceApi(api_client).read_command(command.id)
+    if not command.success:
+        raise Exception(command.result_message)
 
 
 def normalize_output(entity: dict, filter: list) -> dict:
@@ -131,8 +171,8 @@ def resolve_tag_updates(
     incoming_tags = {
         k: str(v)
         for k, v in incoming.items()
-        if (isinstance(v, str) and v.strip() != "")
-        or (not isinstance(v, str) and v is not None)
+        if (type(v) is str and v.strip() != "")
+        or (type(v) is not str and v is not None)
     }
 
     delta_add = {}
@@ -149,6 +189,29 @@ def resolve_tag_updates(
             delta_del = {k: v for k, v in diff[1].items() if k in diff[0]}
 
     return (delta_add, delta_del)
+
+
+class TagUpdates(object):
+    def __init__(
+        self, existing: list[ApiEntityTag], updates: dict, purge: bool
+    ) -> None:
+        (_additions, _deletions) = resolve_tag_updates(
+            current={t.name: t.value for t in existing},
+            incoming=updates,
+            purge=purge,
+        )
+
+        self.diff = dict(
+            before=_deletions,
+            after=_additions,
+        )
+
+        self.additions = [ApiEntityTag(k, v) for k, v in _additions.items()]
+        self.deletions = [ApiEntityTag(k, v) for k, v in _deletions.items()]
+
+    @property
+    def changed(self) -> bool:
+        return bool(self.additions) or bool(self.deletions)
 
 
 class ConfigListUpdates(object):
@@ -507,7 +570,7 @@ class ClouderaManagerModule(object):
         If the command exceeds the polling limit, it fails with a timeout error.
         If the command completes unsuccessfully, it fails with the command's result message.
 
-        Inputs:
+        Args:
             command (ApiCommand): The command object to monitor.
             polling (int, optional): The maximum number of polling attempts before timing out. Default is 10.
             delay (int, optional): The time (in seconds) to wait between polling attempts. Default is 5.
@@ -515,7 +578,7 @@ class ClouderaManagerModule(object):
         Raises:
             module.fail_json: If the command times out or fails.
 
-        Return:
+        Returns:
             None: The function returns successfully if the command completes and is marked as successful.
         """
         poll_count = 0
@@ -529,6 +592,31 @@ class ClouderaManagerModule(object):
             self.module.fail_json(
                 msg=to_text(command.result_message), command_id=to_text(command.id)
             )
+
+    def wait_commands(
+        self, commands: ApiBulkCommandList, polling: int = 10, delay: int = 5
+    ):
+        """
+        Waits for a list of commands to complete, polling each status at regular intervals.
+        If a command exceeds the polling limit, it fails with a timeout error.
+        If a command completes unsuccessfully, it fails with the command's result message.
+
+        Args:
+            commands (ApiBulkCommandList): Cloudera Manager bulk commands
+
+        Raises:
+            module.fail_json: If the command times out or fails.
+
+        Returns:
+            none: The function returns successfully if the commands complete and are marked as successful.
+        """
+        if commands.errors:
+            error_msg = "\n".join(commands.errors)
+            self.module.fail_json(msg=error_msg)
+
+        for c in commands.items:
+            # Not in parallel...
+            self.wait_command(c, polling, delay)
 
     @staticmethod
     def ansible_module_internal(argument_spec={}, required_together=[], **kwargs):
