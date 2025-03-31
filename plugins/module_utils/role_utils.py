@@ -12,8 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text.converters import to_native
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
+    wait_commands,
+    wait_bulk_commands,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
     get_host_ref,
@@ -23,13 +28,24 @@ from cm_client import (
     ApiClient,
     ApiConfig,
     ApiConfigList,
+    ApiEntityTag,
     ApiRoleList,
     ApiRoleConfigGroupRef,
+    ApiRoleNameList,
+    ApiRoleState,
+    RoleCommandsResourceApi,
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
     MgmtRolesResourceApi,
 )
 from cm_client import ApiRole
+
+
+class RoleException(Exception):
+    """General Exception type for Role management."""
+
+    pass
+
 
 ROLE_OUTPUT = [
     "commission_state",
@@ -71,11 +87,25 @@ def get_mgmt_roles(api_client: ApiClient, role_type: str) -> ApiRoleList:
 
 
 def read_role(
-    api_client: ApiClient, cluster_name: str, service_name: str, name: str
+    api_client: ApiClient, cluster_name: str, service_name: str, role_name: str
 ) -> ApiRole:
+    """Read a role for a cluster service and populates the role configuration.
+
+    Args:
+        api_client (ApiClient): Cloudera Manager API client
+        cluster_name (str): Cluster name (identifier).
+        service_name (str): Service name (identifier).
+        role_name (str): Role name (identifier).
+
+    Raises:
+        ApiException:
+
+    Returns:
+        ApiRole: The Role object or None if the role is not found.
+    """
     role_api = RolesResourceApi(api_client)
     role = role_api.read_role(
-        cluster_name=cluster_name, service_name=service_name, role_name=name
+        cluster_name=cluster_name, service_name=service_name, role_name=role_name
     )
     if role is not None:
         role.config = role_api.read_role_config(
@@ -88,9 +118,28 @@ def read_roles(
     api_client: ApiClient,
     cluster_name: str,
     service_name: str,
+    type: str = None,
+    hostname: str = None,
+    host_id: str = None,
     view: str = None,
-    filter: str = None,
 ) -> ApiRoleList:
+    """Read roles for a cluster service. Optionally, filter by type, hostname, host ID.
+
+    Args:
+        api_client (ApiClient): Cloudera Manager API client
+        cluster_name (str): Cluster name (identifier)
+        service_name (str): Service name (identifier)
+        type (str, optional): Role type. Defaults to None.
+        hostname (str, optional): Cluster hostname. Defaults to None.
+        host_id (str, optional): Cluster host ID. Defaults to None.
+        view (str, optional): View to retrieve. Defaults to None.
+
+    Raises:
+        ApiException:
+
+    Returns:
+        ApiRoleList: List of Role objects
+    """
     role_api = RolesResourceApi(api_client)
 
     payload = dict(
@@ -100,7 +149,20 @@ def read_roles(
 
     if view is not None:
         payload.update(view=view)
-    if filter is not None:
+
+    filter = ";".join(
+        [
+            f"{f[0]}=={f[1]}"
+            for f in [
+                ("type", type),
+                ("hostname", hostname),
+                ("hostId", host_id),
+            ]
+            if f[1] is not None
+        ]
+    )
+
+    if filter != "":
         payload.update(filter=filter)
 
     roles = role_api.read_roles(**payload).items
@@ -152,31 +214,28 @@ def read_cm_roles(api_client: ApiClient) -> ApiRoleList:
     return ApiRoleList(items=roles)
 
 
-class HostNotFoundException(Exception):
+class HostNotFoundException(RoleException):
     pass
 
 
-class RoleConfigGroupNotFoundException(Exception):
+class RoleConfigGroupNotFoundException(RoleException):
     pass
 
 
 def create_role(
     api_client: ApiClient,
     role_type: str,
-    hostname: str,
-    host_id: str,
-    name: str = None,
+    hostname: str = None,
+    host_id: str = None,
     config: dict = None,
     cluster_name: str = None,
     service_name: str = None,
     role_config_group: str = None,
+    tags: dict = None,
 ) -> ApiRole:
-    # Set up the role
-    role = ApiRole(type=str(role_type).upper())
 
-    # Name
-    if name:
-        role.name = name  # No name allows auto-generation
+    # Set up the role type
+    role = ApiRole(type=str(role_type).upper())
 
     # Host assignment
     host_ref = get_host_ref(api_client, hostname, host_id)
@@ -208,4 +267,111 @@ def create_role(
             items=[ApiConfig(name=k, value=v) for k, v in config.items()]
         )
 
+    # Tags
+    if tags:
+        role.tags = [ApiEntityTag(k, v) for k, v in tags.items()]
+
     return role
+
+
+def provision_service_role(
+    api_client: ApiClient, cluster_name: str, service_name: str, role: ApiRole
+) -> ApiRole:
+    role_api = RolesResourceApi(api_client)
+
+    provisioned_role = next(
+        (
+            iter(
+                role_api.create_roles(
+                    cluster_name=cluster_name,
+                    service_name=service_name,
+                    body=ApiRoleList(items=[role]),
+                ).items
+            )
+        ),
+        None,
+    )
+
+    if provisioned_role is None:
+        return
+
+    # Wait for any running commands like Initialize
+    available_cmds = role_api.list_commands(
+        cluster_name=cluster_name,
+        service_name=service_name,
+        role_name=provisioned_role.name,
+    )
+
+    running_cmds = role_api.list_active_commands(
+        cluster_name=cluster_name,
+        service_name=service_name,
+        role_name=provisioned_role.name,
+    )
+
+    try:
+        wait_commands(api_client=api_client, commands=running_cmds)
+        return provisioned_role
+    except Exception as e:
+        raise RoleException(str(e))
+
+
+class MaintenanceStateException(RoleException):
+    pass
+
+
+def toggle_role_maintenance(
+    api_client: ApiClient, role: ApiRole, maintenance: bool, check_mode: bool
+) -> bool:
+    role_api = RolesResourceApi(api_client)
+    changed = False
+
+    if maintenance and not role.maintenance_mode:
+        changed = True
+        cmd = role_api.enter_maintenance_mode
+    elif not maintenance and role.maintenance_mode:
+        changed = True
+        cmd = role_api.exit_maintenance_mode
+
+    if not check_mode and changed:
+        maintenance_cmd = cmd(
+            cluster_name=role.service_ref.cluster_name,
+            service_name=role.service_ref.service_name,
+            role_name=role.name,
+        )
+
+        if maintenance_cmd.success is False:
+            raise MaintenanceStateException(
+                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}"
+            )
+
+    return changed
+
+
+def toggle_role_state(
+    api_client: ApiClient, role: ApiRole, state: str, check_mode: bool
+) -> ApiRoleState:
+    role_cmd_api = RoleCommandsResourceApi(api_client)
+    changed = None
+
+    if state == "started" and role.role_state not in [ApiRoleState.STARTED]:
+        changed = ApiRoleState.STARTED
+        cmd = role_cmd_api.start_command
+    elif state == "stopped" and role.role_state not in [
+        ApiRoleState.STOPPED,
+        ApiRoleState.NA,
+    ]:
+        changed = ApiRoleState.STOPPED
+        cmd = role_cmd_api.stop_command
+    elif state == "restarted":
+        changed = ApiRoleState.STARTED
+        cmd = role_cmd_api.restart_command
+
+    if not check_mode and changed:
+        exec_cmds = cmd(
+            cluster_name=role.service_ref.cluster_name,
+            service_name=role.service_ref.service_name,
+            body=ApiRoleNameList(items=[role.name]),
+        )
+        wait_bulk_commands(api_client=api_client, commands=exec_cmds)
+
+    return changed
