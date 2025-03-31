@@ -32,6 +32,7 @@ from cm_client import (
     ApiConfig,
     ApiService,
     ApiServiceConfig,
+    ClustersResourceApi,
     MgmtServiceResourceApi,
     MgmtRoleConfigGroupsResourceApi,
     MgmtRolesResourceApi,
@@ -187,3 +188,11 @@ class ServiceConfigUpdates(object):
     @property
     def changed(self) -> bool:
         return bool(self.config.items)
+
+
+def get_service_hosts(api_client: ApiClient, service: ApiService):
+    return (
+        ClustersResourceApi(api_client)
+        .list_hosts(cluster_name=service.cluster_ref.cluster_name)
+        .items
+    )
