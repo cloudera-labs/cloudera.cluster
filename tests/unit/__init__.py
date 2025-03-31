@@ -32,12 +32,14 @@ from cm_client import (
     ApiService,
     ApiServiceConfig,
     ApiServiceList,
+    ApiServiceState,
     ClustersResourceApi,
     CommandsResourceApi,
     MgmtRolesResourceApi,
     MgmtRoleCommandsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
     RoleConfigGroupsResourceApi,
+    RolesResourceApi,
     ServicesResourceApi,
 )
 from cm_client.rest import ApiException
@@ -89,7 +91,7 @@ def wait_for_command(
         raise Exception(f"CM command [{command.id}] failed: {command.result_message}")
 
 
-def provision_service(
+def yield_service(
     api_client: ApiClient, cluster: ApiCluster, service_name: str, service_type: str
 ) -> Generator[ApiService]:
     """Provisions a new cluster service as a generator.
@@ -128,6 +130,88 @@ def provision_service(
     yield api.read_service(cluster_name=cluster.name, service_name=service_name)
 
     api.delete_service(cluster_name=cluster.name, service_name=service_name)
+
+
+def service_register(
+    api_client: ApiClient,
+    registry: list[ApiService],
+    cluster: ApiCluster,
+    service: ApiService,
+) -> ApiService:
+    service_api = ServicesResourceApi(api_client)
+    cm_api = ClustersResourceApi(api_client)
+
+    # Check the cluster hosts
+    hosts = [
+        h
+        for i, h in enumerate(cm_api.list_hosts(cluster_name=cluster.name).items)
+        if i < 3
+    ]
+
+    if len(hosts) != 3:
+        raise Exception(
+            "Not enough available hosts to assign service roles; the cluster must have 3 or more hosts."
+        )
+
+    # Create the service
+    created_service = service_api.create_services(
+        cluster_name=cluster.name, body=ApiServiceList(items=[service])
+    ).items[0]
+
+    # Record the service
+    registry.append(created_service)
+
+    # Execute first run initialization
+    first_run_cmd = service_api.first_run(
+        cluster_name=cluster.name,
+        service_name=created_service.name,
+    )
+    wait_for_command(api_client, first_run_cmd)
+
+    # Refresh the service
+    created_service = service_api.read_service(
+        cluster_name=cluster.name, service_name=created_service.name
+    )
+
+    # Establish the maintenance mode of the service
+    if service.maintenance_mode:
+        maintenance_cmd = service_api.enter_maintenance_mode(
+            cluster_name=cluster.name, service_name=created_service.name
+        )
+        wait_for_command(api_client, maintenance_cmd)
+        created_service = service_api.read_service(
+            cluster_name=cluster.name, service_name=created_service.name
+        )
+
+    # Establish the state the of the service
+    if service.service_state and created_service.service_state != service.service_state:
+        if service.service_state == ApiServiceState.STOPPED:
+            stop_cmd = service_api.stop_command(
+                cluster_name=cluster.name,
+                service_name=created_service.name,
+            )
+            wait_for_command(api_client, stop_cmd)
+            created_service = service_api.read_service(
+                cluster_name=cluster.name, service_name=created_service.name
+            )
+        else:
+            raise Exception(
+                "Unsupported service state for fixture: " + service.service_state
+            )
+
+    # Return the provisioned service
+    return created_service
+
+
+def service_deregister(api_client: ApiClient, registry: list[ApiService]) -> None:
+    service_api = ServicesResourceApi(api_client)
+
+    # Delete the services
+    for s in registry:
+        service_api.delete_service(
+            cluster_name=s.cluster_ref.cluster_name,
+            service_name=s.name,
+        )
 
 
 def service_wide_config(
@@ -500,3 +584,16 @@ def set_role_config_group(
             message=f"{message}::reset",
             body=role_config_group,
         )
+
+
+def read_expected_roles(
+    api_client: ApiClient, cluster_name: str, service_name: str
+) -> list[ApiRole]:
+    return (
+        RolesResourceApi(api_client)
+        .read_roles(
+            cluster_name=cluster_name,
+            service_name=service_name,
+        )
+        .items
+    )
