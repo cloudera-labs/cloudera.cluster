@@ -492,7 +492,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
             self.diff["after"].update(role_state=value)
 
         if not self.module.check_mode:
-            self.handle_commands(cmd(body=ApiRoleNameList(items=[role.name])))
+            self.wait_commands(cmd(body=ApiRoleNameList(items=[role.name])))
 
     def handle_maintenance(self, role_api: MgmtRolesResourceApi, role: ApiRole) -> None:
         if self.maintenance is not None and self.maintenance != role.maintenance_mode:
@@ -580,15 +580,6 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
 
         if not self.module.check_mode:
             role_api.delete_role(role.name)
-
-    def handle_commands(self, commands: ApiBulkCommandList):
-        if commands.errors:
-            error_msg = "\n".join(commands.errors)
-            self.module.fail_json(msg=error_msg)
-
-        for c in commands.items:
-            # Not in parallel, but should only be a single command
-            self.wait_command(c)
 
 
 def main():
