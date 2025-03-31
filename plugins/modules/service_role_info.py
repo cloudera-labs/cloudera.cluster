@@ -320,36 +320,13 @@ class ClusterServiceRoleInfo(ClouderaManagerModule):
                             api_client=self.api_client,
                             cluster_name=self.cluster,
                             service_name=self.service,
-                            name=self.role,
+                            role_name=self.role,
                         )
                     )
                 )
             except ApiException as e:
                 if e.status != 404:
                     raise e
-        elif self.type or self.cluster_hostname or self.cluster_host_id:
-            filter = ";".join(
-                [
-                    f"{f[0]}=={f[1]}"
-                    for f in [
-                        ("type", self.type),
-                        ("hostname", self.cluster_hostname),
-                        ("hostId", self.cluster_host_id),
-                    ]
-                    if f[1] is not None
-                ]
-            )
-
-            self.roles = [
-                parse_role_result(s)
-                for s in read_roles(
-                    api_client=self.api_client,
-                    cluster_name=self.cluster,
-                    service_name=self.service,
-                    view=self.view,
-                    filter=filter,
-                ).items
-            ]
         else:
             self.roles = [
                 parse_role_result(s)
@@ -358,6 +335,9 @@ class ClusterServiceRoleInfo(ClouderaManagerModule):
                     cluster_name=self.cluster,
                     service_name=self.service,
                     view=self.view,
+                    type=self.type,
+                    hostname=self.cluster_hostname,
+                    host_id=self.cluster_host_id,
                 ).items
             ]
 
