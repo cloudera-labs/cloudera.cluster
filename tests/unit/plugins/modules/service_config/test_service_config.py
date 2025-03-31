@@ -42,7 +42,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
     wait_for_command,
-    provision_service,
+    yield_service,
     service_wide_config,
 )
 
@@ -63,7 +63,7 @@ def zk_service(cm_api_client, base_cluster, request):
             + "_"
             + "".join(random.choices(string.ascii_lowercase, k=6))
         )
-        yield from provision_service(
+        yield from yield_service(
             api_client=cm_api_client,
             cluster=base_cluster,
             service_name=name,
