@@ -93,6 +93,12 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
     AnsibleExitJson,
     provision_cm_role,
+    deregister_role,
+    register_role,
+    deregister_service,
+    register_service,
+    deregister_role_config_group,
+    register_role_config_group,
     set_cm_role_config,
     set_cm_role_config_group,
     set_role_config_group,
@@ -1197,275 +1203,70 @@ def monitor_command(
 
 
 @pytest.fixture(scope="module")
-def test_service(
+def service_factory(
     cm_api_client,
 ) -> Generator[Callable[[ApiCluster, ApiService], ApiService]]:
-    service_api = ServicesResourceApi(cm_api_client)
-    cm_api = ClustersResourceApi(cm_api_client)
-
+    # Track the created services
     services = list[ApiService]()
 
-    # Consider returning a class with basic functions like initialize?
-    def _provision_service(cluster: ApiCluster, service: ApiService) -> ApiService:
-        # Check the cluster hosts
-        hosts = [
-            h
-            for i, h in enumerate(cm_api.list_hosts(cluster_name=cluster.name).items)
-            if i < 3
-        ]
-
-        if len(hosts) != 3:
-            raise Exception(
-                "Not enough available hosts to assign service roles; the cluster must have 3 or more hosts."
-            )
-
-        # Create the service
-        created_service = service_api.create_services(
-            cluster_name=cluster.name, body=ApiServiceList(items=[service])
-        ).items[0]
-
-        # Record the service
-        services.append(created_service)
-
-        # Execute first run initialization
-        first_run_cmd = service_api.first_run(
-            cluster_name=cluster.name,
-            service_name=created_service.name,
-        )
-        wait_for_command(cm_api_client, first_run_cmd)
-
-        # Refresh the service
-        created_service = service_api.read_service(
-            cluster_name=cluster.name, service_name=created_service.name
+    # Yield the service factory function to the tests
+    def _wrapper(cluster: ApiCluster, service: ApiService) -> ApiService:
+        return register_service(
+            api_client=cm_api_client,
+            registry=services,
+            cluster=cluster,
+            service=service,
         )
 
-        # Establish the maintenance mode of the service
-        if service.maintenance_mode:
-            maintenance_cmd = service_api.enter_maintenance_mode(
-                cluster_name=cluster.name, service_name=created_service.name
-            )
-            wait_for_command(cm_api_client, maintenance_cmd)
-            created_service = service_api.read_service(
-                cluster_name=cluster.name, service_name=created_service.name
-            )
+    yield _wrapper
 
-        # Establish the state the of the service
-        if (
-            service.service_state
-            and created_service.service_state != service.service_state
-        ):
-            if service.service_state == ApiServiceState.STOPPED:
-                stop_cmd = service_api.stop_command(
-                    cluster_name=cluster.name,
-                    service_name=created_service.name,
-                )
-                wait_for_command(cm_api_client, stop_cmd)
-                created_service = service_api.read_service(
-                    cluster_name=cluster.name, service_name=created_service.name
-                )
-            else:
-                raise Exception(
-                    "Unsupported service state for fixture: " + service.service_state
-                )
-
-        # Return the provisioned service
-        return created_service
-
-    # Yield the service to the tests
-    yield _provision_service
-
-    # Delete the services
-    for s in services:
-        service_api.delete_service(
-            cluster_name=s.cluster_ref.cluster_name,
-            service_name=s.name,
-        )
+    # Delete the registered services
+    deregister_service(api_client=cm_api_client, registry=services)
 
 
 @pytest.fixture(scope="function")
-def test_role(cm_api_client) -> Generator[Callable[[ApiService, ApiRole], ApiRole]]:
-    role_api = RolesResourceApi(cm_api_client)
-
+def role_factory(cm_api_client) -> Generator[Callable[[ApiService, ApiRole], ApiRole]]:
+    # Track the created roles
     roles = list[ApiRole]()
 
-    def _provision_role(service: ApiService, role: ApiRole) -> ApiRole:
-        # Create the role
-        created_role = provision_service_role(
+    # Yield the role factory function to the tests
+    def _wrapper(service: ApiService, role: ApiRole) -> ApiRole:
+        return register_role(
             api_client=cm_api_client,
-            cluster_name=service.cluster_ref.cluster_name,
-            service_name=service.name,
+            registry=roles,
+            service=service,
             role=role,
         )
 
-        # Record the role
-        roles.append(created_role)
+    yield _wrapper
 
-        # Establish the maintenance mode of the role
-        toggle_role_maintenance(
-            api_client=cm_api_client,
-            role=created_role,
-            maintenance=role.maintenance_mode,
-            check_mode=False,
-        )
-
-        # Establish the state the of the role
-        toggle_role_state(
-            api_client=cm_api_client,
-            role=created_role,
-            state="stopped" if role.role_state == ApiRoleState.STOPPED else "started",
-            check_mode=False,
-        )
-
-        # Return the provisioned role
-        return created_role
-
-    # Yield the role to the tests
-    yield _provision_role
-
-    # Delete the roles
-    for r in roles:
-        # Refresh the role state (and check for existence)
-        refreshed_role = read_role(
-            api_client=cm_api_client,
-            cluster_name=r.service_ref.cluster_name,
-            service_name=r.service_ref.service_name,
-            role_name=r.name,
-        )
-
-        # If it is still around, stop it and then delete the role
-        if refreshed_role is not None:
-            toggle_role_state(
-                api_client=cm_api_client,
-                role=refreshed_role,
-                state="stopped",
-                check_mode=False,
-            )
-
-            role_api.delete_role(
-                cluster_name=refreshed_role.service_ref.cluster_name,
-                service_name=refreshed_role.service_ref.service_name,
-                role_name=refreshed_role.name,
-            )
+    # Delete any registered roles
+    deregister_role(api_client=cm_api_client, registry=roles)
 
 
 @pytest.fixture(scope="function")
-def test_role_config_group(
+def role_config_group_factory(
     cm_api_client, request
 ) -> Generator[Callable[[ApiService, ApiRoleConfigGroup], ApiRoleConfigGroup]]:
-    rcg_api = RoleConfigGroupsResourceApi(cm_api_client)
+    # Track the created or updated role config groups
+    role_config_groups = list[ApiRoleConfigGroup]()
 
-    custom_rcgs = list[ApiRoleConfigGroup]()
-    base_rcgs = list[ApiRoleConfigGroup]()
-
+    # Create the message
     message = f"{Path(request.node.parent.name).stem}::{request.node.name}"
 
-    def _provision_rcg(
+    # Yield the role factory function to the tests
+    def _wrapper(
         service: ApiService, role_config_group: ApiRoleConfigGroup
-    ) -> Generator[ApiRoleConfigGroup]:
-        # If creating a custom Role Config Group
-        if role_config_group.name is not None:
-            # Create the Role Config Group
-            created_rcg = rcg_api.create_role_config_groups(
-                cluster_name=service.cluster_ref.cluster_name,
-                service_name=service.name,
-                body=ApiRoleConfigGroupList(items=[role_config_group]),
-            ).items[0]
-
-            # Record the Role Config Group
-            custom_rcgs.append(created_rcg)
-
-            # Return the Role Config Group
-            return created_rcg
-
-        # Else modify the base Role Config Group
-        else:
-            # Look up the base
-            base_rcg = get_base_role_config_group(
-                api_client=cm_api_client,
-                cluster_name=service.cluster_ref.cluster_name,
-                service_name=service.name,
-                role_type=role_config_group.role_type,
-            )
-
-            # Retrieve its current configuration
-            base_rcg.config = rcg_api.read_config(
-                cluster_name=service.cluster_ref.cluster_name,
-                service_name=service.name,
-                role_config_group_name=base_rcg.name,
-            )
-
-            # Record the state of the current base
-            base_rcgs.append(base_rcg)
-
-            # Add the existing base name to the incoming changes
-            role_config_group.name = base_rcg.name
-
-            # Update the configuration
-            updated_base_rcg = rcg_api.update_role_config_group(
-                cluster_name=service.cluster_ref.cluster_name,
-                service_name=service.name,
-                role_config_group_name=base_rcg.name,  # Use the base RCG's name
-                message=f"{message}::set",
-                body=role_config_group,
-            )
-
-            # Return the updated base Role Config Group
-            return updated_base_rcg
-
-    # Yield the factory function
-    yield _provision_rcg
-
-    # Delete the custom role config groups
-    for rcg in custom_rcgs:
-        existing_roles = rcg_api.read_roles(
-            cluster_name=rcg.service_ref.cluster_name,
-            service_name=rcg.service_ref.service_name,
-            role_config_group_name=rcg.name,
-        ).items
-
-        if existing_roles:
-            rcg_api.move_roles_to_base_group(
-                cluster_name=rcg.service_ref.cluster_name,
-                service_name=rcg.service_ref.service_name,
-                body=ApiRoleNameList([r.name for r in existing_roles]),
-            )
-
-        # Might already be deleted
-        try:
-            rcg_api.delete_role_config_group(
-                cluster_name=rcg.service_ref.cluster_name,
-                service_name=rcg.service_ref.service_name,
-                role_config_group_name=rcg.name,
-            )
-        except ApiException as ex:
-            if ex.status != 404:
-                raise ex
-
-    # Reset the base Role Config Groups
-    for rcg in base_rcgs:
-        # Read the current base
-        current_rcg = rcg_api.read_role_config_group(
-            cluster_name=rcg.service_ref.cluster_name,
-            service_name=rcg.service_ref.service_name,
-            role_config_group_name=rcg.name,
+    ) -> ApiRoleConfigGroup:
+        return register_role_config_group(
+            api_client=cm_api_client,
+            registry=role_config_groups,
+            service=service,
+            role_config_group=role_config_group,
+            message=message,
         )
 
-        # Revert the changes
-        config_revert = resolve_parameter_updates(
-            {c.name: c.value for c in current_rcg.config.items},
-            {c.name: c.value for c in rcg.config.items},
-            True,
-        )
+    yield _wrapper
 
-        if config_revert:
-            rcg.config = ApiConfigList(
-                items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
-            )
-
-            rcg_api.update_role_config_group(
-                cluster_name=rcg.service_ref.cluster_name,
-                service_name=rcg.service_ref.service_name,
-                role_config_group_name=rcg.name,
-                message=f"{message}::reset",
-                body=rcg,
-            )
+    # Delete any registered role config groups
+    deregister_role_config_group(api_client=cm_api_client, registry=role_config_groups)
