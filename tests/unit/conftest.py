@@ -348,6 +348,7 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
             # Create the initial cluster
             config = ApiCluster(
                 name=name,
+                display_name=f"Base ({name})",
                 full_version=cdh_version,
             )
 
