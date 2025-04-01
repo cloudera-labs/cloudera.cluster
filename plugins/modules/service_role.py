@@ -1,6 +1,7 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,45 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_tag_updates,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    parse_role_result,
-)
-
-from cm_client import (
-    ApiEntityTag,
-    ApiHostRef,
-    ApiRole,
-    ApiRoleList,
-    ApiRoleNameList,
-    ClustersResourceApi,
-    HostsResourceApi,
-    RoleCommandsResourceApi,
-    RolesResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
-
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_role
 short_description: Manage a service role in cluster
 description:
   - Manage a service role in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
-requirements:
-  - cm-client
 options:
   cluster:
     description:
@@ -68,18 +37,27 @@ options:
     required: yes
     aliases:
       - service_name
-  role:
+  name:
     description:
-      - The role name.
-      - If not specified, the role name will be auto-generated on creation.
+      - The role name, i.e. the auto-generated identifier.
+      - Either O(name) or O(type) must be provided.
     type: str
     aliases:
       - role_name
-      - name
+      - role
+  type:
+    description:
+      - A role type for the role.
+      - Either O(name) or O(type) must be provided.
+      - Required to provision a new role.
+    type: str
+    aliases:
+      - role_type
   cluster_hostname:
     description:
       - The hostname of a cluster instance for the role.
       - Mutually exclusive with I(cluster_host_id).
+      - Either O(cluster_host_id) or O(cluster_hostname) must be provided if O(type) is present.
     type: str
     aliases:
       - cluster_host
@@ -87,35 +65,42 @@ options:
     description:
       - The host ID of a cluster instance for the role.
       - Mutually exclusive with I(cluster_hostname).
+      - Either O(cluster_host_id) or O(cluster_hostname) must be provided if O(type) is present.
     type: str
-  type:
-    description:
-      - A role type for the role.
-      - Required if the I(state) creates a new role.
-    type: str
-    aliases:
-      - role_type
   maintenance:
     description:
       - Flag for whether the role should be in maintenance mode.
     type: bool
     aliases:
       - maintenance_mode
+  config:
+    description:
+      - The role configuration overrides to set.
+      - To unset a parameter, use V(None) as the value.
+    type: dict
+    aliases:
+      - params
+      - parameters
   tags:
     description:
       - A set of tags applied to the role.
-      - To unset a tag, use C(None) as its value.
+      - To unset a tag, use V(None) as its value.
     type: dict
+  role_config_group:
+    description:
+      - The role configuration group name to assign to the role.
+      - To assign the I(base) role configuration group, i.e. the default, set O(role_config_group=None).
+    type: str
   purge:
     description:
-      - Flag for whether the declared role tags should append or overwrite any existing tags.
-      - To clear all tags, set I(tags={}), i.e. an empty dictionary, and I(purge=True).
+      - Flag for whether the declared role configuration overrides and tags should append or overwrite any existing entries.
+      - To clear all configuration overrides or tags, set O(config={}) or O(tags={}), i.e. an empty dictionary, respectively, and set O(purge=True).
     type: bool
     default: False
   state:
     description:
       - The state of the role.
-      - Note, if the declared state is invalid for the role, for example, the role is a C(HDFS GATEWAY), the module will return an error.
+      - Note, if the declared state is invalid for the role type, for example, C(HDFS GATEWAY), the module will return an error.
     type: str
     default: present
     choices:
@@ -125,9 +110,9 @@ options:
       - started
       - stopped
 extends_documentation_fragment:
-  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.message
 attributes:
   check_mode:
     support: full
@@ -135,11 +120,14 @@ attributes:
     support: full
   platform:
     platforms: all
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.service_role_info
 """
 
 EXAMPLES = r"""
----
-- name: Establish a service role (auto-generated name)
+- name: Provision a service role
   cloudera.cluster.service_role:
     host: example.cloudera.com
     username: "jane_smith"
@@ -149,25 +137,14 @@ EXAMPLES = r"""
     type: GATEWAY
     cluster_hostname: worker-01.cloudera.internal
 
-- name: Establish a service role (defined name)
+- name: Set a service role to maintenance mode (using role name)
   cloudera.cluster.service_role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-hdfs
-    type: GATEWAY
-    name: example-gateway
-    cluster_hostname: worker-01.cloudera.internal
-
-- name: Set a service role to maintenance mode
-  cloudera.cluster.service_role:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
+    name: example-GATEWAY
     maintenance: yes
 
 - name: Update (append) tags to a service role
@@ -177,7 +154,8 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-hdfs
-    name: example-gateway
+    type: GATEWAY
+    cluster_hostname: worker-01.cloudera.internal
     tags:
       tag_one: value_one
       tag_two: value_two
@@ -188,7 +166,8 @@ EXAMPLES = r"""
     username: "jane_smith"
     cluster: example-cluster
     service: example-hdfs
-    name: example-gateway
+    type: GATEWAY
+    cluster_hostname: worker-01.cloudera.internal
     tags:
       tag_three: value_three
     purge: yes
@@ -200,7 +179,8 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-hdfs
-    name: example-gateway
+    type: GATEWAY
+    cluster_hostname: worker-01.cloudera.internal
     tags: {}
     purge: yes
 
@@ -211,7 +191,8 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-hdfs
-    name: example-gateway
+    type: GATEWAY
+    cluster_hostname: worker-01.cloudera.internal
     state: started
 
 - name: Force a restart to a service role
@@ -221,18 +202,9 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-hdfs
-    name: example-gateway
+    type: GATEWAY
+    cluster_hostname: worker-01.cloudera.internal
     state: restarted
-
-- name: Start a service role
-  cloudera.cluster.service_role:
-    host: example.cloudera.com
-    username: "jane_smith"
-    password: "S&peR4Ec*re"
-    cluster: example-cluster
-    service: example-hdfs
-    name: example-gateway
-    state: started
 
 - name: Remove a service role
   cloudera.cluster.service_role:
@@ -241,15 +213,15 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-hdfs
-    name: example-gateway
+    type: GATEWAY
     state: absent
 """
 
 RETURN = r"""
----
 role:
   description: Details about the service role.
   type: dict
+  returned: always
   contains:
     name:
       description: The cluster service role name.
@@ -356,6 +328,10 @@ role:
       description: The name of the cluster service role config group, which uniquely identifies it in a Cloudera Manager installation.
       type: str
       returned: when supported
+    config:
+      description: Set of role configurations for the cluster service role.
+      type: dict
+      returned: when supported
     tags:
       description: The dictionary of tags for the cluster service role.
       type: dict
@@ -368,6 +344,39 @@ role:
       returned: when supported
 """
 
+from cm_client import (
+    ApiRole,
+    ApiRoleNameList,
+    ClustersResourceApi,
+    RoleConfigGroupsResourceApi,
+    RolesResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
+
+from ansible.module_utils.common.text.converters import to_native
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    ConfigListUpdates,
+    TagUpdates,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    get_base_role_config_group,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    create_role,
+    parse_role_result,
+    provision_service_role,
+    read_role,
+    read_roles,
+    toggle_role_maintenance,
+    toggle_role_state,
+    RoleException,
+)
+
 
 class ClusterServiceRole(ClouderaManagerMutableModule):
     def __init__(self, module):
@@ -376,10 +385,12 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
         # Set the parameters
         self.cluster = self.get_param("cluster")
         self.service = self.get_param("service")
-        self.role = self.get_param("role")
+        self.name = self.get_param("name")
         self.cluster_hostname = self.get_param("cluster_hostname")
         self.cluster_host_id = self.get_param("cluster_host_id")
         self.maintenance = self.get_param("maintenance")
+        self.config = self.get_param("config")
+        self.role_config_group = self.get_param("role_config_group")
         self.tags = self.get_param("tags")
         self.type = self.get_param("type")
         self.state = self.get_param("state")
@@ -395,6 +406,13 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
+        if self.type:
+            if not self.cluster_hostname and not self.cluster_host_id:
+                self.module.fail_json(
+                    msg="one of the following is required: %s"
+                    % ", ".join(["cluster_hostname", "cluster_host_id"])
+                )
+
         try:
             ClustersResourceApi(self.api_client).read_cluster(self.cluster)
         except ApiException as ex:
@@ -413,310 +431,256 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
             else:
                 raise ex
 
-        api_instance = RolesResourceApi(self.api_client)
-        existing = None
+        role_api = RolesResourceApi(self.api_client)
+        current = None
 
-        if self.role:
+        # If given the role identifier, get it or fail (is a read-only variable)
+        if self.name:
             try:
-                existing = api_instance.read_role(self.cluster, self.role, self.service)
+                current = read_role(
+                    api_client=self.api_client,
+                    cluster_name=self.cluster,
+                    service_name=self.service,
+                    role_name=self.name,
+                )
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
+                else:
+                    return
+        # Else look up the role by type and host
+        else:
+            current = next(
+                iter(
+                    read_roles(
+                        api_client=self.api_client,
+                        cluster_name=self.cluster,
+                        service_name=self.service,
+                        type=self.type,
+                        hostname=self.cluster_hostname,
+                        host_id=self.cluster_host_id,
+                    ).items
+                ),
+                None,
+            )
 
         if self.state == "absent":
-            if existing:
+            if current:
                 self.changed = True
+
+                if self.module._diff:
+                    self.diff = dict(before=parse_role_result(current), after=dict())
+
                 if not self.module.check_mode:
-                    api_instance.delete_role(self.cluster, self.role, self.service)
+                    role_api.delete_role(self.cluster, self.name, self.service)
 
         elif self.state in ["present", "restarted", "started", "stopped"]:
+            # If it is a new role
+            if not current:
+                self.changed = True
 
-            if existing:
-                if self.type and self.type != existing.type:
-                    # Destroy and rebuild
-                    self.changed = True
+                try:
+                    role = create_role(
+                        api_client=self.api_client,
+                        cluster_name=self.cluster,
+                        service_name=self.service,
+                        role_type=self.type,
+                        hostname=self.cluster_hostname,
+                        host_id=self.cluster_host_id,
+                        config=self.config,
+                        role_config_group=self.role_config_group,
+                        tags=self.tags,
+                    )
+                except RoleException as ex:
+                    self.module.fail_json(msg=to_native(ex))
 
-                    if not self.module.check_mode:
-                        api_instance.delete_role(self.cluster, self.role, self.service)
-                        self.cluster_host_id = existing.host_ref.host_id
-                        self.cluster_hostname = existing.host_ref.hostname
-                        self.create_role(api_instance)
-                else:
-                    # Update existing
+                if self.module._diff:
+                    self.diff = dict(
+                        before={},
+                        after=role.to_dict(),
+                    )
 
-                    # Maintenance
-                    if (
-                        self.maintenance is not None
-                        and self.maintenance != existing.maintenance_mode
-                    ):
+                if not self.module.check_mode:
+                    current = provision_service_role(
+                        api_client=self.api_client,
+                        cluster_name=self.cluster,
+                        service_name=self.service,
+                        role=role,
+                    )
+
+                    if not current:
+                        self.module.fail_json(
+                            msg="Unable to create new role",
+                            role=to_native(role.to_dict()),
+                        )
+
+                self.handle_maintenance(current)
+
+            # Else it exists, so address any changes
+            else:
+                self.handle_maintenance(current)
+
+                # Handle role override configurations
+                if self.config or self.purge:
+                    if self.config is None:
+                        self.config = dict()
+
+                    config_updates = ConfigListUpdates(
+                        current.config, self.config, self.purge
+                    )
+
+                    if config_updates.changed:
                         self.changed = True
 
                         if self.module._diff:
                             self.diff["before"].update(
-                                maintenance_mode=existing.maintenance_mode
+                                config=config_updates.diff["before"]
                             )
-                            self.diff["after"].update(maintenance_mode=self.maintenance)
+                            self.diff["after"].update(
+                                config=config_updates.diff["after"]
+                            )
 
                         if not self.module.check_mode:
-                            if self.maintenance:
-                                maintenance_cmd = api_instance.enter_maintenance_mode(
-                                    self.cluster, self.role, self.service
-                                )
-                            else:
-                                maintenance_cmd = api_instance.exit_maintenance_mode(
-                                    self.cluster, self.role, self.service
-                                )
+                            role_api.update_role_config(
+                                cluster_name=self.cluster,
+                                service_name=self.service,
+                                role_name=current.name,
+                                message=self.message,
+                                body=config_updates.config,
+                            )
 
-                            if maintenance_cmd.success is False:
-                                self.module.fail_json(
-                                    msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
-                                )
-
-                    # Tags
-                    if self.tags:
-                        (delta_add, delta_del) = resolve_tag_updates(
-                            {t.name: t.value for t in existing.tags},
-                            self.tags,
-                            self.purge,
+                # Handle role config group
+                if (
+                    self.role_config_group is None
+                    or self.role_config_group
+                    != current.role_config_group_ref.role_config_group_name
+                ):
+                    # If None, move to the base role config group
+                    if self.role_config_group is None:
+                        base_rcg = get_base_role_config_group(
+                            api_client=self.api_client,
+                            cluster_name=self.cluster,
+                            service_name=self.service,
+                            role_type=current.type,
                         )
 
-                        if delta_add or delta_del:
+                        if (
+                            current.role_config_group_ref.role_config_group_name
+                            != base_rcg.name
+                        ):
                             self.changed = True
 
                             if self.module._diff:
-                                self.diff["before"].update(tags=delta_del)
-                                self.diff["after"].update(tags=delta_add)
+                                self.diff["before"].update(
+                                    role_config_group=current.role_config_group_ref.role_config_group_name
+                                )
+                                self.diff["after"].update(role_config_group=None)
 
                             if not self.module.check_mode:
-                                if delta_del:
-                                    api_instance.delete_tags(
-                                        self.cluster,
-                                        self.role,
-                                        self.service,
-                                        body=[
-                                            ApiEntityTag(k, v)
-                                            for k, v in delta_del.items()
-                                        ],
-                                    )
-                                if delta_add:
-                                    api_instance.add_tags(
-                                        self.cluster,
-                                        self.role,
-                                        self.service,
-                                        body=[
-                                            ApiEntityTag(k, v)
-                                            for k, v in delta_add.items()
-                                        ],
-                                    )
-
-                    # TODO Config
-
-                    if self.state == "started" and existing.role_state != "STARTED":
-                        self.changed = True
-
-                        if self.module._diff:
-                            self.diff["before"].update(role_state=existing.role_state)
-                            self.diff["after"].update(role_state="STARTED")
-
-                        if not self.module.check_mode:
-                            self.start_role(self.role)
-
-                    elif self.state == "stopped" and existing.role_state not in [
-                        "STOPPED",
-                        "NA",
-                    ]:
-                        self.changed = True
-
-                        if self.module._diff:
-                            self.diff["before"].update(role_state=existing.role_state)
-                            self.diff["after"].update(role_state="STOPPED")
-
-                        if not self.module.check_mode:
-                            self.stop_role(self.role)
-
-                    elif self.state == "restarted":
-                        self.changed = True
-
-                        if self.module._diff:
-                            self.diff["before"].update(role_state=existing.role_state)
-                            self.diff["after"].update(role_state="STARTED")
-
-                        if not self.module.check_mode:
-                            restart_cmds = RoleCommandsResourceApi(
-                                self.api_client
-                            ).restart_command(
-                                self.cluster,
-                                self.service,
-                                body=ApiRoleNameList(items=[self.role]),
-                            )
-
-                            if restart_cmds.errors:
-                                error_msg = "\n".join(restart_cmds.errors)
-                                self.module.fail_json(msg=error_msg)
-
-                            for c in restart_cmds.items:
-                                # Not in parallel, but should only be a single command
-                                self.wait_command(c)
-
-                    if self.changed:
-                        self.output = parse_role_result(
-                            api_instance.read_role(
-                                self.cluster, self.role, self.service, view="full"
-                            )
-                        )
+                                RoleConfigGroupsResourceApi(
+                                    self.api_client
+                                ).move_roles_to_base_group(
+                                    cluster_name=self.cluster,
+                                    service_name=self.service,
+                                    body=ApiRoleNameList(items=[current.name]),
+                                )
+                    # Otherwise, move to the given role config group
                     else:
-                        self.output = parse_role_result(existing)
+                        self.changed = True
+                        if self.module._diff:
+                            self.diff["before"].update(
+                                role_config_group=current.role_config_group_ref.role_config_group_name
+                            )
+                            self.diff["after"].update(
+                                role_config_group=self.role_config_group
+                            )
+
+                        if not self.module.check_mode:
+                            RoleConfigGroupsResourceApi(self.api_client).move_roles(
+                                cluster_name=self.cluster,
+                                service_name=self.service,
+                                role_config_group_name=self.role_config_group,
+                                body=ApiRoleNameList(items=[current.name]),
+                            )
+
+                # Handle tags
+                if self.tags or self.purge:
+                    if self.tags is None:
+                        self.tags = dict()
+
+                    tag_updates = TagUpdates(current.tags, self.tags, self.purge)
+
+                    if tag_updates.changed:
+                        self.changed = True
+
+                        if self.module._diff:
+                            self.diff["before"].update(tags=tag_updates.diff["before"])
+                            self.diff["after"].update(tags=tag_updates.diff["after"])
+
+                        if not self.module.check_mode:
+                            if tag_updates.deletions:
+                                role_api.delete_tags(
+                                    self.cluster,
+                                    self.name,
+                                    self.service,
+                                    body=tag_updates.deletions,
+                                )
+
+                            if tag_updates.additions:
+                                role_api.add_tags(
+                                    self.cluster,
+                                    self.name,
+                                    self.service,
+                                    body=tag_updates.additions,
+                                )
+
+            # Handle state changes
+            state_changed = toggle_role_state(
+                api_client=self.api_client,
+                role=current,
+                state=self.state,
+                check_mode=self.module.check_mode,
+            )
+
+            if state_changed is not None:
+                self.changed = True
+                if self.module._diff:
+                    self.diff["before"].update(role_state=current.role_state)
+                    self.diff["after"].update(role_state=state_changed)
+
+            # If there are changes, get a fresh read
+            if self.changed:
+                self.output = parse_role_result(
+                    read_role(
+                        api_client=self.api_client,
+                        cluster_name=self.cluster,
+                        service_name=self.service,
+                        role_name=current.name,
+                    )
+                )
             else:
-                # Role doesn't exist
-                self.create_role(api_instance)
+                self.output = parse_role_result(current)
 
         else:
             self.module.fail_json(msg=f"Invalid state: {self.state}")
 
-    def create_role(self, api_instance):
-        missing_params = []
-
-        if self.type is None:
-            missing_params.append("type")
-
-        if self.cluster_hostname is None and self.cluster_host_id is None:
-            missing_params += ["cluster_hostname", "cluster_host_id"]
-
-        if missing_params:
-            self.module.fail_json(
-                msg=f"Role does not exist, missing required arguments: {', '.join(sorted(missing_params)) }"
-            )
-
-        payload = ApiRole(type=str(self.type).upper())
-
-        # Name
-        if self.role:
-            payload.name = self.role
-
-        # Host assignment
-        if self.cluster_host_id is None or self.cluster_hostname is None:
-            host = None
-
-            if self.cluster_hostname:
-                host = next(
-                    (
-                        h
-                        for h in HostsResourceApi(self.api_client).read_hosts().items
-                        if h.hostname == self.cluster_hostname
-                    ),
-                    None,
+    def handle_maintenance(self, role: ApiRole) -> None:
+        if self.maintenance is not None:
+            try:
+                state_changed = toggle_role_maintenance(
+                    api_client=self.api_client,
+                    role=role,
+                    maintenance=self.maintenance,
+                    check_mode=self.module.check_mode,
                 )
-            else:
-                try:
-                    host = HostsResourceApi(self.api_client).read_host(
-                        self.cluster_host_id
-                    )
-                except ApiException as ex:
-                    if ex.status != 404:
-                        raise ex
+            except RoleException as ex:
+                self.module.fail_json(msg=to_native(ex))
 
-            if host is None:
-                self.module.fail_json(msg="Invalid host reference")
-
-            payload.host_ref = ApiHostRef(host.host_id, host.hostname)
-        else:
-            payload.host_ref = ApiHostRef(self.cluster_host_id, self.cluster_hostname)
-
-        # Tags
-        if self.tags:
-            payload.tags = [ApiEntityTag(k, v) for k, v in self.tags.items()]
-
-        # TODO Config
-
-        self.changed = True
-
-        if self.module._diff:
-            self.diff = dict(
-                before={},
-                after=payload.to_dict(),
-            )
-
-        if not self.module.check_mode:
-            created_role = next(
-                (
-                    iter(
-                        api_instance.create_roles(
-                            self.cluster,
-                            self.service,
-                            body=ApiRoleList([payload]),
-                        ).items
-                    )
-                ),
-                {},
-            )
-
-            refresh = False
-
-            # Maintenance
-            if self.maintenance:
-                refresh = True
-
+            if state_changed:
+                self.changed = True
                 if self.module._diff:
-                    self.diff["after"].update(maintenance_mode=True)
-
-                maintenance_cmd = api_instance.enter_maintenance_mode(
-                    self.cluster, created_role.name, self.service
-                )
-
-                if maintenance_cmd.success is False:
-                    self.module.fail_json(
-                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
-                    )
-
-            if self.state in ["started", "restarted"]:
-                refresh = True
-                self.start_role(created_role.name)
-
-            elif self.state == "stopped":
-                refresh = True
-                self.stop_role(created_role.name)
-
-            if refresh:
-                self.output = parse_role_result(
-                    api_instance.read_role(
-                        self.cluster,
-                        created_role.name,
-                        self.service,
-                        view="full",
-                    )
-                )
-            else:
-                self.output = parse_role_result(created_role)
-
-    def start_role(self, role_name: str):
-        start_cmds = RoleCommandsResourceApi(self.api_client).start_command(
-            self.cluster,
-            self.service,
-            body=ApiRoleNameList(items=[role_name]),
-        )
-
-        if start_cmds.errors:
-            error_msg = "\n".join(start_cmds.errors)
-            self.module.fail_json(msg=error_msg)
-
-        for c in start_cmds.items:
-            # Not in parallel, but should only be a single command
-            self.wait_command(c)
-
-    def stop_role(self, role_name: str):
-        stop_cmds = RoleCommandsResourceApi(self.api_client).stop_command(
-            self.cluster,
-            self.service,
-            body=ApiRoleNameList(items=[role_name]),
-        )
-
-        if stop_cmds.errors:
-            error_msg = "\n".join(stop_cmds.errors)
-            self.module.fail_json(msg=error_msg)
-
-        for c in stop_cmds.items:
-            # Not in parallel, but should only be a single command
-            self.wait_command(c)
+                    self.diff["before"].update(maintenance_mode=role.maintenance_mode)
+                    self.diff["after"].update(maintenance_mode=self.maintenance)
 
 
 def main():
@@ -724,20 +688,26 @@ def main():
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name"]),
-            role=dict(aliases=["role_name", "name"]),
+            name=dict(aliases=["role_name", "role"]),
+            type=dict(aliases=["role_type"]),
             cluster_hostname=dict(aliases=["cluster_host"]),
             cluster_host_id=dict(),
             maintenance=dict(type="bool", aliases=["maintenance_mode"]),
+            config=dict(type=dict, aliases=["parameters", "params"]),
             tags=dict(type=dict),
+            role_config_group=dict(),
             purge=dict(type="bool", default=False),
-            type=dict(),
             state=dict(
                 default="present",
                 choices=["present", "absent", "restarted", "started", "stopped"],
             ),
         ),
         mutually_exclusive=[
+            ["type", "name"],
             ["cluster_hostname", "cluster_host_id"],
+        ],
+        required_one_of=[
+            ["type", "name"],
         ],
         supports_check_mode=True,
     )
