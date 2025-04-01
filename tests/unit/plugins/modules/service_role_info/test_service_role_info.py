@@ -62,7 +62,7 @@ def gather_server_roles(api_client: ApiClient, service: ApiService):
     ).items
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def zookeeper(cm_api_client, base_cluster, request):
     # Keep track of the provisioned service(s)
     service_registry = list[ApiService]()
