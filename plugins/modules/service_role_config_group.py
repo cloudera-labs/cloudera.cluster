@@ -92,9 +92,6 @@ attributes:
 requirements:
   - cm-client
 seealso:
-  - module: cloudera.cluster.cluster
-  - module: cloudera.cluster.service
-  - module: cloudera.cluster.service_role
   - module: cloudera.cluster.service_role_config_group_info
 """
 
@@ -201,7 +198,6 @@ from cm_client import (
     ApiConfigList,
     ApiRoleConfigGroup,
     ApiRoleConfigGroupList,
-    ApiRoleNameList,
     ClustersResourceApi,
     RoleConfigGroupsResourceApi,
     ServicesResourceApi,
