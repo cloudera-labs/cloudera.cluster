@@ -217,10 +217,14 @@ def deregister_service(api_client: ApiClient, registry: list[ApiService]) -> Non
 
     # Delete the services
     for s in registry:
-        service_api.delete_service(
-            cluster_name=s.cluster_ref.cluster_name,
-            service_name=s.name,
-        )
+        try:
+            service_api.delete_service(
+                cluster_name=s.cluster_ref.cluster_name,
+                service_name=s.name,
+            )
+        except ApiException as e:
+            if e.status != 404:
+                raise e
 
 
 def register_role(
