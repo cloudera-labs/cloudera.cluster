@@ -30,9 +30,11 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
 from cm_client import (
     ApiClient,
     ApiConfig,
+    ApiHost,
     ApiService,
     ApiServiceConfig,
     ClustersResourceApi,
+    HostsResourceApi,
     MgmtServiceResourceApi,
     MgmtRoleConfigGroupsResourceApi,
     MgmtRolesResourceApi,
@@ -190,9 +192,19 @@ class ServiceConfigUpdates(object):
         return bool(self.config.items)
 
 
-def get_service_hosts(api_client: ApiClient, service: ApiService):
-    return (
-        ClustersResourceApi(api_client)
-        .list_hosts(cluster_name=service.cluster_ref.cluster_name)
+def get_service_hosts(api_client: ApiClient, service: ApiService) -> list[ApiHost]:
+    host_api = HostsResourceApi(api_client)
+    seen_hosts = dict()
+
+    for r in (
+        RolesResourceApi(api_client)
+        .read_roles(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+        )
         .items
-    )
+    ):
+        if r.host_ref.hostname not in seen_hosts:
+            seen_hosts[r.host_ref.hostname] = host_api.read_host(r.host_ref.host_id)
+
+    return seen_hosts.values()
