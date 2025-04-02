@@ -16,9 +16,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from plugins.module_utils.cm_utils import resolve_parameter_updates
-from tests.unit import wait_for_command
-
 __metaclass__ = type
 
 import json
@@ -40,7 +37,6 @@ from cm_client import (
     ApiCluster,
     ApiCommand,
     ApiConfig,
-    ApiConfigList,
     ApiHostRef,
     ApiHostRefList,
     ApiRole,
@@ -64,9 +60,7 @@ from cm_client import (
     ParcelResourceApi,
     ParcelsResourceApi,
     ServicesResourceApi,
-    RoleCommandsResourceApi,
     RoleConfigGroupsResourceApi,
-    RolesResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
 
@@ -83,10 +77,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     get_mgmt_roles,
-    provision_service_role,
-    read_role,
-    toggle_role_maintenance,
-    toggle_role_state,
 )
 
 from ansible_collections.cloudera.cluster.tests.unit import (
