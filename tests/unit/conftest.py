@@ -1270,4 +1270,6 @@ def role_config_group_factory(
     yield _wrapper
 
     # Delete any registered role config groups
-    deregister_role_config_group(api_client=cm_api_client, registry=role_config_groups)
+    deregister_role_config_group(
+        api_client=cm_api_client, registry=role_config_groups, message=message
+    )

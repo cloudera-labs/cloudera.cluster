@@ -263,15 +263,14 @@ def deregister_role(api_client: ApiClient, registry: list[ApiRole]) -> None:
     # Delete the roles
     for r in registry:
         # Refresh the role state (and check for existence)
-        refreshed_role = read_role(
-            api_client=api_client,
-            cluster_name=r.service_ref.cluster_name,
-            service_name=r.service_ref.service_name,
-            role_name=r.name,
-        )
+        try:
+            refreshed_role = read_role(
+                api_client=api_client,
+                cluster_name=r.service_ref.cluster_name,
+                service_name=r.service_ref.service_name,
+                role_name=r.name,
+            )
 
-        # If it is still around, stop it and then delete the role
-        if refreshed_role is not None:
             toggle_role_state(
                 api_client=api_client,
                 role=refreshed_role,
@@ -284,6 +283,9 @@ def deregister_role(api_client: ApiClient, registry: list[ApiRole]) -> None:
                 service_name=refreshed_role.service_ref.service_name,
                 role_name=refreshed_role.name,
             )
+        except ApiException as e:
+            if e.status != 404:
+                raise e
 
 
 def register_role_config_group(
