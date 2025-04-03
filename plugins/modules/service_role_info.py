@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
+# # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,36 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    parse_role_result,
-)
-
-from cm_client import ClustersResourceApi, RolesResourceApi, ServicesResourceApi
-from cm_client.rest import ApiException
-
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_role_info
 short_description: Retrieve information about the service roles of cluster
 description:
-  - Gather information about service roles of a CDP cluster.
+  - Gather information about one or all service roles of a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
-requirements:
-  - cm_client
 options:
   cluster:
     description:
@@ -103,10 +81,13 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+requirements:
+  - cm_client
+seealso:
+  - module: cloudera.cluster.service_role
 """
 
 EXAMPLES = r"""
----
 - name: Gather details of the roles for the 'yarn' service
   cloudera.cluster.service_role_info:
     host: "example.cloudera.host"
@@ -144,11 +125,11 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 roles:
   description: Details about the roles of cluster service.
   type: list
   elements: dict
+  returned: always
   contains:
     name:
       description: The cluster service role name.
@@ -164,6 +145,10 @@ roles:
         - TASKTRACKER
     host_id:
       description: The unique ID of the cluster host.
+      type: str
+      returned: always
+    hostname:
+      description: The hostname of the cluster host.
       type: str
       returned: always
     service_name:
@@ -267,6 +252,21 @@ roles:
       returned: when supported
 """
 
+import json
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    parse_role_result,
+    read_role,
+    read_roles,
+)
+
+from cm_client import ClustersResourceApi, ServicesResourceApi
+from cm_client.rest import ApiException
+
 
 class ClusterServiceRoleInfo(ClouderaManagerModule):
     def __init__(self, module):
@@ -307,8 +307,6 @@ class ClusterServiceRoleInfo(ClouderaManagerModule):
             else:
                 raise ex
 
-        api_instance = RolesResourceApi(self.api_client)
-
         if self.view == "healthcheck":
             self.view = "full_with_health_check_explanation"
         elif self.view == "redacted":
@@ -318,44 +316,28 @@ class ClusterServiceRoleInfo(ClouderaManagerModule):
             try:
                 self.roles.append(
                     parse_role_result(
-                        api_instance.read_role(
+                        read_role(
+                            api_client=self.api_client,
                             cluster_name=self.cluster,
-                            role_name=self.role,
                             service_name=self.service,
-                            view=self.view,
+                            role_name=self.role,
                         )
                     )
                 )
             except ApiException as e:
                 if e.status != 404:
                     raise e
-        elif self.type or self.cluster_hostname or self.cluster_host_id:
-            filter = ";".join(
-                [
-                    f"{f[0]}=={f[1]}"
-                    for f in [
-                        ("type", self.type),
-                        ("hostname", self.cluster_hostname),
-                        ("hostId", self.cluster_host_id),
-                    ]
-                    if f[1] is not None
-                ]
-            )
-
-            self.roles = [
-                parse_role_result(s)
-                for s in api_instance.read_roles(
-                    cluster_name=self.cluster,
-                    service_name=self.service,
-                    view=self.view,
-                    filter=filter,
-                ).items
-            ]
         else:
             self.roles = [
                 parse_role_result(s)
-                for s in api_instance.read_roles(
-                    cluster_name=self.cluster, service_name=self.service, view=self.view
+                for s in read_roles(
+                    api_client=self.api_client,
+                    cluster_name=self.cluster,
+                    service_name=self.service,
+                    view=self.view,
+                    type=self.type,
+                    hostname=self.cluster_hostname,
+                    host_id=self.cluster_host_id,
                 ).items
             ]
 

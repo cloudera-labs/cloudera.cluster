@@ -83,6 +83,12 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleFailJson,
     AnsibleExitJson,
     provision_cm_role,
+    deregister_role,
+    register_role,
+    deregister_service,
+    register_service,
+    deregister_role_config_group,
+    register_role_config_group,
     set_cm_role_config,
     set_cm_role_config_group,
     set_role_config_group,
@@ -292,7 +298,7 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
     """Provision a Cloudera on premise base cluster for the session.
        If the variable 'CM_CLUSTER' is present, will attempt to read and yield
        a reference to this cluster. Otherwise, will yield a new base cluster
-       with a single host, deleting the cluster once completed.
+       with three hosts, deleting the cluster once completed.
 
     Args:
         cm_api_client (ApiClient): CM API client
@@ -332,23 +338,28 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
             # Create the initial cluster
             config = ApiCluster(
                 name=name,
+                display_name=f"Base ({name})",
                 full_version=cdh_version,
             )
 
             cluster_api.create_clusters(body=ApiClusterList(items=[config]))
 
-            # Get first free host and assign to the cluster
-            all_hosts = host_api.read_hosts()
-            host = next((h for h in all_hosts.items if not h.cluster_ref), None)
+            # Get three free hosts and assign to the cluster
+            hosts = [h for h in host_api.read_hosts().items if not h.cluster_ref]
 
-            if host is None:
+            if len(hosts) < 3:
                 # Roll back the cluster and then raise an error
                 cluster_api.delete_cluster(cluster_name=name)
-                raise Exception("No available hosts to allocate to new cluster")
+
+                raise NoHostsFoundException(
+                    "Not enough available hosts to assign to base cluster"
+                )
             else:
                 cluster_api.add_hosts(
                     cluster_name=name,
-                    body=ApiHostRefList(items=[ApiHostRef(host_id=host.host_id)]),
+                    body=ApiHostRefList(
+                        items=[ApiHostRef(host_id=h.host_id) for h in hosts[:3]]
+                    ),
                 )
 
             # Find the first CDH parcel version and activate it
@@ -387,6 +398,7 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
             raise Exception(str(ae))
 
 
+# TODO Replace with new service factory fixture
 @pytest.fixture(scope="function")
 def zk_function(cm_api_client, base_cluster, request) -> Generator[ApiService]:
     """Create a new ZooKeeper service on the provided base cluster.
@@ -448,6 +460,7 @@ def zk_function(cm_api_client, base_cluster, request) -> Generator[ApiService]:
     )
 
 
+# TODO Replace with new service factory fixture
 @pytest.fixture(scope="session")
 def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
     """Create a new ZooKeeper service on the provided base cluster.
@@ -465,13 +478,15 @@ def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
     service_api = ServicesResourceApi(cm_api_client)
     cm_api = ClustersResourceApi(cm_api_client)
 
-    host = next(
-        (h for h in cm_api.list_hosts(cluster_name=base_cluster.name).items), None
-    )
+    hosts = [
+        h
+        for i, h in enumerate(cm_api.list_hosts(cluster_name=base_cluster.name).items)
+        if i < 3
+    ]
 
-    if host is None:
+    if len(hosts) != 3:
         raise NoHostsFoundException(
-            "No available hosts to assign ZooKeeper service roles"
+            "Not enough available hosts to assign ZooKeeper service roles"
         )
 
     payload = ApiService(
@@ -480,7 +495,11 @@ def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
         roles=[
             ApiRole(
                 type="SERVER",
-                host_ref=ApiHostRef(host.host_id, host.hostname),
+                host_ref=ApiHostRef(hosts[0].host_id, hosts[0].hostname),
+            ),
+            ApiRole(
+                type="SERVER",
+                host_ref=ApiHostRef(hosts[1].host_id, hosts[1].hostname),
             ),
         ],
     )
@@ -508,6 +527,7 @@ def zk_session(cm_api_client, base_cluster) -> Generator[ApiService]:
     )
 
 
+# TODO Convert into a service factory fixture
 @pytest.fixture(scope="session")
 def cms(cm_api_client: ApiClient, request) -> Generator[ApiService]:
     """Provisions Cloudera Manager Service. If the Cloudera Manager Service
@@ -995,6 +1015,80 @@ def zk_role_config_group(
     )
 
 
+@pytest.fixture(scope="function")
+def role_config_group_wrapper(
+    cm_api_client, request
+) -> Callable[[ApiService, ApiRoleConfigGroup], Generator[ApiRoleConfigGroup]]:
+    """
+    Returns a function that will create a role config group on the selected service,
+    yield the role config group, and then when the role config group is no longer in scope,
+    destroys the role config group.
+    """
+
+    def wrapper(
+        service: ApiService, role_config_group: ApiRoleConfigGroup
+    ) -> Generator[ApiRoleConfigGroup]:
+        rcg_api = RoleConfigGroupsResourceApi(cm_api_client)
+        wrapped_rcg = None
+        if role_config_group.name is not None:
+            # If it exists, update it
+            try:
+                wrapped_rcg = rcg_api.read_role_config_group(
+                    cluster_name=service.cluster_ref.cluster_name,
+                    service_name=service.name,
+                    role_config_group_name=role_config_group.name,
+                )
+            except ApiException as ex:
+                if ex.status != 404:
+                    raise ex
+
+            # If it doesn't exist, create, yield, and destroy
+            if wrapped_rcg is None:
+                wrapped_rcg = rcg_api.create_role_config_groups(
+                    cluster_name=service.cluster_ref.cluster_name,
+                    service_name=service.name,
+                    body=ApiRoleConfigGroupList(items=[role_config_group]),
+                ).items[0]
+
+                yield wrapped_rcg
+
+                try:
+                    rcg_api.delete_role_config_group(
+                        cluster_name=service.cluster_ref.cluster_name,
+                        service_name=service.name,
+                        role_config_group_name=wrapped_rcg.name,
+                    )
+                except ApiException as ex:
+                    if ex.status != 404:
+                        raise ex
+
+                return
+        else:
+            wrapped_rcg = get_base_role_config_group(
+                api_client=cm_api_client,
+                cluster_name=service.cluster_ref.cluster_name,
+                service_name=service.name,
+                role_type=role_config_group.role_type,
+            )
+
+        wrapped_rcg.config = rcg_api.read_config(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+            role_config_group_name=wrapped_rcg.name,
+        )
+
+        yield from set_role_config_group(
+            api_client=cm_api_client,
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=zk_session.name,
+            role_config_group=wrapped_rcg,
+            update=role_config_group,
+            message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
+        )
+
+    return wrapper
+
+
 def handle_commands(api_client: ApiClient, commands: ApiBulkCommandList):
     if commands.errors:
         error_msg = "\n".join(commands.errors)
@@ -1017,3 +1111,155 @@ def monitor_command(
         command = CommandsResourceApi(api_client).read_command(command.id)
     if not command.success:
         raise Exception(command.result_message)
+
+
+# @pytest.fixture(scope="module")
+# def test_service(cm_api_client) -> Generator[Callable[[ApiCluster, ApiService], ApiService]]:
+#     service_api = ServicesResourceApi(cm_api_client)
+#     cm_api = ClustersResourceApi(cm_api_client)
+
+#     services = []
+
+#     # Consider returning a class with basic functions like initialize?
+#     def _provision_service(cluster: ApiCluster, service: ApiService) -> ApiService:
+#         # Check the cluster hosts
+#         hosts = [
+#             h
+#             for i, h in enumerate(cm_api.list_hosts(cluster_name=cluster.name).items)
+#             if i < 3
+#         ]
+
+#         if len(hosts) != 3:
+#             raise Exception(
+#                 "Not enough available hosts to assign service roles; the cluster must have 3 or more hosts."
+#             )
+
+#         # Create the service
+#         created_service = service_api.create_services(
+#             cluster_name=cluster.name, body=ApiServiceList(items=[service])
+#         ).items[0]
+
+#         # Record the service
+#         services.append(created_service)
+
+#         # Start the service
+#         first_run_cmd = service_api.first_run(
+#             cluster_name=cluster.name,
+#             service_name=created_service.name,
+#         )
+#         wait_for_command(cm_api_client, first_run_cmd)
+
+#         # Refresh the service
+#         created_service = service_api.read_service(
+#             cluster_name=cluster.name, service_name=created_service.name
+#         )
+
+#         # Establish the maintenance mode of the service
+#         if service.maintenance_mode:
+#             maintenance_cmd = service_api.enter_maintenance_mode(
+#                 cluster_name=cluster.name,
+#                 service_name=created_service.name
+#             )
+#             wait_for_command(cm_api_client, maintenance_cmd)
+#             created_service = service_api.read_service(
+#                 cluster_name=cluster.name, service_name=created_service.name
+#             )
+
+#         # Establish the state the of the service
+#         if created_service.service_state != service.service_state:
+#             if service.service_state == ApiServiceState.STOPPED:
+#                 stop_cmd = service_api.stop_command(
+#                     cluster_name=cluster.name,
+#                     service_name=created_service.name,
+#                 )
+#                 wait_for_command(cm_api_client, stop_cmd)
+#                 created_service = service_api.read_service(
+#                     cluster_name=cluster.name, service_name=created_service.name
+#                 )
+#             else:
+#                 raise Exception("Unsupported service state for fixture: " + service.service_state)
+
+#         # Return the provisioned service
+#         return created_service
+
+#     # Yield the service to the tests
+#     yield _provision_service
+
+#     # Delete the services
+#     for s in services:
+#         service_api.delete_service(
+#             cluster_name=s.cluster_ref.cluster_name,
+#             service_name=s.name,
+#         )
+
+
+@pytest.fixture(scope="module")
+def service_factory(
+    cm_api_client,
+) -> Generator[Callable[[ApiCluster, ApiService], ApiService]]:
+    # Track the created services
+    services = list[ApiService]()
+
+    # Yield the service factory function to the tests
+    def _wrapper(cluster: ApiCluster, service: ApiService) -> ApiService:
+        return register_service(
+            api_client=cm_api_client,
+            registry=services,
+            cluster=cluster,
+            service=service,
+        )
+
+    yield _wrapper
+
+    # Delete the registered services
+    deregister_service(api_client=cm_api_client, registry=services)
+
+
+@pytest.fixture(scope="function")
+def role_factory(cm_api_client) -> Generator[Callable[[ApiService, ApiRole], ApiRole]]:
+    # Track the created roles
+    roles = list[ApiRole]()
+
+    # Yield the role factory function to the tests
+    def _wrapper(service: ApiService, role: ApiRole) -> ApiRole:
+        return register_role(
+            api_client=cm_api_client,
+            registry=roles,
+            service=service,
+            role=role,
+        )
+
+    yield _wrapper
+
+    # Delete any registered roles
+    deregister_role(api_client=cm_api_client, registry=roles)
+
+
+@pytest.fixture(scope="function")
+def role_config_group_factory(
+    cm_api_client, request
+) -> Generator[Callable[[ApiService, ApiRoleConfigGroup], ApiRoleConfigGroup]]:
+    # Track the created or updated role config groups
+    role_config_groups = list[ApiRoleConfigGroup]()
+
+    # Create the message
+    message = f"{Path(request.node.parent.name).stem}::{request.node.name}"
+
+    # Yield the role factory function to the tests
+    def _wrapper(
+        service: ApiService, role_config_group: ApiRoleConfigGroup
+    ) -> ApiRoleConfigGroup:
+        return register_role_config_group(
+            api_client=cm_api_client,
+            registry=role_config_groups,
+            service=service,
+            role_config_group=role_config_group,
+            message=message,
+        )
+
+    yield _wrapper
+
+    # Delete any registered role config groups
+    deregister_role_config_group(
+        api_client=cm_api_client, registry=role_config_groups, message=message
+    )

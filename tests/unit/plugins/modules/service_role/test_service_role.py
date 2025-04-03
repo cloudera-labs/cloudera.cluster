@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,437 +19,1120 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import logging
-import os
 import pytest
+
+from pathlib import Path
+
+from cm_client import (
+    ApiClient,
+    ApiConfig,
+    ApiConfigList,
+    ApiEntityTag,
+    ApiHostRef,
+    ApiRole,
+    ApiRoleConfigGroup,
+    ApiRoleNameList,
+    ApiRoleState,
+    ApiService,
+    RoleConfigGroupsResourceApi,
+    RolesResourceApi,
+    RoleCommandsResourceApi,
+)
 
 from ansible.module_utils.common.dict_transformations import recursive_diff
 
 from ansible_collections.cloudera.cluster.plugins.modules import service_role
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    wait_bulk_commands,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
+    get_cluster_hosts,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
+    get_service_hosts,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    create_role,
+    read_roles,
+)
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
+    deregister_service,
+    register_service,
+    deregister_role,
+    register_role,
+    deregister_role_config_group,
+    register_role_config_group,
 )
 
 LOG = logging.getLogger(__name__)
 
 
-@pytest.fixture
-def conn():
-    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
-
-    if os.getenv("CM_HOST", None):
-        conn.update(host=os.getenv("CM_HOST"))
-
-    if os.getenv("CM_PORT", None):
-        conn.update(port=os.getenv("CM_PORT"))
-
-    if os.getenv("CM_ENDPOINT", None):
-        conn.update(url=os.getenv("CM_ENDPOINT"))
-
-    if os.getenv("CM_PROXY", None):
-        conn.update(proxy=os.getenv("CM_PROXY"))
-
-    return {
-        **conn,
-        "verify_tls": "no",
-        "debug": "no",
-    }
-
-
-def test_missing_required(conn, module_args):
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="cluster, role, service"):
-        service_role.main()
-
-
-def test_missing_service(conn, module_args):
-    conn.update(service="example")
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="cluster, role"):
-        service_role.main()
-
-
-def test_missing_cluster(conn, module_args):
-    conn.update(cluster="example")
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="role, service"):
-        service_role.main()
-
-
-def test_missing_role(conn, module_args):
-    conn.update(role="example")
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="cluster, service"):
-        service_role.main()
-
-
-def test_present_invalid_cluster(conn, module_args):
-    conn.update(cluster="example", service="example", role="example")
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
-        service_role.main()
-
-
-def test_present_invalid_service(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service="example",
-        role="example",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="Service does not exist"):
-        service_role.main()
-
-
-def test_present_create_missing_all_requirements(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-    )
-    module_args(conn)
-
-    with pytest.raises(
-        AnsibleFailJson,
-        match="missing required arguments: cluster_host_id, cluster_hostname, type",
-    ):
-        service_role.main()
-
-
-def test_present_create_missing_host(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        cluster_hostname=os.getenv("CM_CLUSTER_HOSTNAME"),
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleFailJson, match="missing required arguments: type"):
-        service_role.main()
-
-
-def test_present_create_missing_type(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        type=os.getenv("CM_ROLE_TYPE"),
-    )
-    module_args(conn)
-
-    with pytest.raises(
-        AnsibleFailJson,
-        match="missing required arguments: cluster_host_id, cluster_hostname",
-    ):
-        service_role.main()
-
-
-def test_role(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        type=os.getenv("CM_ROLE_TYPE"),
-        cluster_hostname=os.getenv("CM_CLUSTER_HOSTNAME"),
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-
-    # with pytest.raises(AnsibleExitJson) as e:
-    #     cluster_service_role.main()
-
-    # assert e.value.changed == False
-
-
-def test_role_generated_name(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        type=os.getenv("CM_ROLE_TYPE"),
-        cluster_hostname=os.getenv("CM_CLUSTER_HOSTNAME"),
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-
-
-def test_role_with_tags(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        type=os.getenv("CM_ROLE_TYPE"),
-        cluster_hostname=os.getenv("CM_CLUSTER_HOSTNAME"),
-        tags=dict(foo="test"),
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-
-
-def test_role_with_maintenance(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        type=os.getenv("CM_ROLE_TYPE"),
-        cluster_hostname=os.getenv("CM_CLUSTER_HOSTNAME"),
-        maintenance=True,
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-
-
-def test_role_started(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        type=os.getenv("CM_ROLE_TYPE"),
-        cluster_hostname=os.getenv("CM_CLUSTER_HOSTNAME"),
-        state="started",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-
-
-def test_role_type_update(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        type="HTTPFS",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == False
-
-
-def test_role_maintenance_mode(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        maintenance="yes",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.role["maintenance_mode"] == True
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.role["maintenance_mode"] == True
-    assert e.value.changed == False
-
-    conn.update(
-        maintenance="no",
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.role["maintenance_mode"] == False
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.role["maintenance_mode"] == False
-    assert e.value.changed == False
-
-
-def test_role_set_tags(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        tags=dict(
-            test="Ansible", key="Value", empty_string="", blank_string="  ", none=None
-        ),
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert (
-        recursive_diff(e.value.role["tags"], dict(test="Ansible", key="Value")) is None
-    )
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert (
-        recursive_diff(e.value.role["tags"], dict(test="Ansible", key="Value")) is None
-    )
-    assert e.value.changed == False
-
-
-def test_role_append_tags(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        tags=dict(more="Tags", key="Value"),
-    )
-    module_args(conn)
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert (
-        recursive_diff(
-            e.value.role["tags"], dict(test="Ansible", key="Value", more="Tags")
-        )
-        is None
-    )
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert (
-        recursive_diff(
-            e.value.role["tags"], dict(test="Ansible", key="Value", more="Tags")
-        )
-        is None
-    )
-    assert e.value.changed == False
-
-
-@pytest.mark.skip("Move to separate DIFF test suite.")
-def test_update_tags_check_mode(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
+def gather_server_roles(api_client: ApiClient, service: ApiService) -> list[ApiRole]:
+    return read_roles(
+        api_client=api_client,
+        cluster_name=service.cluster_ref.cluster_name,
+        service_name=service.name,
+        type="SERVER",
+    ).items
+
+
+@pytest.fixture(scope="module")
+def zookeeper(cm_api_client, base_cluster, request):
+    # Keep track of the provisioned service(s)
+    service_registry = list[ApiService]()
+
+    # Get the current cluster hosts
+    hosts = get_cluster_hosts(cm_api_client, base_cluster)
+
+    id = Path(request.node.parent.name).stem
+
+    zk_service = ApiService(
+        name=f"test-zk-{id}",
         type="ZOOKEEPER",
-        tags=dict(
-            test="Ansible",
-            empty_string="",
-            none=None,
-            long_empty_string="   ",
-        ),
-        _ansible_check_mode=True,
-        _ansible_diff=True,
+        display_name=f"ZooKeeper ({id})",
+        # Add a SERVER role (so we can start the service -- a ZK requirement!)
+        roles=[ApiRole(type="SERVER", host_ref=ApiHostRef(hosts[0].host_id))],
     )
-    module_args(conn)
 
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == True
-    assert e.value.diff["before"]["tags"] == dict()
-    assert e.value.diff["after"]["tags"] == dict(test="Ansible")
-
-
-def test_role_purge_tags(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        tags=dict(purge="Ansible"),
-        purge=True,
+    # Provision and yield the created service
+    yield register_service(
+        api_client=cm_api_client,
+        registry=service_registry,
+        cluster=base_cluster,
+        service=zk_service,
     )
-    module_args(conn)
 
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert recursive_diff(e.value.role["tags"], dict(purge="Ansible")) is None
-    assert e.value.changed == True
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert recursive_diff(e.value.role["tags"], dict(purge="Ansible")) is None
-    assert e.value.changed == False
+    # Remove the created service
+    deregister_service(api_client=cm_api_client, registry=service_registry)
 
 
-def test_started(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        state="started",
-        _ansible_verbosity=3,
+@pytest.fixture()
+def server_role(cm_api_client, zookeeper):
+    # Keep track of the provisioned role(s)
+    role_registry = list[ApiRole]()
+
+    existing_role_instances = [
+        r.host_ref.hostname for r in gather_server_roles(cm_api_client, zookeeper)
+    ]
+
+    hosts = [
+        h
+        for h in get_service_hosts(cm_api_client, zookeeper)
+        if h.hostname not in existing_role_instances
+    ]
+
+    second_role = create_role(
+        api_client=cm_api_client,
+        role_type="SERVER",
+        hostname=hosts[0].hostname,
+        cluster_name=zookeeper.cluster_ref.cluster_name,
+        service_name=zookeeper.name,
     )
-    module_args(conn)
 
-    with pytest.raises(AnsibleExitJson):
-        service_role.main()
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == False
-
-
-def test_stopped(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        state="stopped",
+    yield register_role(
+        api_client=cm_api_client,
+        registry=role_registry,
+        service=zookeeper,
+        role=second_role,
     )
-    module_args(conn)
 
-    with pytest.raises(AnsibleExitJson):
-        service_role.main()
-
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
-
-    assert e.value.changed == False
+    deregister_role(api_client=cm_api_client, registry=role_registry)
 
 
-def test_absent(conn, module_args):
-    conn.update(
-        cluster=os.getenv("CM_CLUSTER"),
-        service=os.getenv("CM_SERVICE"),
-        role=os.getenv("CM_ROLE"),
-        state="absent",
-    )
-    module_args(conn)
+@pytest.fixture()
+def server_role_reset(cm_api_client, zookeeper):
+    # Keep track of the existing SERVER roles
+    initial_roles = set([r.name for r in gather_server_roles(cm_api_client, zookeeper)])
 
-    with pytest.raises(AnsibleExitJson):
-        service_role.main()
+    # Yield to the test
+    yield
 
-    with pytest.raises(AnsibleExitJson) as e:
-        service_role.main()
+    # Remove any added roles
+    roles_to_remove = [
+        r
+        for r in gather_server_roles(cm_api_client, zookeeper)
+        if r.name not in initial_roles
+    ]
+    deregister_role(cm_api_client, roles_to_remove)
 
-    assert e.value.changed == False
+
+class TestServiceRoleArgSpec:
+    def test_service_role_missing_required(self, conn, module_args):
+        module_args(conn)
+
+        with pytest.raises(AnsibleFailJson, match="cluster, service"):
+            service_role.main()
+
+    def test_service_role_missing_one_of(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "cluster",
+                "service": "service",
+            }
+        )
+
+        with pytest.raises(AnsibleFailJson, match="type, name"):
+            service_role.main()
+
+    def test_service_role_missing_required_by_type(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "cluster",
+                "service": "service",
+                "type": "type",
+            }
+        )
+
+        with pytest.raises(AnsibleFailJson, match="cluster_hostname, cluster_host_id"):
+            service_role.main()
+
+    def test_service_role_missing_required_by_type_exclusives(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "cluster",
+                "service": "service",
+                "type": "type",
+                "cluster_hostname": "hostname",
+                "cluster_host_id": "host_id",
+            }
+        )
+
+        with pytest.raises(
+            AnsibleFailJson,
+            match="mutually exclusive: cluster_hostname\|cluster_host_id",
+        ):
+            service_role.main()
+
+
+class TestServiceRoleInvalidParams:
+    def test_service_role_invalid_cluster(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "example",
+                "service": "example",
+                "type": "type",
+                "cluster_hostname": "hostname",
+            }
+        )
+
+        with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
+            service_role.main()
+
+    def test_service_role_invalid_service(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        expected_roles = gather_server_roles(
+            api_client=cm_api_client,
+            service=zookeeper,
+        )
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": "example",
+                "type": expected_roles[0].type,
+                "cluster_hostname": expected_roles[0].host_ref.hostname,
+            }
+        )
+
+        with pytest.raises(AnsibleFailJson, match="Service does not exist"):
+            service_role.main()
+
+    def test_service_role_invalid_type(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        expected_roles = gather_server_roles(
+            api_client=cm_api_client,
+            service=zookeeper,
+        )
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "example",
+                "cluster_hostname": expected_roles[0].host_ref.hostname,
+            }
+        )
+
+        with pytest.raises(
+            AnsibleFailJson,
+            match="Base role config group of type EXAMPLE not found in service",
+        ):
+            service_role.main()
+
+    def test_service_role_invalid_host(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        expected_roles = gather_server_roles(
+            api_client=cm_api_client,
+            service=zookeeper,
+        )
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": expected_roles[0].type,
+                "cluster_hostname": "example",
+            }
+        )
+
+        with pytest.raises(AnsibleFailJson, match="Host not found"):
+            service_role.main()
+
+    def test_service_role_invalid_role_name(self, conn, module_args, zookeeper):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": "example",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert not e.value.role
+
+
+class TestServiceRoleProvision:
+    def test_service_role_provision_hostname(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+
+    def test_service_role_provision_host_id(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_host_id": hosts[0].host_id,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["host_id"] == hosts[0].host_id
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+
+    def test_service_role_provision_config(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "config": {
+                    "minSessionTimeout": 4500,
+                },
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+        assert e.value.role["config"]["minSessionTimeout"] == "4500"
+
+    def test_service_role_provision_role_config_group(
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        role_config_group_factory,
+        server_role_reset,
+        request,
+    ):
+        id = Path(request.node.parent.name).stem
+
+        rcg = role_config_group_factory(
+            service=zookeeper,
+            role_config_group=ApiRoleConfigGroup(
+                name=f"pytest-{id}",
+                role_type="SERVER",
+                config=ApiConfigList(items=[ApiConfig("minSessionTimeout", "4501")]),
+                display_name=f"Pytest ({id})",
+            ),
+        )
+
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": rcg.role_type,
+                "cluster_hostname": hosts[0].hostname,
+                "role_config_group": rcg.name,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+        assert e.value.role["role_config_group_name"] == rcg.name
+        assert e.value.role["config"]["minSessionTimeout"] == "4501"
+
+    def test_service_role_provision_tags(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "tags": {
+                    "pytest": "success",
+                },
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+        assert e.value.role["tags"]["pytest"] == "success"
+
+    def test_service_role_provision_enable_maintenance(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "maintenance": True,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+        assert e.value.role["maintenance_mode"] == True
+
+    def test_service_role_provision_state_start(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "state": "started",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+    def test_service_role_provision_state_stopped(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "state": "stopped",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+
+    def test_service_role_provision_state_restarted(
+        self, conn, module_args, cm_api_client, zookeeper, server_role_reset
+    ):
+        existing_role_instances = [
+            r.host_ref.hostname
+            for r in gather_server_roles(
+                api_client=cm_api_client,
+                service=zookeeper,
+            )
+        ]
+
+        hosts = [
+            h
+            for h in get_service_hosts(cm_api_client, zookeeper)
+            if h.hostname not in existing_role_instances
+        ]
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": "SERVER",
+                "cluster_hostname": hosts[0].hostname,
+                "state": "restarted",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.role["type"] == "SERVER"
+        assert e.value.role["hostname"] == hosts[0].hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+
+class TestServiceRoleModification:
+    @pytest.fixture()
+    def updated_server_role_config(self, cm_api_client, server_role):
+        RolesResourceApi(cm_api_client).update_role_config(
+            cluster_name=server_role.service_ref.cluster_name,
+            service_name=server_role.service_ref.service_name,
+            role_name=server_role.name,
+            body=ApiConfigList(
+                items=[
+                    ApiConfig(
+                        "minSessionTimeout",
+                        5000,
+                    )
+                ]
+            ),
+        )
+        return server_role
+
+    @pytest.fixture()
+    def updated_server_role_tags(self, cm_api_client, server_role):
+        RolesResourceApi(cm_api_client).add_tags(
+            cluster_name=server_role.service_ref.cluster_name,
+            service_name=server_role.service_ref.service_name,
+            role_name=server_role.name,
+            body=[ApiEntityTag("existing", "tag")],
+        )
+        return server_role
+
+    @pytest.fixture()
+    def stopped_server_role(self, cm_api_client, server_role):
+        stop_cmds = RoleCommandsResourceApi(cm_api_client).stop_command(
+            cluster_name=server_role.service_ref.cluster_name,
+            service_name=server_role.service_ref.service_name,
+            body=ApiRoleNameList(items=[server_role.name]),
+        )
+        wait_bulk_commands(
+            api_client=cm_api_client,
+            commands=stop_cmds,
+        )
+        return server_role
+
+    @pytest.fixture()
+    def custom_rcg_server_role(self, cm_api_client, zookeeper, request):
+        id = Path(request.node.name).stem
+
+        role_config_groups = list[ApiRoleConfigGroup]()
+
+        yield register_role_config_group(
+            api_client=cm_api_client,
+            registry=role_config_groups,
+            service=zookeeper,
+            role_config_group=ApiRoleConfigGroup(
+                name=f"pytest-{id}",
+                role_type="SERVER",
+                config=ApiConfigList(items=[ApiConfig("minSessionTimeout", "4501")]),
+                display_name=f"Pytest ({id})",
+            ),
+            message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
+        )
+
+        deregister_role_config_group(
+            api_client=cm_api_client,
+            registry=role_config_groups,
+            message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
+        )
+
+    @pytest.fixture()
+    def updated_server_role_rcg(
+        self, cm_api_client, server_role, custom_rcg_server_role
+    ):
+        RoleConfigGroupsResourceApi(cm_api_client).move_roles(
+            cluster_name=server_role.service_ref.cluster_name,
+            service_name=server_role.service_ref.service_name,
+            role_config_group_name=custom_rcg_server_role.name,
+            body=ApiRoleNameList(items=[server_role.name]),
+        )
+        return server_role
+
+    def test_service_role_existing_name(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": server_role.name,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+    def test_service_role_existing_hostname(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": server_role.type,
+                "cluster_hostname": server_role.host_ref.hostname,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+    def test_service_role_existing_hostid(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "type": server_role.type,
+                "cluster_host_id": server_role.host_ref.host_id,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+    def test_service_role_existing_enable_maintenance(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": server_role.name,
+                "maintenance": True,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert e.value.role["maintenance_mode"] == True
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["maintenance_mode"] == True
+
+    def test_service_role_existing_config(
+        self, conn, module_args, zookeeper, updated_server_role_config
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": updated_server_role_config.name,
+                "config": {
+                    "minSessionTimeout": 5001,
+                    "maxSessionTimeout": 50001,
+                },
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == updated_server_role_config.type
+        assert e.value.role["hostname"] == updated_server_role_config.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert e.value.role["config"]["minSessionTimeout"] == "5001"
+        assert e.value.role["config"]["maxSessionTimeout"] == "50001"
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["config"]["minSessionTimeout"] == "5001"
+        assert e.value.role["config"]["maxSessionTimeout"] == "50001"
+
+    def test_service_role_existing_config_purge(
+        self, conn, module_args, zookeeper, updated_server_role_config
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": updated_server_role_config.name,
+                "config": {
+                    "maxSessionTimeout": 50001,
+                },
+                "purge": True,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == updated_server_role_config.type
+        assert e.value.role["hostname"] == updated_server_role_config.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert "minSessionTimeout" not in e.value.role["config"]
+        assert e.value.role["config"]["maxSessionTimeout"] == "50001"
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert "minSessionTimeout" not in e.value.role["config"]
+        assert e.value.role["config"]["maxSessionTimeout"] == "50001"
+
+    def test_service_role_existing_rcg(
+        self, conn, module_args, zookeeper, server_role, custom_rcg_server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": server_role.name,
+                "role_config_group": custom_rcg_server_role.name,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert e.value.role["config"]["minSessionTimeout"] == "4501"
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["config"]["minSessionTimeout"] == "4501"
+
+    def test_service_role_existing_rcg_base(
+        self, conn, module_args, zookeeper, updated_server_role_rcg
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": updated_server_role_rcg.name,
+                "role_config_group": None,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == updated_server_role_rcg.type
+        assert e.value.role["hostname"] == updated_server_role_rcg.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert "minSessionTimeout" not in e.value.role["config"]
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert "minSessionTimeout" not in e.value.role["config"]
+
+    def test_service_role_existing_tags(
+        self, conn, module_args, zookeeper, updated_server_role_tags
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": updated_server_role_tags.name,
+                "tags": {
+                    "pytest": "tag",
+                },
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == updated_server_role_tags.type
+        assert e.value.role["hostname"] == updated_server_role_tags.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert e.value.role["tags"]["existing"] == "tag"
+        assert e.value.role["tags"]["pytest"] == "tag"
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["tags"]["existing"] == "tag"
+        assert e.value.role["tags"]["pytest"] == "tag"
+
+    def test_service_role_existing_tags_purge(
+        self, conn, module_args, zookeeper, updated_server_role_tags
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": updated_server_role_tags.name,
+                "tags": {
+                    "pytest": "tag",
+                },
+                "purge": True,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == updated_server_role_tags.type
+        assert e.value.role["hostname"] == updated_server_role_tags.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+        assert "existing" not in e.value.role["tags"]
+        assert e.value.role["tags"]["pytest"] == "tag"
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert "existing" not in e.value.role["tags"]
+        assert e.value.role["tags"]["pytest"] == "tag"
+
+    def test_service_role_existing_state_started(
+        self, conn, module_args, zookeeper, stopped_server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": stopped_server_role.name,
+                "state": "started",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == stopped_server_role.type
+        assert e.value.role["hostname"] == stopped_server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+    def test_service_role_existing_state_stopped(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": server_role.name,
+                "state": "stopped",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert e.value.role["role_state"] == ApiRoleState.STOPPED
+
+    def test_service_role_existing_state_restarted(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": server_role.name,
+                "state": "restarted",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["type"] == server_role.type
+        assert e.value.role["hostname"] == server_role.host_ref.hostname
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+        # Idempotency (rather, 'restarted' is not idempotent)
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert e.value.role["role_state"] == ApiRoleState.STARTED
+
+    def test_service_role_existing_state_absent(
+        self, conn, module_args, zookeeper, server_role
+    ):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "service": zookeeper.name,
+                "name": server_role.name,
+                "state": "absent",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == True
+        assert not e.value.role
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service_role.main()
+
+        assert e.value.changed == False
+        assert not e.value.role

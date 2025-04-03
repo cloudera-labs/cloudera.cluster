@@ -28,6 +28,19 @@ from cm_client.rest import ApiException
 def get_host(
     api_client: ApiClient, hostname: str = None, host_id: str = None
 ) -> ApiHost:
+    """Retrieve a Host by either hostname or host ID.
+
+    Args:
+        api_client (ApiClient): Cloudera Manager API client.
+        hostname (str, optional): The cluster hostname. Defaults to None.
+        host_id (str, optional): The cluster host ID. Defaults to None.
+
+    Raises:
+        ex: ApiException for all non-404 errors.
+
+    Returns:
+        ApiHost: Host object. If not found, returns None.
+    """
     if hostname:
         return next(
             (
@@ -50,7 +63,21 @@ def get_host(
 def get_host_ref(
     api_client: ApiClient, hostname: str = None, host_id: str = None
 ) -> ApiHostRef:
+    """Retrieve a Host Reference by either hostname or host ID.
+
+    Args:
+        api_client (ApiClient): Cloudera Manager API client.
+        hostname (str, optional): The cluster hostname. Defaults to None.
+        host_id (str, optional): The cluster host ID. Defaults to None.
+
+    Raises:
+        ex: ApiException for all non-404 errors.
+
+    Returns:
+        ApiHostRef: Host reference object. If not found, returns None.
+    """
     host = get_host(api_client, hostname, host_id)
+
     if host is not None:
         return ApiHostRef(host.host_id, host.hostname)
     else:

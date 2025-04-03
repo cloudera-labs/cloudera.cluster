@@ -20,7 +20,12 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
 )
 
-from cm_client import ApiCluster
+from cm_client import (
+    ApiClient,
+    ApiCluster,
+    ApiHost,
+    ClustersResourceApi,
+)
 
 
 CLUSTER_OUTPUT = [
@@ -44,3 +49,13 @@ def parse_cluster_result(cluster: ApiCluster) -> dict:
     output = dict(version=cluster.full_version)
     output.update(normalize_output(cluster.to_dict(), CLUSTER_OUTPUT))
     return output
+
+
+def get_cluster_hosts(api_client: ApiClient, cluster: ApiCluster) -> list[ApiHost]:
+    return (
+        ClustersResourceApi(api_client)
+        .list_hosts(
+            cluster_name=cluster.name,
+        )
+        .items
+    )
