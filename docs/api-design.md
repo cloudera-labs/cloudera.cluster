@@ -16,71 +16,71 @@ Within the *Cluster* module, the order of precedence for a Role assignment to a 
 4. `name` or `type` assignment within `hosts.role_config_groups` (indirect)
 5. `host_template` assignment within `hosts.host_template` (indirect)
 
-Note that Role Config Groups are _defined_ only within `service.role_config_groups`, and Host Templates are _defined_ only within `host_templates`; no assignment of services are within scope of these parameters.
+Note that Role Config Groups are _defined_ only within `service.role_config_groups`, and Host Templates are _defined_ only within `host_templates`; both are _assigned_ in other parameters.
 
 ```yaml
 cloudera.cluster.cluster:
-	name: # str
-	display_name: # str
-	version: # str
-	type: # enumeration
-	state: # enumeration
-	template: # json
-	repos_appended: # bool
-	parcels: # list[str]
-	tags: # dict
-	contexts: # list[str]
-	tls_enabled: # bool
-	auto_assignment_enabled: # bool
-	maintenance_enabled: # bool
-	purge: # bool
-	control_plane:
-		remote_repo_url: # str
-		datalake_cluster_name: # str
-		control_plane_config: # yaml
-	services:
-	  - name: # str
-	    display_name: # str
-	    type: # enumeration
-	    version: # str
-	    state: # enumeration -- overridden by cluster.state
-	    maintenance_enabled: # bool -- ignored if service.maintenance_enabled is not None
-	    config: # dict
-	    tags: # dict
-	    roles: # Assignment -- see role module
-		  - type: # str
-		    hostnames: # list[str] -- allows for multiple assignment
-		    host_ids: # list[str] -- allows for mulitple assignment
-		    state: # enumeration -- overridden by service
-		    maintenance_enabled: # bool -- ignored if cluster.maintenance_enabled is not None
-		    config: # dict
-		    role_config_group: # str
-		    tags: # dict
-		role_config_groups: # Definition only
-		  - name: # str
-		    display_name: # str
-		    type: # str
-		    config: # dict
-	host_templates: # See host_template module
-	  - name: # str
-	    role_config_groups: # Reference-only
-	      - name: # str
-	        type: # str
-	        service: # str
-	        service_type: # str
-	hosts: # See host module
-	  - hostnames: # list[str] -- allows for multiple assignment
-	    host_ids: # list[str] -- allows for multiple assignment
-		config: # dict
-		host_template: # str
-		role_config_groups: # Reference-only
-		  - service: # str
-		    name: # str
-		    type: # str
-		roles: # Assignment
-		  - service: # str
-		    type: # str
-		    config: # dict
+  name: # str
+  display_name: # str
+  version: # str
+  type: # enumeration
+  state: # enumeration
+  template: # json
+  repos_appended: # bool
+  parcels: # list[str]
+  tags: # dict
+  contexts: # list[str]
+  tls_enabled: # bool
+  auto_assignment_enabled: # bool
+  maintenance_enabled: # bool
+  purge: # bool
+  control_plane:
+    remote_repo_url: # str
+    datalake_cluster_name: # str
+    control_plane_config: # yaml
+  services:
+    - name: # str
+      display_name: # str
+      type: # enumeration
+      version: # str
+      state: # enumeration -- overridden by cluster.state
+      maintenance_enabled: # bool -- ignored if service.maintenance_enabled is not None
+      config: # dict
+      tags: # dict
+      roles: # Assignment -- see role module
+        - type: # str
+          hostnames: # list[str] -- allows for multiple assignment
+          host_ids: # list[str] -- allows for mulitple assignment
+          state: # enumeration -- overridden by service
+          maintenance_enabled: # bool -- ignored if cluster.maintenance_enabled is not None
+          config: # dict
+          role_config_group: # str
+          tags: # dict
+      role_config_groups: # Definition only
+        - name: # str
+          display_name: # str
+          type: # str
+          config: # dict
+  host_templates: # See host_template module
+    - name: # str
+      role_config_groups: # Reference-only
+        - name: # str
+          type: # str
+          service: # str
+          service_type: # str
+  hosts: # See host module
+    - hostnames: # list[str] -- allows for multiple assignment
+      host_ids: # list[str] -- allows for multiple assignment
+      config: # dict
+      host_template: # str
+      role_config_groups: # Reference-only
+        - service: # str
+          name: # str
+          type: # str
+      roles: # Assignment
+        - service: # str
+          type: # str
+          config: # dict
 ```
 
 The `purge` flag will affect the following parameters:
@@ -109,33 +109,33 @@ The `purge` flag will affect the following parameters:
 
 # Service
 
-Within the *Service* module, Role assignments are handled directly in the `roles` option. Role Config Groups are simply a definition and not an assignment.
+Within the *Service* module, Role assignments are handled directly in the `roles` option. Role Config Groups are simply a definition and have no assignments.
 
 ```yaml
 cloudera.cluster.service:
-	name: # str
-	display_name: # str
-	type: # enumeration
-	version: # str
-	state: # enumeration
-	maintenance_enabled: # bool
-	purge: # bool
-	config: # dict
-	tags: # dict
-	roles: # Assignment -- see role module
-	  - type: # str
-		hostnames: # list[str] -- allows for multiple assignment
-		host_ids: # list[str] -- allows for mulitple assignment
-		state: # enumeration -- overridden by service
-		maintenance_enabled: # bool -- ignored if service.maintenance_enabled is not None
-		config: # dict
-		role_config_group: # str
-		tags: # dict
-	role_config_groups: # Definition only
-	  - name: # str
-		display_name: # str
-		type: # str
-		config: # dict
+  name: # str
+  display_name: # str
+  type: # enumeration
+  version: # str
+  state: # enumeration
+  maintenance_enabled: # bool
+  purge: # bool
+  config: # dict
+  tags: # dict
+  roles: # Assignment -- see role module
+    - type: # str
+      hostnames: # list[str] -- allows for multiple assignment
+      host_ids: # list[str] -- allows for mulitple assignment
+      state: # enumeration -- overridden by service
+      maintenance_enabled: # bool -- ignored if service.maintenance_enabled is not None
+      config: # dict
+      role_config_group: # str
+      tags: # dict
+  role_config_groups: # Definition only
+    - name: # str
+      display_name: # str
+      type: # str
+      config: # dict
 ```
 
 The `purge` flag will affect the following parameters:
@@ -156,16 +156,16 @@ Within the *Role* module, assignment is managed directly for a single Role on an
 
 ```yaml
 cloudera.cluster.role:
-	name: # str -- Reference-only, as role names are auto-generated
-	type: # str
-	cluster_hostname: # str
-	cluster_host_id: # str
-	state: # enumeration
-	maintenance_enabled: # bool
-	purge: # bool
-	config: # dict
-	role_config_group: # str
-	tags: # dict
+  name: # str -- Reference-only, as role names are auto-generated
+  type: # str
+  cluster_hostname: # str
+  cluster_host_id: # str
+  state: # enumeration
+  maintenance_enabled: # bool
+  purge: # bool
+  config: # dict
+  role_config_group: # str
+  tags: # dict
 ```
 
 The `purge` flag will affect the following parameters:
@@ -179,11 +179,11 @@ Within the *Role Config Group* module, there is no Role assignment. The module o
 
 ```yaml
 cloudera.cluster.role_config_group:
-	name: # str
-	display_name: # str
-	type: # str
-	purge: # bool
-	config: # dict
+  name: # str
+  display_name: # str
+  type: # str
+  purge: # bool
+  config: # dict
 ```
 
 The  `purge` flag will affect the following parameters:
@@ -196,19 +196,19 @@ Within the *Host* module, assignments are both direct, via the `roles` option, a
 
 ```yaml
 cloudera.cluster.host:
-	name: # str
-	host_id: # str
-	config: # dict
-	host_template: # str
-	purge: # bool
-	role_config_groups: # Reference-only
-	  - service: # str
-		name: # str
-		type: # str
-	roles: # Assignment
-	  - service: # str
-		type: # str
-		config: # dict
+  name: # str
+  host_id: # str
+  config: # dict
+  host_template: # str
+  purge: # bool
+  role_config_groups: # Reference-only
+    - service: # str
+      name: # str
+      type: # str
+  roles: # Assignment
+    - service: # str
+      type: # str
+      config: # dict
 ```
 
 The  `purge` flag will affect the following parameters:
@@ -224,12 +224,12 @@ Within the *Host Template* module, there is no Role assignment. The module only 
 
 ```yaml
 cloudera.cluster.host_template:
-	name: # str
-	role_config_groups: # Reference-only
-	  - name: # str
-		type: # str
-		service: # str
-		service_type: # str
+  name: # str
+  role_config_groups: # Reference-only
+    - name: # str
+      type: # str
+      service: # str
+      service_type: # str
 ```
 
 The  `purge` flag will affect the following parameters:
