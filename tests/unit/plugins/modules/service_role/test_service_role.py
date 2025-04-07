@@ -39,8 +39,6 @@ from cm_client import (
     RoleCommandsResourceApi,
 )
 
-from ansible.module_utils.common.dict_transformations import recursive_diff
-
 from ansible_collections.cloudera.cluster.plugins.modules import service_role
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     wait_bulk_commands,
