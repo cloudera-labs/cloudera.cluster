@@ -359,21 +359,21 @@ def deregister_role_config_group(
     for rcg in registry:
         # Delete the custom role config groups
         if not rcg.base:
-            existing_roles = rcg_api.read_roles(
-                cluster_name=rcg.service_ref.cluster_name,
-                service_name=rcg.service_ref.service_name,
-                role_config_group_name=rcg.name,
-            ).items
-
-            if existing_roles:
-                rcg_api.move_roles_to_base_group(
-                    cluster_name=rcg.service_ref.cluster_name,
-                    service_name=rcg.service_ref.service_name,
-                    body=ApiRoleNameList([r.name for r in existing_roles]),
-                )
-
             # The role might already be deleted, so ignore if not found
             try:
+                existing_roles = rcg_api.read_roles(
+                    cluster_name=rcg.service_ref.cluster_name,
+                    service_name=rcg.service_ref.service_name,
+                    role_config_group_name=rcg.name,
+                ).items
+
+                if existing_roles:
+                    rcg_api.move_roles_to_base_group(
+                        cluster_name=rcg.service_ref.cluster_name,
+                        service_name=rcg.service_ref.service_name,
+                        body=ApiRoleNameList([r.name for r in existing_roles]),
+                    )
+
                 rcg_api.delete_role_config_group(
                     cluster_name=rcg.service_ref.cluster_name,
                     service_name=rcg.service_ref.service_name,
