@@ -39,6 +39,7 @@ from cm_client import (
     ApiRoleNameList,
     ApiRoleState,
     ApiService,
+    ApiServiceConfig,
     ClustersResourceApi,
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
@@ -176,9 +177,58 @@ class TestServiceArgSpec:
         with pytest.raises(AnsibleFailJson, match="name"):
             service.main()
 
-    # TODO Add argspec for RCG
+    def test_service_roles_missing_type(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "example",
+                "name": "example",
+                "roles": [
+                    {
+                        "hostnames": "example",
+                    }
+                ],
+            }
+        )
 
-    # TODO Add argspec for roles
+        with pytest.raises(AnsibleFailJson, match="type found in roles"):
+            service.main()
+
+    def test_service_roles_missing_hostnames(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "example",
+                "name": "example",
+                "roles": [
+                    {
+                        "type": "example",
+                    }
+                ],
+            }
+        )
+
+        with pytest.raises(AnsibleFailJson, match="hostnames found in roles"):
+            service.main()
+
+    def test_service_role_config_group_missing_one_of(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "cluster": "example",
+                "name": "example",
+                "role_config_groups": [
+                    {
+                        "display_name": "example",
+                    }
+                ],
+            }
+        )
+
+        with pytest.raises(
+            AnsibleFailJson, match="name, role_type found in role_config_groups"
+        ):
+            service.main()
 
 
 class TestServiceInvalidParameters:
@@ -254,7 +304,7 @@ class TestServiceProvision:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
         # Idempotency
@@ -268,7 +318,7 @@ class TestServiceProvision:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
     def test_service_provision_display_name(
@@ -298,7 +348,7 @@ class TestServiceProvision:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
         # Idempotency
@@ -312,7 +362,7 @@ class TestServiceProvision:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
     def test_service_provision_config(self, conn, module_args, base_cluster, request):
@@ -339,7 +389,7 @@ class TestServiceProvision:
         assert e.value.service["config"]["tickTime"] == "2001"
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
         # Idempotency
@@ -353,7 +403,7 @@ class TestServiceProvision:
         assert e.value.service["config"]["tickTime"] == "2001"
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
     def test_service_provision_tags(self, conn, module_args, base_cluster, request):
@@ -380,7 +430,7 @@ class TestServiceProvision:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"]["pytest"] == "example"
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
         # Idempotency
@@ -394,19 +444,18 @@ class TestServiceProvision:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"]["pytest"] == "example"
         assert e.value.service["maintenance_mode"] == False
-        assert e.value.service["role_config_groups"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert e.value.service["roles"] == list()
 
 
 class TestServiceModification:
-    @pytest.fixture(autouse=True)
-    def maintenance_enabled_zookeeper(
-        self, cm_api_client, zookeeper
-    ) -> Generator[ApiService]:
+    @pytest.fixture()
+    def maintenance_enabled_zookeeper(self, cm_api_client, zookeeper) -> ApiService:
         ServicesResourceApi(cm_api_client).enter_maintenance_mode(
             cluster_name=zookeeper.cluster_ref.cluster_name,
             service_name=zookeeper.name,
         )
+        return zookeeper
 
     def test_service_existing_type(self, conn, module_args, zookeeper):
         module_args(
@@ -443,8 +492,8 @@ class TestServiceModification:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert len(e.value.service["role_config_groups"]) == 2
-        assert e.value.service["roles"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
@@ -457,121 +506,306 @@ class TestServiceModification:
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
-        assert len(e.value.service["role_config_groups"]) == 2
-        assert e.value.service["roles"] == list()
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
+    def test_service_existing_maintenance_enabled(self, conn, module_args, zookeeper):
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "maintenance": True,
+                "state": "present",
+            }
+        )
 
-def test_service_existing_maintenance_enabled(self, conn, module_args, zookeeper):
-    module_args(
-        {
-            **conn,
-            "cluster": zookeeper.cluster_ref.cluster_name,
-            "name": zookeeper.name,
-            "maintenance": True,
-            "state": "present",
-        }
-    )
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
 
-    with pytest.raises(AnsibleExitJson) as e:
-        service.main()
+        assert e.value.changed == True
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == True
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
-    assert e.value.changed == True
-    assert e.value.service["name"] == zookeeper.name
-    assert e.value.service["type"] == zookeeper.type
-    assert e.value.service["config"] == dict()
-    assert e.value.service["tags"] == dict()
-    assert e.value.service["maintenance_mode"] == True
-    assert len(e.value.service["role_config_groups"]) == 2
-    assert e.value.service["roles"] == list()
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
 
-    # Idempotency
-    with pytest.raises(AnsibleExitJson) as e:
-        service.main()
+        assert e.value.changed == False
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == True
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
-    assert e.value.changed == False
-    assert e.value.service["name"] == zookeeper.name
-    assert e.value.service["type"] == zookeeper.type
-    assert e.value.service["config"] == dict()
-    assert e.value.service["tags"] == dict()
-    assert e.value.service["maintenance_mode"] == True
-    assert len(e.value.service["role_config_groups"]) == 2
-    assert e.value.service["roles"] == list()
+    def test_service_existing_maintenance_disabled(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        ServicesResourceApi(cm_api_client).enter_maintenance_mode(
+            cluster_name=zookeeper.cluster_ref.cluster_name,
+            service_name=zookeeper.name,
+        )
 
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "maintenance": False,
+                "state": "present",
+            }
+        )
 
-def test_service_existing_maintenance_enabled(self, conn, module_args, zookeeper):
-    module_args(
-        {
-            **conn,
-            "cluster": zookeeper.cluster_ref.cluster_name,
-            "name": zookeeper.name,
-            "maintenance": True,
-            "state": "present",
-        }
-    )
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
 
-    with pytest.raises(AnsibleExitJson) as e:
-        service.main()
+        assert e.value.changed == True
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
-    assert e.value.changed == True
-    assert e.value.service["name"] == zookeeper.name
-    assert e.value.service["type"] == zookeeper.type
-    assert e.value.service["config"] == dict()
-    assert e.value.service["tags"] == dict()
-    assert e.value.service["maintenance_mode"] == True
-    assert len(e.value.service["role_config_groups"]) == 2
-    assert e.value.service["roles"] == list()
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
 
-    # Idempotency
-    with pytest.raises(AnsibleExitJson) as e:
-        service.main()
+        assert e.value.changed == False
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
-    assert e.value.changed == False
-    assert e.value.service["name"] == zookeeper.name
-    assert e.value.service["type"] == zookeeper.type
-    assert e.value.service["config"] == dict()
-    assert e.value.service["tags"] == dict()
-    assert e.value.service["maintenance_mode"] == True
-    assert len(e.value.service["role_config_groups"]) == 2
-    assert e.value.service["roles"] == list()
+    def test_service_existing_config(
+        self, conn, module_args, cm_api_client, zookeeper, request
+    ):
+        ServicesResourceApi(cm_api_client).update_service_config(
+            cluster_name=zookeeper.cluster_ref.cluster_name,
+            service_name=zookeeper.name,
+            message=f"{request.node.name}::set",
+            body=ApiServiceConfig(
+                items=[
+                    ApiConfig(name="tickTime", value="3001"),
+                    ApiConfig(name="autopurgeSnapRetainCount", value="9"),
+                ]
+            ),
+        )
 
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "config": {
+                    "tickTime": 2001,
+                    "leaderServes": "no",
+                },
+                "message": f"{request.node.name}::test",
+                "state": "present",
+            }
+        )
 
-def test_service_existing_maintenance_disabled(
-    self, conn, module_args, maintenance_enabled_zookeeper
-):
-    module_args(
-        {
-            **conn,
-            "cluster": maintenance_enabled_zookeeper.cluster_ref.cluster_name,
-            "name": maintenance_enabled_zookeeper.name,
-            "maintenance": False,
-            "state": "present",
-        }
-    )
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
 
-    with pytest.raises(AnsibleExitJson) as e:
-        service.main()
+        assert e.value.changed == True
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict(
+            tickTime="2001", leaderServes="no", autopurgeSnapRetainCount="9"
+        )
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
-    assert e.value.changed == True
-    assert e.value.service["name"] == maintenance_enabled_zookeeper.name
-    assert e.value.service["type"] == maintenance_enabled_zookeeper.type
-    assert e.value.service["config"] == dict()
-    assert e.value.service["tags"] == dict()
-    assert e.value.service["maintenance_mode"] == False
-    assert len(e.value.service["role_config_groups"]) == 2
-    assert e.value.service["roles"] == list()
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
 
-    # Idempotency
-    with pytest.raises(AnsibleExitJson) as e:
-        service.main()
+        assert e.value.changed == False
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict(
+            tickTime="2001", leaderServes="no", autopurgeSnapRetainCount="9"
+        )
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
-    assert e.value.changed == False
-    assert e.value.service["name"] == maintenance_enabled_zookeeper.name
-    assert e.value.service["type"] == maintenance_enabled_zookeeper.type
-    assert e.value.service["config"] == dict()
-    assert e.value.service["tags"] == dict()
-    assert e.value.service["maintenance_mode"] == False
-    assert len(e.value.service["role_config_groups"]) == 2
-    assert e.value.service["roles"] == list()
+    def test_service_existing_config_purge(
+        self, conn, module_args, cm_api_client, zookeeper, request
+    ):
+        ServicesResourceApi(cm_api_client).update_service_config(
+            cluster_name=zookeeper.cluster_ref.cluster_name,
+            service_name=zookeeper.name,
+            message=f"{request.node.name}::set",
+            body=ApiServiceConfig(
+                items=[
+                    ApiConfig(name="tickTime", value="3001"),
+                    ApiConfig(name="autopurgeSnapRetainCount", value="9"),
+                ]
+            ),
+        )
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "config": {
+                    "tickTime": 2001,
+                    "leaderServes": "no",
+                },
+                "message": f"{request.node.name}::test",
+                "purge": True,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict(
+            tickTime="2001",
+            leaderServes="no",
+        )
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == False
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict(tickTime="2001", leaderServes="no")
+        assert e.value.service["tags"] == dict()
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
+
+    def test_service_existing_tags(self, conn, module_args, cm_api_client, zookeeper):
+        ServicesResourceApi(cm_api_client).add_tags(
+            cluster_name=zookeeper.cluster_ref.cluster_name,
+            service_name=zookeeper.name,
+            body=[
+                ApiEntityTag(name="tag_one", value="Existing"),
+                ApiEntityTag(name="tag_two", value="Existing"),
+            ],
+        )
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "tags": {
+                    "tag_one": "Updated",
+                    "tag_three": "Added",
+                },
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict(
+            tag_one="Updated", tag_two="Existing", tag_three="Added"
+        )
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == False
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict(
+            tag_one="Updated", tag_two="Existing", tag_three="Added"
+        )
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
+
+    def test_service_existing_tags_purge(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        ServicesResourceApi(cm_api_client).add_tags(
+            cluster_name=zookeeper.cluster_ref.cluster_name,
+            service_name=zookeeper.name,
+            body=[
+                ApiEntityTag(name="tag_one", value="Existing"),
+                ApiEntityTag(name="tag_two", value="Existing"),
+            ],
+        )
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "tags": {
+                    "tag_one": "Updated",
+                    "tag_three": "Added",
+                },
+                "purge": True,
+                "state": "present",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict(tag_one="Updated", tag_three="Added")
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == False
+        assert e.value.service["name"] == zookeeper.name
+        assert e.value.service["type"] == zookeeper.type
+        assert e.value.service["config"] == dict()
+        assert e.value.service["tags"] == dict(tag_one="Updated", tag_three="Added")
+        assert e.value.service["maintenance_mode"] == False
+        assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
+        assert len(e.value.service["roles"]) == 1  # SERVER
 
 
 class TestServiceStates:
@@ -602,6 +836,7 @@ class TestServiceStates:
 ## PREVIOUS TESTS
 
 
+@pytest.mark.skip(reason="legacy")
 def test_present_create_service(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -622,6 +857,7 @@ def test_present_create_service(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_present_update_service(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -641,6 +877,7 @@ def test_present_update_service(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_present_maintenance_mode(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -677,6 +914,7 @@ def test_present_maintenance_mode(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_present_set_tags(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -705,6 +943,7 @@ def test_present_set_tags(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_present_append_tags(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -760,6 +999,7 @@ def test_update_tags_check_mode(conn, module_args):
     assert e.value.diff["after"]["tags"] == dict(test="Ansible")
 
 
+@pytest.mark.skip(reason="legacy")
 def test_present_purge_tags(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -782,6 +1022,7 @@ def test_present_purge_tags(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_started(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -800,6 +1041,7 @@ def test_started(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_stopped(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),
@@ -817,6 +1059,7 @@ def test_stopped(conn, module_args):
     assert e.value.changed == False
 
 
+@pytest.mark.skip(reason="legacy")
 def test_absent(conn, module_args):
     conn.update(
         cluster=os.getenv("CM_CLUSTER"),

@@ -26,32 +26,20 @@ from collections.abc import Generator
 from pathlib import Path
 
 from cm_client import (
-    ApiClient,
     ApiConfig,
     ApiConfigList,
-    ApiEntityTag,
     ApiHostRef,
     ApiRole,
     ApiRoleConfigGroup,
     ApiRoleNameList,
-    ApiRoleState,
     ApiService,
-    ClustersResourceApi,
     RoleConfigGroupsResourceApi,
-    RolesResourceApi,
-    RoleCommandsResourceApi,
     ServicesResourceApi,
 )
 
 from ansible_collections.cloudera.cluster.plugins.modules import service
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    wait_bulk_commands,
-)
 from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
     get_cluster_hosts,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
-    get_service_hosts,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
     get_base_role_config_group,
@@ -145,35 +133,6 @@ def server_role(cm_api_client, base_cluster, zookeeper):
 
 
 class TestServiceProvisionRoleConfigGroups:
-    @pytest.fixture(autouse=True)
-    def zookeeper_reset(self, cm_api_client, base_cluster):
-        # Keep track of the existing ZOOKEEPER services
-        initial_services = set(
-            [
-                s.name
-                for s in ServicesResourceApi(cm_api_client)
-                .read_services(
-                    cluster_name=base_cluster.name,
-                )
-                .items
-            ]
-        )
-
-        # Yield to the test
-        yield
-
-        # Remove any added services
-        services_to_remove = [
-            s
-            for s in ServicesResourceApi(cm_api_client)
-            .read_services(
-                cluster_name=base_cluster.name,
-            )
-            .items
-            if s.name not in initial_services
-        ]
-        deregister_service(cm_api_client, services_to_remove)
-
     def test_service_provision_custom_rcg(
         self, conn, module_args, base_cluster, request
     ):
