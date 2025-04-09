@@ -332,6 +332,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils imp
     provision_service,
     read_service,
     reconcile_service_role_config_groups,
+    reconcile_service_roles,
     toggle_service_maintenance,
     toggle_service_state,
     ServiceMaintenanceStateException,
@@ -507,6 +508,8 @@ class ClusterService(ClouderaManagerMutableModule):
                                 body=base_rcg,
                             )
 
+                    # TODO Create and provision roles
+
                 self.handle_maintenance(current)
 
             # Else the service exists, so address any changes
@@ -541,7 +544,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         if not self.module.check_mode:
                             service_api.update_service_config(
                                 cluster_name=self.cluster,
-                                service_name=self.service,
+                                service_name=self.name,
                                 message=self.message,
                                 body=config_updates.config,
                             )
@@ -591,14 +594,11 @@ class ClusterService(ClouderaManagerMutableModule):
                             body=current,
                         )
 
-                # Handle roles
-
                 # Handle role config groups
                 if self.role_config_groups or self.purge:
                     if self.role_config_groups is None:
                         self.role_config_groups = list()
 
-                    # Then call the utility...
                     (before_rcg, after_rcg) = reconcile_service_role_config_groups(
                         api_client=self.api_client,
                         service=current,
@@ -613,48 +613,42 @@ class ClusterService(ClouderaManagerMutableModule):
                             self.diff["before"].update(role_config_groups=before_rcg)
                             self.diff["after"].update(role_config_groups=after_rcg)
 
+                # Handle roles
+                if self.roles or self.purge:
+                    if self.roles is None:
+                        self.roles = list()
+
+                    (before_role, after_role) = reconcile_service_roles(
+                        api_client=self.api_client,
+                        service=current,
+                        roles=self.roles,
+                        purge=self.purge,
+                        check_mode=self.module.check_mode,
+                        # state=self.state,
+                        # maintenance=self.maintenance,
+                    )
+
+                    if before_role or after_role:
+                        self.changed = True
+                        if self.module._diff:
+                            self.diff["before"].update(roles=before_role)
+                            self.diff["after"].update(roles=after_role)
+
             # Handle state changes
-            # if not self.module.check_mode:
-            #     service_api.create_services(self.cluster, body=service_list)
+            state_changed = toggle_service_state(
+                api_client=self.api_client,
+                service=current,
+                state=self.state,
+                check_mode=self.module.check_mode,
+            )
 
-            #     if self.state == "started":
-            #         self.wait_command(
-            #             service_api.first_run(self.cluster, self.name)
-            #         )
-
-            # self.output = parse_service_result(
-            #     service_api.read_service(self.cluster, self.name, view="full")
-            # )
-            if self.state == "started" and current.service_state != "STARTED":
+            if state_changed is not None:
                 self.changed = True
-
                 if self.module._diff:
                     self.diff["before"].update(service_state=current.service_state)
-                    self.diff["after"].update(service_state="STARTED")
+                    self.diff["after"].update(service_state=state_changed)
 
-                if not self.module.check_mode:
-                    if current.service_state == "NA":
-                        self.wait_command(
-                            service_api.first_run(self.cluster, self.name)
-                        )
-                    else:
-                        self.wait_command(
-                            service_api.start_command(self.cluster, self.name)
-                        )
-
-            elif self.state == "stopped" and current.service_state not in [
-                "STOPPED",
-                "NA",
-            ]:
-                self.changed = True
-
-                if self.module._diff:
-                    self.diff["before"].update(service_state=current.service_state)
-                    self.diff["after"].update(service_state="STOPPED")
-
-                if not self.module.check_mode:
-                    self.wait_command(service_api.stop_command(self.cluster, self.name))
-
+            # If there are changes, get a fresh read
             if self.changed:
                 self.output = parse_service_result(
                     read_service(
@@ -705,16 +699,14 @@ def main():
                 type="list",
                 elements="dict",
                 options=dict(
-                    type=dict(aliases=["role_type"]),
+                    type=dict(required=True, aliases=["role_type"]),
                     hostnames=dict(
+                        required=True,
                         type="list",
                         elements="str",
                         aliases=["cluster_hosts", "cluster_hostnames"],
                     ),
-                    host_ids=dict(
-                        type="list", elements="str", aliases=["cluster_host_ids"]
-                    ),
-                    maintenance=dict(type="bool", aliases=["maintenance_mode"]),
+                    # maintenance=dict(type="bool", aliases=["maintenance_mode"]),
                     config=dict(type="dict", aliases=["parameters", "params"]),
                     role_config_group=dict(),
                     tags=dict(type="dict"),
@@ -729,6 +721,9 @@ def main():
                     role_type=dict(aliases=["type"]),
                     config=dict(type="dict", aliases=["params", "parameters"]),
                 ),
+                required_one_of=[
+                    ["name", "role_type"],
+                ],
             ),
             state=dict(
                 default="present", choices=["present", "absent", "started", "stopped"]
