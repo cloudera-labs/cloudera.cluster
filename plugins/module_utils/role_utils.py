@@ -48,7 +48,7 @@ class RoleException(Exception):
     pass
 
 
-class HostNotFoundException(RoleException):
+class RoleHostNotFoundException(RoleException):
     pass
 
 
@@ -56,7 +56,7 @@ class RoleConfigGroupNotFoundException(RoleException):
     pass
 
 
-class MaintenanceStateException(RoleException):
+class RoleMaintenanceStateException(RoleException):
     pass
 
 
@@ -261,7 +261,7 @@ def create_role(
     # Host assignment
     host_ref = get_host_ref(api_client, hostname, host_id)
     if host_ref is None:
-        raise HostNotFoundException(
+        raise RoleHostNotFoundException(
             f"Host not found: hostname='{hostname}', host_id='{host_id}'"
         )
     else:
@@ -357,7 +357,7 @@ def toggle_role_maintenance(
         )
 
         if maintenance_cmd.success is False:
-            raise MaintenanceStateException(
+            raise RoleMaintenanceStateException(
                 f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}"
             )
 
