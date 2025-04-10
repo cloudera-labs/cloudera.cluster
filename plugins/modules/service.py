@@ -325,6 +325,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     create_role,
     provision_service_role,
+    RoleException,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
     create_service,
@@ -444,7 +445,7 @@ class ClusterService(ClouderaManagerMutableModule):
                     base_rcg = None
 
                     if self.module._diff:
-                        before_list, after_list = list(), list()
+                        before_rcg, after_rcg = list(), list()
 
                     for requested_rcg in self.role_config_groups:
                         # Create any custom role config groups
@@ -462,8 +463,8 @@ class ClusterService(ClouderaManagerMutableModule):
                             rcg_list.append(custom_rcg)
 
                             if self.module._diff:
-                                before_list.append(dict())
-                                after_list.append(custom_rcg.to_dict())
+                                before_rcg.append(dict())
+                                after_rcg.append(custom_rcg.to_dict())
 
                         # Else record the base role config group for modification
                         else:
@@ -482,12 +483,12 @@ class ClusterService(ClouderaManagerMutableModule):
                             )
 
                             if self.module._diff:
-                                before_list.append(before)
-                                after_list.append(after)
+                                before_rcg.append(before)
+                                after_rcg.append(after)
 
                     if self.module._diff:
-                        self.diff["before"]["role_config_groups"] = before_list
-                        self.diff["after"]["role_config_groups"] = after_list
+                        self.diff["before"]["role_config_groups"] = before_rcg
+                        self.diff["after"]["role_config_groups"] = after_rcg
 
                     if not self.module.check_mode:
                         provision_role_config_groups(
@@ -508,8 +509,55 @@ class ClusterService(ClouderaManagerMutableModule):
                                 body=base_rcg,
                             )
 
-                    # TODO Create and provision roles
+                # Create and provision roles
+                if self.roles:
+                    if self.module._diff:
+                        role_entries_before, role_entries_after = list(), list()
 
+                    for requested_role in self.roles:
+                        if self.module._diff:
+                            role_instances_before, role_instances_after = list(), list()
+
+                        for role_host in requested_role["hostnames"]:
+                            try:
+                                created_role = create_role(
+                                    api_client=self.api_client,
+                                    cluster_name=self.cluster,
+                                    service_name=current.name,
+                                    role_type=requested_role["type"],
+                                    hostname=role_host,
+                                    config=requested_role.get("config", None),
+                                    role_config_group=requested_role.get(
+                                        "role_config_group", None
+                                    ),
+                                    tags=requested_role.get("tags", None),
+                                )
+                            except RoleException as ex:
+                                self.module.fail_json(msg=to_native(ex))
+
+                            if self.module._diff:
+                                role_instances_before.append(dict())
+                                role_instances_after.append(created_role.to_dict())
+
+                            if not self.module.check_mode:
+                                provisioned_role = provision_service_role(
+                                    api_client=self.api_client,
+                                    cluster_name=self.cluster,
+                                    service_name=current.name,
+                                    role=created_role,
+                                )
+
+                                if not provisioned_role:
+                                    self.module.fail_json(
+                                        msg=f"Unable to create new role in service '{current.name}'",
+                                        role=to_native(provisioned_role.to_dict()),
+                                    )
+
+                        if self.module._diff:
+                            role_entries_before.append(role_instances_before)
+                            role_entries_after.append(role_instances_after)
+
+                # Set the maintenance
                 self.handle_maintenance(current)
 
             # Else the service exists, so address any changes
@@ -519,6 +567,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         msg="Service name already in use for type: " + current.type
                     )
 
+                # Set the maintenance
                 self.handle_maintenance(current)
 
                 # Handle service-wide configurations
