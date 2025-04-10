@@ -627,9 +627,9 @@ def reconcile_service_roles(
                 )
 
                 # before is already an empty dict
-                instance_role_after = create_role.dict()
+                instance_role_after = created_role.to_dict()
 
-                addition_list(created_role)
+                addition_list.append(created_role)
 
             # Update existing role - config, tags, role config group
             else:
@@ -656,7 +656,7 @@ def reconcile_service_roles(
                                 cluster_name=service.cluster_ref.cluster_name,
                                 service_name=service.name,
                                 role_name=current_role.name,
-                                body=current_role,
+                                body=current_role.config,
                             )
 
                     # Reconcile role tags
@@ -673,14 +673,6 @@ def reconcile_service_roles(
                             instance_role_before.update(tags=tag_updates.deletions)
                             instance_role_after.update(tags=tag_updates.additions)
 
-                            if tag_updates.additions:
-                                if not check_mode:
-                                    role_api.add_tags(
-                                        cluster_name=service.cluster_ref.cluster_name,
-                                        service_name=service.name,
-                                        role_name=current_role.name,
-                                        body=tag_updates.additions,
-                                    )
                             if tag_updates.deletions:
                                 if not check_mode:
                                     role_api.delete_tags(
@@ -690,74 +682,51 @@ def reconcile_service_roles(
                                         body=tag_updates.deletions,
                                     )
 
+                            if tag_updates.additions:
+                                if not check_mode:
+                                    role_api.add_tags(
+                                        cluster_name=service.cluster_ref.cluster_name,
+                                        service_name=service.name,
+                                        role_name=current_role.name,
+                                        body=tag_updates.additions,
+                                    )
+
                     # Handle role config group associations
-                    if incoming_rcg or purge:
-                        # If role config group is not present and the existing reference is not the base, reset to base
-                        if (
-                            incoming_rcg is None
-                            and current_role.role_config_group_ref.role_config_group_name
-                            != base_rcg.name
-                        ):
-                            instance_role_before.update(
-                                role_config_group=current_role.role_config_group_ref.role_config_group_name
+                    # If role config group is not present and the existing reference is not the base, reset to base
+                    if (
+                        incoming_rcg is None
+                        and current_role.role_config_group_ref.role_config_group_name
+                        != base_rcg.name
+                    ):
+                        instance_role_before.update(
+                            role_config_group=current_role.role_config_group_ref.role_config_group_name
+                        )
+                        instance_role_after.update(role_config_group=base_rcg.name)
+
+                        if not check_mode:
+                            rcg_api.move_roles_to_base_group(
+                                cluster_name=service.cluster_ref.cluster_name,
+                                service_name=service.name,
+                                body=ApiRoleNameList(items=[current_role.name]),
                             )
-                            instance_role_after.update(role_config_group=base_rcg.name)
+                    # Else if the role config group does not match the declared
+                    elif (
+                        incoming_rcg is not None
+                        and incoming_rcg.name
+                        != current_role.role_config_group_ref.role_config_group_name
+                    ):
+                        instance_role_before.update(
+                            role_config_group=current_role.role_config_group_ref.role_config_group_name
+                        )
+                        instance_role_after.update(role_config_group=incoming_rcg.name)
 
-                            if not check_mode:
-                                rcg_api.move_roles_to_base_group(
-                                    cluster_name=service.cluster_ref.cluster_name,
-                                    service_name=service.name,
-                                    body=ApiRoleNameList(items=[current_role.name]),
-                                )
-
-                        # Else if the role config group does not match the declared
-                        elif (
-                            incoming_rcg.name
-                            != current_role.role_config_group_ref.role_config_group_name
-                        ):
-                            instance_role_before.update(
-                                role_config_group=current_role.role_config_group_ref.role_config_group_name
+                        if not check_mode:
+                            rcg_api.move_roles(
+                                cluster_name=service.cluster_ref.cluster_name,
+                                service_name=service.name,
+                                role_config_group_name=incoming_rcg.name,
+                                body=ApiRoleNameList(items=[current_role.name]),
                             )
-                            instance_role_after.update(
-                                role_config_group=incoming_rcg.name
-                            )
-
-                            if not check_mode:
-                                rcg_api.move_roles(
-                                    cluster_name=service.cluster_ref.cluster_name,
-                                    service_name=service.name,
-                                    role_config_group_name=incoming_rcg.name,
-                                    body=ApiRoleNameList(items=[current_role.name]),
-                                )
-
-            # # Handle maintenance
-            # if not maintenance:
-            #     incoming_maintenance = incoming_role.get("maintenance", None)
-
-            #     maintenance_changed = toggle_role_maintenance(
-            #         api_client=api_client,
-            #         role=current_role,
-            #         maintenance=incoming_maintenance,
-            #         check_mode=check_mode,
-            #     )
-
-            #     if maintenance_changed:
-            #         instance_role_before.update(maintenance_mode=current_role.maintenance_mode)
-            #         instance_role_after.update(maintenance_mode=incoming_maintenance)
-
-            # # Handle state; if the service state is not stopped, then allow the role to maintain its state
-            # incoming_state = incoming_role.get("state", None)
-            # if incoming_state is not None and state != incoming_state and state in ["present", "started", "restarted"]:
-            #     state_changed = toggle_role_state(
-            #         api_client=api_client,
-            #         role=current_role,
-            #         state=incoming_state,
-            #         check_mode=check_mode,
-            #     )
-
-            #     if state_changed is not None:
-            #         instance_role_before.update(state=current_role.role_state)
-            #         instance_role_after.update(state=incoming_state)
 
             # Record any deltas for the role entry
             if instance_role_before or instance_role_after:
