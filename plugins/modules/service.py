@@ -775,7 +775,8 @@ def main():
                 ],
             ),
             state=dict(
-                default="present", choices=["present", "absent", "started", "stopped"]
+                default="present",
+                choices=["present", "absent", "started", "stopped", "restarted"],
             ),
         ),
         supports_check_mode=True,

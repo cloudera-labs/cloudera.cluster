@@ -19,50 +19,30 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import logging
-import os
 import pytest
-
-from collections.abc import Generator
-
-from ansible.module_utils.common.dict_transformations import recursive_diff
 
 from pathlib import Path
 
 from cm_client import (
-    ApiClient,
     ApiConfig,
-    ApiConfigList,
     ApiEntityTag,
     ApiHostRef,
     ApiRole,
-    ApiRoleConfigGroup,
-    ApiRoleNameList,
-    ApiRoleState,
     ApiService,
     ApiServiceConfig,
-    ClustersResourceApi,
-    RoleConfigGroupsResourceApi,
-    RolesResourceApi,
-    RoleCommandsResourceApi,
+    ApiServiceState,
     ServicesResourceApi,
 )
 
 from ansible_collections.cloudera.cluster.plugins.modules import service
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    wait_bulk_commands,
+    wait_command,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
     get_cluster_hosts,
 )
-from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
-    get_service_hosts,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    get_base_role_config_group,
-)
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     create_role,
-    read_role,
     read_roles,
 )
 from ansible_collections.cloudera.cluster.tests.unit import (
@@ -72,8 +52,6 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     register_service,
     deregister_role,
     register_role,
-    deregister_role_config_group,
-    register_role_config_group,
 )
 
 LOG = logging.getLogger(__name__)
@@ -809,9 +787,128 @@ class TestServiceModification:
 
 
 class TestServiceStates:
-    # TODO Finish states
+    def test_service_existing_state_started(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        if zookeeper.service_state not in [
+            ApiServiceState.STOPPED,
+            ApiServiceState.STOPPING,
+        ]:
+            stop_cmd = ServicesResourceApi(cm_api_client).stop_command(
+                cluster_name=zookeeper.cluster_ref.cluster_name,
+                service_name=zookeeper.name,
+            )
 
-    def test_service_existing_state_absent(self, conn, module_args, zookeeper):
+            wait_command(cm_api_client, stop_cmd)
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "state": "started",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["service_state"] == ApiServiceState.STARTED
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == False
+        assert e.value.service["service_state"] == ApiServiceState.STARTED
+
+    def test_service_existing_state_stopped(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        if zookeeper.service_state not in [
+            ApiServiceState.STARTED,
+            ApiServiceState.STARTING,
+        ]:
+            start_cmd = ServicesResourceApi(cm_api_client).start_command(
+                cluster_name=zookeeper.cluster_ref.cluster_name,
+                service_name=zookeeper.name,
+            )
+
+            wait_command(cm_api_client, start_cmd)
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "state": "stopped",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["service_state"] == ApiServiceState.STOPPED
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == False
+        assert e.value.service["service_state"] == ApiServiceState.STOPPED
+
+    def test_service_existing_state_restarted(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        if zookeeper.service_state not in [
+            ApiServiceState.STARTED,
+            ApiServiceState.STARTING,
+        ]:
+            start_cmd = ServicesResourceApi(cm_api_client).start_command(
+                cluster_name=zookeeper.cluster_ref.cluster_name,
+                service_name=zookeeper.name,
+            )
+
+            wait_command(cm_api_client, start_cmd)
+
+        module_args(
+            {
+                **conn,
+                "cluster": zookeeper.cluster_ref.cluster_name,
+                "name": zookeeper.name,
+                "state": "restarted",
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["service_state"] == ApiServiceState.STARTED
+
+        # No idempotency due to the nature of the state
+        with pytest.raises(AnsibleExitJson) as e:
+            service.main()
+
+        assert e.value.changed == True
+        assert e.value.service["service_state"] == ApiServiceState.STARTED
+
+    def test_service_existing_state_absent(
+        self, conn, module_args, cm_api_client, zookeeper
+    ):
+        if zookeeper.service_state not in [
+            ApiServiceState.STARTED,
+            ApiServiceState.STARTING,
+        ]:
+            start_cmd = ServicesResourceApi(cm_api_client).start_command(
+                cluster_name=zookeeper.cluster_ref.cluster_name,
+                service_name=zookeeper.name,
+            )
+
+            wait_command(cm_api_client, start_cmd)
+
         module_args(
             {
                 **conn,
