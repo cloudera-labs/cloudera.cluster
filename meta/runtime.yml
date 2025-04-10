@@ -39,3 +39,49 @@ action_groups:
           - cm
     - cluster_info
     - cluster
+  service:
+    - metadata:
+        extend_group:
+          - cm
+    - service_info
+    - service
+  role:
+    - metadata:
+        extend_group:
+          - cm
+    - service_role_info
+    - service_role
+  role_config_group:
+    - metadata:
+        extend_group:
+          - cm
+    - service_role_config_group_info
+    - service_role_config_group
+  host:
+    - metadata:
+        extend_group:
+          - cm
+    - host_info
+    - host
+  host_template:
+    - metadata:
+        extend_group:
+          - cm
+    - host_template_info
+    - host_template
+  parcel:
+    - metadata:
+        extend_group:
+          - cm
+    - parcel_info
+    - parcel
+  deployment:
+    - metadata:
+        extend_group:
+          - cluster
+          - service
+          - role
+          - role_config_group
+          - host
+          - host_template
+          - parcel
