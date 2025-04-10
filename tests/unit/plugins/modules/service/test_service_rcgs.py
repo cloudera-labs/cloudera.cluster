@@ -51,7 +51,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
 )
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
-    AnsibleFailJson,
     deregister_service,
     register_service,
     deregister_role,
@@ -133,6 +132,35 @@ def server_role(cm_api_client, base_cluster, zookeeper):
 
 
 class TestServiceProvisionRoleConfigGroups:
+    @pytest.fixture(autouse=True)
+    def resettable_cluster(self, cm_api_client, base_cluster):
+        # Keep track of the existing ZOOKEEPER services
+        initial_services = set(
+            [
+                s.name
+                for s in ServicesResourceApi(cm_api_client)
+                .read_services(
+                    cluster_name=base_cluster.name,
+                )
+                .items
+            ]
+        )
+
+        # Yield to the test
+        yield
+
+        # Remove any added services
+        services_to_remove = [
+            s
+            for s in ServicesResourceApi(cm_api_client)
+            .read_services(
+                cluster_name=base_cluster.name,
+            )
+            .items
+            if s.name not in initial_services
+        ]
+        deregister_service(cm_api_client, services_to_remove)
+
     def test_service_provision_custom_rcg(
         self, conn, module_args, base_cluster, request
     ):
