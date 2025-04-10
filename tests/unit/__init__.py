@@ -46,6 +46,8 @@ from cm_client import (
 from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    wait_command,
+    wait_commands,
     resolve_parameter_updates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
@@ -218,6 +220,35 @@ def deregister_service(api_client: ApiClient, registry: list[ApiService]) -> Non
     # Delete the services
     for s in registry:
         try:
+            # Check for running commands and wait for them to finish
+            active_cmds = service_api.list_active_commands(
+                cluster_name=s.cluster_ref.cluster_name,
+                service_name=s.name,
+            )
+
+            wait_commands(
+                api_client=api_client,
+                commands=active_cmds,
+            )
+
+            # If the service is running, stop it
+            current = service_api.read_service(
+                cluster_name=s.cluster_ref.cluster_name,
+                service_name=s.name,
+            )
+
+            if current.service_state == ApiServiceState.STARTED:
+                stop_cmd = service_api.stop_command(
+                    cluster_name=s.cluster_ref.cluster_name,
+                    service_name=s.name,
+                )
+
+                wait_command(
+                    api_client=api_client,
+                    command=stop_cmd,
+                )
+
+            # Delete the service
             service_api.delete_service(
                 cluster_name=s.cluster_ref.cluster_name,
                 service_name=s.name,
