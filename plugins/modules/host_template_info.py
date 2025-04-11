@@ -18,7 +18,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 from cm_client import HostTemplatesResourceApi, ClustersResourceApi
 from cm_client.rest import ApiException
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
-    _parse_host_template_output,
+    parse_host_template,
     _parse_host_templates_output,
 )
 
@@ -128,7 +128,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
         host_temp_api_instance = HostTemplatesResourceApi(self.api_client)
         if self.name:
             try:
-                self.host_templates_output = _parse_host_template_output(
+                self.host_templates_output = parse_host_template(
                     host_temp_api_instance.read_host_template(
                         cluster_name=self.cluster_name,
                         host_template_name=self.name,
