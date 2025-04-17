@@ -24,9 +24,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ConfigListUpdates,
     TagUpdates,
 )
-from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
-    get_host,
-)
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
     create_role_config_group,
     get_base_role_config_group,
@@ -38,10 +35,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
     read_roles,
     read_roles_by_type,
     parse_role_result,
-    provision_service_role,
-    toggle_role_maintenance,
-    toggle_role_state,
-    InvalidRoleTypeException,
 )
 
 from cm_client import (
@@ -119,7 +112,10 @@ def parse_service_result(service: ApiService) -> dict:
         ]
         output.update(
             # Remove service_name from output
-            role_config_groups=[{k: v for k, v in parsed_rcgs if k != "service_name"}]
+            role_config_groups=[
+                {k: v for k, v in rcg_dict.items() if k != "service_name"}
+                for rcg_dict in parsed_rcgs
+            ]
         )
 
     # Parse the roles via util function
@@ -127,7 +123,10 @@ def parse_service_result(service: ApiService) -> dict:
         parsed_roles = [parse_role_result(r) for r in service.roles]
         output.update(
             # Remove service_name from output
-            roles=[{k: v for k, v in parsed_roles if k != "service_name"}]
+            roles=[
+                {k: v for k, v in role_dict.items() if k != "service_name"}
+                for role_dict in parsed_roles
+            ]
         )
 
     return output
@@ -148,7 +147,6 @@ def read_service(
     """
     service_api = ServicesResourceApi(api_client)
     rcg_api = RoleConfigGroupsResourceApi(api_client)
-    role_api = RolesResourceApi(api_client)
 
     service = service_api.read_service(
         cluster_name=cluster_name, service_name=service_name
@@ -174,6 +172,50 @@ def read_service(
         ).items
 
     return service
+
+
+def read_services(api_client: ApiClient, cluster_name: str) -> list[ApiService]:
+    """Read the cluster services and gather each services' role config group and role dependents.
+
+    Args:
+        api_client (ApiClient): _description_
+        cluster_name (str): _description_
+
+    Returns:
+        ApiService: _description_
+    """
+    service_api = ServicesResourceApi(api_client)
+    rcg_api = RoleConfigGroupsResourceApi(api_client)
+
+    services = list[ApiService]()
+
+    discovered_services = service_api.read_services(
+        cluster_name=cluster_name,
+    ).items
+
+    for service in discovered_services:
+        # Gather the service-wide configuration
+        service.config = service_api.read_service_config(
+            cluster_name=cluster_name, service_name=service.name
+        )
+
+        # Gather each role config group configuration
+        service.role_config_groups = rcg_api.read_role_config_groups(
+            cluster_name=cluster_name,
+            service_name=service.name,
+        ).items
+
+        # Gather each role and its config
+        service.roles = read_roles(
+            api_client=api_client,
+            cluster_name=cluster_name,
+            service_name=service.name,
+        ).items
+
+        # Add it to the output
+        services.append(service)
+
+    return services
 
 
 def create_service_model(
