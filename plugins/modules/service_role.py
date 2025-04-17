@@ -620,17 +620,17 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
                         if not self.module.check_mode:
                             if tag_updates.deletions:
                                 role_api.delete_tags(
-                                    self.cluster,
-                                    self.name,
-                                    self.service,
+                                    cluster_name=self.cluster,
+                                    service_name=self.service,
+                                    role_name=self.name,
                                     body=tag_updates.deletions,
                                 )
 
                             if tag_updates.additions:
                                 role_api.add_tags(
-                                    self.cluster,
-                                    self.name,
-                                    self.service,
+                                    cluster_name=self.cluster,
+                                    service_name=self.service,
+                                    role_name=self.name,
                                     body=tag_updates.additions,
                                 )
 

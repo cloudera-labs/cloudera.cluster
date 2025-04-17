@@ -51,6 +51,7 @@ def parse_cluster_result(cluster: ApiCluster) -> dict:
     return output
 
 
+# TODO Convert to use cluster_name vs the ApiCluster object for broader usage in pytest fixtures
 def get_cluster_hosts(api_client: ApiClient, cluster: ApiCluster) -> list[ApiHost]:
     return (
         ClustersResourceApi(api_client)

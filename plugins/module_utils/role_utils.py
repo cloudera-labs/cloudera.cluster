@@ -33,6 +33,7 @@ from cm_client import (
     ApiRoleConfigGroupRef,
     ApiRoleNameList,
     ApiRoleState,
+    ServicesResourceApi,
     RoleCommandsResourceApi,
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
@@ -44,6 +45,22 @@ from cm_client import ApiRole
 class RoleException(Exception):
     """General Exception type for Role management."""
 
+    pass
+
+
+class RoleHostNotFoundException(RoleException):
+    pass
+
+
+class RoleConfigGroupNotFoundException(RoleException):
+    pass
+
+
+class RoleMaintenanceStateException(RoleException):
+    pass
+
+
+class InvalidRoleTypeException(RoleException):
     pass
 
 
@@ -214,14 +231,6 @@ def read_cm_roles(api_client: ApiClient) -> ApiRoleList:
     return ApiRoleList(items=roles)
 
 
-class HostNotFoundException(RoleException):
-    pass
-
-
-class RoleConfigGroupNotFoundException(RoleException):
-    pass
-
-
 def create_role(
     api_client: ApiClient,
     role_type: str,
@@ -233,6 +242,18 @@ def create_role(
     role_config_group: str = None,
     tags: dict = None,
 ) -> ApiRole:
+    if (
+        role_type.upper()
+        not in ServicesResourceApi(api_client)
+        .list_role_types(
+            cluster_name=cluster_name,
+            service_name=service_name,
+        )
+        .items
+    ):
+        raise InvalidRoleTypeException(
+            f"Invalid role type '{role_type}' for service '{service_name}'"
+        )
 
     # Set up the role type
     role = ApiRole(type=str(role_type).upper())
@@ -240,7 +261,7 @@ def create_role(
     # Host assignment
     host_ref = get_host_ref(api_client, hostname, host_id)
     if host_ref is None:
-        raise HostNotFoundException(
+        raise RoleHostNotFoundException(
             f"Host not found: hostname='{hostname}', host_id='{host_id}'"
         )
     else:
@@ -315,10 +336,6 @@ def provision_service_role(
         raise RoleException(str(e))
 
 
-class MaintenanceStateException(RoleException):
-    pass
-
-
 def toggle_role_maintenance(
     api_client: ApiClient, role: ApiRole, maintenance: bool, check_mode: bool
 ) -> bool:
@@ -340,7 +357,7 @@ def toggle_role_maintenance(
         )
 
         if maintenance_cmd.success is False:
-            raise MaintenanceStateException(
+            raise RoleMaintenanceStateException(
                 f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}"
             )
 
