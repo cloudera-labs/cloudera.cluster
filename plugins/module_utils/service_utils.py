@@ -114,16 +114,21 @@ def parse_service_result(service: ApiService) -> dict:
 
     # Parse the role config groups via util function
     if service.role_config_groups is not None:
+        parsed_rcgs = [
+            parse_role_config_group_result(rcg) for rcg in service.role_config_groups
+        ]
         output.update(
-            role_config_groups=[
-                parse_role_config_group_result(rcg)
-                for rcg in service.role_config_groups
-            ]
+            # Remove service_name from output
+            role_config_groups=[{k: v for k, v in parsed_rcgs if k != "service_name"}]
         )
 
     # Parse the roles via util function
     if service.roles is not None:
-        output.update(roles=[parse_role_result(r) for r in service.roles])
+        parsed_roles = [parse_role_result(r) for r in service.roles]
+        output.update(
+            # Remove service_name from output
+            roles=[{k: v for k, v in parsed_roles if k != "service_name"}]
+        )
 
     return output
 
@@ -171,7 +176,7 @@ def read_service(
     return service
 
 
-def create_service(
+def create_service_model(
     api_client: ApiClient,
     name: str,
     type: str,
@@ -179,8 +184,6 @@ def create_service(
     display_name: str = None,
     config: dict = None,
     tags: dict = None,
-    # role_config_groups: list[ApiRoleConfigGroup] = None,
-    # roles: list[ApiRole] = None,
 ) -> ApiService:
     if (
         type.upper()
@@ -209,36 +212,6 @@ def create_service(
     # Tags
     if tags:
         service.tags = [ApiEntityTag(k, v) for k, v in tags.items()]
-
-    # # Role config groups
-    # # TODO Use a role_config_group utility to marshal the ApiRoleConfigGroup list
-    # # Keep the incoming type, but use it to create another via the utility call
-    # # This includes passing in the role type as an external reference
-    # if role_config_groups:
-    #     available_types = ServicesResourceApi(api_client).list_role_types(
-    #         cluster_name=cluster_name,
-    #         service_name=name,
-    #     ).items
-
-    #     for rcg in role_config_groups:
-    #         if rcg.role_type not in available_types:
-    #             raise InvalidRoleType("Unable to find role type: " + rcg.role_type)
-
-    #     service.role_config_groups = role_config_groups
-
-    # # Roles
-    # # TODO Use the create_role() utility to marshal the ApiRole list
-    # # Keep the incoming ApiRole type, but use it to create another via the utility call
-    # # Need to pass in the role types and role config groups as external references (the latter because they
-    # # might be defined within the service)
-    # # For the former, the reference replaces an inline lookup. For the latter, the reference is a initial
-    # # lookup and then a fallback to the inline lookup
-    # # This might not work, as the references might fail because the service is not yet available... or
-    # # break up the provisioning flow to spin up an initial, "core" service, then have additional utility
-    # # calls to spin up RCG and roles, which then would be able to have the inline lookups (still would need
-    # # the to-be reference list for RCGs, however).
-    # if roles:
-    #     pass
 
     return service
 
