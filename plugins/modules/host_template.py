@@ -101,41 +101,67 @@ seealso:
 """
 
 EXAMPLES = r"""
-# TODO Update host template examples
-- name: Create host template
+- name: Provision a host template with a base role config group assignment
   cloudera.cluster.host_template
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: "base_cluster"
-    name: "MyTemplate"
-    role_groups: ["kafka-GATEWAY-BASE", "atlas-ATLAS_SERVER-BASE" , "hive_on_tez-GATEWAY-BASE"]
+    cluster: "example_cluster"
+    name: "Custom Template"
+    role_config_groups:
+      - type: DATANODE
+        service: hdfs-service-1
 
-- name: Update host template
+- name: Provision a host template with a named (custom) role config group assignment
   cloudera.cluster.host_template
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: "base_cluster"
-    name: "MyTemplate"
-    role_groups: ["kafka-GATEWAY-BASE", "atlas-ATLAS_SERVER-BASE"]
+    cluster: "example_cluster"
+    name: "Custom Template"
+    role_config_groups:
+      - name: custom-zk-server
+        service: zookeeper-service-1
 
-- name: Remove host template
+- name: Update (append) a role config group to a host template
   cloudera.cluster.host_template
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: "base_cluster"
-    name: "MyTemplate"
+    cluster: "example_cluster"
+    name: "Custom Template"
+    role_config_groups:
+      - type: OZONE_DATANODE
+        service: ozone-service-2
+
+- name: Update (reset) the role config groups of a host template
+  cloudera.cluster.host_template
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: "example_cluster"
+    name: "Custom Template"
+    role_config_groups:
+      - type: DATANODE
+        service: hdfs-service-1
+      - type: OZONE_DATANODE
+        service: ozone-service-2
+    purge: yes
+
+- name: Remove a host template
+  cloudera.cluster.host_template
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: "example_cluster"
+    name: "Custom Template"
     state: "absent"
 """
 
 RETURN = r"""
 host_template:
-  description:
-    - Retrieve details about host template.
+  description: Details regarding the host template.
   type: dict
-  elements: dict
   returned: always
   contains:
     name:
@@ -149,7 +175,7 @@ host_template:
       returned: always
     role_config_groups:
       description:
-        - The role config groups belonging to this host template.
+        - The role config groups associated with this host template, by role config group name.
       type: list
       elements: str
       returned: always
