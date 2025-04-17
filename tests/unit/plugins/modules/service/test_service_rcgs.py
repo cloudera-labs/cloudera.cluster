@@ -549,6 +549,7 @@ class TestServiceModificationRoleConfigGroups:
                 "role_config_groups": [
                     {
                         "name": custom_rcg_server.name,
+                        "type": custom_rcg_server.role_type,
                         "config": {
                             "minSessionTimeout": 5501,
                             "maxSessionTimeout": 45001,
@@ -605,6 +606,7 @@ class TestServiceModificationRoleConfigGroups:
                 "role_config_groups": [
                     {
                         "name": custom_rcg_server.name,
+                        "type": custom_rcg_server.role_type,
                         "config": {
                             "maxSessionTimeout": 45001,
                         },
