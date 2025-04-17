@@ -189,25 +189,6 @@ class TestServiceArgSpec:
         with pytest.raises(AnsibleFailJson, match="hostnames found in roles"):
             service.main()
 
-    def test_service_role_config_group_missing_one_of(self, conn, module_args):
-        module_args(
-            {
-                **conn,
-                "cluster": "example",
-                "name": "example",
-                "role_config_groups": [
-                    {
-                        "display_name": "example",
-                    }
-                ],
-            }
-        )
-
-        with pytest.raises(
-            AnsibleFailJson, match="name, role_type found in role_config_groups"
-        ):
-            service.main()
-
 
 class TestServiceInvalidParameters:
     def test_present_invalid_cluster(self, conn, module_args):

@@ -1089,7 +1089,6 @@ def main():
                         elements="str",
                         aliases=["cluster_hosts", "cluster_hostnames"],
                     ),
-                    # maintenance=dict(type="bool", aliases=["maintenance_mode"]),
                     config=dict(type="dict", aliases=["parameters", "params"]),
                     role_config_group=dict(),
                     tags=dict(type="dict"),
