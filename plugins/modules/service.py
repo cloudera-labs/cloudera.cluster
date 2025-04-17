@@ -25,50 +25,139 @@ author:
 options:
   cluster:
     description:
-      - The associated cluster.
+      - The associated cluster of the service.
     type: str
     required: yes
     aliases:
       - cluster_name
-  service:
+  name:
     description:
-      - The service.
+      - The service to manage.
+      - This is a unique identifier within the cluster.
     type: str
     required: yes
     aliases:
       - service_name
-      - name
+      - service
   display_name:
     description:
       - The Cloudera Manager UI display name for the service.
     type: str
-  maintenance:
-    description:
-      - Flag for whether the service should be in maintenance mode.
-    type: bool
-    aliases:
-      - maintenance_mode
-  tags:
-    description:
-      - A set of tags applied to the service.
-      - To unset a tag, use C(None) as its value.
-    type: dict
   type:
     description:
       - The service type.
-      - Required if I(state) creates a new service.
+      - Required if O(state) creates a new service.
     type: str
     aliases:
       - service_type
+  maintenance:
+    description:
+      - Flag indicating if the service should be in maintenance mode.
+    type: bool
+    aliases:
+      - maintenance_mode
   purge:
     description:
-      - Flag for whether the declared service tags should append or overwrite any existing tags.
-      - To clear all tags, set I(tags={}), i.e. an empty dictionary, and I(purge=True).
+      - Flag indicating if the declared service-wide configurations, tags, role config groups, and role assignments and configurations should be append-only or fully reconciled.
+      - If set, the module will actively remove undeclared entries, e.g. remove roles.
+      - To clear all service-wide configurations and tags, set O(tags={}) or O(config={}), i.e. an empty dictionary, and O(purge=True).
     type: bool
     default: False
+  config:
+    description:
+      - A set of service-wide configurations for the service.
+      - To unset a configuration, use V(None) as its value.
+      - If O(purge=True), undeclared configurations will be removed.
+    type: dict
+  tags:
+    description:
+      - A set of tags applied to the service.
+      - To unset a tag, use V(None) as its value.
+      - If O(purge=True), undeclared tags will be removed.
+    type: dict
+  roles:
+    description:
+      - List of service roles to provision directly to cluster hosts.
+      - If O(purge=True), undeclared roles for the service will be removed from the hosts.
+    type: list
+    elements: dict
+    options:
+      type:
+        description:
+          - The role instance type to provision on the designated cluster hosts.
+        type: str
+        required: yes
+        aliases:
+          - role_type
+      hostnames:
+        description:
+          - List of hostnames of the cluster hosts receiving the role type instance.
+        type: list
+        elements: str
+        required: yes
+        aliases:
+          - cluster_hosts
+          - cluster_hostnames
+      config:
+        description:
+          - A set of role override configurations for the role instance on the cluster hosts.
+          - To unset a configuration, use V(None) as its value.
+          - If O(purge=True), undeclared configurations will be removed.
+        type: dict
+        aliases:
+          - parameters
+          - params
+      role_config_group:
+        description:
+          - A named (custom) role config group to assign to the role instance on the cluster hosts.
+          - To unset the assignment, use V(None) as the value.
+        type: str
+      tags:
+        description:
+          - A set of tags applied to the role type instance on the cluster hosts.
+          - To unset a tag, use V(None) as its value.
+          - If O(purge=True), undeclared tags will be removed.
+        type: dict
+  role_config_groups:
+    description:
+      - List of base and named (custom) role config groups to declare and configure for the service.
+      - If O(purge=True), undeclared named (custom) role config groups will be removed and their
+        associated role instances reassigned to each role type's base role config group. (Base role
+        config groups cannot be removed.)
+    type: list
+    elements: dict
+    options:
+      name:
+        description:
+          - The name of a custom role config group.
+        type: str
+        aliases:
+          - role_config_group_name
+          - role_config_group
+      display_name:
+        description:
+          - The Cloudera Manager UI display name for the role config group.
+        type: str
+      role_type:
+        description:
+          - The role type of the base or named (custom) role config group.
+        type: str
+        required: yes
+        aliases:
+          - type
+      config:
+        description:
+          - A set of role config group configurations.
+          - To unset a configuration, use V(None) as its value.
+          - If O(purge=True), undeclared configurations will be removed.
+        type: dict
+        aliases:
+          - parameters
+          - params
   state:
     description:
       - The state of the service.
+      - Setting O(state=restarted) will always result in a V(changed=True) result.
     type: str
     default: present
     choices:
@@ -164,6 +253,98 @@ EXAMPLES = r"""
     service: example_ecs
     tags: {}
     purge: yes
+
+- name: Update (append) several service-wide configurations on a cluster service
+  cloudera.cluster.service:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example_cluster
+    service: example_ecs
+    config:
+      param_one: 1
+      param_two: Two
+
+- name: Update (purge) the service-wide configurations on a cluster service
+  cloudera.cluster.service:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example_cluster
+    service: example_ecs
+    config:
+      param_one: 1
+      param_three: three
+    purge: yes
+
+- name: Remove all the service-wide configurations on a cluster service
+  cloudera.cluster.service:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example_cluster
+    service: example_ecs
+    config: {}
+    purge: yes
+
+- name: Provision role instances on cluster hosts for a cluster service
+  cloudera.cluster.service:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example_cluster
+    service: example_ecs
+    roles:
+      - type: SERVER
+        hostnames:
+          - host1.example
+          - host2.example
+        config:
+          param_one: 1
+
+- name: Provision role config groups (base and named) for a cluster service
+  cloudera.cluster.service:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example_cluster
+    service: example_ecs
+    role_config_group:
+      - name: custom_server_1
+        display_name: Custom Server (1)
+        role_type: SERVER
+        config:
+          param_two: Two
+      - role_type: SERVER # This is the base role config group for SERVER
+        config:
+          param_three: three
+
+- name: Provision a cluster service with hosts, role config groups, and role assignments
+  cloudera.cluster.service:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster: example_cluster
+    service: example_ecs
+    roles:
+      - type: SERVER
+        hostnames:
+          - host1.example
+        config:
+          param_two: Twelve
+        role_config_group: custom_server_1
+      - type: SERVER # Will use the base role config group for SERVER
+        hostnames:
+          - host2.example
+    role_config_group:
+      - name: custom_server_1
+        display_name: Custom Server (1)
+        role_type: SERVER
+        config:
+          param_two: Two
+      - role_type: SERVER # This is the base role config group for SERVER
+        config:
+          param_three: three
 
 - name: Remove a cluster service
   cloudera.cluster.service:
@@ -293,15 +474,169 @@ service:
       description: Version of the service.
       type: str
       returned: when supported
+    config:
+      description: Service-wide configuration details about a cluster service.
+      type: dict
+      returned: when supported
+    role_config_groups:
+      description: List of base and custom role config groups for the cluster service.
+      type: list
+      elements: dict
+      contains:
+        name:
+          description:
+            - The unique name of this role config group.
+          type: str
+          returned: always
+        role_type:
+          description:
+            - The type of the roles in this group.
+          type: str
+          returned: always
+        base:
+          description:
+            - Flag indicating whether this is a base group.
+          type: bool
+          returned: always
+        display_name:
+          description:
+            - A user-friendly name of the role config group, as would have been shown in the web UI.
+          type: str
+          returned: when supported
+        config:
+          description: Set of configurations for the role config group.
+          type: dict
+          returned: when supported
+      returned: when supported
+    roles:
+      description: List of provisioned role instances on cluster hosts for the cluster service.
+      type: list
+      elements: dict
+      contains:
+        name:
+          description: The cluster service role name.
+          type: str
+          returned: always
+        type:
+          description: The cluster service role type.
+          type: str
+          returned: always
+          sample:
+            - NAMENODE
+            - DATANODE
+            - TASKTRACKER
+        host_id:
+          description: The unique ID of the cluster host.
+          type: str
+          returned: always
+        hostname:
+          description: The hostname of the cluster host.
+          type: str
+          returned: always
+        role_state:
+          description: State of the cluster service role.
+          type: str
+          returned: always
+          sample:
+            - HISTORY_NOT_AVAILABLE
+            - UNKNOWN
+            - STARTING
+            - STARTED
+            - STOPPING
+            - STOPPED
+            - NA
+        commission_state:
+          description: Commission state of the cluster service role.
+          type: str
+          returned: always
+        health_summary:
+          description: The high-level health status of the cluster service role.
+          type: str
+          returned: always
+          sample:
+            - DISABLED
+            - HISTORY_NOT_AVAILABLE
+            - NOT_AVAILABLE
+            - GOOD
+            - CONCERNING
+            - BAD
+        config_staleness_status:
+          description: Status of configuration staleness for the cluster service role.
+          type: str
+          returned: always
+          sample:
+            - FRESH
+            - STALE_REFRESHABLE
+            - STALE
+        health_checks:
+          description: Lists all available health checks for cluster service role.
+          type: list
+          elements: dict
+          returned: when supported
+          contains:
+            name:
+              description: Unique name of this health check.
+              type: str
+              returned: always
+            summary:
+              description: The high-level health status of the health check.
+              type: str
+              returned: always
+              sample:
+                - DISABLED
+                - HISTORY_NOT_AVAILABLE
+                - NOT_AVAILABLE
+                - GOOD
+                - CONCERNING
+                - BAD
+            explanation:
+              description: The explanation of this health check.
+              type: str
+              returned: when supported
+            suppressed:
+              description:
+                - Whether this health check is suppressed.
+                - A suppressed health check is not considered when computing the role's overall health.
+              type: bool
+              returned: when supported
+        maintenance_mode:
+          description: Whether the cluster service role is in maintenance mode.
+          type: bool
+          returned: when supported
+        maintenance_owners:
+          description: The list of objects that trigger this service to be in maintenance mode.
+          type: list
+          elements: str
+          returned: when supported
+          sample:
+            - CLUSTER
+            - SERVICE
+            - ROLE
+            - HOST
+            - CONTROL_PLANE
+        role_config_group_name:
+          description: The name of the cluster service role config group, which uniquely identifies it in a Cloudera Manager installation.
+          type: str
+          returned: when supported
+        config:
+          description: Set of role configurations for the cluster service role.
+          type: dict
+          returned: when supported
+        tags:
+          description: The dictionary of tags for the cluster service role.
+          type: dict
+          returned: when supported
+        zoo_keeper_server_mode:
+          description:
+            - The Zookeeper server mode for this cluster service role.
+            - Note that for non-Zookeeper Server roles, this will be C(null).
+          type: str
+          returned: when supported
+      returned: when supported
 """
 
 from cm_client import (
-    ApiEntityTag,
-    ApiRoleConfigGroup,
-    ApiRoleConfigGroupList,
-    ApiRoleNameList,
     ApiService,
-    ApiServiceList,
     ClustersResourceApi,
     RoleConfigGroupsResourceApi,
     ServicesResourceApi,
@@ -312,7 +647,6 @@ from ansible.module_utils.common.text.converters import to_native
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    resolve_tag_updates,
     ConfigListUpdates,
     TagUpdates,
 )
@@ -328,7 +662,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
     RoleException,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils import (
-    create_service,
+    create_service_model,
     parse_service_result,
     provision_service,
     read_service,
@@ -408,7 +742,7 @@ class ClusterService(ClouderaManagerMutableModule):
                     self.module.fail_json(msg=f"missing required arguments: type")
 
                 # Create and provision the service
-                service = create_service(
+                service = create_service_model(
                     api_client=self.api_client,
                     name=self.name,
                     type=self.type,
@@ -767,12 +1101,9 @@ def main():
                 options=dict(
                     name=dict(aliases=["role_config_group_name", "role_config_group"]),
                     display_name=dict(),
-                    role_type=dict(aliases=["type"]),
+                    role_type=dict(required=True, aliases=["type"]),
                     config=dict(type="dict", aliases=["params", "parameters"]),
                 ),
-                required_one_of=[
-                    ["name", "role_type"],
-                ],
             ),
             state=dict(
                 default="present",
