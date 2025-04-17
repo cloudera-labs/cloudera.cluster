@@ -49,6 +49,7 @@ def parse_role_config_group_result(role_config_group: ApiRoleConfigGroup) -> dic
     - base (bool)
     - display_name (str)
     - config (dict)
+    - service_name (str)
 
     Args:
         role_config_group (ApiRoleConfigGroup): Role Config Group
