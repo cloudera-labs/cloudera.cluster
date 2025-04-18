@@ -131,7 +131,7 @@ def resettable_host_templates(cm_api_client, base_cluster) -> Generator[None]:
 
 @pytest.fixture()
 def existing_host_template(
-    cm_api_client, zookeeper, role_config_group_factory, request
+    cm_api_client, zookeeper, request
 ) -> Generator[ApiHostTemplate]:
     host_template_api = HostTemplatesResourceApi(cm_api_client)
 

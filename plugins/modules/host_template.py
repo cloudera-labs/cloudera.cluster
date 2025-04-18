@@ -170,7 +170,8 @@ host_template:
       type: str
       returned: always
     cluster_name:
-      description: A reference to the enclosing cluster.
+      description:
+        - A reference to the enclosing cluster.
       type: str
       returned: always
     role_config_groups:

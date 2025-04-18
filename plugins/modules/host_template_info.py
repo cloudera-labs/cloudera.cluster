@@ -1,4 +1,7 @@
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,33 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client import HostTemplatesResourceApi, ClustersResourceApi
-from cm_client.rest import ApiException
-from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
-    parse_host_template,
-    _parse_host_templates_output,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: host_template_info
-short_description: Retrieve details of host templates.
+short_description: Retrieve details regarding a cluster's host templates.
 description:
-  - Collects detailed information about individual or all host templates.
-  - The module supports C(check_mode).
+  - Collects detailed information about individual or all host templates for a cluster.
 author:
   - "Ronald Suplina (@rsuplina)"
-requirements:
-  - cm_client
+  - "Webster Mudge (@wmudge)"
 options:
   cluster:
     description:
@@ -52,31 +36,43 @@ options:
       - The name of the host template.
     type: str
     required: no
+extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: all
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.host_template
 """
 
 EXAMPLES = r"""
----
 - name: Retrieve the defailts about a specific host template
   cloudera.cluster.host_template_info
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: "cfm_cluster"
-    name: "cfm_host_template"
+    cluster: "example_cluster"
+    name: "example_host_template"
 
 - name: Retrieve the details about all host templates within the cluster
   cloudera.cluster.host_template_info
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    cluster: "cfm_cluster"
+    cluster: "example_cluster"
 """
 
 RETURN = r"""
----
-host_template_info:
-  description:
-    - Details about host template.
+host_templates:
+  description: List of details about the host templates.
   type: list
   elements: dict
   returned: always
@@ -87,16 +83,30 @@ host_template_info:
       type: str
       returned: always
     cluster_name:
-      description: A reference to the enclosing cluster.
+      description:
+        - A reference to the enclosing cluster.
       type: dict
       returned: always
-    role_groups:
+    role_config_groups:
       description:
-        - The names of the role config groups
+        - The role config groups associated with this host template, by role config group name.
       type: list
       elements: str
       returned: always
 """
+
+from cm_client import (
+    HostTemplatesResourceApi,
+    ClustersResourceApi,
+)
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
+    parse_host_template,
+)
 
 
 class ClouderaHostTemplateInfo(ClouderaManagerModule):
@@ -108,7 +118,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
         self.name = self.get_param("name")
 
         # Initialize the return value
-        self.host_templates_output = []
+        self.output = []
 
         # Execute the logic
         self.process()
@@ -125,25 +135,29 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
             else:
                 raise ex
 
-        host_temp_api_instance = HostTemplatesResourceApi(self.api_client)
+        host_template_api = HostTemplatesResourceApi(self.api_client)
+
         if self.name:
             try:
-                self.host_templates_output = parse_host_template(
-                    host_temp_api_instance.read_host_template(
-                        cluster_name=self.cluster_name,
-                        host_template_name=self.name,
-                    ).to_dict()
+                self.output.append(
+                    parse_host_template(
+                        host_template_api.read_host_template(
+                            cluster_name=self.cluster_name,
+                            host_template_name=self.name,
+                        )
+                    )
                 )
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
 
         else:
-            self.host_templates_output = _parse_host_templates_output(
-                host_temp_api_instance.read_host_templates(
+            self.output = [
+                parse_host_template(ht)
+                for ht in host_template_api.read_host_templates(
                     cluster_name=self.cluster_name
                 ).items
-            )
+            ]
 
 
 def main():
@@ -159,7 +173,7 @@ def main():
 
     output = dict(
         changed=False,
-        host_templates_output=result.host_templates_output,
+        host_templates=result.output,
     )
 
     if result.debug:
