@@ -313,7 +313,6 @@ role:
 from collections.abc import Callable
 
 from cm_client import (
-    ApiBulkCommandList,
     ApiCommand,
     ApiRole,
     ApiRoleList,
@@ -332,7 +331,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ConfigListUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    create_role,
+    create_mgmt_role_model,
     parse_role_result,
     read_cm_role,
 )
@@ -393,7 +392,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         elif self.state in ["present", "restarted", "started", "stopped"]:
             # If it is a new role
             if not current:
-                new_role = create_role(
+                new_role = create_mgmt_role_model(
                     api_client=self.api_client,
                     role_type=self.type,
                     hostname=self.cluster_hostname,
@@ -419,7 +418,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                 else:
                     new_config = {c.name: c.value for c in current.config.items}
 
-                new_role = create_role(
+                new_role = create_mgmt_role_model(
                     api_client=self.api_client,
                     role_type=current.type,
                     hostname=self.cluster_hostname,
