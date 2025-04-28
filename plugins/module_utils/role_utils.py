@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native
+"""
+A common functions for Cloudera Manager roles
+"""
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
@@ -29,6 +30,7 @@ from cm_client import (
     ApiConfig,
     ApiConfigList,
     ApiEntityTag,
+    ApiRole,
     ApiRoleList,
     ApiRoleConfigGroupRef,
     ApiRoleNameList,
@@ -39,7 +41,6 @@ from cm_client import (
     RolesResourceApi,
     MgmtRolesResourceApi,
 )
-from cm_client import ApiRole
 
 
 class RoleException(Exception):

@@ -37,6 +37,7 @@ from cm_client import (
     ApiCluster,
     ApiCommand,
     ApiConfig,
+    ApiHostTemplate,
     ApiHostRef,
     ApiHostRefList,
     ApiRole,
@@ -89,6 +90,8 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     register_service,
     deregister_role_config_group,
     register_role_config_group,
+    deregister_host_template,
+    register_host_template,
     set_cm_role_config,
     set_cm_role_config_group,
     set_role_config_group,
@@ -1183,3 +1186,27 @@ def role_config_group_factory(
     deregister_role_config_group(
         api_client=cm_api_client, registry=role_config_groups, message=message
     )
+
+
+@pytest.fixture(scope="function")
+def host_template_factory(
+    cm_api_client,
+) -> Generator[Callable[[ApiCluster, ApiHostTemplate], ApiHostTemplate]]:
+    # Track the created host templates
+    host_templates = list[ApiHostTemplate]()
+
+    # Yield the host template factory function to the tests
+    def _wrapper(
+        cluster: ApiCluster, host_template: ApiHostTemplate
+    ) -> ApiHostTemplate:
+        return register_host_template(
+            api_client=cm_api_client,
+            registry=host_templates,
+            cluster=cluster,
+            host_template=host_template,
+        )
+
+    yield _wrapper
+
+    # Delete any registered host templates
+    deregister_host_template(api_client=cm_api_client, registry=host_templates)

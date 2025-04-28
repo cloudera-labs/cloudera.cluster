@@ -24,6 +24,8 @@ from cm_client import (
     ApiConfig,
     ApiConfigList,
     ApiHostRef,
+    ApiHostTemplate,
+    ApiHostTemplateList,
     ApiRole,
     ApiRoleConfigGroup,
     ApiRoleConfigGroupList,
@@ -36,6 +38,8 @@ from cm_client import (
     ApiServiceState,
     ClustersResourceApi,
     CommandsResourceApi,
+    HostsResourceApi,
+    HostTemplatesResourceApi,
     MgmtRolesResourceApi,
     MgmtRoleCommandsResourceApi,
     MgmtRoleConfigGroupsResourceApi,
@@ -52,6 +56,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
     get_host_ref,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
+    create_host_template_model,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     get_mgmt_roles,
@@ -442,6 +449,44 @@ def deregister_role_config_group(
                     message=f"{message}::reset",
                     body=rcg,
                 )
+
+
+def register_host_template(
+    api_client: ApiClient,
+    registry: list[ApiHostTemplate],
+    cluster: ApiCluster,
+    host_template: ApiHostTemplate,
+) -> ApiHostTemplate:
+    host_template_api = HostTemplatesResourceApi(api_client)
+
+    # Create the host template
+    created_host_template = host_template_api.create_host_templates(
+        cluster_name=cluster.name, body=ApiHostTemplateList(items=[host_template])
+    ).items[0]
+
+    # Record the host template
+    registry.append(created_host_template)
+
+    # Return the provisioned host template
+    return created_host_template
+
+
+def deregister_host_template(
+    api_client: ApiClient,
+    registry: list[ApiHostTemplate],
+) -> ApiHostTemplate:
+    host_template_api = HostTemplatesResourceApi(api_client)
+
+    # Delete the host templates
+    for ht in registry:
+        try:
+            host_template_api.delete_host_template(
+                cluster_name=ht.cluster_ref.cluster_name,
+                host_template_name=ht.name,
+            )
+        except ApiException as e:
+            if e.status != 404:
+                raise e
 
 
 def service_wide_config(

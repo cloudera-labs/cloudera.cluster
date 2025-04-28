@@ -16,26 +16,37 @@
 A common functions for Cloudera Manager host templates
 """
 
-HOST_TEMPLATE_OUTPUT = ["name", "cluster_ref", "role_config_group_refs"]
+from cm_client import (
+    ApiClusterRef,
+    ApiHostTemplate,
+    ApiRoleConfigGroup,
+    ApiRoleConfigGroupRef,
+)
 
 
-def _parse_host_template_output(host_template: dict) -> dict:
-    result = _parse_output(host_template, HOST_TEMPLATE_OUTPUT)
-    result["cluster_name"] = result["cluster_ref"]["cluster_name"]
-    result["role_groups"] = [
-        role["role_config_group_name"] for role in result["role_config_group_refs"]
+def parse_host_template(host_template: ApiHostTemplate) -> dict:
+    return dict(
+        name=host_template.name,
+        cluster_name=host_template.cluster_ref.cluster_name,
+        role_config_groups=[
+            rcg_ref.role_config_group_name
+            for rcg_ref in host_template.role_config_group_refs
+        ],
+    )
+
+
+def create_host_template_model(
+    cluster_name: str,
+    name: str,
+    role_config_groups: list[ApiRoleConfigGroup],
+) -> ApiHostTemplate:
+
+    rcg_refs = [
+        ApiRoleConfigGroupRef(role_config_group_name=r.name) for r in role_config_groups
     ]
-    del result["cluster_ref"]
-    del result["role_config_group_refs"]
-    return result
 
-
-def _parse_host_templates_output(host_templates: list) -> list:
-    parsed_templates = [template.to_dict() for template in host_templates]
-    return [
-        _parse_host_template_output(template_dict) for template_dict in parsed_templates
-    ]
-
-
-def _parse_output(host_template: dict, keys: list) -> dict:
-    return {key: host_template[key] for key in keys if key in host_template}
+    return ApiHostTemplate(
+        name=name,
+        cluster_ref=ApiClusterRef(cluster_name=cluster_name),
+        role_config_group_refs=rcg_refs,
+    )
