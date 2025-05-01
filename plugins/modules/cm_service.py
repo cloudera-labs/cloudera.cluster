@@ -580,7 +580,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group
     get_mgmt_base_role_config_group,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    create_role,
+    create_mgmt_role_model,
 )
 
 
@@ -867,7 +867,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                             else {c.name: c.value for c in existing_role.config.items}
                         )
 
-                        new_role = create_role(
+                        new_role = create_mgmt_role_model(
                             api_client=self.api_client,
                             role_type=existing_role.type,
                             hostname=incoming_hostname,
@@ -919,7 +919,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
                     incoming_role = incoming_roles_map[role_type]
 
-                    new_role = create_role(
+                    new_role = create_mgmt_role_model(
                         api_client=self.api_client,
                         role_type=incoming_role.get("type"),
                         hostname=incoming_role.get("cluster_hostname"),

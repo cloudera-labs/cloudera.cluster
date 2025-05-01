@@ -40,6 +40,7 @@ from cm_client import (
     RoleConfigGroupsResourceApi,
     RolesResourceApi,
     MgmtRolesResourceApi,
+    MgmtServiceResourceApi,
 )
 
 
@@ -294,6 +295,42 @@ def create_role(
         role.tags = [ApiEntityTag(k, v) for k, v in tags.items()]
 
     return role
+
+
+def create_mgmt_role_model(
+    api_client: ApiClient,
+    role_type: str,
+    hostname: str = None,
+    host_id: str = None,
+    config: dict = None,
+) -> ApiRole:
+    if (
+        role_type.upper()
+        not in MgmtServiceResourceApi(api_client).list_role_types().items
+    ):
+        raise InvalidRoleTypeException(
+            f"Invalid role type '{role_type}' for Cloudera Management Service"
+        )
+
+    # Set up the role type
+    mgmt_role = ApiRole(type=str(role_type).upper())
+
+    # Host assignment
+    host_ref = get_host_ref(api_client, hostname, host_id)
+    if host_ref is None:
+        raise RoleHostNotFoundException(
+            f"Host not found: hostname='{hostname}', host_id='{host_id}'"
+        )
+    else:
+        mgmt_role.host_ref = host_ref
+
+    # Role override configurations
+    if config:
+        mgmt_role.config = ApiConfigList(
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+        )
+
+    return mgmt_role
 
 
 def provision_service_role(
