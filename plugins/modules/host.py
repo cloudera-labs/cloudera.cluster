@@ -595,7 +595,7 @@ class Host(ClouderaManagerMutableModule):
                     except ApiException as ex:
                         if ex.status == 404:
                             self.module.fail_json(
-                                msg=f"Cluster does not exist:  {self.cluster}"
+                                msg=f"Cluster not found: {self.cluster}."
                             )
 
                     # Handle new cluster membership
