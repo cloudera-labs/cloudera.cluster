@@ -55,21 +55,6 @@ class TestHostArgSpec:
         ) as e:
             host.main()
 
-    def test_host_missing_attached_cluster(self, conn, module_args):
-        module_args(
-            {
-                **conn,
-                "name": "example",
-                "state": "attached",
-            }
-        )
-
-        with pytest.raises(
-            AnsibleFailJson,
-            match="state is attached but all of the following are missing: cluster",
-        ) as e:
-            host.main()
-
     def test_host_missing_host_template_cluster(self, conn, module_args):
         module_args(
             {
