@@ -17,6 +17,7 @@ import json, yaml
 from ansible.module_utils.common.text.converters import to_text, to_native
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    wait_command,
     ClouderaManagerModule,
     ClusterTemplate,
 )
@@ -837,6 +838,8 @@ class ClouderaCluster(ClouderaManagerModule):
         self.contexts = self.get_param("contexts")
         self.auto_assign = self.get_param("auto_assign")
         self.control_plane = self.get_param("control_plane")
+        self.tls = self.get_param("tls")
+        self.force = self.get_param("force")
 
         self.changed = False
         self.output = {}
@@ -912,6 +915,7 @@ class ClouderaCluster(ClouderaManagerModule):
                     if not self.module.check_mode:
                         self.cluster_api.auto_assign_roles(cluster_name=self.name)
                         refresh = True
+
             # Create cluster
             else:
                 # TODO import_cluster_template appears to construct and first run the cluster, which is NOT what present should do
@@ -921,6 +925,23 @@ class ClouderaCluster(ClouderaManagerModule):
                 else:
                     self.create_cluster_from_parameters()
 
+            # Toggle AutoTLS
+            if self.tls is not None:
+                if self.tls:
+                    enable_tls_cmd = (
+                        self.cluster_api.configure_auto_tls_services_command(
+                            cluster_name=self.name
+                        )
+                    )
+                    wait_command(
+                        api_client=self.api_client,
+                        command=enable_tls_cmd,
+                    )
+                else:
+                    disable_tls_cmd = self.cluster_api.disable_tls(
+                        cluster_name=self.name,
+                    )
+                    wait_command(api_client=self.api_client, command=disable_tls_cmd)
         elif self.state == "absent":
             # Delete cluster
             refresh = False
@@ -951,10 +972,30 @@ class ClouderaCluster(ClouderaManagerModule):
                     else:
                         self.create_cluster_from_parameters()
 
+                # Toggle AutoTLS
+                if self.tls is not None:
+                    if self.tls:
+                        enable_tls_cmd = (
+                            self.cluster_api.configure_auto_tls_services_command(
+                                cluster_name=self.name
+                            )
+                        )
+                        wait_command(
+                            api_client=self.api_client,
+                            command=enable_tls_cmd,
+                        )
+                    else:
+                        disable_tls_cmd = self.cluster_api.disable_tls(
+                            cluster_name=self.name,
+                        )
+                        wait_command(
+                            api_client=self.api_client, command=disable_tls_cmd
+                        )
+
                 self.changed = True
                 if not self.module.check_mode:
                     # If newly created or created by not yet initialize
-                    if not existing or existing.entity_status == "NONE":
+                    if not existing or existing.entity_status == "NONE" or self.force:
                         first_run = self.cluster_api.first_run(cluster_name=self.name)
                         self.wait_command(
                             first_run, polling=self.timeout, delay=self.delay
@@ -980,9 +1021,48 @@ class ClouderaCluster(ClouderaManagerModule):
                         self.create_cluster_from_template(template_contents)
                     else:
                         self.create_cluster_from_parameters()
+
+                    # Toggle AutoTLS
+                    if self.tls is not None:
+                        if self.tls:
+                            enable_tls_cmd = (
+                                self.cluster_api.configure_auto_tls_services_command(
+                                    cluster_name=self.name
+                                )
+                            )
+                            wait_command(
+                                api_client=self.api_client,
+                                command=enable_tls_cmd,
+                            )
+                        else:
+                            disable_tls_cmd = self.cluster_api.disable_tls(
+                                cluster_name=self.name,
+                            )
+                            wait_command(
+                                api_client=self.api_client, command=disable_tls_cmd
+                            )
                 # Stop an existing cluster
                 else:
                     self.changed = True
+                    # Toggle AutoTLS
+                    if self.tls is not None:
+                        if self.tls:
+                            enable_tls_cmd = (
+                                self.cluster_api.configure_auto_tls_services_command(
+                                    cluster_name=self.name
+                                )
+                            )
+                            wait_command(
+                                api_client=self.api_client,
+                                command=enable_tls_cmd,
+                            )
+                        else:
+                            disable_tls_cmd = self.cluster_api.disable_tls(
+                                cluster_name=self.name,
+                            )
+                            wait_command(
+                                api_client=self.api_client, command=disable_tls_cmd
+                            )
                     if not self.module.check_mode:
                         stop = self.cluster_api.stop_command(cluster_name=self.name)
                         self.wait_command(stop, polling=self.timeout, delay=self.delay)
@@ -1000,8 +1080,33 @@ class ClouderaCluster(ClouderaManagerModule):
                     else:
                         self.create_cluster_from_parameters()
 
+                # Toggle AutoTLS
+                if self.tls is not None:
+                    if self.tls:
+                        enable_tls_cmd = (
+                            self.cluster_api.configure_auto_tls_services_command(
+                                cluster_name=self.name
+                            )
+                        )
+                        wait_command(
+                            api_client=self.api_client,
+                            command=enable_tls_cmd,
+                        )
+                    else:
+                        disable_tls_cmd = self.cluster_api.disable_tls(
+                            cluster_name=self.name,
+                        )
+                        wait_command(
+                            api_client=self.api_client, command=disable_tls_cmd
+                        )
+
                 self.changed = True
                 if not self.module.check_mode:
+                    if self.force:
+                        first_run = self.cluster_api.first_run(cluster_name=self.name)
+                        self.wait_command(
+                            first_run, polling=self.timeout, delay=self.delay
+                        )
                     restart = self.cluster_api.restart_command(cluster_name=self.name)
                     self.wait_command(restart, polling=self.timeout, delay=self.delay)
 
@@ -1184,16 +1289,25 @@ class ClouderaCluster(ClouderaManagerModule):
             # Activate parcels
             if self.parcels:
                 parcel_api = ParcelResourceApi(self.api_client)
-                for p, v in self.parcels.items():
-                    parcel = Parcel(
-                        parcel_api=parcel_api,
-                        product=p,
-                        version=v,
-                        cluster=self.name,
-                        delay=self.delay,
-                        timeout=self.timeout,
+                try:
+                    for p, v in self.parcels.items():
+                        parcel = Parcel(
+                            parcel_api=parcel_api,
+                            product=p,
+                            version=v,
+                            cluster=self.name,
+                            delay=self.delay,
+                            timeout=self.timeout,
+                        )
+                        if self.hosts:
+                            parcel.activate()
+                        else:
+                            parcel.download()
+                except ApiException as ae:
+                    self.module.fail_json(
+                        msg="Error managing parcel states: " + to_native(ae)
                     )
-                    parcel.activate()
+
             # Apply host templates
             for ht, refs in template_map.items():
                 self.host_template_api.apply_host_template(
@@ -1574,6 +1688,8 @@ def main():
             contexts=dict(type="list", elements="str", aliases=["data_contexts"]),
             # Optional enable/disable TLS for the cluster
             tls=dict(type="bool", aliases=["tls_enabled", "cluster_tls"]),
+            # Optional force first run services initialization
+            force=dict(type="bool", aliases=["forced_init"]),
             # Optional auto-assign roles on cluster (honors existing assignments)
             auto_assign=dict(type="bool", default=False, aliases=["auto_assign_roles"]),
         ),

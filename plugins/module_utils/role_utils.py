@@ -21,20 +21,19 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     wait_commands,
     wait_bulk_commands,
 )
-from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
-    get_host_ref,
-)
 
 from cm_client import (
     ApiClient,
     ApiConfig,
     ApiConfigList,
     ApiEntityTag,
+    ApiHostRef,
     ApiRole,
     ApiRoleList,
     ApiRoleConfigGroupRef,
     ApiRoleNameList,
     ApiRoleState,
+    HostsResourceApi,
     ServicesResourceApi,
     RoleCommandsResourceApi,
     RoleConfigGroupsResourceApi,
@@ -42,6 +41,7 @@ from cm_client import (
     MgmtRolesResourceApi,
     MgmtServiceResourceApi,
 )
+from cm_client.rest import ApiException
 
 
 class RoleException(Exception):
@@ -233,6 +233,7 @@ def read_cm_roles(api_client: ApiClient) -> ApiRoleList:
     return ApiRoleList(items=roles)
 
 
+# TODO Split into CM vs cluster role models
 def create_role(
     api_client: ApiClient,
     role_type: str,
@@ -244,30 +245,50 @@ def create_role(
     role_config_group: str = None,
     tags: dict = None,
 ) -> ApiRole:
-    if (
-        role_type.upper()
-        not in ServicesResourceApi(api_client)
-        .list_role_types(
-            cluster_name=cluster_name,
-            service_name=service_name,
-        )
-        .items
-    ):
-        raise InvalidRoleTypeException(
-            f"Invalid role type '{role_type}' for service '{service_name}'"
-        )
+    if cluster_name and service_name:
+        if (
+            role_type.upper()
+            not in ServicesResourceApi(api_client)
+            .list_role_types(
+                cluster_name=cluster_name,
+                service_name=service_name,
+            )
+            .items
+        ):
+            raise InvalidRoleTypeException(
+                f"Invalid role type '{role_type}' for service '{service_name}'"
+            )
 
     # Set up the role type
     role = ApiRole(type=str(role_type).upper())
 
     # Host assignment
-    host_ref = get_host_ref(api_client, hostname, host_id)
+    if hostname:
+        host_ref = next(
+            (
+                h
+                for h in HostsResourceApi(api_client).read_hosts().items
+                if h.hostname == hostname
+            ),
+            None,
+        )
+    elif host_id:
+        try:
+            host_ref = HostsResourceApi(api_client).read_host(host_id)
+        except ApiException as ex:
+            if ex.status != 404:
+                raise ex
+            else:
+                host_ref = None
+    else:
+        raise RoleException("Specify either 'hostname' or 'host_id'")
+
     if host_ref is None:
         raise RoleHostNotFoundException(
             f"Host not found: hostname='{hostname}', host_id='{host_id}'"
         )
     else:
-        role.host_ref = host_ref
+        role.host_ref = ApiHostRef(host_id=host_ref.host_id, hostname=host_ref.hostname)
 
     # Role config group
     if role_config_group:

@@ -74,14 +74,21 @@ def wait_commands(
 
 
 def wait_command(
-    api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 10
+    api_client: ApiClient,
+    command: ApiCommand,
+    polling: int = 120,
+    delay: int = 10,
+    retry: int = 0,
 ):
     poll_count = 0
-    while command.active:
+    retry_count = 0
+
+    while command.active or retry_count < retry:
         if poll_count > polling:
             raise Exception("Command timeout: " + str(command.id))
         sleep(delay)
         poll_count += 1
+        retry_count += 1
         command = CommandsResourceApi(api_client).read_command(command.id)
     if not command.success:
         raise Exception(command.result_message)

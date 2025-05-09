@@ -19,24 +19,19 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import logging
-import os
 import pytest
 
 from pathlib import Path
 
 from cm_client import (
-    ApiConfig,
-    ApiEntityTag,
     ApiHost,
     ApiHostRef,
     ApiRole,
     ApiService,
-    ApiServiceConfig,
-    ApiServiceState,
-    ServicesResourceApi,
 )
 
 from ansible_collections.cloudera.cluster.plugins.modules import service_info
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
     get_cluster_hosts,
 )

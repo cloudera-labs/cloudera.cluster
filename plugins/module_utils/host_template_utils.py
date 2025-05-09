@@ -24,6 +24,10 @@ from cm_client import (
 )
 
 
+class HostTemplateException(Exception):
+    pass
+
+
 def parse_host_template(host_template: ApiHostTemplate) -> dict:
     return dict(
         name=host_template.name,
