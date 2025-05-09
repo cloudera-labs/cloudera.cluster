@@ -354,7 +354,6 @@ services:
 
 from cm_client import (
     ClustersResourceApi,
-    ServicesResourceApi,
 )
 from cm_client.rest import ApiException
 
@@ -392,8 +391,6 @@ class ClusterServiceInfo(ClouderaManagerModule):
                 self.module.fail_json(msg="Cluster does not exist: " + self.cluster)
             else:
                 raise ex
-
-        service_api = ServicesResourceApi(self.api_client)
 
         if self.name:
             try:
