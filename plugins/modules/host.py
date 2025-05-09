@@ -369,9 +369,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
 )
 
 
-class ClusterHost(ClouderaManagerMutableModule):
+class Host(ClouderaManagerMutableModule):
     def __init__(self, module):
-        super(ClusterHost, self).__init__(module)
+        super(Host, self).__init__(module)
 
         # Set the parameters
         self.name = self.get_param("name")
@@ -838,7 +838,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterHost(module)
+    result = Host(module)
 
     output = dict(
         changed=result.changed,
