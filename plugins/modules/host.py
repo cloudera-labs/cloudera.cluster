@@ -1,4 +1,7 @@
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -193,22 +196,44 @@ cloudera_manager:
 from cm_client import (
     ApiHost,
     ApiHostList,
+    ApiHostRef,
+    ApiHostRefList,
+    ApiRoleConfigGroup,
     ClustersResourceApi,
     HostsResourceApi,
+    HostTemplatesResourceApi,
+    RoleConfigGroupsResourceApi,
+    RolesResourceApi,
 )
 from cm_client.rest import ApiException
 
+from ansible.module_utils.common.text.converters import to_native
+
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
+    ClouderaManagerMutableModule,
+    ConfigListUpdates,
+    TagUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
     create_host_model,
+    detach_host,
     get_host,
+    get_host_roles,
     parse_host_result,
+    reconcile_host_role_configs,
+    reconcile_host_role_config_groups,
+    reconcile_host_template_assignments,
+    toggle_host_maintenance,
+    toggle_host_role_states,
+    HostMaintenanceStateException,
+    HostException,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
+    parse_role_result,
 )
 
 
-class ClusterHost(ClouderaManagerModule):
+class ClusterHost(ClouderaManagerMutableModule):
     def __init__(self, module):
         super(ClusterHost, self).__init__(module)
 
@@ -235,11 +260,14 @@ class ClusterHost(ClouderaManagerModule):
         # Execute the logic
         self.process()
 
-    @ClouderaManagerModule.handle_process
+    @ClouderaManagerMutableModule.handle_process
     def process(self):
 
         cluster_api = ClustersResourceApi(self.api_client)
         host_api = HostsResourceApi(self.api_client)
+        host_template_api = HostTemplatesResourceApi(self.api_client)
+        rcg_api = RoleConfigGroupsResourceApi(self.api_client)
+        role_api = RolesResourceApi(self.api_client)
 
         current = None
 
@@ -248,11 +276,13 @@ class ClusterHost(ClouderaManagerModule):
                 api_client=self.api_client,
                 hostname=self.name,
                 host_id=self.host_id,
+                view="full",
             )
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
 
+        # If removing
         if self.state == "absent":
             if current:
                 self.changed = True
@@ -263,13 +293,59 @@ class ClusterHost(ClouderaManagerModule):
                 if not self.module.check_mode:
                     host_api.delete_host(host_id=current["host_id"])
 
-        elif self.state == "present":
-            if current:
+        # Else if a known run state
+        elif self.state in [
+            "present",
+            "started",
+            "stopped",
+            "restarted",
+        ]:
+            # If the host does not yet exist, so create and provision the core configuration
+            if not current:
+                self.changed = True
+
+                if self.ip_address is None:
+                    self.module.fail_json(msg="missing required arguments: ip_address")
+
+                # Create and provision the host
+                host = create_host_model(
+                    api_client=self.api_client,
+                    hostname=self.name,
+                    ip_address=self.ip_address,
+                    rack_id=self.rack_id,
+                    config=self.config,
+                    tags=self.tags,
+                )
+
+                if self.module._diff:
+                    self.diff.update(before=dict(), after=parse_host_result(host))
+
+                if not self.module.check_mode:
+                    current = host_api.create_hosts(
+                        body=ApiHostList(items=[host])
+                    ).items[0]
+
+                    if not current:
+                        self.module.fail_json(
+                            msg="Unable to create new host",
+                            host=to_native(host.to_dict()),
+                        )
+
+                # Set maintenence mode
+                self.handle_maintenance(current)
+
+            # Else the host exists, so update the core configuration
+            else:
+                # Handle maintenence mode
+                self.handle_maintenance(current)
+
+                # Handle IP address configuration
                 if self.ip_address and self.ip_address != current.ip_address:
                     self.module.fail_json(
                         msg="Invalid host configuration. To update the host IP address, please remove and then add the host."
                     )
 
+                # Handle rack ID
                 if self.rack_id and self.rack_id != current.rack_id:
                     self.changed = True
 
@@ -285,114 +361,292 @@ class ClusterHost(ClouderaManagerModule):
                             host_id=current.host_id, body=current
                         )
 
-                # Handle host template assignment
-                # TODO Read the RCGs for the HT, index by type, and then compare vs the actual role types
-                # on the instance. If any deltas (read: additions), reapply the HT.
+                # Handle host configs
+                if self.config or self.purge:
+                    if self.config is None:
+                        self.config = dict()
 
-                # Handle role config group assignment
-
-                # Handle role override assignment
-
-            else:
-                if self.ip_address is None:
-                    self.module.fail_json(
-                        "Invalid host configuration. IP address is required for new hosts."
+                    config_updates = ConfigListUpdates(
+                        current.config, self.config, self.purge
                     )
 
-                current = create_host_model(
+                    if config_updates.changed:
+                        self.changed = True
+
+                        if self.module._diff:
+                            self.diff["before"].update(
+                                config=config_updates.diff["before"]
+                            )
+                            self.diff["after"].update(
+                                config=config_updates.diff["after"]
+                            )
+
+                        if not self.module.check_mode:
+                            host_api.update_host_config(
+                                host_id=current.host_id,
+                                message=self.message,
+                                body=config_updates.config,
+                            )
+
+                # Handle tags
+                if self.tags or self.purge:
+                    if self.tags is None:
+                        self.tags = dict()
+
+                    tag_updates = TagUpdates(current.tags, self.tags, self.purge)
+
+                    if tag_updates.changed:
+                        self.changed = True
+
+                        if self.module._diff:
+                            self.diff["before"].update(tags=tag_updates.diff["before"])
+                            self.diff["after"].update(tags=tag_updates.diff["after"])
+
+                        if not self.module.check_mode:
+                            if tag_updates.deletions:
+                                host_api.delete_tags(
+                                    hostname=current.hostname,
+                                    body=tag_updates.deletions,
+                                )
+
+                            if tag_updates.additions:
+                                host_api.add_tags(
+                                    hostname=current.hostname,
+                                    body=tag_updates.additions,
+                                )
+
+            # Handle attaching and detaching from clusters
+            if self.cluster or self.purge:
+
+                # If detaching from a cluster, address the role decommissioning
+                if self.cluster is None and self.purge:
+
+                    # Only remove the roles with a cluster reference
+                    if current.cluster_ref is not None:
+                        self.changed = True
+
+                        current_roles = get_host_roles(self.api_client, host=current)
+
+                        if self.module._diff:
+                            self.diff["before"].update(
+                                cluster=current.cluster_ref.cluster_name, roles=[]
+                            )
+                            self.diff["after"].update(cluster="", roles=[])
+
+                        for role in current_roles:
+                            if role.service_ref.cluster_name is not None:
+                                if self.module._diff:
+                                    self.diff["before"]["roles"].append(
+                                        parse_role_result(role)
+                                    )
+
+                                if not self.module.check_mode:
+                                    role_api.delete_role(
+                                        cluster_name=role.service_ref.cluster_name,
+                                        service_name=role.service_ref.service_name,
+                                        role_name=role.name,
+                                    )
+
+                        if not self.module.check_mode:
+                            cluster_api.remove_host(
+                                cluster_name=current.cluster_ref.cluster_name,
+                                host_id=current.host_id,
+                            )
+                # Else if cluster is defined
+                elif self.cluster:
+                    try:
+                        cluster = cluster_api.read_cluster(cluster_name=self.cluster)
+                    except ApiException as ex:
+                        if ex.status == 404:
+                            self.module.fail_json(
+                                msg=f"Cluster does not exist:  {self.cluster}"
+                            )
+
+                    # Handle new cluster membership
+                    if current.cluster_ref is None:
+                        self.changed = True
+
+                        if self.module._diff:
+                            self.diff["before"].update(cluster="")
+                            self.diff["after"].update(cluster=cluster.name)
+
+                        if not self.module.check_mode:
+                            cluster_api.add_hosts(
+                                cluster_name=cluster.name,
+                                body=ApiHostRefList(
+                                    items=[
+                                        ApiHostRef(
+                                            host_id=current.host_id,
+                                            hostname=current.hostname,
+                                        )
+                                    ]
+                                ),
+                            )
+
+                    # Handle cluster migration
+                    elif current.cluster_ref.cluster_name != cluster.name:
+                        self.changed = True
+
+                        # Detach from cluster
+                        (before_detach, after_detach) = detach_host(
+                            api_client=self.api_client,
+                            host=current,
+                            purge=self.purge,
+                            check_mode=self.module.check_mode,
+                        )
+
+                        # Attach to new cluster
+                        if not self.module.check_mode:
+                            cluster_api.add_hosts(
+                                cluster_name=cluster.name,
+                                body=ApiHostRefList(
+                                    items=[
+                                        ApiHostRef(
+                                            host_id=current.host_id,
+                                            hostname=current.hostname,
+                                        )
+                                    ]
+                                ),
+                            )
+
+                        if self.module._diff:
+                            self.diff["before"].update(
+                                cluster=current.cluster_ref.cluster_name,
+                                roles=before_detach,
+                            )
+                            self.diff["after"].update(
+                                cluster=cluster.name,
+                                roles=after_detach,
+                            )
+
+            # Handle host template assignments (argspec enforces inclusion of cluster)
+            if self.host_template:
+                try:
+                    ht = host_template_api.read_host_template(
+                        cluster_name=cluster.name,
+                        host_template_name=self.host_template,
+                    )
+                except ApiException as ex:
+                    if ex.status == 404:
+                        self.module.fail_json(
+                            msg=f"Host template, '{self.host_template}', does not exist on cluster, '{cluster.name}'"
+                        )
+
+                (before_ht, after_ht) = reconcile_host_template_assignments(
                     api_client=self.api_client,
-                    hostname=self.name,
-                    ip_address=self.ip_address,
-                    rack_id=self.rack_id,
-                    config=self.config,
-                    tags=self.tags,
+                    cluster=cluster,
+                    host=current,
+                    host_template=ht,
+                    purge=self.purge,
+                    check_mode=self.module.check_mode,
                 )
 
-                self.changed = True
+                if before_ht or after_ht:
+                    self.changed = True
+                    if self.module._diff:
+                        self.diff["before"].update(roles=before_ht)
+                        self.diff["after"].update(roles=after_ht)
 
-                if self.module._diff:
-                    self.diff.update(before=dict(), after=parse_host_result(current))
+            # Handle role config group assignment (argspec enforces inclusion of cluster)
+            # if self.role_config_groups or (not self.host_template and self.purge):
+            if self.role_config_groups:
+                # if self.role_config_groups is None:
+                #     self.role_config_groups = list()
 
-                if not self.module.check_mode:
-                    current = host_api.create_hosts(
-                        body=ApiHostList(items=[current])
-                    ).items[0]
+                try:
+                    (before_rcg, after_rcg) = reconcile_host_role_config_groups(
+                        api_client=self.api_client,
+                        cluster=cluster,
+                        host=current,
+                        role_config_groups=self.role_config_groups,
+                        purge=self.purge,
+                        check_mode=self.module.check_mode,
+                    )
+                except HostException as he:
+                    self.module.fail_json(msg=to_native(he))
 
-        elif self.state in ["attached", "detached"]:
+                if before_rcg or after_rcg:
+                    self.changed = True
+                    if self.module._diff:
+                        self.diff["before"].update(role_config_groups=before_rcg)
+                        self.diff["after"].update(role_config_groups=after_rcg)
 
-            try:
-                cluster_api.read_cluster(cluster_name=self.name).to_dict()
-            except ApiException as ex:
-                if ex.status == 404:
-                    self.module.fail_json(msg=f"Cluster does not exist:  {self.name}")
+            # Handle role override assignments (argspec enforces inclusion of cluster)
+            # if self.roles or self.purge:
+            if self.roles:
+                # if self.roles is None:
+                #     self.roles = list()
 
-            if self.state == "attached":
-                if current:
-                    try:
-                        if not self.module.check_mode:
-                            host_list = ApiHostList(
-                                items=[
-                                    ApiHost(
-                                        hostname=self.cluster_hostname,
-                                        host_id=current["host_id"],
-                                    )
-                                ]
-                            )
-                            cluster_api.add_hosts(
-                                cluster_name=self.name, body=host_list
-                            )
-                            host_id = current["host_id"]
-                            self.changed = True
-                    except ApiException as ex:
-                        if ex.status == 400:
-                            pass
-                else:
-                    host_params = {
-                        "hostname": self.cluster_hostname,
-                        "ip_address": self.ip_address,
-                    }
-                    if self.rack_id:
-                        host_params["rack_id"] = self.rack_id
-                    if not self.module.check_mode:
-                        new_host_param = ApiHostList(items=[ApiHost(**host_params)])
-                        create_host = host_api.create_hosts(body=new_host_param)
-                        host_list = ApiHostList(
-                            items=[
-                                ApiHost(
-                                    hostname=self.cluster_hostname,
-                                    host_id=create_host.items[0].host_id,
-                                )
-                            ]
-                        )
-                        add_host = cluster_api.add_hosts(
-                            cluster_name=self.name, body=host_list
-                        )
-                        host_id = add_host.items[0].host_id
-                        self.changed = True
+                try:
+                    (before_role, after_role) = reconcile_host_role_configs(
+                        api_client=self.api_client,
+                        host=current,
+                        role_configs=self.roles,
+                        purge=self.purge,
+                        check_mode=self.module.check_mode,
+                        message=self.message,
+                    )
+                except HostException as he:
+                    self.module.fail_json(msg=to_native(he))
 
-            elif self.state == "detached":
-                if (
-                    current
-                    and current.get("cluster_ref")
-                    and current["cluster_ref"].get("cluster_name")
-                ):
-                    if not self.module.check_mode:
-                        cluster_api.remove_host(
-                            cluster_name=current["cluster_ref"]["cluster_name"],
-                            host_id=current["host_id"],
-                        )
-                        host_id = current["host_id"]
-                        self.changed = True
+                if before_role or after_role:
+                    self.changed = True
+                    if self.module._diff:
+                        self.diff["before"].update(roles=before_role)
+                        self.diff["after"].update(roles=after_role)
 
-        # Refresh if state has changed
-        if self.changed:
-            self.output = parse_host_result(host_api.read_host(host_id=current.host_id))
+            # Handle host role states
+            # TODO Examine to make sure they exit if no cluster or roles to exec upon
+            if self.state in ["started", "stopped", "restarted"]:
+                (before_state, after_state) = toggle_host_role_states(
+                    api_client=self.api_client,
+                    host=current,
+                    state=self.state,
+                    check_mode=self.module.check_mode,
+                )
+
+                if before_state or after_state:
+                    self.changed = True
+                    if self.module._diff:
+                        self.diff["before"].update(roles=before_state)
+                        self.diff["after"].update(roles=after_state)
+
+            # Refresh if state has changed
+            if self.changed:
+                self.output = parse_host_result(
+                    get_host(
+                        api_client=self.api_client,
+                        host_id=current.host_id,
+                        view="full",
+                    )
+                )
+            else:
+                self.output = parse_host_result(current)
+
         else:
-            self.output = parse_host_result(current)
+            self.module.fail_json(msg="Unknown host state: " + self.state)
+
+    def handle_maintenance(self, host: ApiHost) -> None:
+        if self.maintenance is not None:
+            try:
+                state_changed = toggle_host_maintenance(
+                    api_client=self.api_client,
+                    host=host,
+                    maintenance=self.maintenance,
+                    check_mode=self.module.check_mode,
+                )
+            except HostMaintenanceStateException as ex:
+                self.module.fail_json(msg=to_native(ex))
+
+            if state_changed:
+                self.changed = True
+                if self.module._diff:
+                    self.diff["before"].update(maintenance_mode=host.maintenance_mode)
+                    self.diff["after"].update(maintenance_mode=self.maintenance)
 
 
 def main():
-    module = ClouderaManagerModule.ansible_module(
+    module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
             name=dict(aliases=["cluster_hostname"]),
             cluster=dict(aliases=["cluster_name"]),
@@ -427,18 +681,34 @@ def main():
             maintenance=dict(type="bool", aliases=["maintenance_mode"]),
             state=dict(
                 default="present",
-                choices=["present", "absent", "attached", "detached"],
+                choices=[
+                    "present",
+                    "absent",
+                    "attached",
+                    "detached",
+                    "started",
+                    "stopped",
+                    "restarted",
+                ],
             ),
         ),
         required_one_of=[
             ("name", "host_id"),
         ],
+        mutually_exclusive=[
+            ["host_template", "role_config_groups"],
+        ],
         required_if=[
             ("state", "attached", ("cluster",), False),
-            # ("state", "attached", ("name", "ip_address",), False),
-            # ("state", "detached", ("name",), False),
-            # ("state", "present", ("ip_address",), False), # TODO Move to execution check
+            ("state", "started", ("cluster",), False),
+            ("state", "stopped", ("cluster",), False),
+            ("state", "restarted", ("cluster",), False),
         ],
+        required_by={
+            "host_template": "cluster",
+            "role_config_groups": "cluster",
+            "roles": "cluster",
+        },
         supports_check_mode=True,
     )
 
