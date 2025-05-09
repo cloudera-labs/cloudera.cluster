@@ -30,6 +30,7 @@ from cm_client import (
     ApiHostRef,
     ApiHostRefList,
     ApiHostRef,
+    ApiHostsToRemoveArgs,
     ApiRole,
     ApiRoleList,
     ApiService,
@@ -40,6 +41,7 @@ from cm_client import (
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    wait_command,
     wait_commands,
     TagUpdates,
     ConfigListUpdates,
@@ -244,6 +246,7 @@ def resettable_cluster(cm_api_client, base_cluster):
 @pytest.fixture()
 def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], ApiHost]]:
     host_api = HostsResourceApi(cm_api_client)
+    cluster_api = ClustersResourceApi(cm_api_client)
 
     # Registry of resettable hosts
     registry = list[ApiHost]()
@@ -262,17 +265,17 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
         current_hosts_map[host.host_id] = host
 
     # Reset each host
-    for h in registry:
-        target_host = current_hosts_map.get(h.host_id, None)
+    for previous_host in registry:
+        target_host = current_hosts_map.get(previous_host.host_id, None)
 
         # If the host was deleted, recreate
         if target_host is None:
-            # TODO Handle creation
+            # TODO Handle host creation
             pass
         else:
             # Tags
             tag_updates = TagUpdates(
-                target_host.tags, {t.name: t.value for t in h.tags}, True
+                target_host.tags, {t.name: t.value for t in previous_host.tags}, True
             )
             if tag_updates.deletions:
                 host_api.delete_tags(
@@ -287,11 +290,13 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
                 )
 
             # Config
-            if h.config is None:
-                h.config = ApiConfigList(items=[])
+            if previous_host.config is None:
+                previous_host.config = ApiConfigList(items=[])
 
             config_updates = ConfigListUpdates(
-                target_host.config, {c.name: c.value for c in h.config.items}, True
+                target_host.config,
+                {c.name: c.value for c in previous_host.config.items},
+                True,
             )
             host_api.update_host_config(
                 host_id=target_host.host_id,
@@ -300,5 +305,42 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
             )
 
             # Cluster
+            if (
+                previous_host.cluster_ref is not None
+                and target_host.cluster_ref is not None
+                and previous_host.cluster_ref.cluster_name
+                != target_host.cluster_ref.cluster_name
+            ) or (
+                previous_host.cluster_ref is None
+                and target_host.cluster_ref is not None
+            ):
+                decommission_cmd = host_api.remove_hosts_from_cluster(
+                    body=ApiHostsToRemoveArgs(hosts_to_remove=[target_host.hostname])
+                )
+                wait_command(
+                    api_client=cm_api_client,
+                    command=decommission_cmd,
+                )
+
+            if (
+                previous_host.cluster_ref is not None
+                and target_host.cluster_ref is not None
+                and previous_host.cluster_ref.cluster_name
+                != target_host.cluster_ref.cluster_name
+            ) or (
+                previous_host.cluster_ref is not None
+                and target_host.cluster_ref is None
+            ):
+                cluster_api.add_hosts(
+                    cluster_name=previous_host.cluster_ref.cluster_name,
+                    body=ApiHostRefList(
+                        items=[
+                            ApiHostRef(
+                                host_id=target_host.host_id,
+                                hostname=previous_host.hostname,
+                            )
+                        ]
+                    ),
+                )
 
             # Roles
