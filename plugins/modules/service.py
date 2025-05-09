@@ -739,7 +739,7 @@ class ClusterService(ClouderaManagerMutableModule):
                 self.changed = True
 
                 if self.type is None:
-                    self.module.fail_json(msg=f"missing required arguments: type")
+                    self.module.fail_json(msg="missing required arguments: type")
 
                 # Create and provision the service
                 service = create_service_model(
