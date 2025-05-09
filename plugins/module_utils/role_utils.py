@@ -337,13 +337,34 @@ def create_mgmt_role_model(
     mgmt_role = ApiRole(type=str(role_type).upper())
 
     # Host assignment
-    host_ref = get_host_ref(api_client, hostname, host_id)
+    if hostname:
+        host_ref = next(
+            (
+                h
+                for h in HostsResourceApi(api_client).read_hosts().items
+                if h.hostname == hostname
+            ),
+            None,
+        )
+    elif host_id:
+        try:
+            host_ref = HostsResourceApi(api_client).read_host(host_id)
+        except ApiException as ex:
+            if ex.status != 404:
+                raise ex
+            else:
+                host_ref = None
+    else:
+        raise RoleException("Specify either 'hostname' or 'host_id'")
+
     if host_ref is None:
         raise RoleHostNotFoundException(
             f"Host not found: hostname='{hostname}', host_id='{host_id}'"
         )
     else:
-        mgmt_role.host_ref = host_ref
+        mgmt_role.host_ref = ApiHostRef(
+            host_id=host_ref.host_id, hostname=host_ref.hostname
+        )
 
     # Role override configurations
     if config:
