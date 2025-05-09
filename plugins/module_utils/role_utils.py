@@ -233,6 +233,7 @@ def read_cm_roles(api_client: ApiClient) -> ApiRoleList:
     return ApiRoleList(items=roles)
 
 
+# TODO Split into CM vs cluster role models
 def create_role(
     api_client: ApiClient,
     role_type: str,
@@ -244,18 +245,19 @@ def create_role(
     role_config_group: str = None,
     tags: dict = None,
 ) -> ApiRole:
-    if (
-        role_type.upper()
-        not in ServicesResourceApi(api_client)
-        .list_role_types(
-            cluster_name=cluster_name,
-            service_name=service_name,
-        )
-        .items
-    ):
-        raise InvalidRoleTypeException(
-            f"Invalid role type '{role_type}' for service '{service_name}'"
-        )
+    if cluster_name and service_name:
+        if (
+            role_type.upper()
+            not in ServicesResourceApi(api_client)
+            .list_role_types(
+                cluster_name=cluster_name,
+                service_name=service_name,
+            )
+            .items
+        ):
+            raise InvalidRoleTypeException(
+                f"Invalid role type '{role_type}' for service '{service_name}'"
+            )
 
     # Set up the role type
     role = ApiRole(type=str(role_type).upper())
