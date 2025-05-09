@@ -25,6 +25,7 @@ from cm_client import (
     ApiCluster,
     ApiHost,
     ClustersResourceApi,
+    HostsResourceApi,
 )
 
 
@@ -53,10 +54,19 @@ def parse_cluster_result(cluster: ApiCluster) -> dict:
 
 # TODO Convert to use cluster_name vs the ApiCluster object for broader usage in pytest fixtures
 def get_cluster_hosts(api_client: ApiClient, cluster: ApiCluster) -> list[ApiHost]:
-    return (
+    hosts = (
         ClustersResourceApi(api_client)
         .list_hosts(
             cluster_name=cluster.name,
         )
         .items
     )
+
+    host_api = HostsResourceApi(api_client)
+
+    for h in hosts:
+        h.config = host_api.read_host_config(
+            host_id=h.host_id,
+        )
+
+    return hosts
