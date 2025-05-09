@@ -330,6 +330,7 @@ host:
       returned: when supported
 """
 
+
 from cm_client import (
     ApiHost,
     ApiHostList,
@@ -338,7 +339,8 @@ from cm_client import (
     ClustersResourceApi,
     HostsResourceApi,
     HostTemplatesResourceApi,
-    RoleConfigGroupsResourceApi,
+    ParcelResourceApi,
+    ParcelsResourceApi,
     RolesResourceApi,
 )
 from cm_client.rest import ApiException
@@ -363,6 +365,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import
     toggle_host_role_states,
     HostMaintenanceStateException,
     HostException,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    Parcel,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     parse_role_result,
@@ -402,7 +407,8 @@ class Host(ClouderaManagerMutableModule):
         cluster_api = ClustersResourceApi(self.api_client)
         host_api = HostsResourceApi(self.api_client)
         host_template_api = HostTemplatesResourceApi(self.api_client)
-        rcg_api = RoleConfigGroupsResourceApi(self.api_client)
+        parcels_api = ParcelsResourceApi(self.api_client)
+        parcel_api = ParcelResourceApi(self.api_client)
         role_api = RolesResourceApi(self.api_client)
 
         current = None
@@ -607,6 +613,7 @@ class Host(ClouderaManagerMutableModule):
                             self.diff["after"].update(cluster=cluster.name)
 
                         if not self.module.check_mode:
+                            # Add the host to the cluster
                             cluster_api.add_hosts(
                                 cluster_name=cluster.name,
                                 body=ApiHostRefList(
@@ -618,6 +625,23 @@ class Host(ClouderaManagerMutableModule):
                                     ]
                                 ),
                             )
+
+                            parcel_api = ParcelResourceApi(self.api_client)
+                            try:
+                                for parcel in parcels_api.read_parcels(
+                                    cluster_name=cluster.name
+                                ).items:
+                                    if parcel.stage in ["DOWNLOADED", "DISTRIBUTED"]:
+                                        Parcel(
+                                            parcel_api=parcel_api,
+                                            product=parcel.product,
+                                            version=parcel.version,
+                                            cluster=cluster.name,
+                                        ).activate()
+                            except ApiException as ae:
+                                self.module.fail_json(
+                                    msg="Error managing parcel states: " + to_native(ae)
+                                )
 
                     # Handle cluster migration
                     elif current.cluster_ref.cluster_name != cluster.name:
@@ -668,14 +692,19 @@ class Host(ClouderaManagerMutableModule):
                             msg=f"Host template, '{self.host_template}', does not exist on cluster, '{cluster.name}'"
                         )
 
-                (before_ht, after_ht) = reconcile_host_template_assignments(
-                    api_client=self.api_client,
-                    cluster=cluster,
-                    host=current,
-                    host_template=ht,
-                    purge=self.purge,
-                    check_mode=self.module.check_mode,
-                )
+                try:
+                    (before_ht, after_ht) = reconcile_host_template_assignments(
+                        api_client=self.api_client,
+                        cluster=cluster,
+                        host=current,
+                        host_template=ht,
+                        purge=self.purge,
+                        check_mode=self.module.check_mode,
+                    )
+                except ApiException as ex:
+                    self.module.fail_json(
+                        msg=f"Error whil reconciling host template assignments: {to_native(ex)}"
+                    )
 
                 if before_ht or after_ht:
                     self.changed = True
