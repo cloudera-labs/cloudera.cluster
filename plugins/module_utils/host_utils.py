@@ -16,6 +16,8 @@
 A common functions for Cloudera Manager hosts
 """
 
+from time import sleep
+
 from cm_client import (
     ApiClient,
     ApiCluster,
@@ -54,6 +56,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
     provision_service_role,
     read_role,
     read_roles,
+)
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    wait_parcel_staging,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
     get_base_role_config_group,
@@ -345,6 +350,12 @@ def reconcile_host_role_config_groups(
         cluster_rcgs=cluster_rcgs,
     )
 
+    # Read the parcel states for the cluster until all are at a stable stage
+    wait_parcel_staging(
+        api_client=api_client,
+        cluster=cluster,
+    )
+
     # Reconcile the role config groups on the host with the declared role config groups
     return _reconcile_host_rcgs(
         api_client=api_client,
@@ -532,24 +543,52 @@ def reconcile_host_template_assignments(
             )
 
         if not check_mode:
-            # Apply the host template
-            apply_cmd = host_template_api.apply_host_template(
-                cluster_name=cluster.name,
-                host_template_name=host_template.name,
-                start_roles=False,
-                body=ApiHostRefList(
-                    items=[ApiHostRef(host_id=host.host_id, hostname=host.hostname)]
-                ),
-            )
-            wait_command(
+            # Read the parcel states for the cluster until all are at a stable stage
+            wait_parcel_staging(
                 api_client=api_client,
-                command=apply_cmd,
+                cluster=cluster,
             )
+
+            # Apply the host template
+            def _apply():
+                apply_cmd = host_template_api.apply_host_template(
+                    cluster_name=cluster.name,
+                    host_template_name=host_template.name,
+                    start_roles=False,
+                    body=ApiHostRefList(
+                        items=[ApiHostRef(host_id=host.host_id, hostname=host.hostname)]
+                    ),
+                )
+                wait_command(
+                    api_client=api_client,
+                    command=apply_cmd,
+                )
+
+            retries = 3
+            delay = 10
+            attempts = 0
+            while attempts < retries:
+                try:
+                    _apply()
+                    break
+                except ApiException as ae:
+                    attempts += 1
+                    if ae.status == 400:
+                        sleep(delay)
+                    else:
+                        raise ae
 
         return (diff_before, diff_after)
 
     # Else the host has role assignments
     else:
+        # Read the parcel states for the cluster until all are at a stable stage
+        wait_parcel_staging(
+            api_client=api_client,
+            cluster=cluster,
+        )
+
+        # Reconcile the role assignments of the host template
         return _reconcile_host_rcgs(
             api_client=api_client,
             host=host,

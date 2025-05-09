@@ -20,11 +20,21 @@ import time
 
 from enum import IntEnum
 
-from cm_client import ApiParcel, ParcelResourceApi
+from cm_client import (
+    ApiClient,
+    ApiCluster,
+    ApiParcel,
+    ParcelResourceApi,
+    ParcelsResourceApi,
+)
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
 )
+
+
+class ParcelException(Exception):
+    pass
 
 
 class Parcel(object):
@@ -140,3 +150,34 @@ def parse_parcel_result(parcel: ApiParcel) -> dict:
     output = dict(cluster_name=parcel.cluster_ref.cluster_name)
     output.update(normalize_output(parcel.to_dict(), PARCEL))
     return output
+
+
+def wait_parcel_staging(
+    api_client: ApiClient, cluster: ApiCluster, delay: int = 15, timeout: int = 3600
+) -> None:
+    parcels_api = ParcelsResourceApi(api_client)
+
+    end_time = time.time() + timeout
+
+    while end_time > time.time():
+        # For each cluster parcel, check parcel stage for stable state
+        parcel_status = [
+            parcel
+            for parcel in parcels_api.read_parcels(cluster_name=cluster.name).items
+            if parcel.stage
+            not in [
+                "UNAVAILABLE",
+                "AVAILABLE_REMOTELY",
+                "DOWNLOADED",
+                "DISTRIBUTED",
+                "ACTIVATED",
+            ]
+        ]
+        if not parcel_status:
+            return
+        else:
+            time.sleep(delay)
+
+    raise ParcelException(
+        f"Failed to reach stable parcel stages for cluster, '{cluster.name}': timeout ({timeout} secs)"
+    )
