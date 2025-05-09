@@ -20,87 +20,125 @@ __metaclass__ = type
 
 import logging
 import pytest
-
-from collections.abc import Callable, Generator
-from pathlib import Path
-
-from cm_client import (
-    ApiConfig,
-    ApiConfigList,
-    ApiEntityTag,
-    ApiHost,
-    ApiHostList,
-    ApiHostRef,
-    ApiHostRefList,
-    ApiHostTemplate,
-    ApiHostTemplateList,
-    ApiHostRef,
-    ApiRole,
-    ApiRoleConfigGroup,
-    ApiRoleConfigGroupRef,
-    ApiRoleList,
-    ApiService,
-    ClouderaManagerResourceApi,
-    ClustersResourceApi,
-    HostsResourceApi,
-    HostTemplatesResourceApi,
-    RolesResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
+import random
 
 from ansible_collections.cloudera.cluster.plugins.modules import host
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    wait_commands,
-    TagUpdates,
-    ConfigListUpdates,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
-    get_cluster_hosts,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    create_role,
-    provision_service_role,
-    read_roles,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
-    create_host_template_model,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
-    get_host_roles,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    get_base_role_config_group,
-)
+
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
-    deregister_service,
-    register_service,
 )
 
 LOG = logging.getLogger(__name__)
 
 
-class TestHostAttached:
-    def test_host_create_invalid_cluster(self, conn, module_args):
+class TestHostAttachedCluster:
+    def test_host_attach_invalid_cluster(
+        self, conn, module_args, resettable_host, detached_hosts
+    ):
+        target_host = resettable_host(random.choice(detached_hosts))
+
         module_args(
             {
                 **conn,
+                "name": target_host.hostname,
+                "cluster": "BOOM",
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(
+            AnsibleFailJson,
+            match="Cluster not found: BOOM",
+        ):
             host.main()
 
+    def test_host_attach_cluster(
+        self, conn, module_args, base_cluster, resettable_host, detached_hosts
+    ):
+        target_host = resettable_host(random.choice(detached_hosts))
 
-class TestHostDetached:
-    def test_host_create_invalid_cluster(self, conn, module_args):
         module_args(
             {
                 **conn,
+                "name": target_host.hostname,
+                "cluster": base_cluster.name,
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(AnsibleExitJson) as e:
             host.main()
+
+        assert e.value.changed == True
+        assert e.value.host["cluster_name"] == base_cluster.name
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["cluster_name"] == base_cluster.name
+
+
+@pytest.mark.skip("Requires set up of two clusters")
+class TestHostMigrateClusters:
+    def test_host_migrate_cluster(
+        self, conn, module_args, base_cluster, resettable_host, detached_hosts
+    ):
+        target_host = resettable_host(random.choice(detached_hosts))
+
+        module_args(
+            {
+                **conn,
+                "name": target_host.hostname,
+                "cluster": base_cluster.name,
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == True
+        assert e.value.host["cluster_name"] == base_cluster.name
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["cluster_name"] == base_cluster.name
+
+
+class TestHostDetachedCluster:
+    def test_host_detach(self, conn, module_args, attached_hosts, resettable_host):
+        target_host = resettable_host(random.choice(attached_hosts))
+
+        module_args(
+            {
+                **conn,
+                "name": target_host.hostname,
+                "purge": True,
+            }
+        )
+
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == True
+        assert e.value.host["cluster_name"] == None
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["cluster_name"] == None
+
+
+@pytest.mark.skip("Requires new host")
+class TestHostCreate:
+    pass
+
+
+@pytest.mark.skip("Requires existing host")
+class TestHostDestroy:
+    pass
