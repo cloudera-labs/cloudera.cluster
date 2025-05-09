@@ -487,21 +487,9 @@ def reconcile_host_template_assignments(
     check_mode: bool,
 ) -> tuple[list[dict], list[dict]]:
 
-    # diff_before, diff_after = list[dict](), list[dict]()
-
     host_template_api = HostTemplatesResourceApi(api_client)
-    # service_api = ServicesResourceApi(api_client)
-    # rcg_api = RoleConfigGroupsResourceApi(api_client)
-    # role_api = RolesResourceApi(api_client)
 
     # Index by all cluster role config groups by name
-    # cluster_rcg_map = {
-    #     rcg.name: rcg
-    #     for service in service_api.read_services(cluster_name=cluster.name).items
-    #     for rcg in rcg_api.read_role_config_groups(
-    #         cluster_name=cluster.name, service_name=service.name
-    #     ).items
-    # }
     cluster_rcg_map = _read_cluster_rcgs(
         api_client=api_client,
         cluster=cluster,
@@ -520,22 +508,6 @@ def reconcile_host_template_assignments(
             )
 
     # Retrieve the associated role config groups from each installed role
-    # current_rcgs = dict[str, ApiRoleConfigGroup]()
-    # for role_ref in host.role_refs:
-    #     role = read_role(
-    #         api_client=api_client,
-    #         cluster_name=role_ref.cluster_name,
-    #         service_name=role_ref.service_name,
-    #         role_name=role_ref.role_name,
-    #     )
-    #     if role.role_config_group_ref.role_config_group_name in cluster_rcg_map:
-    #         current_rcgs[
-    #             role.role_config_group_ref.role_config_group_name
-    #         ] = cluster_rcg_map[role.role_config_group_ref.role_config_group_name]
-    #     else:
-    #         raise Exception(
-    #             f"Invalid role config group reference, '{role.role_config_group_ref.role_config_group_name}', on host, {host.hostname}"
-    #         )
     current_rcgs = _read_host_rcgs(
         api_client=api_client,
         host=host,
@@ -587,73 +559,6 @@ def reconcile_host_template_assignments(
             purge=purge,
             check_mode=check_mode,
         )
-        # additions = set(ht_rcgs.keys()) - set(current_rcgs.keys())
-        # deletions = set(current_rcgs.keys()) - set(ht_rcgs.keys())
-
-        # # If the host template has additional assignments
-        # if additions:
-        #     for add_rcg_name in additions:
-
-        #         # Retrieve the role config group by name from the cluster
-        #         add_rcg = cluster_rcg_map[add_rcg_name]
-
-        #         # Create the role instance model using the role config group
-        #         created_role = create_role(
-        #             api_client=api_client,
-        #             host_id=host.host_id,
-        #             cluster_name=add_rcg.service_ref.cluster_name,
-        #             service_name=add_rcg.service_ref.service_name,
-        #             role_type=add_rcg.role_type,
-        #             role_config_group=add_rcg.name,
-        #         )
-
-        #         diff_before.append(dict())
-        #         diff_after.append(created_role.to_dict())
-
-        #         if not check_mode:
-        #             provision_service_role(
-        #                 api_client=api_client,
-        #                 cluster_name=add_rcg.service_ref.cluster_name,
-        #                 service_name=add_rcg.service_ref.service_name,
-        #                 role=created_role,
-        #             )
-
-        # # If the host has extraneous assignments
-        # if deletions and purge:
-        #     for del_rcg_name in deletions:
-
-        #         # Retrieve the current role config group by name
-        #         del_rcg = cluster_rcg_map[del_rcg_name]  # current_rcgs[del_rcg_name]
-
-        #         # Retrieve the role instance on the host via the role config group's type
-        #         del_roles = read_roles(
-        #             api_client=api_client,
-        #             host_id=host.host_id,
-        #             cluster_name=del_rcg.service_ref.cluster_name,
-        #             service_name=del_rcg.service_ref.service_name,
-        #             type=del_rcg.role_type,
-        #         ).items
-
-        #         if not del_roles:
-        #             raise Exception(
-        #                 f"Error reading role type, '{del_rcg.role_type}', for service, '{del_rcg.service_ref.service_name}', on cluster, '{del_rcg.service_ref.cluster_name}'"
-        #             )
-        #         if len(del_roles) != 1:
-        #             raise Exception(
-        #                 f"Error, multiple instances for role type, '{del_rcg.role_type}', for service, '{del_rcg.service_ref.service_name}', on cluster, '{del_rcg.service_ref.cluster_name}'"
-        #             )
-
-        #         diff_before.append(del_roles[0].to_dict())
-        #         diff_after.append(dict())
-
-        #         if not check_mode:
-        #             role_api.delete_role(
-        #                 cluster_name=del_roles[0].service_ref.cluster_name,
-        #                 service_name=del_roles[0].service_ref.service_name,
-        #                 role_name=del_roles[0].name,
-        #             )
-
-    # return (diff_before, diff_after)
 
 
 def toggle_host_role_states(
