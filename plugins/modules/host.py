@@ -17,59 +17,156 @@
 
 DOCUMENTATION = r"""
 module: host
-short_description: Manage hosts within Cloudera Manager
+short_description: Manage Cloudera Manager hosts
 description:
-  - Allows for the management of hosts within the Cloudera Manager.
-  - It provides functionalities to create, delete, attach, or detach host instance from a cluster.
+  - Allows for the management of Cloudera Manager hosts.
+  - Functionality includes creation and deletion of hosts; host cluster assignment, host template, role config group assignment, and host and role instance configuration.
 author:
   - "Ronald Suplina (@rsuplina)"
-requirements:
-  - cm_client
+  - "Webster Mudge (@wmudge)"
 options:
-  cluster_hostname:
+  name:
     description:
       - The name of the host.
+      - One of O(name) or O(host_id) is required.
     type: str
-    required: yes
-  host_ip:
-    description:
-      - The ip of the host.
-    type: str
-    required: no
     aliases:
-        - cluster_host_ip
+      - cluster_hostname
+  cluster:
+    description:
+      - The name of the associated (attached) cluster.
+      - To remove from a cluster, omit and set I(purge=True).
+    type: str
+    aliases:
+      - cluster_name
+  host_id:
+    description:
+      - The unique identifier of the host. Read-only.
+      - One of O(name) or O(host_id) is required.
+    type: str
+    aliases:
+  ip_address:
+    description:
+      - The IP address of the host.
+    type: str
+    aliases:
+        - host_ip
   rack_id:
     description:
       - The rack ID for this host.
     type: str
-    required: no
-  name:
+  config:
     description:
-      - The name of the CM Cluster.
+      - The host configuration overrides to set.
+      - To unset a parameter, use V(None) as the value.
+    type: dict
+    aliases:
+      - params
+      - parameters
+  host_template:
+    description:
+      - The host template (and associated role instances) to apply to the host.
     type: str
-    required: no
+    aliases:
+      - template
+  roles:
+    description:
+      - Role configuration overrides for the host.
+    type: list
+    elements: dict
+    options:
+      service:
+        description:
+          - The service of the role instance on the host.
+        type: str
+        required: yes
+        aliases:
+          - service_name
+      type:
+        description:
+          - The role type of the role instance on the host.
+        type: str
+        required: yes
+        aliases:
+          - role_type
+      config:
+        description:
+          - The host configuration overrides to set.
+          - To unset a parameter, use V(None) as the value.
+        type: dict
+        aliases:
+          - params
+          - parameters
+  role_config_groups:
+    description:
+      - Role config groups (and associated role instances) to apply to the host.
+    type: list
+    elements: dict
+    options:
+      service:
+        description:
+          - The service of the role config group (and associated role instance) on the host.
+        type: str
+        required: yes
+        aliases:
+          - service_name
+      type:
+        description:
+          - The base role type of the role config group (and associated role instance) on the host.
+          - One of O(type) or O(name) is required.
+        type: str
+        aliases:
+          - role_type
+      name:
+        description:
+          - The name of the role config group (and associated role instance) on the host.
+          - One of O(type) or O(name) is required.
+        type: str
+  tags:
+    description:
+      - A set of tags applied to the host.
+      - To unset a tag, use V(None) as its value.
+    type: dict
+  purge:
+    description:
+      - Flag for whether the declared role configuration overrides, tags, and associated role instance (via O(host_template) or O(role_config_groups)) should append to existing entries or overwrite, i.e. reset, to only the declared entries.
+      - To clear all configuration and assignments, set empty dictionaries, e.g. O(config={}), or omit the parameter, e.g. O(role_config_groups), and set O(purge=True).
+    type: bool
+    default: False
+  maintenance:
+    description:
+      - Flag for whether the host should be in maintenance mode.
+    type: bool
+    aliases:
+      - maintenance_mode
   state:
     description:
       - State of the host.
+      - The states V(started), V(stopped), and V(restarted) refer the state of the host's role instances.
     type: str
-    default: 'present'
+    default: present
     choices:
-      - 'present'
-      - 'absent'
-      - 'attached'
-      - 'detached'
-    required: False
+      - present
+      - absent
+      - started
+      - stopped
+      - restarted
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - cloudera.cluster.message
 attributes:
   check_mode:
     support: full
   diff_mode:
-    support: none
+    support: full
   platform:
     platforms: all
+requirements:
+  - cm-client
+seealso:
+  - module: cloudera.cluster.host_info
 """
 
 EXAMPLES = r"""
@@ -111,86 +208,126 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
-cloudera_manager:
-    description: Details about Cloudera Manager Host
-    type: dict
-    contains:
-        clusterRef:
-            description: A reference to the enclosing cluster.
-            type: str
-            returned: optional
-        commissionState:
-            description: Represents the Commission state of an entity.
-            type: str
-            returned: optional
-        distribution:
-            description: OS distribution details.
-            type: dict
-            returned: optional
-        entity_status:
-            description: The single value used by the Cloudera Manager UI to represent the status of the entity.
-            type: str
-            returned: optional
-        health_checks:
-            description: Represents a result from a health test performed by Cloudera Manager for an entity.
-            type: list
-            returned: optional
-        health_summary:
-            description: The summary status of health check.
-            type: str
-            returned: optional
-        host_id:
-            description: A unique host identifier. This is not the same as the hostname (FQDN). It is a distinct value that remains the same even if the hostname changes.
-            type: str
-            returned: optional
-        host_url:
-            description: A URL into the Cloudera Manager web UI for this specific host.
-            type: str
-            returned: optional
-        hostname:
-            description: The hostname. This field is not mutable after the initial creation.
-            type: str
-            returned: optional
-        ip_address:
-            description: The host IP address. This field is not mutable after the initial creation.
-            type: str
-            returned: optional
-        last_heartbeat:
-            description: Time when the host agent sent the last heartbeat.
-            type: str
-            returned: optional
-        maintenance_mode:
-            description: Maintance mode of Cloudera Manager Service.
-            type: bool
-            returned: optional
-        maintenance_owners:
-            description: List of Maintance owners for Cloudera Manager Service.
-            type: list
-            returned: optional
-        num_cores:
-            description: The number of logical CPU cores on this host.
-            type: number
-            returned: optional
-        numPhysicalCores:
-            description: The number of physical CPU cores on this host.
-            type: number
-            returned: optional
-        rack_id:
-            description: The rack ID for this host.
-            type: str
-            returned: optional
-        role_refs:
-            description: The list of roles assigned to this host.
-            type: list
-            returned: optional
-        tags:
-            description: Tags associated with the host.
-            type: list
-            returned: optional
-        total_phys_mem_bytes:
-            description: he amount of physical RAM on this host, in bytes.
-            type: str
-            returned: optional
+host:
+  description: Details about the host
+  type: dict
+  contains:
+    host_id:
+      description:
+        - The unique ID of the host.
+        - This is not the same as the hostname (FQDN); I(host_id) is a distinct value that remains static across hostname changes.
+      type: str
+      returned: always
+    hostname:
+      description: The hostname of the host.
+      type: str
+      returned: when supported
+    ip_address:
+      description: The IP address of the host.
+      type: str
+      returned: always
+    rack_id:
+      description: The rack ID for this host.
+      type: str
+      returned: when supported
+    last_heartbeat:
+      description: Time when the host agent sent the last heartbeat.
+      type: str
+      returned: when supported
+    health_summary:
+      description: The high-level health status of the host.
+      type: str
+      returned: always
+      sample:
+        - DISABLED
+        - HISTORY_NOT_AVAILABLE
+        - NOT_AVAILABLE
+        - GOOD
+        - CONCERNING
+        - BAD
+    health_checks:
+      description: Lists all available health checks for the host.
+      type: list
+      elements: dict
+      returned: when supported
+      contains:
+        name:
+          description: Unique name of this health check.
+          type: str
+          returned: always
+        summary:
+          description: The high-level health status of the health check.
+          type: str
+          returned: always
+          sample:
+            - DISABLED
+            - HISTORY_NOT_AVAILABLE
+            - NOT_AVAILABLE
+            - GOOD
+            - CONCERNING
+            - BAD
+        explanation:
+          description: The explanation of this health check.
+          type: str
+          returned: when supported
+        suppressed:
+          description:
+            - Whether this health check is suppressed.
+            - A suppressed health check is not considered when computing the host's overall health.
+          type: bool
+          returned: when supported
+    maintenance_mode:
+      description: Whether the host is in maintenance mode.
+      type: bool
+      returned: when supported
+    commission_state:
+      description: Commission state of the host.
+      type: str
+      returned: always
+    maintenance_owners:
+      description: The list of objects that trigger this host to be in maintenance mode.
+      type: list
+      elements: str
+      returned: when supported
+      sample:
+        - CLUSTER
+        - SERVICE
+        - ROLE
+        - HOST
+        - CONTROL_PLANE
+    num_cores:
+      description: The number of logical CPU cores on this host.
+      type: number
+      returned: when supported
+    numPhysicalCores:
+      description: The number of physical CPU cores on this host.
+      type: number
+      returned: when supported
+    total_phys_mem_bytes:
+      description: he amount of physical RAM on this host, in bytes.
+      type: str
+      returned: when supported
+    config:
+      description: Set of host configurations.
+      type: dict
+      returned: when supported
+    distribution:
+      description: OS distribution details.
+      type: dict
+      returned: when supported
+    tags:
+      description: The dictionary of tags for the host.
+      type: dict
+      returned: when supported
+    cluster_name:
+      description: The associated cluster for the host.
+      type: str
+      returned: when supported
+    roles:
+      description: The list of role instances, i.e. role identifiers, assigned to this host.
+      type: list
+      elements: str
+      returned: when supported
 """
 
 from cm_client import (
@@ -198,7 +335,6 @@ from cm_client import (
     ApiHostList,
     ApiHostRef,
     ApiHostRefList,
-    ApiRoleConfigGroup,
     ClustersResourceApi,
     HostsResourceApi,
     HostTemplatesResourceApi,
@@ -548,11 +684,7 @@ class ClusterHost(ClouderaManagerMutableModule):
                         self.diff["after"].update(roles=after_ht)
 
             # Handle role config group assignment (argspec enforces inclusion of cluster)
-            # if self.role_config_groups or (not self.host_template and self.purge):
             if self.role_config_groups:
-                # if self.role_config_groups is None:
-                #     self.role_config_groups = list()
-
                 try:
                     (before_rcg, after_rcg) = reconcile_host_role_config_groups(
                         api_client=self.api_client,
@@ -572,11 +704,7 @@ class ClusterHost(ClouderaManagerMutableModule):
                         self.diff["after"].update(role_config_groups=after_rcg)
 
             # Handle role override assignments (argspec enforces inclusion of cluster)
-            # if self.roles or self.purge:
             if self.roles:
-                # if self.roles is None:
-                #     self.roles = list()
-
                 try:
                     (before_role, after_role) = reconcile_host_role_configs(
                         api_client=self.api_client,
@@ -684,8 +812,6 @@ def main():
                 choices=[
                     "present",
                     "absent",
-                    "attached",
-                    "detached",
                     "started",
                     "stopped",
                     "restarted",
@@ -695,9 +821,9 @@ def main():
         required_one_of=[
             ("name", "host_id"),
         ],
-        mutually_exclusive=[
-            ["host_template", "role_config_groups"],
-        ],
+        # mutually_exclusive=[
+        #     ["host_template", "role_config_groups"],
+        # ],
         required_if=[
             ("state", "attached", ("cluster",), False),
             ("state", "started", ("cluster",), False),
