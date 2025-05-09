@@ -25,211 +25,21 @@ from collections.abc import Generator
 from pathlib import Path
 
 from cm_client import (
+    ApiConfig,
     ApiConfigList,
+    ApiEntityTag,
     ApiHost,
-    ApiHostList,
-    ApiHostRef,
-    ApiHostRefList,
-    ApiHostTemplate,
-    ApiHostTemplateList,
-    ApiHostRef,
-    ApiRole,
-    ApiRoleConfigGroup,
-    ApiRoleConfigGroupRef,
-    ApiRoleList,
-    ApiService,
-    ClouderaManagerResourceApi,
-    ClustersResourceApi,
     HostsResourceApi,
-    HostTemplatesResourceApi,
-    RolesResourceApi,
-    ServicesResourceApi,
 )
-from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.modules import host
-from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
-    get_cluster_hosts,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
-    read_roles,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
-    create_host_template_model,
-)
-from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
-    get_base_role_config_group,
-)
+
 from ansible_collections.cloudera.cluster.tests.unit import (
     AnsibleExitJson,
     AnsibleFailJson,
-    deregister_service,
-    register_service,
 )
 
 LOG = logging.getLogger(__name__)
-
-
-@pytest.fixture()
-def available_hosts(cm_api_client) -> list[ApiHost]:
-    return [
-        h
-        for h in HostsResourceApi(cm_api_client).read_hosts().items
-        if h.cluster_ref is None
-    ]
-
-
-@pytest.fixture()
-def cluster_hosts(cm_api_client, base_cluster) -> list[ApiHost]:
-    return (
-        ClustersResourceApi(cm_api_client)
-        .list_hosts(cluster_name=base_cluster.name)
-        .items
-    )
-
-
-@pytest.fixture(scope="module")
-def zookeeper(cm_api_client, base_cluster, request) -> Generator[ApiService]:
-    # Keep track of the provisioned service(s)
-    service_registry = list[ApiService]()
-
-    # Get the current cluster hosts
-    hosts = get_cluster_hosts(cm_api_client, base_cluster)
-
-    id = Path(request.node.parent.name).stem
-
-    zk_service = ApiService(
-        name=f"test-zk-{id}",
-        type="ZOOKEEPER",
-        display_name=f"ZooKeeper ({id})",
-        # Add a SERVER role (so we can start the service -- a ZK requirement!)
-        roles=[ApiRole(type="SERVER", host_ref=ApiHostRef(hosts[0].host_id))],
-    )
-
-    # Provision and yield the created service
-    yield register_service(
-        api_client=cm_api_client,
-        registry=service_registry,
-        cluster=base_cluster,
-        service=zk_service,
-    )
-
-    # Remove the created service
-    deregister_service(api_client=cm_api_client, registry=service_registry)
-
-
-@pytest.fixture(autouse=True)
-def resettable_cluster(cm_api_client, base_cluster):
-    host_api = HostsResourceApi(cm_api_client)
-    cluster_api = ClustersResourceApi(cm_api_client)
-    service_api = ServicesResourceApi(cm_api_client)
-    role_api = RolesResourceApi(cm_api_client)
-
-    # Keep track of attached hosts and their role assignments
-    prior_hosts = dict[str, (ApiHost, dict[str, ApiRole])]()
-
-    # Get all services on the cluster
-    prior_services = service_api.read_services(
-        cluster_name=base_cluster.name,
-    ).items
-
-    # For each host in the cluster, get a map of each service role type's instance
-    for h in get_cluster_hosts(api_client=cm_api_client, cluster=base_cluster):
-        prior_roles_by_service = dict[str, dict[str, ApiRole]]()
-
-        # And for each service in the cluster
-        for s in prior_services:
-            # Retrieve any roles for the host
-            prior_roles_by_service[s.name] = {
-                r.type: r
-                for r in read_roles(
-                    api_client=cm_api_client,
-                    cluster_name=base_cluster.name,
-                    service_name=s.name,
-                    host_id=h.host_id,
-                ).items
-            }
-
-        # Add to the map of prior hosts
-        prior_hosts[h.host_id] = (h, prior_roles_by_service)
-
-    # yield to the tests
-    yield base_cluster
-
-    # Each current host
-    for h in get_cluster_hosts(api_client=cm_api_client, cluster=base_cluster):
-        # If new, remove
-        if h.host_id not in prior_hosts:
-            cluster_api.remove_host(
-                cluster_name=base_cluster.name,
-                host_id=h.host_id,
-            )
-        # Else, update host, host config, and roles
-        else:
-            (prior_host, prior_roles_by_service) = prior_hosts.pop(h.host_id)
-            host_api.update_host(
-                host_id=h.host_id,
-                body=prior_host,
-            )
-            host_api.update_host_config(
-                host_id=h.host_id,
-                body=prior_host.config,
-            )
-
-            # Get current roles for the host by service
-            for s in prior_services:
-                current_roles = read_roles(
-                    api_client=cm_api_client,
-                    cluster_name=base_cluster.name,
-                    service_name=s.name,
-                    host_id=h.host_id,
-                ).items
-
-                # Retrieve the map of prior service roles (by type)
-                prior_role_types = prior_roles_by_service.get(s.name)
-
-                for current_role in current_roles:
-                    # If the current has a new role type, remove it
-                    if current_role.type not in prior_role_types:
-                        role_api.delete_role(
-                            cluster_name=base_cluster.name,
-                            service_name=s.name,
-                            role_name=current_role.name,
-                        )
-                    # Else, update the role and its config with the prior settings
-                    else:
-                        prior_role = prior_role_types.pop(current_role.type)
-
-                        if not prior_role.config:
-                            prior_role.config = ApiConfigList()
-
-                        role_api.update_role_config(
-                            cluster_name=base_cluster.name,
-                            service_name=s.name,
-                            role_name=current_role.name,
-                            body=prior_role.config,
-                        )
-
-                # If a prior role type is missing, restore
-                if prior_role_types:
-                    for r in prior_role_types:
-                        role_api.create_roles(
-                            cluster_name=base_cluster.name,
-                            service_name=r.service_ref.service_name,
-                            body=ApiRoleList(items=[r]),
-                        )
-
-    # If missing, restore host and roles
-    if prior_hosts:
-        cluster_api.add_hosts(
-            cluster_name=base_cluster.name,
-            body=ApiHostRefList(
-                items=[
-                    ApiHostRef(host_id=prior_host.host_id, hostname=prior_host.hostname)
-                    for prior_host in prior_hosts
-                ]
-            ),
-        )
 
 
 class TestHostArgSpec:
@@ -245,7 +55,7 @@ class TestHostArgSpec:
         ) as e:
             host.main()
 
-    def test_host_missing_attached_ip_address(self, conn, module_args):
+    def test_host_missing_attached_cluster(self, conn, module_args):
         module_args(
             {
                 **conn,
@@ -257,6 +67,61 @@ class TestHostArgSpec:
         with pytest.raises(
             AnsibleFailJson,
             match="state is attached but all of the following are missing: cluster",
+        ) as e:
+            host.main()
+
+    def test_host_missing_host_template_cluster(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "name": "example",
+                "host_template": "example",
+            }
+        )
+
+        with pytest.raises(
+            AnsibleFailJson,
+            match="required by 'host_template': cluster",
+        ) as e:
+            host.main()
+
+    def test_host_missing_role_config_groups_cluster(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "name": "example",
+                "role_config_groups": [
+                    {
+                        "service": "example",
+                        "type": "example",
+                    },
+                ],
+            }
+        )
+
+        with pytest.raises(
+            AnsibleFailJson,
+            match="required by 'role_config_groups': cluster",
+        ) as e:
+            host.main()
+
+    def test_host_missing_roles_cluster(self, conn, module_args):
+        module_args(
+            {
+                **conn,
+                "name": "example",
+                "roles": [
+                    {
+                        "service": "example",
+                        "type": "example",
+                    },
+                ],
+            }
+        )
+
+        with pytest.raises(
+            AnsibleFailJson,
+            match="required by 'roles': cluster",
         ) as e:
             host.main()
 
@@ -278,12 +143,12 @@ class TestHostProvision:
         ) as e:
             host.main()
 
-    def test_host_create_ip_address(self, conn, module_args, available_hosts):
+    def test_host_create_ip_address(self, conn, module_args, detached_hosts):
         module_args(
             {
                 **conn,
                 "name": "pytest-host",
-                "ip_address": available_hosts[0].ip_address,
+                "ip_address": detached_hosts[0].ip_address,
             }
         )
 
@@ -332,8 +197,46 @@ class TestHostProvision:
 
 
 class TestHostModification:
-    def test_host_update_ip_address(self, conn, module_args, cluster_hosts):
-        target_host = cluster_hosts[0]
+    @pytest.fixture()
+    def maintenance_enabled_host(
+        self, cm_api_client, detached_hosts
+    ) -> Generator[ApiHost]:
+        target_host = detached_hosts[0]
+
+        # Set the host to maintenance mode if not already set
+        if not target_host.maintenance_mode:
+            HostsResourceApi(cm_api_client).enter_maintenance_mode(target_host.host_id)
+
+        # Yield to the test
+        yield target_host
+
+        # Reset the maintenance mode
+        if target_host.maintenance_mode:
+            HostsResourceApi(cm_api_client).enter_maintenance_mode(target_host.host_id)
+        else:
+            HostsResourceApi(cm_api_client).exit_maintenance_mode(target_host.host_id)
+
+    @pytest.fixture()
+    def maintenance_disabled_host(
+        self, cm_api_client, detached_hosts
+    ) -> Generator[ApiHost]:
+        target_host = detached_hosts[0]
+
+        # Unset the host to maintenance mode if not already set
+        if target_host.maintenance_mode:
+            HostsResourceApi(cm_api_client).exit_maintenance_mode(target_host.host_id)
+
+        # Yield to the test
+        yield target_host
+
+        # Reset the maintenance mode
+        if target_host.maintenance_mode:
+            HostsResourceApi(cm_api_client).enter_maintenance_mode(target_host.host_id)
+        else:
+            HostsResourceApi(cm_api_client).exit_maintenance_mode(target_host.host_id)
+
+    def test_host_update_ip_address(self, conn, module_args, attached_hosts):
+        target_host = attached_hosts[0]
 
         module_args(
             {
@@ -346,8 +249,8 @@ class TestHostModification:
         with pytest.raises(AnsibleFailJson, match="To update the host IP address") as e:
             host.main()
 
-    def test_host_update_rack_id(self, conn, module_args, cluster_hosts):
-        target_host = cluster_hosts[0]
+    def test_host_update_rack_id(self, conn, module_args, attached_hosts):
+        target_host = attached_hosts[0]
 
         module_args(
             {
@@ -370,41 +273,37 @@ class TestHostModification:
         assert e.value.changed == False
         assert e.value.host["rack_id"] == "/pytest1"
 
-    def test_host_update_host_template(
+    def test_host_update_tags(
         self,
         conn,
         module_args,
-        request,
         cm_api_client,
-        base_cluster,
-        zookeeper,
-        cluster_hosts,
-        role_config_group_factory,
-        host_template_factory,
+        detached_hosts,
+        resettable_host,
     ):
-        target_host = cluster_hosts[0]
-        target_name = f"pytest-{Path(request.node.name)}"
-        target_rcg = get_base_role_config_group(
-            api_client=cm_api_client,
-            cluster_name=zookeeper.cluster_ref.cluster_name,
-            service_name=zookeeper.name,
-            role_type="SERVER",
+        HostsResourceApi(cm_api_client)
+
+        # Get a detached host
+        target_host = resettable_host(detached_hosts[0])
+
+        # Update the host's tags
+        HostsResourceApi(cm_api_client).add_tags(
+            hostname=target_host.hostname,
+            body=[
+                ApiEntityTag(name="tag_one", value="Existing"),
+                ApiEntityTag(name="tag_two", value="Existing"),
+            ],
         )
 
-        host_template = host_template_factory(
-            cluster=base_cluster,
-            host_template=create_host_template_model(
-                cluster_name=base_cluster.name,
-                name=target_name,
-                role_config_groups=[target_rcg],
-            ),
-        )
-
+        # Set the tags
         module_args(
             {
                 **conn,
                 "name": target_host.hostname,
-                "host_template": host_template.name,
+                "tags": {
+                    "tag_one": "Updated",
+                    "tag_three": "Added",
+                },
             }
         )
 
@@ -412,142 +311,244 @@ class TestHostModification:
             host.main()
 
         assert e.value.changed == True
+        assert e.value.host["tags"] == dict(
+            tag_one="Updated", tag_two="Existing", tag_three="Added"
+        )
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
             host.main()
 
         assert e.value.changed == False
+        assert e.value.host["tags"] == dict(
+            tag_one="Updated", tag_two="Existing", tag_three="Added"
+        )
 
-    def test_host_update_host_template_new_role(self, conn, module_args):
+    def test_host_update_tags_purge(
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        detached_hosts,
+        resettable_host,
+    ):
+        HostsResourceApi(cm_api_client)
+
+        # Get a detached host
+        target_host = resettable_host(detached_hosts[0])
+
+        # Update the host's tags
+        HostsResourceApi(cm_api_client).add_tags(
+            hostname=target_host.hostname,
+            body=[
+                ApiEntityTag(name="tag_one", value="Existing"),
+                ApiEntityTag(name="tag_two", value="Existing"),
+            ],
+        )
+
+        # Set the tags
         module_args(
             {
                 **conn,
+                "name": target_host.hostname,
+                "tags": {
+                    "tag_one": "Updated",
+                    "tag_three": "Added",
+                },
+                # Note that if using an attached host, be sure to include the cluster name
+                # or purge will detach the host from the cluster!
+                "purge": True,
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(AnsibleExitJson) as e:
             host.main()
 
-    def test_host_update_tags(self, conn, module_args):
+        assert e.value.changed == True
+        assert e.value.host["tags"] == dict(tag_one="Updated", tag_three="Added")
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["tags"] == dict(tag_one="Updated", tag_three="Added")
+
+    def test_host_update_config(
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        detached_hosts,
+        resettable_host,
+        request,
+    ):
+        id = Path(request.node.parent.name).stem
+        HostsResourceApi(cm_api_client)
+
+        # Get a detached host
+        target_host = resettable_host(detached_hosts[0])
+
+        # Update the host's tags
+        HostsResourceApi(cm_api_client).update_host_config(
+            host_id=target_host.host_id,
+            message=f"pytest-{id}",
+            body=ApiConfigList(
+                items=[
+                    ApiConfig(name="memory_overcommit_threshold", value="0.85"),
+                    ApiConfig(name="host_memswap_window", value="16"),
+                ]
+            ),
+        )
+
+        # Set the tags
         module_args(
             {
                 **conn,
+                "name": target_host.hostname,
+                "config": {
+                    "host_network_frame_errors_window": "20",
+                    "host_memswap_window": "20",
+                },
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(AnsibleExitJson) as e:
             host.main()
 
-    def test_host_update_maintenance_enabled(self, conn, module_args):
+        assert e.value.changed == True
+        assert e.value.host["config"] == dict(
+            memory_overcommit_threshold="0.85",
+            host_memswap_window="20",
+            host_network_frame_errors_window="20",
+        )
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["config"] == dict(
+            memory_overcommit_threshold="0.85",
+            host_memswap_window="20",
+            host_network_frame_errors_window="20",
+        )
+
+    def test_host_update_config_purge(
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        detached_hosts,
+        resettable_host,
+        request,
+    ):
+        id = Path(request.node.parent.name).stem
+        HostsResourceApi(cm_api_client)
+
+        # Get a detached host
+        target_host = resettable_host(detached_hosts[0])
+
+        # Update the host's tags
+        HostsResourceApi(cm_api_client).update_host_config(
+            host_id=target_host.host_id,
+            message=f"pytest-{id}",
+            body=ApiConfigList(
+                items=[
+                    ApiConfig(name="memory_overcommit_threshold", value="0.85"),
+                    ApiConfig(name="host_memswap_window", value="16"),
+                ]
+            ),
+        )
+
+        # Set the tags
         module_args(
             {
                 **conn,
+                "name": target_host.hostname,
+                "config": {
+                    "host_network_frame_errors_window": "20",
+                    "host_memswap_window": "20",
+                },
+                "purge": True,
+                # Note that if using an attached host, be sure to set 'cluster' or it will
+                # be detached due to the 'purge' flag!
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(AnsibleExitJson) as e:
             host.main()
 
-    def test_host_update_maintenance_disabled(self, conn, module_args):
+        assert e.value.changed == True
+        assert e.value.host["config"] == dict(
+            host_memswap_window="20",
+            host_network_frame_errors_window="20",
+        )
+
+        # Idempotency
+        with pytest.raises(AnsibleExitJson) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["config"] == dict(
+            host_memswap_window="20",
+            host_network_frame_errors_window="20",
+        )
+
+    def test_host_update_maintenance_enabled(
+        self, conn, module_args, maintenance_disabled_host
+    ):
         module_args(
             {
                 **conn,
+                "name": maintenance_disabled_host.hostname,
+                "maintenance": True,
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(
+            AnsibleExitJson,
+        ) as e:
             host.main()
 
+        assert e.value.changed == True
+        assert e.value.host["maintenance_mode"] == True
 
-class TestHostAttached:
-    def test_host_create_invalid_cluster(self, conn, module_args):
+        # Idempotency
+
+        with pytest.raises(
+            AnsibleExitJson,
+        ) as e:
+            host.main()
+
+        assert e.value.changed == False
+        assert e.value.host["maintenance_mode"] == True
+
+    def test_host_update_maintenance_disabled(
+        self, conn, module_args, maintenance_enabled_host
+    ):
         module_args(
             {
                 **conn,
+                "name": maintenance_enabled_host.hostname,
+                "maintenance": False,
             }
         )
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(
+            AnsibleExitJson,
+        ) as e:
             host.main()
 
+        assert e.value.changed == True
+        assert e.value.host["maintenance_mode"] == False
 
-class TestHostDetached:
-    def test_host_create_invalid_cluster(self, conn, module_args):
-        module_args(
-            {
-                **conn,
-            }
-        )
+        # Idempotency
 
-        with pytest.raises(AnsibleFailJson, match="boom") as e:
+        with pytest.raises(
+            AnsibleExitJson,
+        ) as e:
             host.main()
 
-
-# def test_pytest_add_host_to_cloudera_manager(module_args):
-#     module_args(
-#         {
-#             "username": os.getenv("CM_USERNAME"),
-#             "password": os.getenv("CM_PASSWORD"),
-#             "host": os.getenv("CM_HOST"),
-#             "port": "7180",
-#             "verify_tls": "no",
-#             "debug": "no",
-#             "cluster_hostname": "cloudera.host.example",
-#             "rack_id": "/defo",
-#             "cluster_host_ip": "10.10.1.1",
-#             "state": "present",
-#         }
-#     )
-
-#     with pytest.raises(AnsibleExitJson) as e:
-#         host.main()
-
-#     # LOG.info(str(e.value))
-#     LOG.info(str(e.value.cloudera_manager))
-
-
-# def test_pytest_attach_host_to_cluster(module_args):
-#     module_args(
-#         {
-#             "username": os.getenv("CM_USERNAME"),
-#             "password": os.getenv("CM_PASSWORD"),
-#             "host": os.getenv("CM_HOST"),
-#             "port": "7180",
-#             "verify_tls": "no",
-#             "debug": "no",
-#             "cluster_hostname": "cloudera.host.example",
-#             "name": "Cluster_Example",
-#             "rack_id": "/defo",
-#             "cluster_host_ip": "10.10.1.1",
-#             "state": "attached",
-#         }
-#     )
-
-#     with pytest.raises(AnsibleExitJson) as e:
-#         host.main()
-
-#     # LOG.info(str(e.value))
-#     LOG.info(str(e.value.cloudera_manager))
-
-
-# def test_pytest_detach_host_from_cluster(module_args):
-#     module_args(
-#         {
-#             "username": os.getenv("CM_USERNAME"),
-#             "password": os.getenv("CM_PASSWORD"),
-#             "host": os.getenv("CM_HOST"),
-#             "port": "7180",
-#             "verify_tls": "no",
-#             "debug": "no",
-#             "cluster_hostname": "cloudera.host.example",
-#             "name": "Cluster_Example",
-#             "state": "detached",
-#         }
-#     )
-
-#     with pytest.raises(AnsibleExitJson) as e:
-#         host.main()
-
-#     # LOG.info(str(e.value))
-#     LOG.info(str(e.value.cloudera_manager))
+        assert e.value.changed == False
+        assert e.value.host["maintenance_mode"] == False
