@@ -400,7 +400,7 @@ options:
     required: no
     aliases:
       - data_contexts
-  tls:
+  auto_tls:
     description:
       - Flag enabling TLS for the cluster.
     type: bool
