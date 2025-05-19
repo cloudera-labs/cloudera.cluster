@@ -400,7 +400,7 @@ options:
     required: no
     aliases:
       - data_contexts
-  tls:
+  auto_tls:
     description:
       - Flag enabling TLS for the cluster.
     type: bool
@@ -838,7 +838,7 @@ class ClouderaCluster(ClouderaManagerModule):
         self.contexts = self.get_param("contexts")
         self.auto_assign = self.get_param("auto_assign")
         self.control_plane = self.get_param("control_plane")
-        self.tls = self.get_param("tls")
+        self.auto_tls = self.get_param("auto_tls")
         self.force = self.get_param("force")
 
         self.changed = False
@@ -926,8 +926,8 @@ class ClouderaCluster(ClouderaManagerModule):
                     self.create_cluster_from_parameters()
 
             # Toggle AutoTLS
-            if self.tls is not None:
-                if self.tls:
+            if self.auto_tls is not None:
+                if self.auto_tls:
                     enable_tls_cmd = (
                         self.cluster_api.configure_auto_tls_services_command(
                             cluster_name=self.name
@@ -973,8 +973,8 @@ class ClouderaCluster(ClouderaManagerModule):
                         self.create_cluster_from_parameters()
 
                 # Toggle AutoTLS
-                if self.tls is not None:
-                    if self.tls:
+                if self.auto_tls is not None:
+                    if self.auto_tls:
                         enable_tls_cmd = (
                             self.cluster_api.configure_auto_tls_services_command(
                                 cluster_name=self.name
@@ -1023,8 +1023,8 @@ class ClouderaCluster(ClouderaManagerModule):
                         self.create_cluster_from_parameters()
 
                     # Toggle AutoTLS
-                    if self.tls is not None:
-                        if self.tls:
+                    if self.auto_tls is not None:
+                        if self.auto_tls:
                             enable_tls_cmd = (
                                 self.cluster_api.configure_auto_tls_services_command(
                                     cluster_name=self.name
@@ -1045,8 +1045,8 @@ class ClouderaCluster(ClouderaManagerModule):
                 else:
                     self.changed = True
                     # Toggle AutoTLS
-                    if self.tls is not None:
-                        if self.tls:
+                    if self.auto_tls is not None:
+                        if self.auto_tls:
                             enable_tls_cmd = (
                                 self.cluster_api.configure_auto_tls_services_command(
                                     cluster_name=self.name
@@ -1081,8 +1081,8 @@ class ClouderaCluster(ClouderaManagerModule):
                         self.create_cluster_from_parameters()
 
                 # Toggle AutoTLS
-                if self.tls is not None:
-                    if self.tls:
+                if self.auto_tls is not None:
+                    if self.auto_tls:
                         enable_tls_cmd = (
                             self.cluster_api.configure_auto_tls_services_command(
                                 cluster_name=self.name
@@ -1687,7 +1687,7 @@ def main():
             # Optional data contexts, required for compute-type clusters
             contexts=dict(type="list", elements="str", aliases=["data_contexts"]),
             # Optional enable/disable TLS for the cluster
-            tls=dict(type="bool", aliases=["tls_enabled", "cluster_tls"]),
+            auto_tls=dict(type="bool", aliases=["tls_enabled", "cluster_tls"]),
             # Optional force first run services initialization
             force=dict(type="bool", aliases=["forced_init"]),
             # Optional auto-assign roles on cluster (honors existing assignments)
