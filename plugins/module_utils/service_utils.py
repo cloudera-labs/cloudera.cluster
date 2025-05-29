@@ -388,6 +388,73 @@ def read_cm_service(api_client: ApiClient) -> ApiService:
     return service
 
 
+def reconcile_service_config(
+    api_client: ApiClient,
+    service: ApiService,
+    config: dict,
+    purge: bool,
+    check_mode: bool,
+    message: str,
+) -> tuple[dict, dict]:
+    service_api = ServicesResourceApi(api_client)
+
+    def _handle_config(
+        existing: ApiServiceConfig,
+    ) -> tuple[ApiServiceConfig, dict, dict]:
+        current = {r.name: r.value for r in existing.items}
+        changeset = resolve_parameter_updates(current, config, purge)
+
+        before = {k: current[k] if k in current else None for k in changeset.keys()}
+        after = changeset
+
+        reconciled_config = ApiServiceConfig(
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+        )
+
+        return (reconciled_config, before, after)
+
+    initial_before = dict()
+    initial_after = dict()
+    retry = 0
+
+    while retry < 3:
+        existing_config = service_api.read_service_config(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+        )
+
+        (updated_config, before, after) = _handle_config(existing_config)
+
+        if (before or after) and not check_mode:
+            if retry == 0:
+                initial_before, initial_after = before, after
+
+            service_api.update_service_config(
+                cluster_name=service.cluster_ref.cluster_name,
+                service_name=service.name,
+                message=message,
+                body=updated_config,
+            )
+
+            config_check = service_api.read_service_config(
+                cluster_name=service.cluster_ref.cluster_name,
+                service_name=service.name,
+            )
+
+            (_, checked_before, checked_after) = _handle_config(config_check)
+
+            if not checked_before or not checked_after:
+                return (initial_before, initial_after)
+            else:
+                retry += 1
+        else:
+            return (before, after)
+
+    raise ServiceException(
+        f"Unable to reconcile service-wide configuration for '{service.name}' in cluster '{service.cluster_ref.cluster_name}"
+    )
+
+
 class ServiceConfigUpdates(object):
     def __init__(self, existing: ApiServiceConfig, updates: dict, purge: bool) -> None:
         current = {r.name: r.value for r in existing.items}
