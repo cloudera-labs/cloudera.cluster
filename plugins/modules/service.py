@@ -666,6 +666,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils imp
     parse_service_result,
     provision_service,
     read_service,
+    reconcile_service_config,
     reconcile_service_role_config_groups,
     reconcile_service_roles,
     toggle_service_maintenance,
@@ -909,28 +910,20 @@ class ClusterService(ClouderaManagerMutableModule):
                     if self.config is None:
                         self.config = dict()
 
-                    config_updates = ConfigListUpdates(
-                        current.config, self.config, self.purge
+                    (before_config, after_config) = reconcile_service_config(
+                        api_client=self.api_client,
+                        service=current,
+                        config=self.config,
+                        purge=self.purge,
+                        check_mode=self.module.check_mode,
+                        message=self.message,
                     )
 
-                    if config_updates.changed:
+                    if before_config or after_config:
                         self.changed = True
-
                         if self.module._diff:
-                            self.diff["before"].update(
-                                config=config_updates.diff["before"]
-                            )
-                            self.diff["after"].update(
-                                config=config_updates.diff["after"]
-                            )
-
-                        if not self.module.check_mode:
-                            service_api.update_service_config(
-                                cluster_name=self.cluster,
-                                service_name=self.name,
-                                message=self.message,
-                                body=config_updates.config,
-                            )
+                            self.diff["before"].update(config=before_config)
+                            self.diff["after"].update(config=after_config)
 
                 # Handle tags
                 if self.tags or self.purge:
