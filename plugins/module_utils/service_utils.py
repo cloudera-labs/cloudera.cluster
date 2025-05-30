@@ -394,6 +394,7 @@ def reconcile_service_config(
     config: dict,
     purge: bool,
     check_mode: bool,
+    redacted_skipped: bool,
     message: str,
 ) -> tuple[dict, dict]:
     service_api = ServicesResourceApi(api_client)
@@ -402,7 +403,7 @@ def reconcile_service_config(
         existing: ApiServiceConfig,
     ) -> tuple[ApiServiceConfig, dict, dict]:
         current = {r.name: r.value for r in existing.items}
-        changeset = resolve_parameter_updates(current, config, purge)
+        changeset = resolve_parameter_updates(current, config, purge, redacted_skipped)
 
         before = {k: current[k] if k in current else None for k in changeset.keys()}
         after = changeset
@@ -451,7 +452,9 @@ def reconcile_service_config(
             return (before, after)
 
     raise ServiceException(
-        f"Unable to reconcile service-wide configuration for '{service.name}' in cluster '{service.cluster_ref.cluster_name}"
+        f"Unable to reconcile service-wide configuration for '{service.name}' in cluster '{service.cluster_ref.cluster_name}",
+        before,
+        after,
     )
 
 
