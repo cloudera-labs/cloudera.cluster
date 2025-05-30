@@ -131,7 +131,10 @@ def normalize_values(add: dict) -> dict:
 
 
 def resolve_parameter_updates(
-    current: dict, incoming: dict, purge: bool = False
+    current: dict,
+    incoming: dict,
+    purge: bool = False,
+    redacted_skipped: bool = False,
 ) -> dict:
     """Produce a change set between two parameter dictionaries.
 
@@ -142,6 +145,7 @@ def resolve_parameter_updates(
         current (dict): Existing parameters
         incoming (dict): Declared parameters
         purge (bool, optional): Flag to reset any current parameters not found in the declared set. Defaults to False.
+        redacted_skipped (bool, optional): Flag to not include parameters with REDACTED values in the changeset. Defaults to False.
 
     Returns:
         dict: A change set of the updates
@@ -159,7 +163,9 @@ def resolve_parameter_updates(
         updates = {
             k: v
             for k, v in diff[1].items()
-            if k in current or (k not in current and v is not None)
+            if (k in current and not redacted_skipped)
+            or (k in current and (redacted_skipped and current[k] != "REDACTED"))
+            or (k not in current and v is not None)
         }
 
         if purge:
