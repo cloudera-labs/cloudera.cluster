@@ -626,22 +626,22 @@ class Host(ClouderaManagerMutableModule):
                                 ),
                             )
 
-                            parcel_api = ParcelResourceApi(self.api_client)
-                            try:
-                                for parcel in parcels_api.read_parcels(
-                                    cluster_name=cluster.name
-                                ).items:
-                                    if parcel.stage in ["DOWNLOADED", "DISTRIBUTED"]:
-                                        Parcel(
-                                            parcel_api=parcel_api,
-                                            product=parcel.product,
-                                            version=parcel.version,
-                                            cluster=cluster.name,
-                                        ).activate()
-                            except ApiException as ae:
-                                self.module.fail_json(
-                                    msg="Error managing parcel states: " + to_native(ae)
-                                )
+                            # parcel_api = ParcelResourceApi(self.api_client)
+                            # try:
+                            #     for parcel in parcels_api.read_parcels(
+                            #         cluster_name=cluster.name
+                            #     ).items:
+                            #         if parcel.stage in ["DOWNLOADED", "DISTRIBUTED"]:
+                            #             Parcel(
+                            #                 parcel_api=parcel_api,
+                            #                 product=parcel.product,
+                            #                 version=parcel.version,
+                            #                 cluster=cluster.name,
+                            #             ).activate()
+                            # except ApiException as ae:
+                            #     self.module.fail_json(
+                            #         msg="Error managing parcel states: " + to_native(ae)
+                            #     )
 
                     # Handle cluster migration
                     elif current.cluster_ref.cluster_name != cluster.name:
