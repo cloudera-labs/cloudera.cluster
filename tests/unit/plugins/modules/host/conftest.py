@@ -41,10 +41,10 @@ from cm_client import (
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    reconcile_config_list_updates,
     wait_command,
     wait_commands,
     TagUpdates,
-    ConfigListUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
     get_cluster_hosts,
@@ -293,15 +293,17 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
             if previous_host.config is None:
                 previous_host.config = ApiConfigList(items=[])
 
-            config_updates = ConfigListUpdates(
+            (updated_config, _, _) = reconcile_config_list_updates(
                 target_host.config,
                 {c.name: c.value for c in previous_host.config.items},
                 True,
+                False,
             )
+
             host_api.update_host_config(
                 host_id=target_host.host_id,
                 message=f"{Path(request.node.parent.name).stem}::{request.node.name}",
-                body=config_updates.config,
+                body=updated_config,
             )
 
             # Cluster
