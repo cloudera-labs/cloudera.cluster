@@ -18,7 +18,7 @@ import json
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    resolve_parameter_updates,
+    resolve_parameter_changeset,
 )
 
 from cm_client import (
@@ -280,7 +280,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
         current = {r.name: r.value for r in existing.items}
         incoming = {k: str(v) if v is not None else v for k, v in self.params.items()}
 
-        change_set = resolve_parameter_updates(current, incoming, self.purge)
+        change_set = resolve_parameter_changeset(current, incoming, self.purge)
 
         if change_set:
             self.changed = True

@@ -676,6 +676,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                 if self.config is None:
                     self.config = dict()
 
+                # TODO Replace with reconcile_service_config()
                 updates = ServiceConfigUpdates(current.config, self.config, self.purge)
 
                 if updates.changed:

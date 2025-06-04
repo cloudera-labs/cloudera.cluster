@@ -16,7 +16,7 @@ import cm_client
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    resolve_parameter_updates,
+    resolve_parameter_changeset,
 )
 
 ANSIBLE_METADATA = {
@@ -184,7 +184,7 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
         current = {r.name: r.value for r in existing}
         incoming = {k.upper(): v for k, v in self.params.items()}
 
-        change_set = resolve_parameter_updates(current, incoming, self.purge)
+        change_set = resolve_parameter_changeset(current, incoming, self.purge)
 
         if change_set:
             self.changed = True
