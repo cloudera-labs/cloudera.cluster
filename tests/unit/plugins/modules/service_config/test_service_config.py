@@ -48,6 +48,9 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+# Skip all tests due to pending removal of module from collection
+pytestmark = pytest.mark.skip("Deprecated module")
+
 
 @pytest.fixture(scope="module")
 def zk_service(cm_api_client, base_cluster, request):
