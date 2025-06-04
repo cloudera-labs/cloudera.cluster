@@ -63,13 +63,15 @@ options:
       - To clear all service-wide configurations and tags, set O(tags={}) or O(config={}), i.e. an empty dictionary, and O(purge=True).
     type: bool
     default: False
-  redacted_skipped:
+  skip_redacted:
     description:
       - Flag indicating if the declared service-wide configurations, tags, role config groups, and role assignments and configurations should skipped I(REDACTED) parameters during reconciliation.
       - If set, the module will not attempt to update any existing parameter with a I(REDACTED) value.
       - Otherwise, the parameter value will be overridden.
     type: bool
     default: False
+    aliases:
+      - redacted
   config:
     description:
       - A set of service-wide configurations for the service.
@@ -654,7 +656,6 @@ from ansible.module_utils.common.text.converters import to_native
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    ConfigListUpdates,
     TagUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
@@ -693,7 +694,7 @@ class ClusterService(ClouderaManagerMutableModule):
         self.type = self.get_param("type")
         self.maintenance = self.get_param("maintenance")
         self.purge = self.get_param("purge")
-        self.redacted_skipped = self.get_param("redacted_skipped")
+        self.skip_redacted = self.get_param("skip_redacted")
         self.config = self.get_param("config")
         self.tags = self.get_param("tags")
         self.roles = self.get_param("roles")
@@ -823,6 +824,7 @@ class ClusterService(ClouderaManagerMutableModule):
                                 display_name=requested_rcg.get("display_name", None),
                                 config=requested_rcg.get("config", None),
                                 purge=self.purge,
+                                skip_redacted=self.skip_redacted,
                             )
 
                             base_rcg_list.append(base_rcg)
@@ -926,7 +928,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         config=self.config,
                         purge=self.purge,
                         check_mode=self.module.check_mode,
-                        redacted_skipped=self.redacted_skipped,
+                        skip_redacted=self.skip_redacted,
                         message=self.message,
                     )
 
@@ -992,6 +994,8 @@ class ClusterService(ClouderaManagerMutableModule):
                         role_config_groups=self.role_config_groups,
                         purge=self.purge,
                         check_mode=self.module.check_mode,
+                        skip_redacted=self.skip_redacted,
+                        message=self.message,
                     )
 
                     if before_rcg or after_rcg:
@@ -1011,6 +1015,8 @@ class ClusterService(ClouderaManagerMutableModule):
                         roles=self.roles,
                         purge=self.purge,
                         check_mode=self.module.check_mode,
+                        skip_redacted=self.skip_redacted,
+                        message=self.message,
                         # state=self.state,
                         # maintenance=self.maintenance,
                     )
@@ -1080,7 +1086,7 @@ def main():
             # version=dict(),
             maintenance=dict(type="bool", aliases=["maintenance_mode"]),
             purge=dict(type="bool", default=False),
-            redacted_skipped=dict(type="bool", default=False),
+            skip_redacted=dict(type="bool", default=False, aliases=["redacted"]),
             config=dict(type="dict", aliases=["service_wide_config"]),
             tags=dict(type="dict"),
             roles=dict(
