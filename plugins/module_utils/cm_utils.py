@@ -130,11 +130,11 @@ def normalize_values(add: dict) -> dict:
     return {k: _normalize(v) for k, v in add.items()}
 
 
-def resolve_parameter_updates(
+def resolve_parameter_changeset(
     current: dict,
     incoming: dict,
     purge: bool = False,
-    redacted_skipped: bool = False,
+    skip_redacted: bool = False,
 ) -> dict:
     """Produce a change set between two parameter dictionaries.
 
@@ -145,7 +145,7 @@ def resolve_parameter_updates(
         current (dict): Existing parameters
         incoming (dict): Declared parameters
         purge (bool, optional): Flag to reset any current parameters not found in the declared set. Defaults to False.
-        redacted_skipped (bool, optional): Flag to not include parameters with REDACTED values in the changeset. Defaults to False.
+        skip_redacted (bool, optional): Flag to not include parameters with REDACTED values in the changeset. Defaults to False.
 
     Returns:
         dict: A change set of the updates
@@ -163,8 +163,8 @@ def resolve_parameter_updates(
         updates = {
             k: v
             for k, v in diff[1].items()
-            if (k in current and not redacted_skipped)
-            or (k in current and (redacted_skipped and current[k] != "REDACTED"))
+            if (k in current and not skip_redacted)
+            or (k in current and (skip_redacted and current[k] != "REDACTED"))
             or (k not in current and v is not None)
         }
 
@@ -176,6 +176,40 @@ def resolve_parameter_updates(
             }
 
     return updates
+
+
+def reconcile_config_list_updates(
+    existing: ApiConfigList,
+    config: dict,
+    purge: bool = False,
+    skip_redacted: bool = False,
+) -> tuple[ApiConfigList, dict, dict]:
+    """Return a reconciled configuration list and the change deltas.
+
+    The function will normalize parameter values to remove whitespace from strings and
+    convert integers and Booleans to their string representations. Optionally, the
+    function will reset undeclared parameters or skip parameters that it is unable to
+    resolve, i.e. REDACTED parameter values.
+
+    Args:
+        existing (ApiConfigList): Existing parameters
+        config (dict): Declared parameters
+        purge (bool, optional): Flag to reset any current parameters not found in the declared set. Defaults to False.
+        skip_redacted (bool, optional): Flag to not include parameters with REDACTED values in the changeset. Defaults to False.
+    Returns:
+        tuple[ApiConfigList, dict, dict]: Updated configuration list and the before and after deltas
+    """
+    current = {r.name: r.value for r in existing.items}
+    changeset = resolve_parameter_changeset(current, config, purge, skip_redacted)
+
+    before = {k: current[k] if k in current else None for k in changeset.keys()}
+    after = changeset
+
+    reconciled_config = ApiConfigList(
+        items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+    )
+
+    return (reconciled_config, before, after)
 
 
 def resolve_tag_updates(
@@ -230,7 +264,7 @@ class TagUpdates(object):
 class ConfigListUpdates(object):
     def __init__(self, existing: ApiConfigList, updates: dict, purge: bool) -> None:
         current = {r.name: r.value for r in existing.items}
-        changeset = resolve_parameter_updates(current, updates, purge)
+        changeset = resolve_parameter_changeset(current, updates, purge)
 
         self.diff = dict(
             before={k: current[k] if k in current else None for k in changeset.keys()},
