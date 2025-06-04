@@ -97,6 +97,15 @@ options:
       - To clear all configuration overrides or tags, set O(config={}) or O(tags={}), i.e. an empty dictionary, respectively, and set O(purge=True).
     type: bool
     default: False
+  skip_redacted:
+    description:
+      - Flag indicating if the declared role configurations overrides and tags should skipped I(REDACTED) parameters during reconciliation.
+      - If set, the module will not attempt to update any existing parameter with a I(REDACTED) value.
+      - Otherwise, the parameter value will be overridden.
+    type: bool
+    default: False
+    aliases:
+      - redacted
   state:
     description:
       - The state of the role.
@@ -357,8 +366,8 @@ from cm_client.rest import ApiException
 from ansible.module_utils.common.text.converters import to_native
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    reconcile_config_list_updates,
     ClouderaManagerMutableModule,
-    ConfigListUpdates,
     TagUpdates,
 )
 
@@ -395,6 +404,7 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
         self.type = self.get_param("type")
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
+        self.skip_redacted = self.get_param("skip_redacted")
 
         # Initialize the return values
         self.changed = False
@@ -525,20 +535,23 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
                     if self.config is None:
                         self.config = dict()
 
-                    config_updates = ConfigListUpdates(
-                        current.config, self.config, self.purge
+                    (
+                        updated_config,
+                        config_before,
+                        config_after,
+                    ) = reconcile_config_list_updates(
+                        current.config,
+                        self.config,
+                        self.purge,
+                        self.skip_redacted,
                     )
 
-                    if config_updates.changed:
+                    if config_before or config_after:
                         self.changed = True
 
                         if self.module._diff:
-                            self.diff["before"].update(
-                                config=config_updates.diff["before"]
-                            )
-                            self.diff["after"].update(
-                                config=config_updates.diff["after"]
-                            )
+                            self.diff["before"].update(config=config_before)
+                            self.diff["after"].update(config=config_after)
 
                         if not self.module.check_mode:
                             role_api.update_role_config(
@@ -546,7 +559,7 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
                                 service_name=self.service,
                                 role_name=current.name,
                                 message=self.message,
-                                body=config_updates.config,
+                                body=updated_config,
                             )
 
                 # Handle role config group
@@ -697,6 +710,7 @@ def main():
             tags=dict(type=dict),
             role_config_group=dict(),
             purge=dict(type="bool", default=False),
+            skip_redacted=dict(type="bool", default=False, aliases=["redacted"]),
             state=dict(
                 default="present",
                 choices=["present", "absent", "restarted", "started", "stopped"],
