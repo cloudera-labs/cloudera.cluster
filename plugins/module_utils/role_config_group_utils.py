@@ -14,7 +14,7 @@
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
-    ConfigListUpdates,
+    reconcile_config_list_updates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     InvalidRoleTypeException,
@@ -120,6 +120,7 @@ def update_role_config_group(
     display_name: str = None,
     config: dict = None,
     purge: bool = False,
+    skip_redacted: bool = False,
 ) -> tuple[ApiRoleConfigGroup, dict, dict]:
     before, after = dict(), dict()
 
@@ -134,12 +135,14 @@ def update_role_config_group(
         if config is None:
             config = dict()
 
-        updates = ConfigListUpdates(role_config_group.config, config, purge)
+        (updated_config, config_before, config_after) = reconcile_config_list_updates(
+            role_config_group.config, config, purge, skip_redacted
+        )
 
-        if updates.changed:
-            before.update(config=updates.diff["before"])
-            after.update(config=updates.diff["after"])
-            role_config_group.config = updates.config
+        if config_before or config_after:
+            before.update(config=config_before)
+            after.update(config=config_after)
+            role_config_group.config = updated_config
 
     return (role_config_group, before, after)
 

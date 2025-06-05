@@ -52,7 +52,7 @@ from cm_client.rest import ApiException
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     wait_command,
     wait_commands,
-    resolve_parameter_updates,
+    resolve_parameter_changeset,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
     get_host_ref,
@@ -431,7 +431,7 @@ def deregister_role_config_group(
             )
 
             # Revert the changes
-            config_revert = resolve_parameter_updates(
+            config_revert = resolve_parameter_changeset(
                 {c.name: c.value for c in current_rcg.config.items},
                 {c.name: c.value for c in rcg.config.items},
                 True,
@@ -777,7 +777,7 @@ def set_cm_role_config_group(
     post_rcg = rcg_api.read_role_config_group(role_config_group_name=pre_rcg.name)
 
     # Revert the changes
-    config_revert = resolve_parameter_updates(
+    config_revert = resolve_parameter_changeset(
         {c.name: c.value for c in post_rcg.config.items},
         {c.name: c.value for c in role_config_group.config.items},
         True,
@@ -841,7 +841,7 @@ def set_role_config_group(
     )
 
     # Revert the changes
-    config_revert = resolve_parameter_updates(
+    config_revert = resolve_parameter_changeset(
         {c.name: c.value for c in post_rcg.config.items},
         {c.name: c.value for c in role_config_group.config.items},
         True,

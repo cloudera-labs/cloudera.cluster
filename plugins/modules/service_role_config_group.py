@@ -68,6 +68,15 @@ options:
       - Whether to reset configuration parameters to only the declared entries.
     type: bool
     default: False
+  skip_redacted:
+    description:
+      - Flag indicating if the declared configuration parameters and tags should skipped I(REDACTED) parameters during reconciliation.
+      - If set, the module will not attempt to update any existing parameter with a I(REDACTED) value.
+      - Otherwise, the parameter value will be overridden.
+    type: bool
+    default: False
+    aliases:
+      - redacted
   state:
     description:
       - The presence or absence of the role config group.
@@ -205,11 +214,12 @@ from cm_client import (
 from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    reconcile_config_list_updates,
     ClouderaManagerMutableModule,
-    ConfigListUpdates,
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
+    create_role_config_group,
     parse_role_config_group_result,
     get_base_role_config_group,
 )
@@ -227,6 +237,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
         self.display_name = self.get_param("display_name")
         self.config = self.get_param("config")
         self.purge = self.get_param("purge")
+        self.skip_redacted = self.get_param("skip_redacted")
         self.state = self.get_param("state")
 
         # Initialize the return value
@@ -340,16 +351,25 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
                     if self.config is None:
                         self.config = dict()
 
-                    updates = ConfigListUpdates(current.config, self.config, self.purge)
+                    (
+                        updated_config,
+                        config_before,
+                        config_after,
+                    ) = reconcile_config_list_updates(
+                        current.config,
+                        self.config,
+                        self.purge,
+                        self.skip_redacted,
+                    )
 
-                    if updates.changed:
+                    if config_before or config_after:
                         self.changed = True
 
                         if self.module._diff:
-                            self.diff["before"].update(config=updates.diff["before"])
-                            self.diff["after"].update(config=updates.diff["after"])
+                            self.diff["before"].update(config=config_before)
+                            self.diff["after"].update(config=config_after)
 
-                        payload.config = updates.config
+                        payload.config = updated_config
 
                 # Execute changes if needed
                 if self.changed and not self.module.check_mode:
@@ -369,19 +389,29 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
                 self.changed = True
 
                 # Create the RCG
-                payload = ApiRoleConfigGroup(
+                payload = create_role_config_group(
+                    api_client=self.api_client,
+                    cluster_name=self.cluster,
+                    service_name=self.service,
                     name=self.name,
                     role_type=self.role_type,
+                    display_name=self.display_name,
+                    config=self.config,
                 )
 
-                if self.display_name:
-                    payload.display_name = self.display_name
+                # payload = ApiRoleConfigGroup(
+                #     name=self.name,
+                #     role_type=self.role_type,
+                # )
 
-                # Set the configuration
-                if self.config:
-                    payload.config = ConfigListUpdates(
-                        ApiConfigList(items=[]), self.config, self.purge
-                    ).config
+                # if self.display_name:
+                #     payload.display_name = self.display_name
+
+                # # Set the configuration
+                # if self.config:
+                #     payload.config = ConfigListUpdates(
+                #         ApiConfigList(items=[]), self.config, self.purge
+                #     ).config
 
                 if self.module._diff:
                     self.diff = dict(
@@ -427,6 +457,7 @@ def main():
             role_type=dict(aliases=["type"]),
             config=dict(type="dict", aliases=["params", "parameters"]),
             purge=dict(type="bool", default=False),
+            skip_redacted=dict(type="bool", default=False, aliases=["redacted"]),
             state=dict(choices=["present", "absent"], default="present"),
         ),
         required_one_of=[

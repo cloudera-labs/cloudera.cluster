@@ -239,7 +239,7 @@ import re
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    resolve_parameter_updates,
+    resolve_parameter_changeset,
 )
 
 from cm_client import (
@@ -333,7 +333,7 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                     "gen_keytab_script",
                 ]
             }
-            change_set = resolve_parameter_updates(current, incoming)
+            change_set = resolve_parameter_changeset(current, incoming)
 
             if change_set:
                 self.changed = True
@@ -415,7 +415,7 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                 gen_keytab_script="",
             )
             # NOTE: Change set is always > 0
-            change_set = resolve_parameter_updates(
+            change_set = resolve_parameter_changeset(
                 current, {k.upper(): v for k, v in reset_params.items()}
             )
 

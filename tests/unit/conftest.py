@@ -176,8 +176,8 @@ def conn() -> dict:
 
     return {
         **conn,
-        "verify_tls": "no",
-        "debug": "no",
+        "verify_tls": False,
+        "debug": False,
     }
 
 
@@ -195,6 +195,7 @@ def cm_api_client(conn) -> ApiClient:
 
     config.username = conn["username"]
     config.password = conn["password"]
+    config.verify_ssl = conn["verify_tls"]
 
     if "url" in conn:
         config.host = str(conn["url"]).rstrip(" /")

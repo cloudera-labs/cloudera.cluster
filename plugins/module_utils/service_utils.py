@@ -18,10 +18,10 @@ A common functions for service management
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
-    resolve_parameter_updates,
+    reconcile_config_list_updates,
+    resolve_parameter_changeset,
     wait_command,
     wait_commands,
-    ConfigListUpdates,
     TagUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
@@ -388,10 +388,80 @@ def read_cm_service(api_client: ApiClient) -> ApiService:
     return service
 
 
+def reconcile_service_config(
+    api_client: ApiClient,
+    service: ApiService,
+    config: dict,
+    purge: bool,
+    check_mode: bool,
+    skip_redacted: bool,
+    message: str,
+) -> tuple[dict, dict]:
+    service_api = ServicesResourceApi(api_client)
+
+    def _handle_config(
+        existing: ApiServiceConfig,
+    ) -> tuple[ApiServiceConfig, dict, dict]:
+        current = {r.name: r.value for r in existing.items}
+        changeset = resolve_parameter_changeset(current, config, purge, skip_redacted)
+
+        before = {k: current[k] if k in current else None for k in changeset.keys()}
+        after = changeset
+
+        reconciled_config = ApiServiceConfig(
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+        )
+
+        return (reconciled_config, before, after)
+
+    initial_before = dict()
+    initial_after = dict()
+    retry = 0
+
+    while retry < 3:
+        existing_config = service_api.read_service_config(
+            cluster_name=service.cluster_ref.cluster_name,
+            service_name=service.name,
+        )
+
+        (updated_config, before, after) = _handle_config(existing_config)
+
+        if (before or after) and not check_mode:
+            if retry == 0:
+                initial_before, initial_after = before, after
+
+            service_api.update_service_config(
+                cluster_name=service.cluster_ref.cluster_name,
+                service_name=service.name,
+                message=message,
+                body=updated_config,
+            )
+
+            config_check = service_api.read_service_config(
+                cluster_name=service.cluster_ref.cluster_name,
+                service_name=service.name,
+            )
+
+            (_, checked_before, checked_after) = _handle_config(config_check)
+
+            if not checked_before or not checked_after:
+                return (initial_before, initial_after)
+            else:
+                retry += 1
+        else:
+            return (before, after)
+
+    raise ServiceException(
+        f"Unable to reconcile service-wide configuration for '{service.name}' in cluster '{service.cluster_ref.cluster_name}",
+        before,
+        after,
+    )
+
+
 class ServiceConfigUpdates(object):
     def __init__(self, existing: ApiServiceConfig, updates: dict, purge: bool) -> None:
         current = {r.name: r.value for r in existing.items}
-        changeset = resolve_parameter_updates(current, updates, purge)
+        changeset = resolve_parameter_changeset(current, updates, purge)
 
         self.before = {
             k: current[k] if k in current else None for k in changeset.keys()
@@ -436,7 +506,10 @@ def reconcile_service_role_config_groups(
     role_config_groups: list[dict],
     purge: bool,
     check_mode: bool,
+    skip_redacted: bool,
+    message: str,
 ) -> tuple[dict, dict]:
+
     # Map the current role config groups by name and by base role type
     base_rcg_map, rcg_map = dict(), dict()
     for rcg in service.role_config_groups:
@@ -463,6 +536,7 @@ def reconcile_service_role_config_groups(
                     display_name=incoming_rcg["display_name"],
                     config=incoming_rcg["config"],
                     purge=purge,
+                    skip_redacted=skip_redacted,
                 )
 
                 if before or after:
@@ -475,6 +549,7 @@ def reconcile_service_role_config_groups(
                             service_name=service.name,
                             role_config_group_name=current_rcg.name,
                             body=updated_rcg,
+                            message=message,
                         )
 
             # Else create the new custom role config group
@@ -499,6 +574,7 @@ def reconcile_service_role_config_groups(
                 display_name=incoming_rcg["display_name"],
                 config=incoming_rcg["config"],
                 purge=purge,
+                skip_redacted=skip_redacted,
             )
 
             if before or after:
@@ -511,6 +587,7 @@ def reconcile_service_role_config_groups(
                         service_name=service.name,
                         role_config_group_name=current_rcg.name,
                         body=updated_rcg,
+                        message=message,
                     )
 
     # Process role config group additions
@@ -529,6 +606,7 @@ def reconcile_service_role_config_groups(
             (updated_rcg, before, after) = update_role_config_group(
                 role_config_group=current_rcg,
                 purge=purge,
+                skip_redacted=skip_redacted,
             )
 
             if before or after:
@@ -541,6 +619,7 @@ def reconcile_service_role_config_groups(
                         service_name=service.name,
                         role_config_group_name=current_rcg.name,
                         body=updated_rcg,
+                        message=message,
                     )
 
         # Reset to base and remove any remaining custom role config groups
@@ -578,6 +657,8 @@ def reconcile_service_roles(
     roles: list[dict],
     purge: bool,
     check_mode: bool,
+    skip_redacted: bool,
+    message: str,
     # maintenance: bool,
     # state: str,
 ) -> tuple[dict, dict]:
@@ -656,15 +737,22 @@ def reconcile_service_roles(
                         if incoming_config is None:
                             incoming_config = dict()
 
-                        updates = ConfigListUpdates(
-                            current_role.config, incoming_config, purge
+                        (
+                            updated_config,
+                            config_before,
+                            config_after,
+                        ) = reconcile_config_list_updates(
+                            current_role.config,
+                            incoming_config,
+                            purge,
+                            skip_redacted,
                         )
 
-                        if updates.changed:
-                            instance_role_before.update(config=current_role.config)
-                            instance_role_after.update(config=updates.config)
+                        if config_before or config_after:
+                            instance_role_before.update(config=config_before)
+                            instance_role_after.update(config=config_after)
 
-                            current_role.config = updates.config
+                            current_role.config = updated_config
 
                         if not check_mode:
                             role_api.update_role_config(
@@ -672,6 +760,7 @@ def reconcile_service_roles(
                                 service_name=service.name,
                                 role_name=current_role.name,
                                 body=current_role.config,
+                                message=message,
                             )
 
                     # Reconcile role tags

@@ -44,9 +44,9 @@ from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
+    reconcile_config_list_updates,
     wait_command,
     wait_bulk_commands,
-    ConfigListUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_template_utils import (
     HostTemplateException,
@@ -243,6 +243,7 @@ def reconcile_host_role_configs(
     role_configs: list[dict],  # service, type, and config (optional)
     purge: bool,
     check_mode: bool,
+    skip_redacted: bool,
     message: str = None,
 ) -> tuple[list[dict], list[dict]]:
 
@@ -275,15 +276,22 @@ def reconcile_host_role_configs(
         if incoming_role_config["config"] or purge:
             incoming_config = incoming_role_config.get("config", dict())
 
-            updates = ConfigListUpdates(current_role.config, incoming_config, purge)
+            (
+                updated_config,
+                config_before,
+                config_after,
+            ) = reconcile_config_list_updates(
+                current_role.config,
+                incoming_config,
+                purge,
+                skip_redacted,
+            )
 
-            if updates.changed:
-                diff_before.append(
-                    dict(name=current_role.name, config=current_role.config)
-                )
-                diff_after.append(dict(name=current_role.name, config=updates.config))
+            if config_before or config_after:
+                diff_before.append(dict(name=current_role.name, config=config_before))
+                diff_after.append(dict(name=current_role.name, config=config_after))
 
-                current_role.config = updates.config
+                current_role.config = updated_config
 
                 if not check_mode:
                     role_api.update_role_config(
@@ -303,6 +311,7 @@ def reconcile_host_role_config_groups(
     host: ApiHost,
     role_config_groups: list[dict],  # service, type (optional), name (optional)
     purge: bool,
+    skip_redacted: bool,
     check_mode: bool,
 ) -> tuple[list[dict], list[dict]]:
 
@@ -350,6 +359,7 @@ def reconcile_host_role_config_groups(
         cluster_rcgs=cluster_rcgs,
     )
 
+    # TODO Validate if the parcel staging check is still needed
     # Read the parcel states for the cluster until all are at a stable stage
     wait_parcel_staging(
         api_client=api_client,

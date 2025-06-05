@@ -63,6 +63,15 @@ options:
       - To clear all service-wide configurations and tags, set O(tags={}) or O(config={}), i.e. an empty dictionary, and O(purge=True).
     type: bool
     default: False
+  skip_redacted:
+    description:
+      - Flag indicating if the declared service-wide configurations, tags, role config groups, and role assignments and configurations should skipped I(REDACTED) parameters during reconciliation.
+      - If set, the module will not attempt to update any existing parameter with a I(REDACTED) value.
+      - Otherwise, the parameter value will be overridden.
+    type: bool
+    default: False
+    aliases:
+      - redacted
   config:
     description:
       - A set of service-wide configurations for the service.
@@ -647,7 +656,6 @@ from ansible.module_utils.common.text.converters import to_native
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
-    ConfigListUpdates,
     TagUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
@@ -666,6 +674,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils imp
     parse_service_result,
     provision_service,
     read_service,
+    reconcile_service_config,
     reconcile_service_role_config_groups,
     reconcile_service_roles,
     toggle_service_maintenance,
@@ -685,6 +694,7 @@ class ClusterService(ClouderaManagerMutableModule):
         self.type = self.get_param("type")
         self.maintenance = self.get_param("maintenance")
         self.purge = self.get_param("purge")
+        self.skip_redacted = self.get_param("skip_redacted")
         self.config = self.get_param("config")
         self.tags = self.get_param("tags")
         self.roles = self.get_param("roles")
@@ -775,8 +785,8 @@ class ClusterService(ClouderaManagerMutableModule):
 
                 # Create and provision the role config groups
                 if self.role_config_groups:
-                    rcg_list = list()
-                    base_rcg = None
+                    custom_rcg_list = list()
+                    base_rcg_list = list()
 
                     if self.module._diff:
                         before_rcg, after_rcg = list(), list()
@@ -794,7 +804,7 @@ class ClusterService(ClouderaManagerMutableModule):
                                 config=requested_rcg.get("config", None),
                             )
 
-                            rcg_list.append(custom_rcg)
+                            custom_rcg_list.append(custom_rcg)
 
                             if self.module._diff:
                                 before_rcg.append(dict())
@@ -814,7 +824,10 @@ class ClusterService(ClouderaManagerMutableModule):
                                 display_name=requested_rcg.get("display_name", None),
                                 config=requested_rcg.get("config", None),
                                 purge=self.purge,
+                                skip_redacted=self.skip_redacted,
                             )
+
+                            base_rcg_list.append(base_rcg)
 
                             if self.module._diff:
                                 before_rcg.append(before)
@@ -829,10 +842,10 @@ class ClusterService(ClouderaManagerMutableModule):
                             api_client=self.api_client,
                             cluster_name=self.cluster,
                             service_name=current.name,
-                            role_config_groups=rcg_list,
+                            role_config_groups=custom_rcg_list,
                         )
 
-                        if base_rcg is not None:
+                        for base_rcg in base_rcg_list:
                             RoleConfigGroupsResourceApi(
                                 self.api_client
                             ).update_role_config_group(
@@ -909,28 +922,21 @@ class ClusterService(ClouderaManagerMutableModule):
                     if self.config is None:
                         self.config = dict()
 
-                    config_updates = ConfigListUpdates(
-                        current.config, self.config, self.purge
+                    (before_config, after_config) = reconcile_service_config(
+                        api_client=self.api_client,
+                        service=current,
+                        config=self.config,
+                        purge=self.purge,
+                        check_mode=self.module.check_mode,
+                        skip_redacted=self.skip_redacted,
+                        message=self.message,
                     )
 
-                    if config_updates.changed:
+                    if before_config or after_config:
                         self.changed = True
-
                         if self.module._diff:
-                            self.diff["before"].update(
-                                config=config_updates.diff["before"]
-                            )
-                            self.diff["after"].update(
-                                config=config_updates.diff["after"]
-                            )
-
-                        if not self.module.check_mode:
-                            service_api.update_service_config(
-                                cluster_name=self.cluster,
-                                service_name=self.name,
-                                message=self.message,
-                                body=config_updates.config,
-                            )
+                            self.diff["before"].update(config=before_config)
+                            self.diff["after"].update(config=after_config)
 
                 # Handle tags
                 if self.tags or self.purge:
@@ -988,6 +994,8 @@ class ClusterService(ClouderaManagerMutableModule):
                         role_config_groups=self.role_config_groups,
                         purge=self.purge,
                         check_mode=self.module.check_mode,
+                        skip_redacted=self.skip_redacted,
+                        message=self.message,
                     )
 
                     if before_rcg or after_rcg:
@@ -1007,6 +1015,8 @@ class ClusterService(ClouderaManagerMutableModule):
                         roles=self.roles,
                         purge=self.purge,
                         check_mode=self.module.check_mode,
+                        skip_redacted=self.skip_redacted,
+                        message=self.message,
                         # state=self.state,
                         # maintenance=self.maintenance,
                     )
@@ -1076,6 +1086,7 @@ def main():
             # version=dict(),
             maintenance=dict(type="bool", aliases=["maintenance_mode"]),
             purge=dict(type="bool", default=False),
+            skip_redacted=dict(type="bool", default=False, aliases=["redacted"]),
             config=dict(type="dict", aliases=["service_wide_config"]),
             tags=dict(type="dict"),
             roles=dict(

@@ -133,6 +133,15 @@ options:
       - To clear all configuration and assignments, set empty dictionaries, e.g. O(config={}), or omit the parameter, e.g. O(role_config_groups), and set O(purge=True).
     type: bool
     default: False
+  skip_redacted:
+    description:
+      - Flag indicating if the declared role configurations overrides and tags should skipped I(REDACTED) parameters during reconciliation.
+      - If set, the module will not attempt to update any existing parameter with a I(REDACTED) value.
+      - Otherwise, the parameter value will be overridden.
+    type: bool
+    default: False
+    aliases:
+      - redacted
   maintenance:
     description:
       - Flag for whether the host should be in maintenance mode.
@@ -348,8 +357,8 @@ from cm_client.rest import ApiException
 from ansible.module_utils.common.text.converters import to_native
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    reconcile_config_list_updates,
     ClouderaManagerMutableModule,
-    ConfigListUpdates,
     TagUpdates,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import (
@@ -390,6 +399,7 @@ class Host(ClouderaManagerMutableModule):
         self.role_config_groups = self.get_param("role_config_groups")
         self.tags = self.get_param("tags")
         self.purge = self.get_param("purge")
+        self.skip_redacted = self.get_param("skip_redacted")
         self.maintenance = self.get_param("maintenance")
         self.state = self.get_param("state")
 
@@ -508,26 +518,29 @@ class Host(ClouderaManagerMutableModule):
                     if self.config is None:
                         self.config = dict()
 
-                    config_updates = ConfigListUpdates(
-                        current.config, self.config, self.purge
+                    (
+                        updated_config,
+                        config_before,
+                        config_after,
+                    ) = reconcile_config_list_updates(
+                        current.config,
+                        self.config,
+                        self.purge,
+                        self.skip_redacted,
                     )
 
-                    if config_updates.changed:
+                    if config_before or config_after:
                         self.changed = True
 
                         if self.module._diff:
-                            self.diff["before"].update(
-                                config=config_updates.diff["before"]
-                            )
-                            self.diff["after"].update(
-                                config=config_updates.diff["after"]
-                            )
+                            self.diff["before"].update(config=config_before)
+                            self.diff["after"].update(config=config_after)
 
                         if not self.module.check_mode:
                             host_api.update_host_config(
                                 host_id=current.host_id,
                                 message=self.message,
-                                body=config_updates.config,
+                                body=updated_config,
                             )
 
                 # Handle tags
@@ -626,22 +639,22 @@ class Host(ClouderaManagerMutableModule):
                                 ),
                             )
 
-                            parcel_api = ParcelResourceApi(self.api_client)
-                            try:
-                                for parcel in parcels_api.read_parcels(
-                                    cluster_name=cluster.name
-                                ).items:
-                                    if parcel.stage in ["DOWNLOADED", "DISTRIBUTED"]:
-                                        Parcel(
-                                            parcel_api=parcel_api,
-                                            product=parcel.product,
-                                            version=parcel.version,
-                                            cluster=cluster.name,
-                                        ).activate()
-                            except ApiException as ae:
-                                self.module.fail_json(
-                                    msg="Error managing parcel states: " + to_native(ae)
-                                )
+                            # parcel_api = ParcelResourceApi(self.api_client)
+                            # try:
+                            #     for parcel in parcels_api.read_parcels(
+                            #         cluster_name=cluster.name
+                            #     ).items:
+                            #         if parcel.stage in ["DOWNLOADED", "DISTRIBUTED"]:
+                            #             Parcel(
+                            #                 parcel_api=parcel_api,
+                            #                 product=parcel.product,
+                            #                 version=parcel.version,
+                            #                 cluster=cluster.name,
+                            #             ).activate()
+                            # except ApiException as ae:
+                            #     self.module.fail_json(
+                            #         msg="Error managing parcel states: " + to_native(ae)
+                            #     )
 
                     # Handle cluster migration
                     elif current.cluster_ref.cluster_name != cluster.name:
@@ -721,6 +734,7 @@ class Host(ClouderaManagerMutableModule):
                         host=current,
                         role_config_groups=self.role_config_groups,
                         purge=self.purge,
+                        skip_redacted=self.skip_redacted,
                         check_mode=self.module.check_mode,
                     )
                 except HostException as he:
@@ -741,6 +755,7 @@ class Host(ClouderaManagerMutableModule):
                         role_configs=self.roles,
                         purge=self.purge,
                         check_mode=self.module.check_mode,
+                        skip_redacted=self.skip_redacted,
                         message=self.message,
                     )
                 except HostException as he:
@@ -835,6 +850,7 @@ def main():
             ),
             tags=dict(type="dict"),
             purge=dict(type="bool", default=False),
+            skip_redacted=dict(type="bool", default=False, aliases=["redacted"]),
             maintenance=dict(type="bool", aliases=["maintenance_mode"]),
             state=dict(
                 default="present",

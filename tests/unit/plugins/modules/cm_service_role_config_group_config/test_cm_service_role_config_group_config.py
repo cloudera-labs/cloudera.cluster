@@ -40,6 +40,9 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+# Skip all tests due to pending removal of module from collection
+pytestmark = pytest.mark.skip("Deprecated module")
+
 
 def test_missing_required(conn, module_args):
     module_args(conn)
