@@ -463,7 +463,7 @@ def main():
             kdc_account_creation_host_override=dict(required=False, type="str"),
             gen_keytab_script=dict(required=False, type="str"),
             kdc_admin_user=dict(required=False, type="str"),
-            kdc_admin_password=dict(required=False, type="str"),
+            kdc_admin_password=dict(required=False, type="str", no_log=True),
             state=dict(type="str", default="present", choices=["present", "absent"]),
             force=dict(required=False, type="bool", default=False),
         ),
