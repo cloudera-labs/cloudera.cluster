@@ -15,16 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client import (
-    ClouderaManagerResourceApi,
-    ApiGenerateCmcaArguments,
-    ApiConfigList,
-    ApiConfig,
-)
-
 DOCUMENTATION = r"""
 module: cm_autotls
 short_description: Manage and configure Auto-TLS and Cloudera Manager CA
@@ -265,6 +255,16 @@ cm_config:
       returned: when supported
 """
 
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client import (
+    ClouderaManagerResourceApi,
+    ApiGenerateCmcaArguments,
+    ApiConfigList,
+    ApiConfig,
+)
+
 
 class ClouderaManagerAutoTLS(ClouderaManagerModule):
     def __init__(self, module):
@@ -400,19 +400,19 @@ def main():
         argument_spec=dict(
             connection_ssh_port=dict(required=False, type="int"),
             connection_user_name=dict(required=False, type="str"),
-            connection_password=dict(required=False, type="str"),
-            connection_private_key=dict(required=False, type="str"),
-            connection_passphrase=dict(required=False, type="str"),
+            connection_password=dict(required=False, type="str", no_log=True),
+            connection_private_key=dict(required=False, type="str", no_log=True),
+            connection_passphrase=dict(required=False, type="str", no_log=True),
             configure_all_services=dict(required=False, type="bool", default=True),
             custom_ca=dict(required=False, type="bool"),
             force=dict(required=False, type="bool", default=False),
             location=dict(required=False, type="str"),
             interpret_as_filenames=dict(required=False, type="bool", default=True),
             cm_host_cert=dict(required=False, type="str"),
-            cm_host_key=dict(required=False, type="str"),
+            cm_host_key=dict(required=False, type="str", no_log=True),
             ca_cert=dict(required=False, type="str"),
-            keystore_passwd=dict(required=False, type="str"),
-            truststore_passwd=dict(required=False, type="str"),
+            keystore_passwd=dict(required=False, type="str", no_log=True),
+            truststore_passwd=dict(required=False, type="str", no_log=True),
             trusted_ca_certs=dict(required=False, type="str"),
             host_certs=dict(
                 type="list",
@@ -420,7 +420,7 @@ def main():
                 options=dict(
                     hostname=dict(),
                     certificate=dict(),
-                    key=dict(),
+                    key=dict(no_log=True),
                 ),
             ),
             state=dict(
