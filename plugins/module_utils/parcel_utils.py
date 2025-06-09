@@ -27,6 +27,7 @@ from cm_client import (
     ParcelResourceApi,
     ParcelsResourceApi,
 )
+from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     normalize_output,
@@ -89,11 +90,26 @@ class Parcel(object):
         return Exception(f"Failed to reach {stage.name}: timeout ({self.timeout} secs)")
 
     def _exec(self, stage: STAGE, func) -> None:
-        func(
-            cluster_name=self.cluster,
-            product=self.product,
-            version=self.version,
-        )
+        retries = 0
+
+        # Retry the function, i.e. start_distribution, if receiving a 400 error due to
+        # potential "eventual consistency" issues with parcel torrents.
+        while True:
+            try:
+                func(
+                    cluster_name=self.cluster,
+                    product=self.product,
+                    version=self.version,
+                )
+                break
+            except ApiException as e:
+                if retries < 4 and e.status == 400:
+                    retries += 1
+                    time.sleep(15)
+                    continue
+                else:
+                    raise e
+
         self._wait(stage)
 
     def remove(self):
