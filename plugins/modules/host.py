@@ -339,6 +339,7 @@ host:
       returned: when supported
 """
 
+from time import sleep
 
 from cm_client import (
     ApiHost,
@@ -626,18 +627,30 @@ class Host(ClouderaManagerMutableModule):
                             self.diff["after"].update(cluster=cluster.name)
 
                         if not self.module.check_mode:
-                            # Add the host to the cluster
-                            cluster_api.add_hosts(
-                                cluster_name=cluster.name,
-                                body=ApiHostRefList(
-                                    items=[
-                                        ApiHostRef(
-                                            host_id=current.host_id,
-                                            hostname=current.hostname,
-                                        )
-                                    ]
-                                ),
-                            )
+                            # Add the host to the cluster (with simple retry)
+                            add_retry = 0
+
+                            while True:
+                                try:
+                                    cluster_api.add_hosts(
+                                        cluster_name=cluster.name,
+                                        body=ApiHostRefList(
+                                            items=[
+                                                ApiHostRef(
+                                                    host_id=current.host_id,
+                                                    hostname=current.hostname,
+                                                )
+                                            ]
+                                        ),
+                                    )
+                                    break
+                                except ApiException as ae:
+                                    if add_retry < 4 and ae.status == 400:
+                                        add_retry += 1
+                                        sleep(10)
+                                        continue
+                                    else:
+                                        raise ae
 
                             # parcel_api = ParcelResourceApi(self.api_client)
                             # try:
