@@ -417,7 +417,7 @@ class ClouderaManagerModule(object):
 
         return _impl
 
-    def __init__(self, module):
+    def __init__(self, module: AnsibleModule):
         # Set common parameters
         self.module = module
         self.url = self.get_param("url", None)
