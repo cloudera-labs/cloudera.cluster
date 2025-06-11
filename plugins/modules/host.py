@@ -160,6 +160,20 @@ options:
       - started
       - stopped
       - restarted
+  timeout:
+    description:
+      - Timeout, in seconds, before failing when joining a cluster.
+    type: int
+    default: 300
+    aliases:
+      - polling_timeout
+  delay:
+    description:
+      - Delay (interval), in seconds, between each attempt.
+    type: int
+    default: 15
+    aliases:
+      - polling_interval
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -339,7 +353,7 @@ host:
       returned: when supported
 """
 
-from time import sleep
+import time
 
 from cm_client import (
     ApiHost,
@@ -349,8 +363,6 @@ from cm_client import (
     ClustersResourceApi,
     HostsResourceApi,
     HostTemplatesResourceApi,
-    ParcelResourceApi,
-    ParcelsResourceApi,
     RolesResourceApi,
 )
 from cm_client.rest import ApiException
@@ -376,9 +388,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.host_utils import
     HostMaintenanceStateException,
     HostException,
 )
-from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
-    Parcel,
-)
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import (
     parse_role_result,
 )
@@ -403,6 +412,8 @@ class Host(ClouderaManagerMutableModule):
         self.skip_redacted = self.get_param("skip_redacted")
         self.maintenance = self.get_param("maintenance")
         self.state = self.get_param("state")
+        self.timeout = self.get_param("timeout")
+        self.delay = self.get_param("delay")
 
         # Initialize the return values
         self.output = {}
@@ -418,8 +429,6 @@ class Host(ClouderaManagerMutableModule):
         cluster_api = ClustersResourceApi(self.api_client)
         host_api = HostsResourceApi(self.api_client)
         host_template_api = HostTemplatesResourceApi(self.api_client)
-        parcels_api = ParcelsResourceApi(self.api_client)
-        parcel_api = ParcelResourceApi(self.api_client)
         role_api = RolesResourceApi(self.api_client)
 
         current = None
@@ -627,10 +636,10 @@ class Host(ClouderaManagerMutableModule):
                             self.diff["after"].update(cluster=cluster.name)
 
                         if not self.module.check_mode:
-                            # Add the host to the cluster (with simple retry)
-                            add_retry = 0
+                            # Add the host to the cluster
+                            end_time = time.time() + self.timeout
 
-                            while True:
+                            while end_time > time.time():
                                 try:
                                     cluster_api.add_hosts(
                                         cluster_name=cluster.name,
@@ -645,29 +654,14 @@ class Host(ClouderaManagerMutableModule):
                                     )
                                     break
                                 except ApiException as ae:
-                                    if add_retry < 4 and ae.status == 400:
-                                        add_retry += 1
-                                        sleep(10)
+                                    if ae.status == 400:
+                                        self.module.log(
+                                            f"[RETRY] Attempting to add host, {current.hostname}, to cluster, {cluster.name}"
+                                        )
+                                        time.sleep(self.delay)
                                         continue
                                     else:
                                         raise ae
-
-                            # parcel_api = ParcelResourceApi(self.api_client)
-                            # try:
-                            #     for parcel in parcels_api.read_parcels(
-                            #         cluster_name=cluster.name
-                            #     ).items:
-                            #         if parcel.stage in ["DOWNLOADED", "DISTRIBUTED"]:
-                            #             Parcel(
-                            #                 parcel_api=parcel_api,
-                            #                 product=parcel.product,
-                            #                 version=parcel.version,
-                            #                 cluster=cluster.name,
-                            #             ).activate()
-                            # except ApiException as ae:
-                            #     self.module.fail_json(
-                            #         msg="Error managing parcel states: " + to_native(ae)
-                            #     )
 
                     # Handle cluster migration
                     elif current.cluster_ref.cluster_name != cluster.name:
@@ -875,6 +869,8 @@ def main():
                     "restarted",
                 ],
             ),
+            timeout=dict(type="int", default=300, aliases=["polling_timeout"]),
+            delay=dict(type="int", default=15, aliases=["polling_interval"]),
         ),
         required_one_of=[
             ("name", "host_id"),
