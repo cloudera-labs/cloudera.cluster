@@ -1296,6 +1296,7 @@ class ClouderaCluster(ClouderaManagerModule):
                             product=p,
                             version=v,
                             cluster=self.name,
+                            log=self.module.log,
                             delay=self.delay,
                             timeout=self.timeout,
                         )

@@ -19,6 +19,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import json
+import logging
 import os
 import pytest
 import random
@@ -96,6 +97,8 @@ from ansible_collections.cloudera.cluster.tests.unit import (
     set_cm_role_config_group,
     set_role_config_group,
 )
+
+LOG = logging.getLogger(__name__)
 
 
 class NoHostsFoundException(Exception):
@@ -384,11 +387,15 @@ def base_cluster(cm_api_client, cms_session) -> Generator[ApiCluster]:
                     f"CDH Version {cdh_version} not found. Please check your parcel repo configuration."
                 )
 
+            def _log(msg: str, args: dict = None) -> None:
+                LOG.log(logging.INFO, msg)
+
             parcel = Parcel(
                 parcel_api=parcel_api,
                 product=cdh_parcel.product,
                 version=cdh_parcel.version,
                 cluster=name,
+                log=_log,
             )
 
             parcel.activate()

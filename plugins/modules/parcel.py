@@ -75,6 +75,20 @@ options:
       - 'present'
       - 'absent'
     required: False
+  timeout:
+    description:
+      - Timeout, in seconds, before failing when changing state, e.g. V(DISTRIBUTED).
+    type: int
+    default: 1200
+    aliases:
+      - polling_timeout
+  delay:
+    description:
+      - Delay (interval), in seconds, between each attempt.
+    type: int
+    default: 15
+    aliases:
+      - polling_interval
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -213,6 +227,7 @@ class ClouderaParcel(ClouderaManagerModule):
                 product=self.parcel_name,
                 version=self.parcel_version,
                 cluster=self.cluster,
+                log=self.module.log,
                 delay=self.delay,
                 timeout=self.timeout,
             )
@@ -256,10 +271,10 @@ def main():
             name=dict(required=True, aliases=["parcel", "product"]),
             parcel_version=dict(required=True),
             delay=dict(
-                required=False, type="int", default=10, aliases=["polling_interval"]
+                required=False, type="int", default=15, aliases=["polling_interval"]
             ),
             timeout=dict(
-                required=False, type="int", default=600, aliases=["polling_timeout"]
+                required=False, type="int", default=1200, aliases=["polling_timeout"]
             ),
             state=dict(
                 default="present",

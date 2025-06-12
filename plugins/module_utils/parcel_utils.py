@@ -18,6 +18,7 @@ A common functions for Cloudera Manager parcel management
 
 import time
 
+from collections.abc import Callable
 from enum import IntEnum
 
 from cm_client import (
@@ -51,6 +52,7 @@ class Parcel(object):
         product: str,
         version: str,
         cluster: str,
+        log: Callable[[str, dict], None],
         delay: int = 15,
         timeout: int = 600,
     ) -> None:
@@ -60,6 +62,7 @@ class Parcel(object):
         self.cluster = cluster
         self.delay = delay
         self.timeout = timeout
+        self.log = log
 
         self.current = Parcel.STAGE[
             str(
@@ -85,16 +88,21 @@ class Parcel(object):
             if parcel_status.stage == stage.name:
                 return
             else:
+                self.log(
+                    f"[RETRY] Waiting for parcel stage, {stage.name}, for cluster '{self.cluster}': Product {self.product}[{self.version}]"
+                )
                 time.sleep(self.delay)
 
-        return Exception(f"Failed to reach {stage.name}: timeout ({self.timeout} secs)")
+        return Exception(
+            f"Failed to reach parcel stage, {stage.name}: timeout ({self.timeout} secs)"
+        )
 
     def _exec(self, stage: STAGE, func) -> None:
-        retries = 0
+        end_time = time.time() + self.timeout
 
         # Retry the function, i.e. start_distribution, if receiving a 400 error due to
         # potential "eventual consistency" issues with parcel torrents.
-        while True:
+        while end_time > time.time():
             try:
                 func(
                     cluster_name=self.cluster,
@@ -103,9 +111,11 @@ class Parcel(object):
                 )
                 break
             except ApiException as e:
-                if retries < 4 and e.status == 400:
-                    retries += 1
-                    time.sleep(15)
+                if e.status == 400:
+                    self.log(
+                        f"[RETRY] Attempting to execute parcel function, {func}, for cluster '{self.cluster}': Product {self.product}[{self.version}]"
+                    )
+                    time.sleep(self.delay)
                     continue
                 else:
                     raise e
