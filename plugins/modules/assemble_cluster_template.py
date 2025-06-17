@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2023 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: assemble_cluster_template
 short_description: Merge Cloudera Manager cluster template fragments
 description:
@@ -112,7 +108,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
----
 - name: Assemble a cluster template from files (on the controller)
   cloudera.cluster.assemble_cluster_template:
     src: examples

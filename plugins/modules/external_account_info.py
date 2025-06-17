@@ -15,17 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
-from cm_client import (
-    ExternalAccountsResourceApi,
-)
-
-
 DOCUMENTATION = r"""
----
 module: external_account_info
 short_description: Retrieve external account details details.
 description:
@@ -63,7 +53,6 @@ requirements:
 """
 
 EXAMPLES = r"""
----
 - name: Get all external accounts in Cloudera Manager
   cloudera.cluster.external_account_info:
     host: example.cloudera.com
@@ -86,11 +75,9 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "aws_test_key"
-
 """
 
 RETURN = r"""
----
 external_accounts:
     description:
         - List of one or more external accounts within the cluster.
@@ -124,6 +111,14 @@ external_accounts:
             elements: dict
             returned: always
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
+from cm_client import (
+    ExternalAccountsResourceApi,
+)
 
 
 class ClouderaExternalAccountInfo(ClouderaManagerModule):

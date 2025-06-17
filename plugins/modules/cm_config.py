@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cm_client
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_parameter_changeset,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_config
 short_description: Manage the configuration of Cloudera Manager
 description:
@@ -60,7 +49,6 @@ attributes:
 """
 
 EXAMPLES = r"""
----
 - name: Update several Cloudera Manager parameters
   cloudera.cluster.cm_config:
     host: example.cloudera.com
@@ -80,7 +68,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 config:
   description:
     - List of Cloudera Manager configurations.
@@ -158,6 +145,13 @@ config:
       type: bool
       returned: when supported
 """
+
+import cm_client
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    resolve_parameter_changeset,
+)
 
 
 class ClouderaManagerConfig(ClouderaManagerMutableModule):

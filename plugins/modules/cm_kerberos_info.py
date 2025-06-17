@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
 
 DOCUMENTATION = r"""
 module: cm_kerberos_info
@@ -45,7 +40,6 @@ seealso:
 """
 
 EXAMPLES = r"""
----
 - name: Retrieve CM Kerberos settings
   cloudera.cluster.cm_kerberos_info:
     host: example.cloudera.com
@@ -125,6 +119,11 @@ cm_config:
       type: bool
       returned: when supported
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
 
 
 class ClouderaManagerKerberosInfo(ClouderaManagerModule):

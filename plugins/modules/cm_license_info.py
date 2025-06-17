@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
-from cm_client import ClouderaManagerResourceApi
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_license
 short_description: Returns details about current license
 description:
@@ -37,7 +27,6 @@ requirements:
 """
 
 EXAMPLES = r"""
----
 - name: Get details about a license
   cloudera.cluster.cm_license_info:
     host: example.cloudera.com
@@ -47,7 +36,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 cloudera_manager:
     description: Details about an active license
     type: dict
@@ -77,6 +65,12 @@ cloudera_manager:
             type: str
             returned: optional
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
+from cm_client import ClouderaManagerResourceApi
 
 
 class ClouderaLicenseInfo(ClouderaManagerModule):

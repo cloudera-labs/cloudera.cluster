@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from cm_client import (
-    ExternalUserMappingsResourceApi,
-    ApiExternalUserMapping,
-    ApiAuthRoleRef,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: external_user_mappings
 short_description: Create, update, or delete external user mappings
 description:
@@ -89,7 +75,6 @@ attributes:
 """
 
 EXAMPLES = r"""
----
 - name: Create external user mapping with admin permissions
   cloudera.cluster.external_user_mappings:
     host: example.cloudera.com
@@ -151,7 +136,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 external_user_mappings:
   description:
     - A dictionary containing details of external user mapping.
@@ -180,6 +164,16 @@ external_user_mappings:
       type: list
       returned: always
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from cm_client import (
+    ExternalUserMappingsResourceApi,
+    ApiExternalUserMapping,
+    ApiAuthRoleRef,
+)
 
 
 class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):

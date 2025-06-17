@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,61 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import json, yaml
-
-from ansible.module_utils.common.text.converters import to_text, to_native
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    wait_command,
-    ClouderaManagerModule,
-    ClusterTemplate,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
-    Parcel,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
-    parse_cluster_result,
-)
-
-from cm_client import (
-    ApiCluster,
-    ApiClusterList,
-    ApiClusterTemplate,
-    ApiConfig,
-    ApiConfigList,
-    ApiDataContext,
-    ApiHostRef,
-    ApiHostRefList,
-    ApiHostTemplate,
-    ApiHostTemplateList,
-    ApiRole,
-    ApiRoleList,
-    ApiRoleConfigGroup,
-    ApiRoleConfigGroupRef,
-    ApiRoleNameList,
-    ApiService,
-    ApiServiceConfig,
-    ClouderaManagerResourceApi,
-    ClustersResourceApi,
-    HostsResourceApi,
-    HostTemplatesResourceApi,
-    ParcelResourceApi,
-    ServicesResourceApi,
-    RoleConfigGroupsResourceApi,
-    RolesResourceApi,
-    ControlPlanesResourceApi,
-    ApiInstallEmbeddedControlPlaneArgs,
-)
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 module: cluster
@@ -816,6 +764,55 @@ cloudera_manager:
             type: bool
             returned: always
 """
+
+import json, yaml
+
+from ansible.module_utils.common.text.converters import to_text, to_native
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    wait_command,
+    ClouderaManagerModule,
+    ClusterTemplate,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    Parcel,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
+    parse_cluster_result,
+)
+
+from cm_client import (
+    ApiCluster,
+    ApiClusterList,
+    ApiClusterTemplate,
+    ApiConfig,
+    ApiConfigList,
+    ApiDataContext,
+    ApiHostRef,
+    ApiHostRefList,
+    ApiHostTemplate,
+    ApiHostTemplateList,
+    ApiRole,
+    ApiRoleList,
+    ApiRoleConfigGroup,
+    ApiRoleConfigGroupRef,
+    ApiRoleNameList,
+    ApiService,
+    ApiServiceConfig,
+    ClouderaManagerResourceApi,
+    ClustersResourceApi,
+    HostsResourceApi,
+    HostTemplatesResourceApi,
+    ParcelResourceApi,
+    ServicesResourceApi,
+    RoleConfigGroupsResourceApi,
+    RolesResourceApi,
+    ControlPlanesResourceApi,
+    ApiInstallEmbeddedControlPlaneArgs,
+)
+from cm_client.rest import ApiException
 
 
 class ClouderaCluster(ClouderaManagerModule):

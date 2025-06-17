@@ -15,11 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
-
 DOCUMENTATION = r"""
 module: cm_autotls_info
 short_description: Retrieve Cloudera Manager configurations for Auto-TLS
@@ -45,7 +40,6 @@ seealso:
 """
 
 EXAMPLES = r"""
----
 - name: Retrieve Auto-TLS settings
   cloudera.cluster.cm_autotls_info:
     host: example.cloudera.com
@@ -125,6 +119,12 @@ cm_config:
       type: bool
       returned: when supported
 """
+
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
 
 
 class ClouderaManagerAutoTLSInfo(ClouderaManagerModule):
