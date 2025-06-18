@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-)
-from cm_client import DataContextsResourceApi, ApiDataContextRef, ApiDataContextList
-
-from cm_client.rest import ApiException
-from ansible_collections.cloudera.cluster.plugins.module_utils.data_context_utils import (
-    parse_data_context_result,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: data_context_info
 short_description: Retrieve details of data contexts
 description:
@@ -50,7 +36,6 @@ options:
 """
 
 EXAMPLES = r"""
----
 - name: Gather details about specific data context
   cloudera.cluster.data_context_info
     host: example.cloudera.com
@@ -66,7 +51,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 data_context_info:
   description:
     - List of data contexts within the cluster.
@@ -130,6 +114,16 @@ data_context_info:
       type: str
       returned: always
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+)
+from cm_client import DataContextsResourceApi, ApiDataContextRef, ApiDataContextList
+
+from cm_client.rest import ApiException
+from ansible_collections.cloudera.cluster.plugins.module_utils.data_context_utils import (
+    parse_data_context_result,
+)
 
 
 class ClouderaDataContextInfo(ClouderaManagerMutableModule):

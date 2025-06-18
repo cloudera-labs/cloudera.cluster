@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_config_info
 short_description: Retrieve the Cloudera Manager configuration
 description:
@@ -48,7 +40,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
----
 - name: Retrieve the summary (default) settings
   cloudera.cluster.cm_config_info
     host: example.cloudera.com
@@ -66,7 +57,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 config:
   description:
     - List of Cloudera Manager Server configurations.
@@ -145,6 +135,10 @@ config:
       type: bool
       returned: when supported
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
 
 
 class ClouderaManagerConfigInfo(ClouderaManagerModule):

@@ -205,7 +205,6 @@ roles:
       returned: optional
 """
 
-
 from cm_client import (
     MgmtServiceResourceApi,
 )

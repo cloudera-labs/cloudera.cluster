@@ -14,21 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from cm_client import ClustersResourceApi
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_type_info
 short_description: Retrieve the service types of a cluster
 description:
@@ -51,7 +37,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
----
 - name: Gather service type details
   cloudera.cluster.service_type_info:
     host: "example.cloudera.host"
@@ -62,7 +47,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 service_types:
   description: List of the service types available in the cluster.
   type: list
@@ -72,6 +56,13 @@ service_types:
     - OZONE
     - ICEBERG_REPLICATION
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from cm_client import ClustersResourceApi
+from cm_client.rest import ApiException
 
 
 class ClusterServiceTypeInfo(ClouderaManagerModule):

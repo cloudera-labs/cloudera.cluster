@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_resource
 short_description: Create, update, and delete resources from the Cloudera Manager API endpoint
 description:
@@ -56,7 +48,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
----
 - name: Create a new local Cloudera Manager user
   cloudera.cluster.cm_resource:
     host: example.cloudera.com
@@ -90,7 +81,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 resources:
     description:
         - The results from the Cloudera Manager API endpoint call.
@@ -99,6 +89,10 @@ resources:
     elements: complex
     returned: always
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
 
 
 class ClouderaResource(ClouderaManagerModule):

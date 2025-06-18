@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
-from cm_client import (
-    UsersResourceApi,
-    ApiUser2,
-    ApiAuthRoleRef,
-    ApiUser2List,
-    AuthRolesResourceApi,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: user
 short_description: Create, delete or update users within Cloudera Manager
 description:
@@ -80,7 +64,6 @@ options:
 """
 
 EXAMPLES = r"""
----
 - name: Create new Administrator user
   cloudera.cluster.user:
     host: example.cloudera.com
@@ -125,11 +108,9 @@ EXAMPLES = r"""
     account_name: "john"
     roles: ["Dashboard User"]
     state: "absent"
-
 """
 
 RETURN = r"""
----
 user:
     description: Details of a single user within the cluster
     type: dict
@@ -145,6 +126,18 @@ user:
             type: list
             returned: optional
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
+from cm_client import (
+    UsersResourceApi,
+    ApiUser2,
+    ApiAuthRoleRef,
+    ApiUser2List,
+    AuthRolesResourceApi,
+)
 
 
 class ClouderaUserInfo(ClouderaManagerModule):

@@ -96,7 +96,6 @@ role_config_groups:
       returned: always
 """
 
-
 from cm_client import (
     ApiRoleConfigGroup,
     MgmtRoleConfigGroupsResourceApi,

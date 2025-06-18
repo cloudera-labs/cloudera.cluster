@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
@@ -14,30 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_parameter_changeset,
-)
-
-from cm_client import (
-    ApiConfig,
-    ApiConfigList,
-    ClustersResourceApi,
-    RoleConfigGroupsResourceApi,
-    ServicesResourceApi,
-)
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: service_role_config_group_config
 short_description: Manage the configuration of a cluster service role config group.
 description:
@@ -101,7 +79,6 @@ attributes:
 """
 
 EXAMPLES = r"""
----
 - name: Update (append) several role config group parameters
   cloudera.cluster.service_role_config_group_config:
     host: example.cloudera.com
@@ -147,7 +124,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 config:
   description:
     - List of configurations for a service role config group.
@@ -224,6 +200,22 @@ config:
       type: bool
       returned: when supported
 """
+
+import json
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    resolve_parameter_changeset,
+)
+
+from cm_client import (
+    ApiConfig,
+    ApiConfigList,
+    ClustersResourceApi,
+    RoleConfigGroupsResourceApi,
+    ServicesResourceApi,
+)
+from cm_client.rest import ApiException
 
 
 class ClusterServiceRoleConfigGroupConfig(ClouderaManagerMutableModule):

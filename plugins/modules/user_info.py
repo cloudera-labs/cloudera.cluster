@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
-from cm_client import UsersResourceApi
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: user_info
 short_description: Retrieve user details and associated authentication roles.
 description:
@@ -44,7 +34,6 @@ options:
 """
 
 EXAMPLES = r"""
----
 - name: Get list of all users in Cloudera Manager
   cloudera.cluster.user_info:
     host: example.cloudera.com
@@ -63,7 +52,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 users:
     description:
       - Retrieve details of single user or all users within the Cloudera Manager
@@ -80,6 +68,12 @@ users:
             type: list
             returned: optional
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
+from cm_client import UsersResourceApi
 
 
 class ClouderaUserInfo(ClouderaManagerModule):

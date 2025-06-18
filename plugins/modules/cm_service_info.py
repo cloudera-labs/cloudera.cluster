@@ -338,7 +338,6 @@ service:
         - MGMT
 """
 
-
 from cm_client.rest import ApiException
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,24 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
-    Parcel,
-    parse_parcel_result,
-)
-
-from cm_client import ClustersResourceApi, ParcelResourceApi
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 module: parcel
@@ -180,6 +165,18 @@ parcel:
             type: str
             returned: when supported
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
+    Parcel,
+    parse_parcel_result,
+)
+
+from cm_client import ClustersResourceApi, ParcelResourceApi
+from cm_client.rest import ApiException
 
 
 class ClouderaParcel(ClouderaManagerModule):

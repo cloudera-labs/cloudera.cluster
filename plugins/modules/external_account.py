@@ -15,21 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client.rest import ApiException
-from cm_client import (
-    ExternalAccountsResourceApi,
-    ApiExternalAccount,
-    ApiConfig,
-    ApiConfigList,
-)
-import json
-
-
 DOCUMENTATION = r"""
----
 module: external_account
 short_description: Create, update, or delete an external module account
 description:
@@ -131,8 +117,8 @@ attributes:
 requirements:
   - cm-client
 """
+
 EXAMPLES = r"""
----
 - name: Create AWS Access key credentials
   cloudera.cluster.external_account:
     host: example.cloudera.com
@@ -183,11 +169,9 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     name: Jane
     state: absent
-
 """
 
 RETURN = r"""
----
 external_account:
     description: Details of the external account created, updated, or retrieved.
     type: dict
@@ -220,6 +204,19 @@ external_account:
             elements: dict
             returned: always
 """
+
+import json
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client.rest import ApiException
+from cm_client import (
+    ExternalAccountsResourceApi,
+    ApiExternalAccount,
+    ApiConfig,
+    ApiConfigList,
+)
 
 
 class ClouderaExternalAccount(ClouderaManagerModule):

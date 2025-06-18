@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,27 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from cm_client import (
-    HostsResourceApi,
-    ApiConfigList,
-    ApiConfig,
-)
-from cm_client.rest import ApiException
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerMutableModule,
-    resolve_parameter_changeset,
-)
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: host_config
 short_description: Manage a host configuration in Cloudera Manager
 description:
@@ -75,7 +58,6 @@ attributes:
 """
 
 EXAMPLES = r"""
----
 - name: Update host configuration parameters
   cloudera.cluster.host_config
     host: example.cloudera.com
@@ -100,7 +82,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 config:
   description:
     - Configuration details about a specific host.
@@ -179,6 +160,18 @@ config:
       type: bool
       returned: when supported
 """
+
+from cm_client import (
+    HostsResourceApi,
+    ApiConfigList,
+    ApiConfig,
+)
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerMutableModule,
+    resolve_parameter_changeset,
+)
 
 
 class ClouderaHostConfigInfo(ClouderaManagerMutableModule):

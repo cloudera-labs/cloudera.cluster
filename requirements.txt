@@ -19,5 +19,4 @@ jmespath
 cm-client
 
 # For cm_license lookup
-
 python-gnupg

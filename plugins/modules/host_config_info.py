@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-from cm_client import HostsResourceApi
-from cm_client.rest import ApiException
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: host_config_info
 short_description: Retrieves the configuration details of a specific host.
 description:
@@ -54,7 +44,6 @@ options:
 """
 
 EXAMPLES = r"""
----
 - name: Gather the configuration details for a host
   cloudera.cluster.host_config_info
     host: example.cloudera.com
@@ -73,7 +62,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 config:
   description: Configuration details about a specific host.
   type: list
@@ -151,6 +139,12 @@ config:
       type: bool
       returned: when supported
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+from cm_client import HostsResourceApi
+from cm_client.rest import ApiException
 
 
 class ClouderaHostConfigInfo(ClouderaManagerModule):

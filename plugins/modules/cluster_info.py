@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,25 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from ansible.module_utils.basic import to_native
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
-    parse_cluster_result,
-)
-
-from cm_client.rest import ApiException
-from cm_client import ClustersResourceApi
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
 
 DOCUMENTATION = r"""
 module: cluster_info
@@ -110,6 +94,19 @@ clusters:
             type: bool
             returned: always
 """
+
+from ansible.module_utils.basic import to_native
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
+    parse_cluster_result,
+)
+
+from cm_client.rest import ApiException
+from cm_client import ClustersResourceApi
 
 
 class ClusterInfo(ClouderaManagerModule):

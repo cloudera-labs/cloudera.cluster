@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from cm_client import ClouderaManagerResourceApi
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
 DOCUMENTATION = r"""
----
 module: cm_version_info
 short_description: Gather information about Cloudera Manager
 description:
@@ -41,7 +31,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
----
 - name: Gather details using an endpoint URL
   cloudera.cluster.cm_version:
     url: "https://example.cloudera.com:7183/api/v49"
@@ -60,7 +49,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
----
 cloudera_manager:
     description: Details for the Cloudera Manager instance
     type: dict
@@ -86,6 +74,12 @@ cloudera_manager:
             type: str
             returned: optional
 """
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from cm_client import ClouderaManagerResourceApi
 
 
 class ClouderaManagerVersionInfo(ClouderaManagerModule):

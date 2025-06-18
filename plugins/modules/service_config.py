@@ -204,7 +204,6 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.service_utils imp
     ServiceConfigUpdates,
 )
 
-
 from cm_client import (
     ClustersResourceApi,
     ServicesResourceApi,
