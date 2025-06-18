@@ -4,7 +4,7 @@
     endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ kms_service_name | lower }}/roleConfigGroups/{{ kms_service_name | lower }}-RANGER_KMS_SERVER_KTS-BASE/config"
     method: PUT
     body: "{{ lookup('file', 'kms_tls.json', errors='ignore' ) }}"
-  ignore_errors: yes
+  ignore_errors: true
   when: cloudera_manager_version is version('7.0.0','>=')
 
 - name: Push TLS settings for Keytrustee roleConfigGroups
@@ -12,7 +12,7 @@
     endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ kms_service_name | lower }}/roleConfigGroups/{{ kms_service_name | lower }}-KMS_KEYTRUSTEE-BASE/config"
     method: PUT
     body: "{{ lookup('file', 'kms_tls_cdh.json', errors='ignore' ) }}"
-  ignore_errors: yes
+  ignore_errors: true
   when: cloudera_manager_version is version('7.0.0','<')
 
 - name: Push TLS settings for Keytrustee config
@@ -20,7 +20,7 @@
     endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ kms_service_name | lower }}/config"
     method: PUT
     body: "{{ lookup('file', 'kms_tls_cdh_kms.json', errors='ignore' ) }}"
-  ignore_errors: yes
+  ignore_errors: true
   when: cloudera_manager_version is version('7.0.0','<')
 
 # Restart all clusters to be sure

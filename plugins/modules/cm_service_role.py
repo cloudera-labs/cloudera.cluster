@@ -111,7 +111,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
-    maintenance: yes
+    maintenance: true
 
 - name: Update (append) role configurations to a Cloudera Manager Service role
   cloudera.cluster.cm_service_role:
@@ -130,7 +130,7 @@ EXAMPLES = r"""
     type: HOSTMONITOR
     config:
       yet_another_config: value_three
-    purge: yes
+    purge: true
 
 - name: Remove all role configurations on a Cloudera Manager Service role
   cloudera.cluster.cm_service_role:
@@ -138,7 +138,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
-    purge: yes
+    purge: true
 
 - name: Start a Cloudera Manager Service role
   cloudera.cluster.cm_service_role:

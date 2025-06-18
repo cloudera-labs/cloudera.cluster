@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Set fact for signed TLS certificates directory
   ansible.builtin.set_fact:
     tls_signed_certs_dir: "{{ local_certs_dir }}"
@@ -53,8 +52,8 @@
   fetch:
     src: "{{ cert.path }}"
     dest: "{{ tls_signed_certs_dir }}/{{ cert.alias }}.pem"
-    flat: yes
-  run_once: yes
+    flat: true
+  run_once: true
   delegate_to: "{{ cert.remote_host }}"
   loop: "{{ tls_ca_certs }}"
   loop_control:
@@ -62,7 +61,7 @@
   when: cert.remote_host is defined
 
 - name: Check if signed cert is available
-  become: no
+  become: false
   delegate_to: localhost
   stat:
     path: "{{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem"
@@ -85,7 +84,7 @@
   copy:
     src: "{{ tls_signed_certs_dir }}/{{ inventory_hostname }}.pem"
     dest: "{{ base_dir_security_pki }}/"
-    mode: 0644
+    mode: "0644"
   when: not signed_cert_remote.stat.exists
 
 - name: Copy CA certs to hosts
@@ -97,7 +96,7 @@
         else cacert.path
       }}
     dest: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
-    mode: 0644
+    mode: "0644"
   loop: "{{ tls_ca_certs }}"
   loop_control:
     loop_var: cacert
@@ -118,7 +117,7 @@
     src: "{{ tls_cert_path }}"
     dest: "{{ tls_cert_path_generic }}"
     state: hard
-    mode: 0644
+    mode: "0644"
     owner: root
     group: root
 
@@ -183,23 +182,23 @@
 
 - name: Update OS trust stores
   block:
-  - copy:
-      src: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
-      dest: /etc/pki/ca-trust/source/anchors/
-      mode: 0644
-      remote_src: yes
-    loop: "{{ tls_ca_certs }}"
-    loop_control:
-      loop_var: cacert
-  - shell:
-      cmd: update-ca-trust extract
+    - copy:
+        src: "{{ base_dir_security_pki }}/{{ cacert.alias }}.pem"
+        dest: /etc/pki/ca-trust/source/anchors/
+        mode: "0644"
+        remote_src: true
+      loop: "{{ tls_ca_certs }}"
+      loop_control:
+        loop_var: cacert
+    - shell:
+        cmd: update-ca-trust extract
   when: ansible_os_family == "RedHat"
 
 - name: Find system cacerts file
   find:
     paths: "{{ jdk_java_cacerts_paths }}"
     pattern: "cacerts"
-    follow: yes
+    follow: true
     file_type: any
   register: java_cacerts
   when:

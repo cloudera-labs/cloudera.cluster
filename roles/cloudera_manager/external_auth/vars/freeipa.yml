@@ -16,17 +16,17 @@
 
 default_free_ipa_role_mappings:
   - group: admins
-    roles: [ ROLE_ADMIN ]
+    roles: [ROLE_ADMIN]
   - group: auditors
-    roles: [ ROLE_AUDITOR ]
+    roles: [ROLE_AUDITOR]
   - group: users
-    roles: [ ROLE_USER ]
+    roles: [ROLE_USER]
 
 cloudera_manager_external_auth:
   provider: "FreeIPA"
-  external_first: no
-  external_only: no
-  external_set: yes
+  external_first: false
+  external_only: false
+  external_set: true
   role_mappings: "{{ default_free_ipa_role_mappings }}"
 
 auth_providers:

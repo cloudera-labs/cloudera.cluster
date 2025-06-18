@@ -21,7 +21,7 @@ cloudera_manager_host_remote: "{{ hostvars[groups.cloudera_manager[0]].ansible_h
 cloudera_manager_host: "{{ cloudera_manager_host_remote if 'localhost' in inventory_hostname else cloudera_manager_host_local }}"
 #
 cloudera_manager_port: 7180
-cloudera_manager_database_embedded: False
+cloudera_manager_database_embedded: false
 cloudera_manager_database_host: "{{ database_host }}"
 cloudera_manager_database_type: "{{ database_type }}"
 cloudera_manager_database_name: scm

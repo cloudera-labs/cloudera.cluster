@@ -74,7 +74,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
     config:
-      some_parameter: True
+      some_parameter: true
 
 - name: Update the configuration of a Cloudera Manager service role config group, purging undeclared parameters
   cloudera.cluster.cm_service_role_config_group:
@@ -84,7 +84,7 @@ EXAMPLES = r"""
     type: HOSTMONITOR
     config:
       another_parameter: 3456
-    purge: yes
+    purge: true
 
 - name: Reset the configuration of a Cloudera Manager service role config group
   cloudera.cluster.cm_service_role_config_group:
@@ -92,7 +92,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""

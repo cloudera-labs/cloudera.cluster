@@ -1,28 +1,27 @@
 ---
-
 - name: Get All services from CM
   cloudera.cluster.cm_api:
     endpoint: "/clusters/{{ cluster_name | urlencode() }}/services"
   register: cloudera_manager_all_services
-  no_log: yes  # overly verbose
+  no_log: true # overly verbose
 
 - name: Get All Mgmt Roles from CM
   cloudera.cluster.cm_api:
     endpoint: "/cm/service/roles"
   register: cloudera_manager_mgmt_roles
-  no_log: yes  # overly verbose
+  no_log: true # overly verbose
 
 - name: Get CM Hosts info
   cloudera.cluster.cm_api:
     endpoint: "/hosts"
   register: hosts_details
-  no_log: yes  # overly verbose
+  no_log: true # overly verbose
 
 - name: Get CM deployment of services
   cloudera.cluster.cm_api:
     endpoint: "/cm/deployment"
   register: cm_deployment_services
-  no_log: yes  # overly verbose
+  no_log: true # overly verbose
 
 - name: Get cluster parcel details
   cloudera.cluster.cm_api:
@@ -113,7 +112,7 @@
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ wxm_service_name | lower }}/roles"
       register: cloudera_manager_wxm_all_roles
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - set_fact:
         wxm_api_server: "{{ cloudera_manager_wxm_all_roles.json | community.general.json_query(query) }}"
@@ -124,7 +123,7 @@
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ wxm_service_name | lower }}/roleConfigGroups/{{ wxm_service_name | lower }}-THUNDERHEAD_SIGMA_CONSOLE-BASE/config?view=full"
       register: cloudera_manager_wxm_all_rcgs
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - set_fact:
         wxm_ssl_enabled: "{{ cloudera_manager_wxm_all_roles.json | community.general.json_query(query) }}"
@@ -162,13 +161,13 @@
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ ranger_service_name | lower }}/config?view=full"
       register: full_ranger_config
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - name: Get Ranger Admin full config
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ ranger_service_name | lower }}/roleConfigGroups/{{ ranger_service_name | lower }}-RANGER_ADMIN-BASE/config?view=full"
       register: full_ranger_admin_config
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - set_fact:
         ranger_ssl: "{{ full_ranger_admin_config.json | community.general.json_query(query) }}"
@@ -219,7 +218,7 @@
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/roles"
       register: solr_roles
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - set_fact:
         solr_all_hosts: "{{ solr_roles.json | community.general.json_query(query) }}"
@@ -230,13 +229,13 @@
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/config?view=full"
       register: solr_full_config
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - name: Get SolR full config for SOLR_SERVER-BASE
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ solr_service_name | lower }}/roleConfigGroups/{{ solr_service_name | lower }}-SOLR_SERVER-BASE/config?view=full"
       register: solr_full_config_base
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     # Additional solr configs
     # Set SoLR protocol
@@ -298,7 +297,7 @@
       cloudera.cluster.cm_api:
         endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ knox_service_name | lower }}/roleConfigGroups/{{ knox_service_name | lower }}-KNOX_GATEWAY-BASE/config?view=full"
       register: knox_full_config
-      no_log: yes  # overly verbose
+      no_log: true # overly verbose
 
     - set_fact:
         gateway_descriptor_cdp_proxy: "{{ knox_full_config.json | community.general.json_query(query) }}"

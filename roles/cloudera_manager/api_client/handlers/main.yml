@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: restart cloudera management service
   cm_api:
     endpoint: /cm/service/commands/restart

@@ -45,7 +45,7 @@ options:
 
 EXAMPLES = r"""
 - name: Gather the configuration details for a host
-  cloudera.cluster.host_config_info
+  cloudera.cluster.host_config_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -53,7 +53,7 @@ EXAMPLES = r"""
     view: summary
 
 - name: Gather the configuration details in 'full' for a host
-  cloudera.cluster.host_config_info
+  cloudera.cluster.host_config_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"

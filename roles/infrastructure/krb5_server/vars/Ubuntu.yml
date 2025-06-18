@@ -1,2 +1,2 @@
 ---
-ipaserver_packages: [ "freeipa-server" ]
+ipaserver_packages: ["freeipa-server"]

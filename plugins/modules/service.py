@@ -229,7 +229,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example_cluster
     service: example_ecs
-    maintenance: yes
+    maintenance: true
 
 - name: Update (append) several tags on a cluster service
   cloudera.cluster.service:
@@ -251,7 +251,7 @@ EXAMPLES = r"""
     service: example_ecs
     tags:
       tag_three: value_three
-    purge: yes
+    purge: true
 
 - name: Remove all the tags on a cluster service
   cloudera.cluster.service:
@@ -261,7 +261,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     tags: {}
-    purge: yes
+    purge: true
 
 - name: Update (append) several service-wide configurations on a cluster service
   cloudera.cluster.service:
@@ -284,7 +284,7 @@ EXAMPLES = r"""
     config:
       param_one: 1
       param_three: three
-    purge: yes
+    purge: true
 
 - name: Remove all the service-wide configurations on a cluster service
   cloudera.cluster.service:
@@ -294,7 +294,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     config: {}
-    purge: yes
+    purge: true
 
 - name: Provision role instances on cluster hosts for a cluster service
   cloudera.cluster.service:

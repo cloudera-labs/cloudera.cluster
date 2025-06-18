@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - set_fact:
     has_oracle_client: >-
       {{
@@ -42,7 +41,7 @@
     name: "{{ database.value.name }}"
     state: absent
   delegate_to: "{{ database.value.host }}"
-  become: yes
+  become: true
   when:
     - database.value.type in ['mariadb', 'mysql']
     - database.value.host in groups.db_server
@@ -52,7 +51,7 @@
     name: "{{ database.value.name }}"
     state: absent
   delegate_to: "{{ database.value.host }}"
-  become: yes
+  become: true
   become_user: postgres
   when:
     - database.value.type == 'postgresql'
@@ -63,7 +62,7 @@
     name: "{{ database.value.user }}"
     state: absent
   delegate_to: "{{ database.value.host }}"
-  become: yes
+  become: true
   when:
     - database.value.type in ['mariadb', 'mysql']
     - database.value.host in groups.db_server
@@ -73,7 +72,7 @@
     name: "{{ database.value.user }}"
     state: absent
   delegate_to: "{{ database.value.host }}"
-  become: yes
+  become: true
   become_user: postgres
   when:
     - database.value.type == 'postgresql'
@@ -89,7 +88,7 @@
       {{ lookup('file', 'oracle_drop.sql') }}
       EOF
       sqlplus "{{ database.value.user }}/{{ database.value.password }}@{{ database.value.host }}:{{ database.value.port | default(1521) }}/{{ database.value.name }}" @$ORACLE_TMP
-  delegate_to:  "{{ teardown_oracle_client_host }}"
-  become: yes
+  delegate_to: "{{ teardown_oracle_client_host }}"
+  become: true
   become_user: "{{ teardown_oracle_user }}"
   when: has_oracle_client

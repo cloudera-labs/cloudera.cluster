@@ -13,10 +13,9 @@
 # limitations under the License.
 
 ---
-
 - name: Install Cloudera Manager daemons package
   ansible.builtin.package:
     lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(180, omit) }}"
     name: cloudera-manager-daemons
-    update_cache: yes
+    update_cache: true
     state: present

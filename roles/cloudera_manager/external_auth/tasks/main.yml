@@ -13,15 +13,13 @@
 # limitations under the License.
 
 ---
-
 - name: Conditionally load in variables for initializing IPA
   ansible.builtin.include_vars:
     file: freeipa.yml
   when:
-  - freeipa_activated
-  - cloudera_manager_external_auth is undefined
-  - cloudera_manager_version is version('6.0.0','>=')
-
+    - freeipa_activated
+    - cloudera_manager_external_auth is undefined
+    - cloudera_manager_version is version('6.0.0','>=')
 
 - name: Select external auth provider details
   set_fact:
@@ -32,20 +30,19 @@
   include_role:
     name: cloudera.cluster.cloudera_manager.config
   vars:
-    api_config_keys_uppercase: True
+    api_config_keys_uppercase: true
     api_configs: "{{ lookup('template', 'external_auth_configs.j2') | from_yaml }}"
   when: auth_provider is defined and cloudera_manager_version is version('6.0.0','>=')
 
 - block:
+    - name: Get auth roles from Cloudera Manager
+      cloudera.cluster.cm_api:
+        endpoint: /authRoles
+      register: response
 
-  - name: Get auth roles from Cloudera Manager
-    cloudera.cluster.cm_api:
-      endpoint: /authRoles
-    register: response
-
-  - name: Create auth role name to UUID mapping
-    set_fact:
-      auth_role_uuids: "{{ response.json['items'] | items2dict(key_name='name', value_name='uuid') }}"
+    - name: Create auth role name to UUID mapping
+      set_fact:
+        auth_role_uuids: "{{ response.json['items'] | items2dict(key_name='name', value_name='uuid') }}"
 
   ## BUG: Can't set all mappings in one API call because of OPSAPS-56242
   # - name: Set Cloudera Manager external auth user to role mappings
@@ -55,18 +52,18 @@
   #     method: POST
   #   when: cloudera_manager_external_auth.role_mappings is defined
 
-  - name: Set Cloudera Manager external auth user to role mappings
-    include_tasks: create_mapping.yml
-    loop: "{{ cloudera_manager_external_auth.role_mappings }}"
-    loop_control:
-      loop_var: role_mapping
+    - name: Set Cloudera Manager external auth user to role mappings
+      include_tasks: create_mapping.yml
+      loop: "{{ cloudera_manager_external_auth.role_mappings }}"
+      loop_control:
+        loop_var: role_mapping
 
-  - name: Restart Cloudera Manager server
-    service:
-      name: cloudera-scm-server
-      state: restarted
-    become: yes
-    notify:
-      - wait cloudera-scm-server
+    - name: Restart Cloudera Manager server
+      service:
+        name: cloudera-scm-server
+        state: restarted
+      become: true
+      notify:
+        - wait cloudera-scm-server
 
   when: cloudera_manager_external_auth.role_mappings is defined and cloudera_manager_version is version('6.0.0','>=')

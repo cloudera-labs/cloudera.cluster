@@ -13,11 +13,10 @@
 # limitations under the License.
 
 ---
-
 - name: Get Key Trustee organisation auth secret
   shell: >
     keytrustee-orgtool --confdir {{ keytrustee_server_conf_dir }} list
-  become: yes
+  become: true
   delegate_to: "{{ groups.kts_active | first }}"
   connection: ssh
   register: orgtool_output

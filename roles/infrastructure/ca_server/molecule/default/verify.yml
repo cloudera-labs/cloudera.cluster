@@ -13,32 +13,30 @@
 # limitations under the License.
 
 ---
-
 - name: Verify
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
+    - name: Output Root CA cert details
+      shell: openssl x509 -in /ca/certs/ca.cert.pem -noout -text
+      register: root_ca_output
 
-  - name: Output Root CA cert details
-    shell: openssl x509 -in /ca/certs/ca.cert.pem -noout -text
-    register: root_ca_output
+    - name: Check Root CA issuer
+      assert:
+        that: "'Issuer: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in root_ca_output.stdout"
 
-  - name: Check Root CA issuer
-    assert:
-      that: "'Issuer: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in root_ca_output.stdout"
+    - name: Check Root CA subject
+      assert:
+        that: "'Subject: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in root_ca_output.stdout"
 
-  - name: Check Root CA subject
-    assert:
-      that: "'Subject: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in root_ca_output.stdout"
+    - name: Output Intermediate CA cert details
+      shell: openssl x509 -in /ca/intermediate/certs/intermediate.cert.pem -noout -text
+      register: intermediate_ca_output
 
-  - name: Output Intermediate CA cert details
-    shell: openssl x509 -in /ca/intermediate/certs/intermediate.cert.pem -noout -text
-    register: intermediate_ca_output
+    - name: Check Intermediate CA issuer
+      assert:
+        that: "'Issuer: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in intermediate_ca_output.stdout"
 
-  - name: Check Intermediate CA issuer
-    assert:
-      that: "'Issuer: C=US, O=Cloudera, Inc., OU=PS, CN=Root CA' in intermediate_ca_output.stdout"
-
-  - name: Check Intermediate CA subject
-    assert:
-      that: "'Subject: C=US, O=Cloudera, Inc., OU=PS, CN=Intermediate CA' in intermediate_ca_output.stdout"
+    - name: Check Intermediate CA subject
+      assert:
+        that: "'Subject: C=US, O=Cloudera, Inc., OU=PS, CN=Intermediate CA' in intermediate_ca_output.stdout"

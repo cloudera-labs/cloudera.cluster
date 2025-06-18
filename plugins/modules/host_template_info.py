@@ -55,7 +55,7 @@ seealso:
 
 EXAMPLES = r"""
 - name: Retrieve the defailts about a specific host template
-  cloudera.cluster.host_template_info
+  cloudera.cluster.host_template_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -63,7 +63,7 @@ EXAMPLES = r"""
     name: "example_host_template"
 
 - name: Retrieve the details about all host templates within the cluster
-  cloudera.cluster.host_template_info
+  cloudera.cluster.host_template_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"

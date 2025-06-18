@@ -102,7 +102,7 @@ seealso:
 
 EXAMPLES = r"""
 - name: Provision a host template with a base role config group assignment
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -113,7 +113,7 @@ EXAMPLES = r"""
         service: hdfs-service-1
 
 - name: Provision a host template with a named (custom) role config group assignment
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -124,7 +124,7 @@ EXAMPLES = r"""
         service: zookeeper-service-1
 
 - name: Update (append) a role config group to a host template
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -135,7 +135,7 @@ EXAMPLES = r"""
         service: ozone-service-2
 
 - name: Update (reset) the role config groups of a host template
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -146,10 +146,10 @@ EXAMPLES = r"""
         service: hdfs-service-1
       - type: OZONE_DATANODE
         service: ozone-service-2
-    purge: yes
+    purge: true
 
 - name: Remove a host template
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"

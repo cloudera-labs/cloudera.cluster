@@ -163,7 +163,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     config:
       mgmt_pause_duration_window: 10
-      ldap_monitoring_enabled: no
+      ldap_monitoring_enabled: false
 
 - name: Unset a service-wide configuration for Cloudera Manager service
   cloudera.cluster.cm_service:
@@ -218,12 +218,12 @@ EXAMPLES = r"""
           process_start_secs: None
 
 - name: Update the service state to only the declared configuration
-  cloudera.cluster.cm_service
+  cloudera.cluster.cm_service:
     host: "cm.example.com"
     username: "jane_smith"
     password: "S&peR4Ec*re"
     state: started
-    purge: yes
+    purge: true
     config:
       mgmt_pause_duration_window: 10
     role_config_groups:
@@ -244,14 +244,14 @@ EXAMPLES = r"""
         cluster_hostname: "services01.example.com"
 
 - name: Stop the Cloudera Manager service
-  cloudera.cluster.cm_service
+  cloudera.cluster.cm_service:
     host: "cm.example.com"
     username: "jane_smith"
     password: "S&peR4Ec*re"
     state: "stopped"
 
 - name: Remove the Cloudera Manager service and its roles and role config groups
-  cloudera.cluster.cm_service
+  cloudera.cluster.cm_service:
     host: "cm.example.com"
     username: "jane_smith"
     password: "S&peR4Ec*re"

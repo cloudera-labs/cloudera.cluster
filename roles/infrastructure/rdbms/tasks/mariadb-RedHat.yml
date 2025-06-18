@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Install MariaDB repository
   yum_repository:
     name: MariaDB

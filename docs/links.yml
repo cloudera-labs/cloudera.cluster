@@ -3,7 +3,7 @@
 edit_on_github:
   repository: cloudera-labs/cloudera.cluster
   branch: main
-  path_prefix: ''
+  path_prefix: ""
 
 extra_links:
   - description: Submit a bug report

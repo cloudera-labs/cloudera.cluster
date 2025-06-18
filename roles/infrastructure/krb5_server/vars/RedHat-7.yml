@@ -1,2 +1,2 @@
 ---
-ipaserver_packages: [ "ipa-server", "libselinux-python" ]
+ipaserver_packages: ["ipa-server", "libselinux-python"]

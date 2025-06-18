@@ -63,7 +63,7 @@ attributes:
 
 EXAMPLES = r"""
 - name: Update host configuration parameters
-  cloudera.cluster.host_config
+  cloudera.cluster.host_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -73,16 +73,15 @@ EXAMPLES = r"""
       port_configuration: 8777
 
 - name: Reset all host configurations and update specified parameters
-  cloudera.cluster.host_config
+  cloudera.cluster.host_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: example.cloudera.com
-    purge: yes
+    purge: true
     parameters:
       some_configuration_path: "/usr/bin/java"
       port_configuration: 8777
-
 """
 
 RETURN = r"""

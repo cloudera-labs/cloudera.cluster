@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Configure Cloudera Manager database (external)
   include_tasks: external.yml
   when: not cloudera_manager_database_embedded

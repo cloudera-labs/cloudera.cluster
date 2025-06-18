@@ -13,11 +13,10 @@
 # limitations under the License.
 
 ---
-
 - name: Include config cluster defaults for deployment
   ansible.builtin.include_role:
     name: cloudera.cluster.config.cluster.common
-    public: yes
+    public: true
 
 - name: Ensure properly configured
   assert:
@@ -83,7 +82,7 @@
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_compute | combine(_cluster) }}"
   run_once: true
-  ignore_errors: '{{ ansible_check_mode }}'
+  ignore_errors: "{{ ansible_check_mode }}"
   loop: "{{ definition.clusters }}"
   loop_control:
     label: "{{ cluster.name }}"
@@ -101,7 +100,7 @@
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_base | combine(_cluster) }}"
   run_once: true
-  ignore_errors: '{{ ansible_check_mode }}'
+  ignore_errors: "{{ ansible_check_mode }}"
   loop: "{{ definition.clusters }}"
   loop_control:
     label: "{{ cluster.name }}"
@@ -119,7 +118,7 @@
     stop_cluster_before_delete: true
     cluster: "{{ default_cluster_kts | combine(_cluster) }}"
   run_once: true
-  ignore_errors: '{{ ansible_check_mode }}'
+  ignore_errors: "{{ ansible_check_mode }}"
   loop: "{{ definition.clusters }}"
   loop_control:
     label: "{{ cluster.name }}"
@@ -140,7 +139,7 @@
   when:
     - teardown_everything | default(false) or teardown_cms | default(false)
     - not (teardown_skip_cluster_deletion | default(false))
-  ignore_errors: '{{ ansible_check_mode }}'
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Teardown Cloudera agent
   include_tasks: teardown_cloudera_agent.yml
@@ -243,7 +242,7 @@
   service:
     name: haproxy
     state: stopped
-    enabled: no
+    enabled: false
   when:
     - "'haproxy' in group_names"
     - teardown_everything | default(false)

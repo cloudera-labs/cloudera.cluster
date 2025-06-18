@@ -13,13 +13,12 @@
 # limitations under the License.
 
 ---
-
 - name: Create databases
   mysql_db:
     name: "{{ databases[service].name }}"
     encoding: "{{ service | cloudera.cluster.get_database_encoding_mysql }}"
     collation: "{{ service | cloudera.cluster.get_database_collation_mysql }}"
-  become: yes
+  become: true
   loop: "{{ databases }}"
   loop_control:
     loop_var: service
@@ -32,10 +31,10 @@
     name: "{{ databases[service].user }}"
     password: "{{ databases[service].password }}"
     update_password: always
-    host: '%'
+    host: "%"
     priv: "{{ databases[service].name }}.*:ALL"
-  no_log: yes
-  become: yes
+  no_log: true
+  become: true
   loop: "{{ databases }}"
   loop_control:
     loop_var: service

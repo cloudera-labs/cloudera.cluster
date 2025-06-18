@@ -84,7 +84,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     account_name: "john"
     account_password: "Password123"
-    roles: ["Configurator","Dashboard User","Limited Operator"]
+    roles: ["Configurator", "Dashboard User", "Limited Operator"]
     state: "present"
 
 - name: Reduce permissions on user to a single role

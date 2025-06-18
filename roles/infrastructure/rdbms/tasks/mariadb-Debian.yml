@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Install MariaDB apt key
   apt_key:
     url: https://mariadb.org/mariadb_release_signing_key.asc

@@ -72,17 +72,17 @@ attributes:
 
 EXAMPLES = r"""
 - name: Create a Data Context
-  cloudera.cluster.data_context
+  cloudera.cluster.data_context:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "base_services"
     cluster: "example_cluster"
-    services: ['hive','atlas','hdfs','ranger']
+    services: ['hive', 'atlas', 'hdfs', 'ranger']
     state: present
 
 - name: Delete a data context
-  cloudera.cluster.data_context
+  cloudera.cluster.data_context:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -90,13 +90,13 @@ EXAMPLES = r"""
     state: absent
 
 - name: Update an existing data context
-  cloudera.cluster.data_context
+  cloudera.cluster.data_context:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "base_services"
     cluster: "example_cluster"
-    services: ['hive','atlas','hdfs']
+    services: ['hive', 'atlas', 'hdfs']
     state: present
 """
 

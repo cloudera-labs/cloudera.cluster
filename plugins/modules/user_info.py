@@ -48,7 +48,6 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     account_name: "john"
-
 """
 
 RETURN = r"""

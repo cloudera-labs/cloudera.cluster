@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Get cluster services
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services

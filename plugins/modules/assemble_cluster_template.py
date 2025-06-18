@@ -123,7 +123,7 @@ EXAMPLES = r"""
   cloudera.cluster.assemble_cluster_template:
     src: /tmp/examples
     dest: /opt/cloudera/cluster-template.json
-    remote_src: yes
+    remote_src: true
 """
 
 RETURN = r"""#"""

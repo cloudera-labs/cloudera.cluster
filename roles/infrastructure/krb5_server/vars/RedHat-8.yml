@@ -1,2 +1,2 @@
 ---
-ipaserver_packages: [ "@idm:DL1/server" ]
+ipaserver_packages: ["@idm:DL1/server"]

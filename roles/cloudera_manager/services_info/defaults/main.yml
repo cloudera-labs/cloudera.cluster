@@ -1,3 +1,4 @@
+---
 cluster_name: Default
 ranger_user: "{{ ranger_rangeradmin_user | default('admin') }}"
 ranger_password: "{{ ranger_rangeradmin_user_password | default(cloudera_manager_admin_password) }}"

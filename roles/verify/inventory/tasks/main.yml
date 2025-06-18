@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Fail if inventory groups are empty
   fail:
     msg: Ensure that all inventory groups are non-empty
@@ -36,15 +35,15 @@
 - block:
     - set_fact:
         cluster_hosts: >-
-            {{ groups.cluster | default([])
-               | union(
-                 (groups.cloudera_manager | default([])
-                   | union(
-                     groups.ecs_nodes | default([])
-                     )
+          {{ groups.cluster | default([])
+             | union(
+               (groups.cloudera_manager | default([])
+                 | union(
+                   groups.ecs_nodes | default([])
                    )
-                )
-            }}
+                 )
+              )
+          }}
 
     - name: Ensure that all hosts requiring TLS certificates have a FreeIPA client
       assert:

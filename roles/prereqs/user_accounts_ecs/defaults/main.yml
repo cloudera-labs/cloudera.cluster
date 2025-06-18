@@ -15,11 +15,10 @@
 ---
 skip_user_group_init: false
 local_accounts:
-
   - user: cloudera-scm
     home: /var/lib/cloudera-scm-server
     comment: Cloudera Manager
-    mode: '770'
-    keystore_acl: True
-    key_acl: True
-    key_password_acl: True
+    mode: "770"
+    keystore_acl: true
+    key_acl: true
+    key_password_acl: true

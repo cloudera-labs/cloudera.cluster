@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Remove service role directories
   include_tasks: teardown_cms_role_directory.yml
   loop: "{{ service.directories_confs }}"

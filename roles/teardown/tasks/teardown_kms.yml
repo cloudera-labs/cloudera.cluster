@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Remove the KMS directory
   file:
     path: /var/lib/kms-keytrustee

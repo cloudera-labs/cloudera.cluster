@@ -34,9 +34,9 @@ options:
     type: str
     required: True
     choices:
-        - DELETE
-        - POST
-        - PUT
+      - DELETE
+      - POST
+      - PUT
   body:
     description:
       - HTTP body for the CM API endpoint call.
@@ -72,7 +72,8 @@ EXAMPLES = r"""
         - name: "ROLE_LIMITED"
 
 - name: Delete a Cloudera Manager user using a custom SSL certificate
-  host: example.cloudera.com
+  cloudera.cluster.cm_resource:
+    host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     path: "/user/existing_user"

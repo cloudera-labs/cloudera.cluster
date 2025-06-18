@@ -115,7 +115,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""

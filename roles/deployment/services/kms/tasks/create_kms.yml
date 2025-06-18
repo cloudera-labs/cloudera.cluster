@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Get cluster parcel details
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ __kms_cluster.name | urlencode() }}/parcels

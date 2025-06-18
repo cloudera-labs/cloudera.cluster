@@ -1,8 +1,8 @@
+---
 DOCUMENTATION:
   name: extract_products_from_manifests
   short_description: extract_products_from_manifests
   description: extract_products_from_manifests
 
 EXAMPLES:
-
 RETURN:

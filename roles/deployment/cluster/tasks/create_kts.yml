@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate complete kts cluster configs
   include_role:
     name: cloudera.cluster.config.cluster.kts
@@ -25,26 +24,25 @@
   #when: cluster_template_dry_run
 
 - block:
+    - name: Import cluster template for {{ cluster.name }}
+      cloudera.cluster.cm_api:
+        endpoint: /cm/importClusterTemplate?addRepositories=true
+        method: POST
+        body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
+      register: cluster_template_result
+      failed_when: '"Status code was 400" in cluster_template_result.msg'
 
-  - name: Import cluster template for {{ cluster.name }}
-    cloudera.cluster.cm_api:
-      endpoint: /cm/importClusterTemplate?addRepositories=true
-      method: POST
-      body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
-    register: cluster_template_result
-    failed_when: '"Status code was 400" in cluster_template_result.msg'
+    - set_fact:
+        first_run_failure: >
+          {{ cluster_template_result.json |
+          json_query('children.items[?resultMessage==`Failed to perform First Run of services.`]') }}
 
-  - set_fact:
-      first_run_failure: >
-        {{ cluster_template_result.json |
-        json_query('children.items[?resultMessage==`Failed to perform First Run of services.`]') }}
-
-  # If we have installed a cluster with Key Trustee Server HA, first run will have failed (but this is ok)
-  # Stop the service now in preparation for remedial action
-  - name: Stop Key Trustee Server service when first run failed
-    cloudera.cluster.cm_api:
-      endpoint: /clusters/{{ cluster.name | urlencode() }}/services/keytrustee_server/commands/stop
-      method: POST
-    when: "'kts_passive' in groups and first_run_failure"
+    # If we have installed a cluster with Key Trustee Server HA, first run will have failed (but this is ok)
+    # Stop the service now in preparation for remedial action
+    - name: Stop Key Trustee Server service when first run failed
+      cloudera.cluster.cm_api:
+        endpoint: /clusters/{{ cluster.name | urlencode() }}/services/keytrustee_server/commands/stop
+        method: POST
+      when: "'kts_passive' in groups and first_run_failure"
 
   when: not cluster_template_dry_run

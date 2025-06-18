@@ -27,7 +27,7 @@
       ansible.builtin.package:
         lock_timeout: 180
         name: python3
-        update_cache: yes
+        update_cache: true
         state: present
 
     - name: Ensure pip3 is upgraded
@@ -49,7 +49,7 @@
       ansible.builtin.package:
         lock_timeout: 180
         name: python2
-        update_cache: yes
+        update_cache: true
         state: present
 
     - name: Ensure Python symlink available for Cloudera Manager and Ranger
@@ -62,7 +62,7 @@
   selinux:
     policy: targeted
     state: "{{ selinux_state }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Disable Transparent Huge Pages until reboot
   shell: echo never > /sys/kernel/mm/transparent_hugepage/{{ item }}
@@ -72,24 +72,24 @@
 
 - name: Disable Transparent Huge Pages permanently
   lineinfile:
-    backup: yes
+    backup: true
     path: /etc/rc.d/rc.local
     line: echo never > /sys/kernel/mm/transparent_hugepage/{{ item }}
-    mode: 0755
+    mode: "0755"
   with_items:
     - enabled
     - defrag
 
 - name: Disable Transparent Huge Pages in GRUB config
   lineinfile:
-    backup: yes
+    backup: true
     state: present
     path: /etc/default/grub
-    backrefs: yes
+    backrefs: true
     regexp: '^(GRUB_CMDLINE_LINUX=(?!.*hugepage)\"[^\"]+)(\".*)'
-    line: '\1 transparent_hugepage=never\2'
-  ignore_errors: yes
+    line: "\\1 transparent_hugepage=never\\2"
+  ignore_errors: true
 
 - name: Rebuild GRUB
   shell: grub2-mkconfig -o /boot/grub2/grub.cfg
-  ignore_errors: yes
+  ignore_errors: true

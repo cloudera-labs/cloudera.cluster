@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 #- name: Include config cluster defaults for deployment
 #  ansible.builtin.include_role:
 #    name: cloudera.cluster.config.cluster.base
@@ -86,10 +85,9 @@
     rm -rf /var/log/pods/*
   ignore_errors: true
 
-
 - name: Flush and Delete IPTables
   ansible.builtin.iptables:
-    flush: yes
+    flush: true
     table: "{{ __iptables_flush_item }}"
   loop:
     - filter

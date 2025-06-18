@@ -520,12 +520,12 @@ EXAMPLES = r"""
         type: ZOOKEEPER
         display_name: Zookeeper
         config:
-          zookeeper_datadir_autocreate: yes
+          zookeeper_datadir_autocreate: true
       - name: hdfs-0
         type: HDFS
         config:
-            zookeeper_service: zookeeper-0
-            core_connector: core-settings-0
+          zookeeper_service: zookeeper-0
+          core_connector: core-settings-0
         role_groups:
           - type: DATANODE
             config:
@@ -595,7 +595,7 @@ EXAMPLES = r"""
     port: "7180"
     name: example-cluster
     template: "./files/cluster-template.json"
-    add_repositories: yes
+    add_repositories: true
 
 - name: Create an ECS cluster
   cloudera.cluster.cluster:
@@ -656,8 +656,8 @@ EXAMPLES = r"""
       remote_repo_url: "https://test_website/cdp-pvc-ds/1.5.1"
       control_plane_config:
         ContainerInfo:
-               Mode: public
-               CopyDocker: false
+          Mode: public
+          CopyDocker: false
         Database:
           Mode: embedded
           EmbeddedDbStorage: 50

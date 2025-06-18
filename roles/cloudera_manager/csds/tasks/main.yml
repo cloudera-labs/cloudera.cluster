@@ -13,14 +13,13 @@
 # limitations under the License.
 
 ---
-
 - name: Create CSD directory
   file:
     path: "{{ cloudera_manager_csd_directory }}"
     state: directory
     owner: cloudera-scm
     group: cloudera-scm
-    mode: 0755
+    mode: "0755"
 
 - name: Download CSDs
   get_url:
@@ -28,7 +27,7 @@
     dest: "{{ cloudera_manager_csd_directory }}"
     url_username: "{{ cloudera_manager_repo_username | default(omit) }}"
     url_password: "{{ cloudera_manager_repo_password | default(omit) }}"
-    mode: 0644
+    mode: "0644"
   loop: "{{ cloudera_manager_csds }}"
   loop_control:
     loop_var: __csd_item

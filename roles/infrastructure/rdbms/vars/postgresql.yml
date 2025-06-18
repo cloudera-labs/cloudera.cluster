@@ -15,9 +15,9 @@
 ---
 postgresql_global_config_options:
   - option: log_directory
-    value: 'log'
+    value: "log"
   - option: listen_addresses
-    value: '*'
+    value: "*"
   - option: max_connections
     value: 300
   - option: ssl
@@ -30,8 +30,8 @@ postgresql_global_config_options:
     value: "{{ tls_chain_path if database_tls else None }}"
 
 postgresql_hba_entries:
-  - {type: local, database: all, user: postgres, auth_method: peer}
-  - {type: local, database: all, user: all, auth_method: peer}
-  - {type: host, database: all, user: all, address: '127.0.0.1/32', auth_method: md5}
-  - {type: host, database: all, user: all, address: '::1/128', auth_method: md5}
-  - {type: host, database: all, user: all, address: '0.0.0.0/0', auth_method: md5}
+  - { type: local, database: all, user: postgres, auth_method: peer }
+  - { type: local, database: all, user: all, auth_method: peer }
+  - { type: host, database: all, user: all, address: "127.0.0.1/32", auth_method: md5 }
+  - { type: host, database: all, user: all, address: "::1/128", auth_method: md5 }
+  - { type: host, database: all, user: all, address: "0.0.0.0/0", auth_method: md5 }

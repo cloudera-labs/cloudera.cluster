@@ -13,14 +13,13 @@
 # limitations under the License.
 
 ---
-
 - name: Download PostgreSQL Connector
   get_url:
     url: "{{ postgresql_connector_url }}"
     dest: "{{ local_temp_dir }}/postgresql-connector-java.jar"
     checksum: "{{ postgresql_connector_checksum }}"
-    mode: 0644
-  become: no
+    mode: "0644"
+  become: false
   run_once: true
   delegate_to: localhost
 
@@ -28,22 +27,22 @@
   file:
     path: /usr/share/java
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Copy PostgreSQL Connector jar file to correct location
   copy:
     src: "{{ local_temp_dir }}/postgresql-connector-java.jar"
     dest: /usr/share/java/postgresql-connector-java.jar
-    mode: 0644
+    mode: "0644"
   ignore_errors: "{{ ansible_check_mode }}"
 
 # SSB will need the python3-psycopg2 connector
 
 - name: Create python3-psycopg2 directory
   file:
-      path: "/usr/share/python3"
-      state: directory
-      mode: '777'
+    path: "/usr/share/python3"
+    state: directory
+    mode: "777"
   when: install_py3_psycopg2 == true
 
 - name: Install python3-psycopg2

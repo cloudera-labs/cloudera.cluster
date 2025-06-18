@@ -19,7 +19,7 @@
     owner: root
     group: root
     state: directory
-    mode: 0777
+    mode: "0777"
 
 - name: Fetch keys from first KMS server
   delegate_to: "{{ groups.kms_servers | first }}"
@@ -37,7 +37,7 @@
     dest: "{{ kms_conf_dir }}"
     owner: "{{ kms_user }}"
     group: "{{ kms_group }}"
-    mode: 0600
+    mode: "0600"
   loop: "{{ groups.kms_servers[1:] }}"
   loop_control:
     loop_var: __kms_host

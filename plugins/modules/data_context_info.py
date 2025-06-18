@@ -37,14 +37,14 @@ options:
 
 EXAMPLES = r"""
 - name: Gather details about specific data context
-  cloudera.cluster.data_context_info
+  cloudera.cluster.data_context_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "SDX"
 
 - name: Gather details about all data contexts within the cluster
-  cloudera.cluster.data_context_info
+  cloudera.cluster.data_context_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"

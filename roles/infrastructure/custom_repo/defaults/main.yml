@@ -17,6 +17,6 @@
 local_temp_dir: /tmp
 repo_tar_local_dir: repo
 repo_tar_files: "{{ definition.repo_tar_files | default([]) }}"
-keep_newer: yes
+keep_newer: true
 
 custom_repo_rehost_files: "{{ definition.custom_repo_rehost_files | default([]) }}"

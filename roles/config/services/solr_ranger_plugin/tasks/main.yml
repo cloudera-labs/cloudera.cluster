@@ -6,13 +6,13 @@
     method: POST
     user: "{{ ranger_user }}"
     password: "{{ ranger_password }}"
-    return_content: yes
+    return_content: true
     body: "{{ lookup('template', 'solr_plugin.json' ) }}"
     body_format: json
     status_code: 200
-    validate_certs: no
-    force_basic_auth: yes
-  no_log: yes
+    validate_certs: false
+    force_basic_auth: true
+  no_log: true
   failed_when:
     - __ranger_solr_plugin is failed
     - "'Duplicate service name' not in __ranger_solr_plugin.json.msgDesc"

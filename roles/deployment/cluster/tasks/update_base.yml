@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate complete base cluster configs
   include_role:
     name: config/cluster/base
@@ -41,7 +40,8 @@
   register: cm_config
 
 - set_fact:
-    parcel_repos: "{{ (cm_config.json | json_query('items[?name==`REMOTE_PARCEL_REPO_URLS`].value') | default(['']))[0].split(',') | default([]) | union(cluster.repositories) }}"
+    parcel_repos: "{{ (cm_config.json | json_query('items[?name==`REMOTE_PARCEL_REPO_URLS`].value') | default(['']))[0].split(',') | default([]) | union(cluster.repositories)
+      }}"
 
 - name: Update parcelrepos
   cloudera.cluster.cm_api:
@@ -82,7 +82,7 @@
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{cluster.name | urlencode() }}/parcels/products/CDH/versions/{{ new_parcel_version }}
   register: parcels_response
-  until:  parcels_response.json.stage in ("DISTRIBUTED", "ACTIVATED")
+  until: parcels_response.json.stage in ("DISTRIBUTED", "ACTIVATED")
   retries: "{{ parcel_poll_max_retries | default(30) }}"
   delay: "{{ parcel_poll_duration | default(60) }}"
 

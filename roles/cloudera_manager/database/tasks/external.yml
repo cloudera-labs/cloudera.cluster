@@ -13,18 +13,17 @@
 # limitations under the License.
 
 ---
-
 - name: Create Cloudera Manager database user for Postgres
   postgresql_user:
     name: "{{ cloudera_manager_database_user }}"
     password: "{{ cloudera_manager_database_password }}"
   delegate_to: "{{ cloudera_manager_database_host }}"
   connection: ssh
-  become: yes
+  become: true
   become_user: postgres
   when:
-  - cloudera_manager_database_type == 'postgresql'
-  - cloudera_manager_database_host in groups.db_server | default([])
+    - cloudera_manager_database_type == 'postgresql'
+    - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Create Cloudera Manager database
   postgresql_db:
@@ -33,24 +32,24 @@
     encoding: UTF-8
   delegate_to: "{{ cloudera_manager_database_host }}"
   connection: ssh
-  become: yes
+  become: true
   become_user: postgres
   when:
-  - cloudera_manager_database_type == 'postgresql'
-  - cloudera_manager_database_host in groups.db_server | default([])
+    - cloudera_manager_database_type == 'postgresql'
+    - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Create Cloudera Manager database user for MySQL
   mysql_user:
     name: "{{ cloudera_manager_database_user }}"
     password: "{{ cloudera_manager_database_password }}"
     update_password: always
-    host: '%'
+    host: "%"
     priv: "{{ cloudera_manager_database_name }}.*:ALL"
   delegate_to: "{{ cloudera_manager_database_host }}"
   connection: ssh
   when:
-  - cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
-  - cloudera_manager_database_host in groups.db_server | default([])
+    - cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+    - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Create Cloudera Manager database
   mysql_db:
@@ -60,9 +59,8 @@
   delegate_to: "{{ cloudera_manager_database_host }}"
   connection: ssh
   when:
-  - cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
-  - cloudera_manager_database_host in groups.db_server | default([])
-
+    - cloudera_manager_database_type == 'mysql' or cloudera_manager_database_type == 'mariadb'
+    - cloudera_manager_database_host in groups.db_server | default([])
 
 - name: Prepare Cloudera Manager Server external database
   command: |
@@ -71,4 +69,4 @@
     {{ cloudera_manager_database_name }}
     {{ cloudera_manager_database_user }}
     {{ cloudera_manager_database_password }}
-  changed_when: False
+  changed_when: false

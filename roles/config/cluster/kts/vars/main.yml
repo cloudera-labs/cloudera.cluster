@@ -15,6 +15,6 @@
 ---
 
 custom_config_templates:
-# Custom configurations for TLS
+  # Custom configurations for TLS
   - template: configs/tls.j2
     condition: "{{ cluster.security.tls | default(False) }}"

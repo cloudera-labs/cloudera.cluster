@@ -155,7 +155,7 @@ EXAMPLES = r"""
     cluster: example-cluster
     service: example-hdfs
     name: example-GATEWAY
-    maintenance: yes
+    maintenance: true
 
 - name: Update (append) tags to a service role
   cloudera.cluster.service_role:
@@ -180,7 +180,7 @@ EXAMPLES = r"""
     cluster_hostname: worker-01.cloudera.internal
     tags:
       tag_three: value_three
-    purge: yes
+    purge: true
 
 - name: Remove all tags on a service role
   cloudera.cluster.service_role:
@@ -192,7 +192,7 @@ EXAMPLES = r"""
     type: GATEWAY
     cluster_hostname: worker-01.cloudera.internal
     tags: {}
-    purge: yes
+    purge: true
 
 - name: Start a service role
   cloudera.cluster.service_role:

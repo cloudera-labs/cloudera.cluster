@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate host_template cluster map
   ansible.builtin.set_fact:
     _host_template_cluster_map: "{{ lookup('template', './template_cluster_map.j2') | from_yaml }}"

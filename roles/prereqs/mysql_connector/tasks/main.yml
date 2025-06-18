@@ -13,14 +13,13 @@
 # limitations under the License.
 
 ---
-
 - name: Download MySQL Connector/J
   get_url:
     url: "{{ mysql_connector_url }}"
     dest: "{{ mysql_connector_download_dir }}/mysql-connector-java.zip"
     checksum: "{{ mysql_connector_checksum }}"
-    mode: 0644
-  become: no
+    mode: "0644"
+  become: false
   run_once: true
   delegate_to: localhost
 
@@ -28,7 +27,7 @@
   file:
     path: /usr/share/java
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Install unzip package
   ansible.builtin.package:
@@ -49,8 +48,8 @@
   copy:
     src: "{{ mysql_connector_local_path }}"
     dest: /usr/share/java/mysql-connector-java.jar
-    remote_src: yes
-    mode: 0644
+    remote_src: true
+    mode: "0644"
   ignore_errors: "{{ ansible_check_mode }}"
 
 # MySql on rhel8 fix
@@ -75,7 +74,7 @@
         dest: /usr/include/mysql/my_config.h
       ignore_errors: "{{ ansible_check_mode }}"
 
-## TODO Fix for RHEL8
+    ## TODO Fix for RHEL8
     - name: Install Mysql packages for python - PyMySQL
       shell: /usr/local/bin/pip install PyMySQL --force-reinstall --ignore-installed
       ignore_errors: true

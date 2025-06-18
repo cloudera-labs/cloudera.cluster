@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Retrieve repository metadata
   include_role:
     name: cloudera.cluster.deployment.repometa

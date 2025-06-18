@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Check the cluster exists
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}
@@ -45,7 +44,7 @@
     and services.json | json_query(stopped_query) | length
         == services.json | json_query(all_query) | length
   vars:
-    stopped_query: 'items[?(serviceState==`STOPPED` || serviceState==`NA`)]'
-    all_query: 'items[*]'
+    stopped_query: "items[?(serviceState==`STOPPED` || serviceState==`NA`)]"
+    all_query: "items[*]"
   retries: "{{ teardown_stop_cluster_poll_max_retries | default(30) }}"
   delay: "{{ teardown_stop_cluster_poll_duration | default(20) }}"

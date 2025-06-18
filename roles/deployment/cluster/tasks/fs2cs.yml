@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - set_fact:
     ts_minus_one_week: "{{ '%Y-%m-%dT%H:%M:%S'| strftime(ansible_date_time.epoch|int - 604800) }}"
 
@@ -21,7 +20,7 @@
   cloudera.cluster.cm_api:
     endpoint: "/timeseries?query=SELECT%20fair_share_mb_cumulative,%20fair_share_vcores_cumulative%20WHERE%20queueName%20=%20root&from={{ ts_minus_one_week }}&desiredRollup=DAILY"
     method: GET
-    return_content: yes
+    return_content: true
   register: yarn_stats
 
 - set_fact:
@@ -34,7 +33,7 @@
   cloudera.cluster.cm_api:
     endpoint: /clusters/{{ cluster.name | urlencode() }}/services/yarn/config
     method: GET
-    return_content: yes
+    return_content: true
   register: yarn_conf
 
 - set_fact:

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Set Cloudera Manager agent 'server_host' in config.ini
   lineinfile:
     dest: "{{ cloudera_manager_agent_config_file }}"

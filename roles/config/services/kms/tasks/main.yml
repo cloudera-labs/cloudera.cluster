@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Reset custom configuration dictionary
   set_fact:
     merged_configs: {}

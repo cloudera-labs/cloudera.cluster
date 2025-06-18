@@ -18,7 +18,7 @@
     owner: oozie
     group: oozie
     state: directory
-    mode: '0755'
+    mode: "0755"
   ignore_errors: true
 
 - name: Install unzip

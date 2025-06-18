@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate merged configs (base)
   include_role:
     name: cloudera.cluster.config.cluster.base

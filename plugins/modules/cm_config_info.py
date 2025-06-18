@@ -41,14 +41,14 @@ extends_documentation_fragment:
 
 EXAMPLES = r"""
 - name: Retrieve the summary (default) settings
-  cloudera.cluster.cm_config_info
+  cloudera.cluster.cm_config_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
   register: summary
 
 - name: Retrieve the full settings
-  cloudera.cluster.cm_config_info
+  cloudera.cluster.cm_config_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"

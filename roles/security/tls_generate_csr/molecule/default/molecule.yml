@@ -25,7 +25,7 @@ platforms:
 provisioner:
   name: ansible
   options:
-    vvv: False
+    vvv: false
 scenario:
   converge_sequence:
     - converge

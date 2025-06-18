@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Wait for Cloudera Manager Port to be up
   delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   ansible.builtin.wait_for:
@@ -34,14 +33,14 @@
     validate_certs: "{{ cloudera_manager_tls_validate_certs }}"
     url_username: "admin"
     url_password: "admin"
-    force_basic_auth: yes
+    force_basic_auth: true
     status_code: [200, 401]
   register: default_admin_password_check
   retries: 30
   until:
     - default_admin_password_check.status is defined
     - default_admin_password_check.status != -1
-  run_once: True
+  run_once: true
   when:
     - cloudera_manager_admin_password is defined
     - cloudera_manager_api_password == 'admin'
@@ -50,7 +49,7 @@
   delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   set_fact:
     cloudera_manager_api_password: "{{ cloudera_manager_admin_password }}"
-  run_once: True
+  run_once: true
   when:
     - cloudera_manager_admin_password is defined
     - cloudera_manager_api_password == 'admin'
@@ -62,4 +61,4 @@
 - delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   set_fact:
     cloudera_manager_api_password: "{{ cloudera_manager_api_password }}"
-  run_once: True
+  run_once: true

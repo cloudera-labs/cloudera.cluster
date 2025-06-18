@@ -13,12 +13,11 @@
 # limitations under the License.
 
 ---
-
 - name: Prepare directories for TLS
   file:
     state: directory
     path: "{{ dir }}"
-    mode: 0755
+    mode: "0755"
     owner: root
   loop:
     - "{{ base_dir_security }}"
@@ -57,7 +56,7 @@
       -keystore {{ tls_keystore_path }}
       -alias {{ keystore_alias | default(inventory_hostname) }}
       -storepass {{ tls_keystore_password }} | grep PrivateKeyEntry
-  changed_when: False
+  changed_when: false
 
 - name: Export temporary PKCS12 keystore
   shell:
@@ -128,7 +127,7 @@
     src: csr.cnf.j2
     dest: "{{ tls_csr_config_path }}"
     owner: root
-    mode: 0644
+    mode: "0644"
 
 - name: Generate CSR
   shell:
@@ -146,4 +145,4 @@
   fetch:
     src: "{{ tls_csr_path }}"
     dest: "{{ local_csrs_dir }}/"
-    flat: yes
+    flat: true

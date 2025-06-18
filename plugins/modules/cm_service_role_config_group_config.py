@@ -100,7 +100,7 @@ EXAMPLES = r"""
     parameters:
       config_one: ValueOne
       config_two: 4567
-    purge: yes
+    purge: true
 
 - name: Reset all role config group parameters for a Cloudera Manager Service role type
   cloudera.cluster.service_role_config_group_config:
@@ -109,7 +109,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""

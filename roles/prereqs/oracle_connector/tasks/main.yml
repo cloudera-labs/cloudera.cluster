@@ -13,10 +13,8 @@
 # limitations under the License.
 
 ---
-
 - name: Setup the Oracle JDBC Driver
   block:
-
     - name: Download Oracle Connector
       maven_artifact:
         group_id: "{{ oracle_connector_group_id }}"
@@ -24,7 +22,7 @@
         version: "{{ oracle_connector_version }}"
         dest: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
         repository_url: "{{ oracle_connector_maven_url }}"
-      become: no
+      become: false
       run_once: true
       connection: local
       delegate_to: localhost
@@ -33,13 +31,13 @@
       file:
         path: /usr/share/java
         state: directory
-        mode: 0755
+        mode: "0755"
 
     - name: Copy Oracle Connector jar file to correct location
       copy:
         src: "{{ local_temp_dir }}/{{ oracle_connector_artifact_id }}-connector-java-{{ oracle_connector_version }}.jar"
         dest: /usr/share/java/oracle-connector-java.jar
-        mode: 0644
+        mode: "0644"
 
   when:
     - not (skip_oracle_jdbc_driver_distribution | default(False))
@@ -50,7 +48,7 @@
   file:
     path: /usr/share/oracle/instantclient/lib
     state: directory
-    mode: 0755
+    mode: "0755"
   when:
     - oracle_instantclient_basic_zip is defined
     - oracle_instantclient_sdk_zip is defined
@@ -68,14 +66,14 @@
   unarchive:
     src: "{{ oracle_instantclient_basic_zip }}"
     dest: /usr/share/oracle/instantclient/lib
-    extra_opts: [ "-j" ]
+    extra_opts: ["-j"]
   when: oracle_instantclient_basic_zip is defined
 
 - name: Unarchive sdk instantclient
   unarchive:
     src: "{{ oracle_instantclient_sdk_zip }}"
     dest: /usr/share/oracle/instantclient/lib
-    extra_opts: [ "-j" ]
+    extra_opts: ["-j"]
   when: oracle_instantclient_sdk_zip is defined
 
 - name: Install the libaio package

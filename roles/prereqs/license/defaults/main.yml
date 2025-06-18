@@ -1,3 +1,4 @@
+---
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,5 +14,5 @@
 # limitations under the License.
 
 # Path to the license file on the Ansible controller
-cloudera_manager_license_file: ''
+cloudera_manager_license_file: ""
 license_local_tmp_path: /tmp/license.txt

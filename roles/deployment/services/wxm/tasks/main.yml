@@ -1,10 +1,9 @@
 ---
-
 - assert:
     that:
       - altus_private_key | length > 0
       - altus_key_id | length > 0
-    quiet: True
+    quiet: true
     fail_msg: >-
       Altus key id and private key must be provided to configure Telemetry service for WXM
 

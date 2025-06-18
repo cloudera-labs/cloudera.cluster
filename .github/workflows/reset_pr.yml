@@ -22,9 +22,9 @@ on:
       - synchronize
       - ready_for_review
     branches:
-      - 'release/**'
-      - 'devel'
-      - 'devel-pvc-base'
+      - "release/**"
+      - "devel"
+      - "devel-pvc-base"
 
 jobs:
   reset:

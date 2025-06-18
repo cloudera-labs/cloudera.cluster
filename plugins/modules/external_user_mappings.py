@@ -97,7 +97,7 @@ EXAMPLES = r"""
     name: "basic_user"
     state: "present"
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER","ROLE_CLUSTER_CREATOR"]
+    auth_roles: ["ROLE_DASHBOARD_USER", "ROLE_USER", "ROLE_CLUSTER_CREATOR"]
 
 - name: Replace current permissions in external user mapping
   cloudera.cluster.external_user_mappings:
@@ -108,7 +108,7 @@ EXAMPLES = r"""
     state: "present"
     purge: "True"
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
+    auth_roles: ["ROLE_DASHBOARD_USER", "ROLE_USER"]
 
 - name: Remove specified authorization roles from external user mapping
   cloudera.cluster.external_user_mappings:
@@ -118,7 +118,7 @@ EXAMPLES = r"""
     name: "default_user"
     state: "absent"
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
+    auth_roles: ["ROLE_DASHBOARD_USER", "ROLE_USER"]
 
 - name: Remove external user mapping
   cloudera.cluster.external_user_mappings:
@@ -135,7 +135,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "basic_user"
-    purge: True
+    purge: true
     auth_roles: []
 """
 

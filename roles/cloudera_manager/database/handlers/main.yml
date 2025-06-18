@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: start cloudera-scm-server-db
   service:
     name: cloudera-scm-server-db

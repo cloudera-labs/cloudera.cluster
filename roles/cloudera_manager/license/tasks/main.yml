@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Upload enterprise license
   include_tasks: enterprise.yml
   when: cloudera_manager_license_type == 'enterprise'

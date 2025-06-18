@@ -13,17 +13,16 @@
 # limitations under the License.
 
 ---
-
 - name: Install rngd
   package:
     name: "{{ rngd_package }}"
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Enable rngd
   service:
     name: "{{ rngd_service }}"
-    enabled: yes
+    enabled: true
 
 - name: Configure rngd to use /dev/urandom (RHEL/CentOS 7)
   template:
@@ -31,7 +30,7 @@
     dest: /etc/systemd/system/rngd.service
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   notify:
     - restart rngd
   when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 7

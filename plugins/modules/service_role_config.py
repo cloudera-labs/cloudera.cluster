@@ -89,7 +89,7 @@ EXAMPLES = r"""
       another_configuration: 234
 
 - name: Reset a role parameter
-  cloudera.cluster.cluster_service_role_config:
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -99,7 +99,7 @@ EXAMPLES = r"""
       more_configuration: None
 
 - name: Update (purge) role parameters
-  cloudera.cluster.cluster_service_role_config:
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -111,14 +111,14 @@ EXAMPLES = r"""
       config_three: 2345
 
 - name: Reset all role parameters
-  cloudera.cluster.cluster_service_role_config:
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-service
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""

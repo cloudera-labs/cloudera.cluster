@@ -13,12 +13,11 @@
 # limitations under the License.
 
 ---
-
 - name: Set Cloudera Manager Kerberos configs
   include_role:
     name: cloudera.cluster.cloudera_manager.config
   vars:
-    api_config_keys_uppercase: True
+    api_config_keys_uppercase: true
     api_configs: "{{ lookup('template', 'kerberos_configs.j2') | from_yaml }}"
 
 - name: Import KDC admin credentials

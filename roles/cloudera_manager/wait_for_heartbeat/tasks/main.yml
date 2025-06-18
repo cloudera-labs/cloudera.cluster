@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Read the Cloudera Manager agent UUID
   slurp:
     path: "{{ cloudera_manager_agent_lib_directory }}/uuid"

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Install acls package
   ansible.builtin.package:
     lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
@@ -24,7 +23,7 @@
   file:
     state: file
     path: "{{ tls_keystore_path }}"
-    mode: 0640
+    mode: "0640"
     owner: root
     group: hadoop
 
@@ -45,7 +44,7 @@
   file:
     state: file
     path: "{{ tls_keystore_path_generic }}"
-    mode: 0640
+    mode: "0640"
     owner: root
     group: hadoop
 
@@ -66,7 +65,7 @@
   file:
     state: file
     path: "{{ item }}"
-    mode: 0440
+    mode: "0440"
     owner: root
     group: root
   loop:
@@ -103,7 +102,7 @@
   file:
     state: file
     path: "{{ tls_key_password_file }}"
-    mode: 0440
+    mode: "0440"
     owner: root
     group: root
 
@@ -124,7 +123,7 @@
   file:
     state: file
     path: "{{ item }}"
-    mode: 0440
+    mode: "0440"
     owner: root
     group: root
   loop:

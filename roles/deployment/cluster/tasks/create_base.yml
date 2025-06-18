@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate complete base cluster configs
   include_role:
     name: cloudera.cluster.config.cluster.base
@@ -28,7 +27,7 @@
   template:
     src: cluster_template/main.j2
     dest: /tmp/cluster_template_{{ cluster.name | replace(' ','_') }}.json
-    mode: 0600
+    mode: "0600"
   #when: cluster_template_dry_run
 
 - name: Import cluster template for {{ cluster.name }}
@@ -37,7 +36,7 @@
     method: POST
     body: "{{ lookup('template', 'cluster_template/main.j2', convert_data=False) }}"
   register: cluster_template_result
-  ignore_errors: yes
+  ignore_errors: true
   when: not cluster_template_dry_run
 
 - name: Find cluster template command URL for troubleshooting

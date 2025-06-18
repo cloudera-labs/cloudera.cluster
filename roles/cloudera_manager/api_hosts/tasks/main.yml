@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Get the host identifiers and names from Cloudera Manager
   delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   cloudera.cluster.cm_api:

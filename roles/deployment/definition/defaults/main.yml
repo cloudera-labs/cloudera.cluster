@@ -15,21 +15,20 @@
 ---
 database_host: "{{ groups['db_server'][0] | default('cloudera_manager[0]') }}"
 
-
 database_default_password: changeme
 database_tls: false
 database_type: postgresql
 database_version: "{{ default_database_versions[database_type][ansible_distribution_major_version] }}"
 default_database_versions:
   postgresql:
-    '7': 10
-    '8': 12
+    "7": 10
+    "8": 12
   mariadb:
-    '7': 10.2
-    '8': 10.2
+    "7": 10.2
+    "8": 10.2
   mysql:
-    '7': 5.7
-    '8': 8.0
+    "7": 5.7
+    "8": 8.0
 
 # Located in cloudera.cluster.infrastructure.krb5_common
 #krb5_realm: CLOUDERA.LOCAL
@@ -39,7 +38,7 @@ default_database_versions:
 #krb5_enc_types: "aes256-cts aes128-cts"
 
 manual_tls_cert_distribution: false
-local_temp_dir: '/tmp'
+local_temp_dir: "/tmp"
 
 database_defaults:
   DAS:
@@ -121,7 +120,7 @@ database_defaults:
     user: queryprocessor
     password: "{{ database_default_password }}"
 
-#New in 7.1.9, postgresql only until CHF2
+  #New in 7.1.9, postgresql only until CHF2
   QUEUEMANAGER:
     host: "{{ database_host }}"
     port: "{{ database_type | cloudera.cluster.default_database_port }}"
@@ -129,7 +128,6 @@ database_defaults:
     name: queuemanager
     user: queuemanager
     password: "{{ database_default_password }}"
-
 
 databases_cm_svcs:
   ACTIVITYMONITOR:

@@ -14,8 +14,8 @@
 
 ---
 
-cluster_template_dry_run: False
-tls: False
+cluster_template_dry_run: false
+tls: false
 
 default_cluster_type: base
 
@@ -23,7 +23,6 @@ pvc_type: ""
 
 kms_services: [KEYTRUSTEE, RANGER_KMS, RANGER_KMS_KTS]
 sdx_services: [ATLAS, HDFS, HIVE, RANGER, SENTRY]
-
 default_cluster_base:
   name: Cluster
   data_contexts:
@@ -38,13 +37,10 @@ default_cluster_kts:
       DB_ACTIVE: {}
       KEYTRUSTEE_PASSIVE_SERVER: {}
       DB_PASSIVE: {}
-
 default_cluster_ecs:
   name: ECS
   services: [DOCKER, ECS]
-
 ecs_databases: [ALERTS, CLASSIC_CLUSTERS, CLUSTER_ACCESS_MANAGER, CLUSTER_PROXY, DEX, DWX, ENV, LIFTIE, MLX, RESOURCEPOOL_MANAGER, UMS]
-
 default_cluster_compute:
   base_cluster:
     data_context: SDX

@@ -84,7 +84,7 @@ EXAMPLES = r"""
     parameters:
       config_one: ValueOne
       config_two: 4567
-    purge: yes
+    purge: true
 
 - name: Reset all service-wide parameters
   cloudera.cluster.cm_service_config:
@@ -94,7 +94,7 @@ EXAMPLES = r"""
     cluster: example-cluster
     service: example-service
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""

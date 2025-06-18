@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Check Cloudera Manager version
   cloudera.cluster.cm_api:
     endpoint: /cm/version
@@ -25,7 +24,7 @@
 
 - name: Patch Cloudera Manager older than 7.3
   include_tasks:
-    file: patch_old_cm
+    file: patch_old_cm.yml
   when: response.json.version is version('7.3.0', '<')
 
 - name: Check if password or key is used to connect to machines

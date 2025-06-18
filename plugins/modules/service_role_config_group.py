@@ -129,7 +129,7 @@ EXAMPLES = r"""
     type: SERVER
     config:
       another_parameter: 12345
-    purge: yes
+    purge: true
 
 - name: Update the base role config group for a role type
   cloudera.cluster.service_role_config_group:
@@ -152,7 +152,7 @@ EXAMPLES = r"""
     service: ZooKeeper
     name: Example-ZK-Server
     type: SERVER
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""
