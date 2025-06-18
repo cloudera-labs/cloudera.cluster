@@ -90,7 +90,7 @@ options:
       - If O(purge=True), undeclared roles for the service will be removed from the hosts.
     type: list
     elements: dict
-    options:
+    suboptions:
       type:
         description:
           - The role instance type to provision on the designated cluster hosts.
@@ -135,7 +135,7 @@ options:
         config groups cannot be removed.)
     type: list
     elements: dict
-    options:
+    suboptions:
       name:
         description:
           - The name of a custom role config group.

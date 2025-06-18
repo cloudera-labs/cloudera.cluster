@@ -35,6 +35,9 @@ options:
       - The uuid of the external mapping.
     type: str
     required: no
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
 """
 
 EXAMPLES = r"""

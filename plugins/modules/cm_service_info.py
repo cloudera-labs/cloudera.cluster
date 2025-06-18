@@ -26,9 +26,7 @@ author:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-attributes:
-  check_mode:
-    support: full
+  - ansible.builtin.action_common_attributes
 requirements:
   - cm-client
 seealso:

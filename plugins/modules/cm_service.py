@@ -35,7 +35,7 @@ options:
   role_config_groups:
     description:
       - A list of one or more role config groups to manage.
-      - Each role config group is the I(base) for the O(type).
+      - Each role config group is the I(base) for the O(role_config_groups[].type).
     type: list
     elements: dict
     suboptions:
@@ -66,16 +66,16 @@ options:
       cluster_hostname:
         description:
           - The hostname of an instance for the role.
-          - If the hostname is different than that of the existing instance for the O(type), the role will be destroyed and rebuilt on the declared host.
-          - Mutually exclusive with O(cluster_host_id).
+          - If the hostname is different than that of the existing instance for the O(roles[].type), the role will be destroyed and rebuilt on the declared host.
+          - Mutually exclusive with O(roles[].cluster_host_id).
         type: str
         aliases:
           - cluster_host
       cluster_host_id:
         description:
           - The host ID of the instance for the role.
-          - If the host ID is different than that of the existing instance for the O(type), the role will be destroyed and rebuilt on the declared host.
-          - Mutually exclusive with O(cluster_hostname).
+          - If the host ID is different than that of the existing instance for the O(roles[].type), the role will be destroyed and rebuilt on the declared host.
+          - Mutually exclusive with O(roles[].cluster_hostname).
         type: str
       config:
         description:
@@ -110,7 +110,7 @@ options:
   state:
     description:
       - The operating state of the service.
-      - The V(restarted) value will always restart the service and set RV(changed=True).
+      - The V(restarted) value will always restart the service and set RV(ignore:changed=True).
     type: str
     default: started
     choices:
@@ -124,6 +124,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full

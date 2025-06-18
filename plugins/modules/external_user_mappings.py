@@ -67,6 +67,10 @@ options:
       - If I(purge=False), the provided authorization roles will be added to the existing ones, and any duplicates will be ignored.
     type: bool
     default: False
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full

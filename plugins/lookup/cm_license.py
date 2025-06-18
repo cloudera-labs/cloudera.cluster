@@ -78,7 +78,7 @@ RETURN = """
     description:
       - The contents of the license.
     type: dict
-    options:
+    contains:
       deactivation_date:
         description: Date of license deactivation.
         returned: always
@@ -95,7 +95,7 @@ RETURN = """
         returned: always
       password:
         description: Computed password of the license.
-        return: always
+        returned: always
       start_date:
         description: Date of license activation.
         returned: always

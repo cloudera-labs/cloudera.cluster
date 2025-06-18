@@ -43,8 +43,8 @@ options:
       - BASICAUTH
   state:
     description:
-      - If I(state=present), the account will be created or updated.
-      - If I(state=absent), the account will be deleted.
+      - If O(state=present), the account will be created or updated.
+      - If O(state=absent), the account will be deleted.
     type: str
     required: no
     default: present
@@ -109,6 +109,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full

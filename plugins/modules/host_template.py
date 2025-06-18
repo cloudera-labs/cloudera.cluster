@@ -50,7 +50,7 @@ options:
       name:
         description:
           - The name of the custom role config group for the specified service.
-          - Mutually exclusive with O(type).
+          - Mutually exclusive with O(role_config_groups[].type).
         type: str
         required: no
       service:
@@ -59,30 +59,30 @@ options:
         type: str
         required: yes
         aliases:
-            - service_name
+          - service_name
       type:
         description:
           - The name of the role type of the base role config group for the specified service.
-          - Mutually exclusive with O(name).
+          - Mutually exclusive with O(role_config_groups[].name).
         type: str
         required: no
         aliases:
-            - role_type
-    purge:
-      description:
-        - Flag for whether the declared role config groups should append or overwrite any existing entries.
-        - To clear all configuration overrides or tags, set O(role_config_groups={}), i.e. an empty dictionary, and set O(purge=True).
-        type: bool
-        default: False
-    state:
-      description:
-        - The state of the host template.
-      type: str
-      required: no
-      choices:
-        - present
-        - absent
-      default: present
+          - role_type
+  purge:
+    description:
+      - Flag for whether the declared role config groups should append or overwrite any existing entries.
+      - To clear all configuration overrides or tags, set O(role_config_groups={}), i.e. an empty dictionary, and set O(purge=True).
+    type: bool
+    default: False
+  state:
+    description:
+      - The state of the host template.
+    type: str
+    required: no
+    choices:
+      - present
+      - absent
+    default: present
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options

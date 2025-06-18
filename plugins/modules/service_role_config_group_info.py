@@ -46,15 +46,6 @@ options:
     aliases:
       - role_type
   name:
-  type:
-    description:
-      - The role type defining the role config group(s).
-      - If specified, will return all role config groups for the type.
-      - Mutually exclusive with O(name).
-    type: str
-    aliases:
-      - role_type
-  name:
     description:
       - The role config group to examine.
       - If defined, the module will return the role config group.
@@ -65,13 +56,7 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-attributes:
-  check_mode:
-    support: full
-requirements:
-  - cm-client
-seealso:
-  - module: cloudera.cluster.service_role_config_group
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full

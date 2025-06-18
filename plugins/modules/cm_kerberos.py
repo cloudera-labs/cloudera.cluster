@@ -116,7 +116,7 @@ options:
     description:
       - Custom Kerberos Keytab Retrieval Script.
       - Specify the path to a custom script, or executable, to retrieve a Kerberos keytab.
-      - The target script should accept two arguments: a destination path for the resulting keytab and the full principal name of the owner of the keytab.
+      - "The target script should accept two arguments: a destination path for the resulting keytab and the full principal name of the owner of the keytab."
     type: str
     required: false
   kdc_admin_user:
@@ -134,7 +134,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
 notes:
-  - Using the C(cm_config) module with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
+  - Using O(cloudera.cluster.cm_config#module:purge=yes) will remove the Cloudera Manager configurations set by this module.
   - Requires C(cm_client).
 seealso:
   - module: cloudera.cluster.cm_config

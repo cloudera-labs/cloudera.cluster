@@ -74,7 +74,7 @@ options:
       - Role configuration overrides for the host.
     type: list
     elements: dict
-    options:
+    suboptions:
       service:
         description:
           - The service of the role instance on the host.
@@ -102,7 +102,7 @@ options:
       - Role config groups (and associated role instances) to apply to the host.
     type: list
     elements: dict
-    options:
+    suboptions:
       service:
         description:
           - The service of the role config group (and associated role instance) on the host.
@@ -113,14 +113,14 @@ options:
       type:
         description:
           - The base role type of the role config group (and associated role instance) on the host.
-          - One of O(type) or O(name) is required.
+          - One of O(role_config_groups[].type) or O(role_config_groups[].name) is required.
         type: str
         aliases:
           - role_type
       name:
         description:
           - The name of the role config group (and associated role instance) on the host.
-          - One of O(type) or O(name) is required.
+          - One of O(role_config_groups[].type) or O(role_config_groups[].name) is required.
         type: str
   tags:
     description:
