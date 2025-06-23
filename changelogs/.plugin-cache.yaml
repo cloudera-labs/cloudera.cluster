@@ -1,0 +1,374 @@
+objects:
+  role:
+    assemble_template:
+      description: Discover and render files into a cluster template
+      name: assemble_template
+      version_added: 4.3.0
+plugins:
+  become: {}
+  cache: {}
+  callback: {}
+  cliconf: {}
+  connection: {}
+  filter:
+    append_database_port:
+      description: append_database_port
+      name: append_database_port
+      version_added: 3.0.3
+    cluster_service_role_hosts:
+      description: cluster_service_role_hosts
+      name: cluster_service_role_hosts
+      version_added: 3.0.3
+    default_database_port:
+      description: default_database_port
+      name: default_database_port
+      version_added: 3.0.3
+    extract_custom_role_groups:
+      description: extract_custom_role_groups
+      name: extract_custom_role_groups
+      version_added: 3.0.4
+    extract_custom_roles:
+      description: extract_custom_roles
+      name: extract_custom_roles
+      version_added: 3.0.4
+    extract_parcel_urls:
+      description: extract_parcel_urls
+      name: extract_parcel_urls
+      version_added: 3.0.3
+    extract_products_from_manifests:
+      description: extract_products_from_manifests
+      name: extract_products_from_manifests
+      version_added: 3.0.3
+    extract_role_and_group:
+      description: extract_role_and_group
+      name: extract_role_and_group
+      version_added: 3.0.4
+    filter_null_configs:
+      description: fill_null_configs
+      name: filter_null_configs
+      version_added: 3.0.3
+    find_clusters:
+      description: find_clusters
+      name: find_clusters
+      version_added: 3.0.3
+    flatten_dict_list:
+      description: flatten_dict_list
+      name: flatten_dict_list
+      version_added: 2.0.0
+    format_database_type:
+      description: format_database_type
+      name: format_database_type
+      version_added: 3.0.3
+    get_database_collation_mysql:
+      description: get_database_collation_mysql
+      name: get_database_collation_mysql
+      version_added: 3.0.3
+    get_database_encoding_mysql:
+      description: get_database_encoding_mysql
+      name: get_database_encoding_mysql
+      version_added: 3.0.3
+    get_major_version:
+      description: get_major_version
+      name: get_major_version
+      version_added: 3.0.3
+    get_product_version:
+      description: get_product_version
+      name: get_product_version
+      version_added: 3.0.3
+    to_ldap_type_enum:
+      description: to_ldap_type_enum
+      name: to_ldap_type_enum
+      version_added: 3.0.3
+  httpapi: {}
+  inventory: {}
+  lookup:
+    cm_license:
+      description: Get the details of a Cloudera license
+      name: cm_license
+      version_added: 5.0.0
+    cm_service:
+      description: Get the details for a service on a CDP Datahub cluster
+      name: cm_service
+      version_added: 4.0.0
+  module:
+    assemble_cluster_template:
+      description: Merge Cloudera Manager cluster template fragments
+      name: assemble_cluster_template
+      namespace: ''
+      version_added: 4.2.0
+    cluster:
+      description: Manage the lifecycle and state of a cluster
+      name: cluster
+      namespace: ''
+      version_added: 4.4.0
+    cluster_info:
+      description: Retrieve details about one or more clusters
+      name: cluster_info
+      namespace: ''
+      version_added: 4.4.0
+    cm_autotls:
+      description: Manage and configure Auto-TLS and Cloudera Manager CA
+      name: cm_autotls
+      namespace: ''
+      version_added: 5.0.0
+    cm_autotls_info:
+      description: Retrieve Cloudera Manager configurations for Auto-TLS
+      name: cm_autotls_info
+      namespace: ''
+      version_added: 5.0.0
+    cm_config:
+      description: Manage the configuration of Cloudera Manager
+      name: cm_config
+      namespace: ''
+      version_added: 4.4.0
+    cm_config_info:
+      description: Retrieve the Cloudera Manager configuration
+      name: cm_config_info
+      namespace: ''
+      version_added: 4.4.0
+    cm_endpoint_info:
+      description: Discover the Cloudera Manager API endpoint
+      name: cm_endpoint_info
+      namespace: ''
+      version_added: 4.0.0
+    cm_kerberos:
+      description: Manage and configure Kerberos Authentication for CDP
+      name: cm_kerberos
+      namespace: ''
+      version_added: 5.0.0
+    cm_kerberos_info:
+      description: Retrieve Cloudera Manager configurations for Kerberos
+      name: cm_kerberos_info
+      namespace: ''
+      version_added: 5.0.0
+    cm_license:
+      description: Activate the license for Cloudera Manager
+      name: cm_license
+      namespace: ''
+      version_added: 4.4.0
+    cm_license_info:
+      description: Returns details about current license
+      name: cm_license_info
+      namespace: ''
+      version_added: 4.4.0
+    cm_resource:
+      description: Create, update, and delete resources from the Cloudera Manager
+        API endpoint
+      name: cm_resource
+      namespace: ''
+      version_added: 4.0.0
+    cm_resource_info:
+      description: Retrieve resources from the Cloudera Manager API endpoint
+      name: cm_resource_info
+      namespace: ''
+      version_added: 4.0.0
+    cm_service:
+      description: Manage Cloudera Manager service
+      name: cm_service
+      namespace: ''
+      version_added: 4.4.0
+    cm_service_config:
+      description: Manage the Cloudera Manager service configuration
+      name: cm_service_config
+      namespace: ''
+      version_added: 4.4.0
+    cm_service_info:
+      description: Retrieve information about the Cloudera Management service
+      name: cm_service_info
+      namespace: ''
+      version_added: 4.4.0
+    cm_service_role:
+      description: Manage a Cloudera Manager Service role
+      name: cm_service_role
+      namespace: ''
+      version_added: 5.0.0
+    cm_service_role_config:
+      description: Manage a service role configuration in cluster
+      name: cm_service_role_config
+      namespace: ''
+      version_added: 4.4.0
+    cm_service_role_config_group:
+      description: Manage a Cloudera Manager Service role config group.
+      name: cm_service_role_config_group
+      namespace: ''
+      version_added: 5.0.0
+    cm_service_role_config_group_config:
+      description: Manage the configuration of a Cloudera Manager Service role config
+        group.
+      name: cm_service_role_config_group_config
+      namespace: ''
+      version_added: 4.4.0
+    cm_service_role_config_group_info:
+      description: Retrieve information about Cloudera Management service role config
+        groups.
+      name: cm_service_role_config_group_info
+      namespace: ''
+      version_added: 5.0.0
+    cm_service_role_info:
+      description: Retrieve information about Cloudera Management service roles.
+      name: cm_service_role_info
+      namespace: ''
+      version_added: 5.0.0
+    cm_trial_license:
+      description: Activate the trial license of Cloudera Manager
+      name: cm_trial_license
+      namespace: ''
+      version_added: 4.4.0
+    cm_version_info:
+      description: Gather information about Cloudera Manager
+      name: cm_version_info
+      namespace: ''
+      version_added: 4.0.0
+    data_context:
+      description: Create, update, or delete a data context
+      name: data_context
+      namespace: ''
+      version_added: 5.0.0
+    data_context_info:
+      description: Retrieve details of data contexts
+      name: data_context_info
+      namespace: ''
+      version_added: 5.0.0
+    external_account:
+      description: Create, update, or delete an external module account
+      name: external_account
+      namespace: ''
+      version_added: 5.0.0
+    external_account_info:
+      description: Retrieve external account details details.
+      name: external_account_info
+      namespace: ''
+      version_added: 5.0.0
+    external_user_mappings:
+      description: Create, update, or delete external user mappings
+      name: external_user_mappings
+      namespace: ''
+      version_added: 5.0.0
+    external_user_mappings_info:
+      description: Retrieve details of external user mappings
+      name: external_user_mappings_info
+      namespace: ''
+      version_added: 5.0.0
+    host:
+      description: Manage Cloudera Manager hosts
+      name: host
+      namespace: ''
+      version_added: 4.4.0
+    host_config:
+      description: Manage a host configuration in Cloudera Manager
+      name: host_config
+      namespace: ''
+      version_added: 4.4.0
+    host_config_info:
+      description: Retrieves the configuration details of a specific host.
+      name: host_config_info
+      namespace: ''
+      version_added: 4.4.0
+    host_info:
+      description: Gather information about Cloudera Manager hosts
+      name: host_info
+      namespace: ''
+      version_added: 4.4.0
+    host_template:
+      description: Manage a cluster host template
+      name: host_template
+      namespace: ''
+      version_added: 5.0.0
+    host_template_info:
+      description: Retrieve details regarding a cluster's host templates.
+      name: host_template_info
+      namespace: ''
+      version_added: 5.0.0
+    parcel:
+      description: Manage the state of parcels on a cluster
+      name: parcel
+      namespace: ''
+      version_added: 4.4.0
+    parcel_info:
+      description: Gather details about the parcels on the cluster
+      name: parcel_info
+      namespace: ''
+      version_added: 4.4.0
+    service:
+      description: Manage a service in cluster
+      name: service
+      namespace: ''
+      version_added: 4.4.0
+    service_config:
+      description: Manage a cluster service configuration
+      name: service_config
+      namespace: ''
+      version_added: 4.4.0
+    service_config_info:
+      description: Retrieve information about the configuration for a cluster service
+      name: service_config_info
+      namespace: ''
+      version_added: 4.4.0
+    service_info:
+      description: Retrieve information about the services of cluster
+      name: service_info
+      namespace: ''
+      version_added: 4.4.0
+    service_role:
+      description: Manage a service role in cluster
+      name: service_role
+      namespace: ''
+      version_added: 4.4.0
+    service_role_config:
+      description: Manage a service role configuration in cluster
+      name: service_role_config
+      namespace: ''
+      version_added: 4.4.0
+    service_role_config_group:
+      description: Manage a cluster service role config group.
+      name: service_role_config_group
+      namespace: ''
+      version_added: 4.4.0
+    service_role_config_group_config:
+      description: Manage the configuration of a cluster service role config group.
+      name: service_role_config_group_config
+      namespace: ''
+      version_added: 4.4.0
+    service_role_config_group_config_info:
+      description: Retrieve the configuration of a cluster service role config group.
+      name: service_role_config_group_config_info
+      namespace: ''
+      version_added: 4.4.0
+    service_role_config_group_info:
+      description: Retrieve information about a cluster service role config group
+        or groups
+      name: service_role_config_group_info
+      namespace: ''
+      version_added: 4.4.0
+    service_role_config_info:
+      description: Retrieve information about the configuration for a cluster service
+        role
+      name: service_role_config_info
+      namespace: ''
+      version_added: 4.4.0
+    service_role_info:
+      description: Retrieve information about the service roles of cluster
+      name: service_role_info
+      namespace: ''
+      version_added: 4.4.0
+    service_type_info:
+      description: Retrieve the service types of a cluster
+      name: service_type_info
+      namespace: ''
+      version_added: 4.4.0
+    user:
+      description: Create, delete or update users within Cloudera Manager
+      name: user
+      namespace: ''
+      version_added: 4.4.0
+    user_info:
+      description: Retrieve user details and associated authentication roles.
+      name: user_info
+      namespace: ''
+      version_added: 4.4.0
+  netconf: {}
+  shell: {}
+  strategy: {}
+  test: {}
+  vars: {}
+version: 4.4.0

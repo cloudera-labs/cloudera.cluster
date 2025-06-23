@@ -51,6 +51,7 @@ extra-dependencies = [
   "sphinx",
   "sphinx-ansible-theme >= 0.9.0",
   "antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs@cldr-docsite#egg=antsibull-docs",
+  "antsichaut",
 ]
 
 [tool.hatch.envs.docs.scripts]

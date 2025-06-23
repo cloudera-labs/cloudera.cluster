@@ -1,0 +1,336 @@
+---
+ancestor:
+releases:
+  4.4.0:
+    changes:
+      minor_changes:
+        - Update to version 4.4.0 (https://github.com/cloudera-labs/cloudera.cluster/pull/231)
+        - Add workflow and steps to validate for and publishing to Ansible Galaxy
+          (https://github.com/cloudera-labs/cloudera.cluster/pull/230)
+        - Updates required for publishing collection to Ansible Galaxy (https://github.com/cloudera-labs/cloudera.cluster/pull/229)
+        - Update cluster and cluster_info results object and API (https://github.com/cloudera-labs/cloudera.cluster/pull/228)
+        - Update cluster state management (https://github.com/cloudera-labs/cloudera.cluster/pull/227)
+        - Update parcel_info API output and move parsing function to parcel_utils
+          (https://github.com/cloudera-labs/cloudera.cluster/pull/226)
+        - Add or update API to support diff documentation (https://github.com/cloudera-labs/cloudera.cluster/pull/225)
+        - Add cluster module (https://github.com/cloudera-labs/cloudera.cluster/pull/224)
+        - Add Parcel Module (https://github.com/cloudera-labs/cloudera.cluster/pull/221)
+        - Add cluster service and related resource modules (https://github.com/cloudera-labs/cloudera.cluster/pull/220)
+        - Add Host Module (https://github.com/cloudera-labs/cloudera.cluster/pull/218)
+        - Add Cloudera Manager config modules (https://github.com/cloudera-labs/cloudera.cluster/pull/211)
+        - Add Cluster Info Module (https://github.com/cloudera-labs/cloudera.cluster/pull/204)
+        - Add License/License_info Module (https://github.com/cloudera-labs/cloudera.cluster/pull/199)
+        - Add Import_cluster_template module (https://github.com/cloudera-labs/cloudera.cluster/pull/197)
+        - Add cm_trial module (https://github.com/cloudera-labs/cloudera.cluster/pull/195)
+        - Add CM Service Module  (https://github.com/cloudera-labs/cloudera.cluster/pull/194)
+        - Add CM Service Info Module (https://github.com/cloudera-labs/cloudera.cluster/pull/190)
+      bugfixes:
+        - Remove deprecated ansible.builtin.command 'warn' parameter (https://github.com/cloudera-labs/cloudera.cluster/pull/196)
+        - Update parcels.yml (https://github.com/cloudera-labs/cloudera.cluster/pull/189)
+        - Update postgresql-RedHat.yml (https://github.com/cloudera-labs/cloudera.cluster/pull/188)
+        - Removes blockers to running check mode & diff mode (https://github.com/cloudera-labs/cloudera.cluster/pull/166)
+    modules:
+      - description: Manage the lifecycle and state of a cluster.
+        name: cluster
+        namespace: ''
+      - description: Retrieve details about one or more clusters.
+        name: cluster_info
+        namespace: ''
+      - description: Manage the configuration of Cloudera Manager.
+        name: cm_config
+        namespace: ''
+      - description: Retrieve the Cloudera Manager configuration.
+        name: cm_config_info
+        namespace: ''
+      - description: Activate the license for Cloudera Manager.
+        name: cm_license
+        namespace: ''
+      - description: Returns details about current license.
+        name: cm_license_info
+        namespace: ''
+      - description: Manage Cloudera Manager service.
+        name: cm_service
+        namespace: ''
+      - description: Manage the Cloudera Manager service configuration.
+        name: cm_service_config
+        namespace: ''
+      - description: Retrieve information about the Cloudera Management service.
+        name: cm_service_info
+        namespace: ''
+      - description: Manage a service role configuration in cluster.
+        name: cm_service_role_config
+        namespace: ''
+      - description: Manage the configuration of a Cloudera Manager Service role config
+          group.
+        name: cm_service_role_config_group_config
+        namespace: ''
+      - description: Activate the trial license of Cloudera Manager.
+        name: cm_trial_license
+        namespace: ''
+      - description: Manage Cloudera Manager hosts.
+        name: host
+        namespace: ''
+      - description: Manage a host configuration in Cloudera Manager.
+        name: host_config
+        namespace: ''
+      - description: Retrieves the configuration details of a specific host.
+        name: host_config_info
+        namespace: ''
+      - description: Gather information about Cloudera Manager hosts.
+        name: host_info
+        namespace: ''
+      - description: Manage the state of parcels on a cluster.
+        name: parcel
+        namespace: ''
+      - description: Gather details about the parcels on the cluster.
+        name: parcel_info
+        namespace: ''
+      - description: Manage a service in cluster.
+        name: service
+        namespace: ''
+      - description: Manage a cluster service configuration.
+        name: service_config
+        namespace: ''
+      - description: Retrieve information about the configuration for a cluster service.
+        name: service_config_info
+        namespace: ''
+      - description: Retrieve information about the services of cluster.
+        name: service_info
+        namespace: ''
+      - description: Manage a service role in cluster.
+        name: service_role
+        namespace: ''
+      - description: Manage a service role configuration in cluster.
+        name: service_role_config
+        namespace: ''
+      - description: Manage a cluster service role config group.
+        name: service_role_config_group
+        namespace: ''
+      - description: Manage the configuration of a cluster service role config group.
+        name: service_role_config_group_config
+        namespace: ''
+      - description: Retrieve the configuration of a cluster service role config group.
+        name: service_role_config_group_config_info
+        namespace: ''
+      - description: Retrieve information about a cluster service role config group
+          or groups.
+        name: service_role_config_group_info
+        namespace: ''
+      - description: Retrieve information about the configuration for a cluster service
+          role.
+        name: service_role_config_info
+        namespace: ''
+      - description: Retrieve information about the service roles of cluster.
+        name: service_role_info
+        namespace: ''
+      - description: Retrieve the service types of a cluster.
+        name: service_type_info
+        namespace: ''
+      - description: Create, delete or update users within Cloudera Manager.
+        name: user
+        namespace: ''
+      - description: Retrieve user details and associated authentication roles.
+        name: user_info
+        namespace: ''
+    release_date: '2024-05-21'
+  4.3.0:
+    changes:
+      bugfixes:
+        - Remove deprecated "warn" argument from shell and command module calls (https://github.com/cloudera-labs/cloudera.cluster/pull/182)
+        - Allow complex expressions in external authentication LDAP search filters
+          (https://github.com/cloudera-labs/cloudera.cluster/pull/171)
+        - Add changes to run ansible.builtin.template locally (https://github.com/cloudera-labs/cloudera.cluster/pull/170)
+      minor_changes:
+        - Update role API for assemble_template (https://github.com/cloudera-labs/cloudera.cluster/pull/183)
+        - Update logging and error handling for CM API modules (https://github.com/cloudera-labs/cloudera.cluster/pull/168)
+        - Add assemble template role (https://github.com/cloudera-labs/cloudera.cluster/pull/167)
+        - ldap search filters - allow literal expression (https://github.com/cloudera-labs/cloudera.cluster/pull/163)
+    objects:
+      role:
+        - description: Discover and render files into a cluster template.
+          name: assemble_template
+          namespace:
+    release_date: '2023-12-21'
+  4.2.0:
+    changes:
+      bugfixes:
+        - Filter AWS_S3 service from host template validation check (https://github.com/cloudera-labs/cloudera.cluster/pull/161)
+        - Fix typo - Feature qmanagerdb (https://github.com/cloudera-labs/cloudera.cluster/pull/158)
+      minor_changes:
+        - Create module and action plugins for assemble_cluster_template (https://github.com/cloudera-labs/cloudera.cluster/pull/164)
+        - Allow selection of cluster deployed from cluster.yml (https://github.com/cloudera-labs/cloudera.cluster/pull/151)
+    modules:
+      - description: Merge Cloudera Manager cluster template fragments.
+        name: assemble_cluster_template
+        namespace: ''
+    release_date: '2023-11-20'
+  4.1.1:
+    changes:
+      bugfixes:
+        - Remove extra quote from databases-7.1.0 config condition (https://github.com/cloudera-labs/cloudera.cluster/pull/159)
+    release_date: '2023-11-07'
+  4.1.0:
+    changes:
+      minor_changes:
+        - Adds 7.1.9 QueueManager for postgresql (https://github.com/cloudera-labs/cloudera.cluster/pull/152)
+        - use spark_on_yarn_service dependency for hive in CDH only (https://github.com/cloudera-labs/cloudera.cluster/pull/123)
+        - 'CDH to CDP Upgrade : YARN Queues are not migrated (https://github.com/cloudera-labs/cloudera.cluster/pull/119)'
+    release_date: '2023-11-02'
+  4.0.1:
+    changes:
+      bugfixes:
+        - Update validate_pr.yml workflow to install latest ansible-core 2.12.* (https://github.com/cloudera-labs/cloudera.cluster/pull/138)
+        - Move non-controller code in 'module_utils/cm_utils'  (https://github.com/cloudera-labs/cloudera.cluster/pull/136)
+      minor_changes:
+        - Update freeipa.ansible_freeipa collection version (https://github.com/cloudera-labs/cloudera.cluster/pull/134)
+    release_date: '2023-10-05'
+  4.0.0:
+    changes:
+      bugfixes:
+        - Add 'freeipa_enroll' optional parameter  (https://github.com/cloudera-labs/cloudera.cluster/pull/129)
+        - Add missing cm_client library (https://github.com/cloudera-labs/cloudera.cluster/pull/121)
+        - Add status check for NetworkManager updates (https://github.com/cloudera-labs/cloudera.cluster/pull/115)
+        - Add Postgres default log_directory (https://github.com/cloudera-labs/cloudera.cluster/pull/114)
+        - Fix/#111 (https://github.com/cloudera-labs/cloudera.cluster/pull/112)
+      minor_changes:
+        - Update release/v4.0.0 (#130) (https://github.com/cloudera-labs/cloudera.cluster/pull/132)
+        - Update release/v4.0.0 (https://github.com/cloudera-labs/cloudera.cluster/pull/130)
+        - support CDP 7.1.9 / CM 7.11.3 deployment (https://github.com/cloudera-labs/cloudera.cluster/pull/127)
+        - Add documentation build workflows (https://github.com/cloudera-labs/cloudera.cluster/pull/125)
+        - Fixes for PvC running on PvC with sidecar FreeIPA (https://github.com/cloudera-labs/cloudera.cluster/pull/120)
+        - Update dependencies for optional functions (https://github.com/cloudera-labs/cloudera.cluster/pull/116)
+        - Add cm_service lookup (https://github.com/cloudera-labs/cloudera.cluster/pull/113)
+        - ECS 1.5.0 changes (https://github.com/cloudera-labs/cloudera.cluster/pull/110)
+        - Update with collected CDP PVC changes (https://github.com/cloudera-labs/cloudera.cluster/pull/107)
+        - Add query processor to the list of CDP 7.x services (https://github.com/cloudera-labs/cloudera.cluster/pull/85)
+    modules:
+      - description: Discover the Cloudera Manager API endpoint.
+        name: cm_endpoint_info
+        namespace: ''
+      - description: Create, update, and delete resources from the Cloudera Manager
+          API endpoint.
+        name: cm_resource
+        namespace: ''
+      - description: Retrieve resources from the Cloudera Manager API endpoint.
+        name: cm_resource_info
+        namespace: ''
+      - description: Gather information about Cloudera Manager.
+        name: cm_version_info
+        namespace: ''
+    plugins:
+      lookup:
+        - description: Get the details for a service on a CDP Datahub cluster.
+          name: cm_service
+          namespace:
+    release_date: '2023-09-28'
+  3.4.2:
+    changes:
+      bugfixes:
+        - Update ansible-builder installation file logic (https://github.com/cloudera-labs/cloudera.cluster/pull/106)
+        - Remove bindep requirements for community.general.ipa_user (https://github.com/cloudera-labs/cloudera.cluster/pull/105)
+    release_date: '2023-02-03'
+  3.4.1:
+    changes:
+      bugfixes:
+        - Remove body_format parameter for parcel manifest URI (https://github.com/cloudera-labs/cloudera.cluster/pull/99)
+        - Remove body_format parameter for parcel manifest URI (https://github.com/cloudera-labs/cloudera.cluster/pull/98)
+        - Avoid repeating CM password check (https://github.com/cloudera-labs/cloudera.cluster/pull/91)
+        - '#86 fix atlas_dir permissions (https://github.com/cloudera-labs/cloudera.cluster/pull/87)'
+        - condition based on runtime version (https://github.com/cloudera-labs/cloudera.cluster/pull/75)
+        - database_port variable typo (https://github.com/cloudera-labs/cloudera.cluster/pull/68)
+        - '#65 Fix SPARK3_ON_YARN inter-service dependency (https://github.com/cloudera-labs/cloudera.cluster/pull/66)'
+      minor_changes:
+        - Pull Request workflow and ansible-builder support (https://github.com/cloudera-labs/cloudera.cluster/pull/104)
+        - Updates for private IP installations (https://github.com/cloudera-labs/cloudera.cluster/pull/93)
+        - Fixes for RHEL8.6 support and custom_repo with Cloudera Manager (https://github.com/cloudera-labs/cloudera.cluster/pull/83)
+        - ' #81 add SAN support for certificates (https://github.com/cloudera-labs/cloudera.cluster/pull/82)'
+        - '#76 add LIVY for SPARK3 support (https://github.com/cloudera-labs/cloudera.cluster/pull/77)'
+        - Update collection version to 4.0.0-alpha1 (https://github.com/cloudera-labs/cloudera.cluster/pull/72)
+        - Cloudera Manager module framework (https://github.com/cloudera-labs/cloudera.cluster/pull/62)
+        - WIP PvC Prereqs and Control Plane merge (https://github.com/cloudera-labs/cloudera.cluster/pull/61)
+        - Moved host configs out of the cluster role (https://github.com/cloudera-labs/cloudera.cluster/pull/60)
+    release_date: '2023-02-01'
+  3.4.0:
+    changes:
+      minor_changes:
+        - Fix CA cipher and python2/3 install for newer OS targets like el8 (https://github.com/cloudera-labs/cloudera.cluster/pull/51)
+        - Adding support for SQL Stream Builder deployment (https://github.com/cloudera-labs/cloudera.cluster/pull/48)
+        - Pvc experiences (https://github.com/cloudera-labs/cloudera.cluster/pull/44)
+        - 2021 07 freeipa dep fix (https://github.com/cloudera-labs/cloudera.cluster/pull/40)
+    release_date: '2022-08-02'
+  3.3.0:
+    changes:
+      minor_changes:
+        - Add Ozone data directories (https://github.com/cloudera-labs/cloudera.cluster/pull/54)
+        - Improve CSD Download (https://github.com/cloudera-labs/cloudera.cluster/pull/53)
+        - Pin collection versions (https://github.com/cloudera-labs/cloudera.cluster/pull/52)
+        - Verify if the hostname reported by the agent heartbeat is correct. (https://github.com/cloudera-labs/cloudera.cluster/pull/50)
+        - Fixed handling of custom roleConfig Groups (https://github.com/cloudera-labs/cloudera.cluster/pull/46)
+        - Fixed MariaDB template evaluation used for TLS (https://github.com/cloudera-labs/cloudera.cluster/pull/45)
+        - removed invalid ranger configs (https://github.com/cloudera-labs/cloudera.cluster/pull/43)
+        - Helpful errors (https://github.com/cloudera-labs/cloudera.cluster/pull/42)
+    release_date: '2022-04-07'
+  3.2.0:
+    changes:
+      minor_changes:
+        - Changes required for Core Settings clusters (https://github.com/cloudera-labs/cloudera.cluster/pull/41)
+    release_date: '2021-12-09'
+  3.1.0:
+    changes:
+      minor_changes:
+        - Update include_role statements to use the full role name within the Collection
+          as a best practice (https://github.com/cloudera-labs/cloudera.cluster/pull/11)
+        - Home directory mode fix (https://github.com/cloudera-labs/cloudera.cluster/pull/8)
+        - Add collection dependencies (https://github.com/cloudera-labs/cloudera.cluster/pull/6)
+        - Fix ansible-galaxy license statement (https://github.com/cloudera-labs/cloudera.cluster/pull/2)
+    release_date: '2021-11-30'
+  3.0.3:
+    plugins:
+      filter:
+        - description: append_database_port.
+          name: append_database_port
+          namespace:
+        - description: cluster_service_role_hosts.
+          name: cluster_service_role_hosts
+          namespace:
+        - description: default_database_port.
+          name: default_database_port
+          namespace:
+        - description: extract_parcel_urls.
+          name: extract_parcel_urls
+          namespace:
+        - description: extract_products_from_manifests.
+          name: extract_products_from_manifests
+          namespace:
+        - description: fill_null_configs.
+          name: filter_null_configs
+          namespace:
+        - description: find_clusters.
+          name: find_clusters
+          namespace:
+        - description: format_database_type.
+          name: format_database_type
+          namespace:
+        - description: get_database_collation_mysql.
+          name: get_database_collation_mysql
+          namespace:
+        - description: get_database_encoding_mysql.
+          name: get_database_encoding_mysql
+          namespace:
+        - description: get_major_version.
+          name: get_major_version
+          namespace:
+        - description: get_product_version.
+          name: get_product_version
+          namespace:
+        - description: to_ldap_type_enum.
+          name: to_ldap_type_enum
+          namespace:
+    release_date: '2021-11-10'
+  2.0.0:
+    plugins:
+      filter:
+        - description: flatten_dict_list.
+          name: flatten_dict_list
+          namespace:
+    release_date: '2021-04-21'
