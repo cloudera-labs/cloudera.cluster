@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: to_ldap_type_enum
   short_description: to_ldap_type_enum
   description: to_ldap_type_enum
-
+  version_added: "3.0.3"
 EXAMPLES:
 RETURN:

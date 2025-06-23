@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: extract_custom_role_groups
   short_description: extract_custom_role_groups
   description: extract_custom_role_groups
-
+  version_added: "3.0.4"
 EXAMPLES:
 RETURN:

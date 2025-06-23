@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: format_database_type
   short_description: format_database_type
   description: format_database_type
-
+  version_added: "3.0.3"
 EXAMPLES:
 RETURN:

@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: cluster_service_role_hosts
   short_description: cluster_service_role_hosts
   description: cluster_service_role_hosts
-
+  version_added: "3.0.3"
 EXAMPLES:
 RETURN:

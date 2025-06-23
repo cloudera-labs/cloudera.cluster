@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: get_product_version
   short_description: get_product_version
   description: get_product_version
-
+  version_added: "3.0.3"
 EXAMPLES:
 RETURN:

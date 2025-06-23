@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: extract_role_and_group
   short_description: extract_role_and_group
   description: extract_role_and_group
-
+  version_added: "3.0.4"
 EXAMPLES:
 RETURN:

@@ -3,6 +3,6 @@ DOCUMENTATION:
   name: default_database_port
   short_description: default_database_port
   description: default_database_port
-
+  version_added: "3.0.3"
 EXAMPLES:
 RETURN:
