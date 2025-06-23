@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# Created with antsibull-docs 2.3.1.post0
-
 set -e
 
 pushd "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -18,6 +16,8 @@ antsibull-docs \
     --squash-hierarchy \
     --dest-dir temp-rst \
     cloudera.cluster
+
+    #     --cleanup everything \
 
 # Copy collection documentation into source directory
 rsync -cprv --delete-after temp-rst/ rst/

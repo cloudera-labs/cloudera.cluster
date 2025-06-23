@@ -1,0 +1,15 @@
+---
+# Whether the collection uses flatmapping to flatten subdirectories in
+# `plugins/*/`.
+flatmap: true
+
+# List of environment variables that are defined by `.. envvar::` directives
+# in the extra docsite RST files.
+envvar_directives: []
+
+# Changelog configuration (added in antsibull-docs 2.10.0)
+changelog:
+  # Whether to write the changelog (taken from changelogs/changelog.yaml, see the
+  # antsibull-changelog documentation for more information) and link to it from the
+  # collection's index page.
+  write_changelog: false

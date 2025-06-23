@@ -42,6 +42,22 @@ extra-dependencies = ["ansible-lint"]
 [tool.hatch.envs.lint.scripts]
 run = "pre-commit run -a"
 
+[tool.hatch.envs.docs]
+python = "3.12"
+detached = true
+extra-dependencies = [
+  # "antsibull-docs >= 2.0.0, < 3.0.0",
+  "ansible-pygments",
+  "sphinx",
+  "sphinx-ansible-theme >= 0.9.0",
+  "antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs@cldr-docsite#egg=antsibull-docs",
+]
+
+[tool.hatch.envs.docs.scripts]
+doclint = "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck ."
+build = "docsbuild/build.sh"
+log = ""
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = [
