@@ -24,6 +24,7 @@ argument_specs:
       - This ensures that the template processing occurs on the Ansible controller machine.
     author:
       - "Ronald Suplina <rsuplina@cloudera.com>"
+    version_added: "4.3.0"
     options:
       cluster_template_fragments_directory:
         description: "Path to the directory containing fragment files for the cluster template"

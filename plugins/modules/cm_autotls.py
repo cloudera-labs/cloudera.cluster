@@ -24,6 +24,7 @@ description:
   - Note that disabling Auto-TLS does not remove the TLS resources (keys, truststores, etc.) created during the enable process.
 author:
   - "Jim Enright (@jimright)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:

@@ -22,6 +22,7 @@ description:
   - Manage a service role configuration (role-specific) in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:

@@ -22,6 +22,7 @@ description:
   - Gather configuration information about a service role of a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:

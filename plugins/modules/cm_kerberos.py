@@ -23,6 +23,7 @@ description:
   - Imports the KDC Account Manager credentials needed by Cloudera Manager to create kerberos principals.
 author:
   - "Jim Enright (@jimright)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:

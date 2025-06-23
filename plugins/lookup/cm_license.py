@@ -25,6 +25,7 @@ DOCUMENTATION = """
     description:
         - Parses and verifies the contents of a Cloudera license.
         - Returns the license details, including the computed C(password).
+    version_added: "5.0.0"
     options:
         _terms:
             description:

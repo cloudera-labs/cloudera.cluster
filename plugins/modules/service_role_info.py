@@ -22,6 +22,7 @@ description:
   - Gather information about one or all service roles of a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:

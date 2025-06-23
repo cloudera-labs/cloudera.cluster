@@ -22,6 +22,7 @@ description:
   - Manage a configuration (service-wide) for a cluster service.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:

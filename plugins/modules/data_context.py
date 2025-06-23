@@ -26,6 +26,7 @@ description:
   - The module supports C(check_mode).
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 requirements:
   - cm-client >= 54
 options:

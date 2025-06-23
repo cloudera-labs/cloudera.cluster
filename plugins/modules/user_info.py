@@ -23,6 +23,7 @@ description:
   - Includes information about authentication roles associated with each user.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:

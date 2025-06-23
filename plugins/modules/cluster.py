@@ -27,6 +27,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:

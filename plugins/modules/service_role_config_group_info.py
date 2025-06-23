@@ -22,6 +22,7 @@ description:
   - Gather details about a role config group or groups of a service in a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:

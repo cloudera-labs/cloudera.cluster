@@ -22,6 +22,7 @@ description:
   - Gather configuration information about a specific host.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:

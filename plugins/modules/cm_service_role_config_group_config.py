@@ -22,6 +22,7 @@ description:
   - Manage the configuration details of a role config group of the Cloudera Manager Service.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:

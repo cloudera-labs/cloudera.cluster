@@ -23,6 +23,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
   - "Webster Mudge (@wmudge)"
+version_added: "5.0.0"
 options:
   cluster:
     description:

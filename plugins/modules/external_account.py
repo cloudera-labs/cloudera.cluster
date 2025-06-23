@@ -25,6 +25,7 @@ description:
   - Supports I(check_mode).
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 options:
   name:
     description:

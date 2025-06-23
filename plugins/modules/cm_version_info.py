@@ -23,6 +23,7 @@ description:
   - The module supports C(check_mode).
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.0.0"
 requirements:
   - cm_client
 extends_documentation_fragment:

@@ -22,6 +22,7 @@ description:
   - Gather information about one or all Cloudera Manager service roles.
 author:
   - Webster Mudge (@wmudge)
+version_added: "5.0.0"
 options:
   type:
     description:

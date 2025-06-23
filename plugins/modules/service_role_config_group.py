@@ -22,6 +22,7 @@ description:
   - Manage a cluster service role config group.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:

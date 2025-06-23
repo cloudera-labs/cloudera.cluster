@@ -22,6 +22,7 @@ description:
   - Manage a Cloudera Manager Service role.
 author:
   - Webster Mudge (@wmudge)
+version_added: "5.0.0"
 options:
   cluster_hostname:
     description:

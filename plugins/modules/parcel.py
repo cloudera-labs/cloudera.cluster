@@ -24,6 +24,7 @@ description:
   - The module manages the transitions between these states, e.g. if a parcel is I(distributed) and I(state=downloaded), the module will deactivate the parcel from the cluster hosts.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:

@@ -22,6 +22,7 @@ description:
   - Retrieves details about one or more clusters managed by Cloudera Manager
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 options:
   name:
     description:

@@ -24,6 +24,7 @@ description:
   - Enables the deletion of a user along with its associated roles if desired.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:

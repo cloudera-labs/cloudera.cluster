@@ -24,6 +24,7 @@ description:
   - Return information about the trial license.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 """

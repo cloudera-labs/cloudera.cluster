@@ -22,6 +22,7 @@ description:
   - Retrieve details of a specific or all external user mappings within the Cloudera Manager.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:

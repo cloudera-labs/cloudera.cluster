@@ -22,6 +22,7 @@ description:
   - Provides details for a specific account or retrieves all external accounts configured in Cloudera Manager.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 options:
   name:
     description:

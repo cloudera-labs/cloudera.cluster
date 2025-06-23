@@ -22,6 +22,7 @@ description:
   - Gather information about Cloudera Manager service role config groups.
 author:
   - Webster Mudge (@wmudge)
+version_added: "5.0.0"
 options:
   type:
     description:
