@@ -16,6 +16,8 @@ bypass-selection = true
 [tool.hatch.version]
 path = "galaxy.yml"
 pattern = "version:\\s+(?P<version>[\\d\\.]+)"
+scheme = "semver"
+validate-bump = true
 
 [tool.hatch.envs.default]
 python = "3.12"
@@ -55,9 +57,15 @@ extra-dependencies = [
 ]
 
 [tool.hatch.envs.docs.scripts]
-doclint = "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck ."
+lint = "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck ."
 build = "docsbuild/build.sh"
-log = ""
+changelog = [
+  # Read the version in galaxy.yml via hatch itself (normalizes release candidates, etc.)
+  # Use 'hatch version' to manage the version, i.e. 'hatch version major,rc'
+  "antsibull-changelog release --version $(hatch version)",
+  "antsichaut --since_version=latest",
+  "antsibull-changelog generate",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -77,5 +85,8 @@ markers = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = [
+  "hatchling",
+  "hatch-semver",
+]
 build-backend = "hatchling.build"
