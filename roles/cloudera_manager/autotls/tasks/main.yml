@@ -33,14 +33,14 @@
 
 - name: DEBUG Auto-TLS using password
   debug:
-    msg: "{{ lookup('template', 'auto-tls.json') }}"
+    msg: "{{ lookup('template', 'auto-tls.json.j2') }}"
   when: use_password and debug | default(false)
 
 - name: Enable Auto-TLS
   cm_api:
     endpoint: "/cm/commands/generateCmca"
     method: POST
-    body: "{{ lookup('template', 'auto-tls.json') }}"
+    body: "{{ lookup('template', 'auto-tls.json.j2') }}"
     timeout: 360
   ignore_errors: true
   when: use_password
@@ -52,14 +52,14 @@
 
 - name: DEBUG Auto-TLS using key
   debug:
-    msg: "{{ lookup('template', 'auto-tls-key.json') }}"
+    msg: "{{ lookup('template', 'auto-tls-key.json.j2') }}"
   when: not use_password
 
 - name: Enable Auto-TLS
   cm_api:
     endpoint: "/cm/commands/generateCmca"
     method: POST
-    body: "{{ lookup('template', 'auto-tls-key.json') }}"
+    body: "{{ lookup('template', 'auto-tls-key.json.j2') }}"
   ignore_errors: true
   when: not use_password
   notify:
