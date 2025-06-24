@@ -34,15 +34,11 @@ dependencies = [
   "jmespath",
   "cm-client",
   "python-gnupg",
+  "ansible-lint",
 ]
 
-[tool.hatch.envs.lint]
-python = "3.12"
-detached = true
-extra-dependencies = ["ansible-lint"]
-
-[tool.hatch.envs.lint.scripts]
-run = "pre-commit run -a"
+[tool.hatch.envs.default.scripts]
+lint = "pre-commit run -a"
 
 [tool.hatch.envs.docs]
 python = "3.12"
