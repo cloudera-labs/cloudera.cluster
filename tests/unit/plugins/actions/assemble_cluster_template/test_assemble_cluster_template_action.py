@@ -279,7 +279,9 @@ def test_assemble_fragments_regexp(tmp_path):
     regexp = re.compile("^((?!ig).)*$")
 
     plugin.assemble_fragments(
-        dest_file.open(mode="w", encoding="utf-8"), src_dir, regex=regexp
+        dest_file.open(mode="w", encoding="utf-8"),
+        src_dir,
+        regex=regexp,
     )
 
     results = json.load(dest_file.open(mode="r", encoding="utf-8"))

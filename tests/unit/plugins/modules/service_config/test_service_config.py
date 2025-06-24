@@ -124,7 +124,7 @@ def test_present_invalid_cluster(conn, module_args):
             "cluster": "example",
             "service": "example",
             "parameters": dict(example="Example"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
@@ -138,7 +138,7 @@ def test_present_invalid_service(conn, module_args, zk_service):
             "cluster": zk_service.cluster_ref.cluster_name,
             "service": "example",
             "parameters": dict(example="Example"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Service 'example' not found"):
@@ -152,11 +152,12 @@ def test_present_invalid_parameter(conn, module_args, zk_service):
             "cluster": zk_service.cluster_ref.cluster_name,
             "service": zk_service.name,
             "parameters": dict(example="Example"),
-        }
+        },
     )
 
     with pytest.raises(
-        AnsibleFailJson, match="Unknown configuration attribute 'example'"
+        AnsibleFailJson,
+        match="Unknown configuration attribute 'example'",
     ):
         service_config.main()
 
@@ -172,7 +173,7 @@ def test_set_parameters(conn, module_args, zk_service_config):
             "message": "test_service_config::test_set_parameters",
             # "_ansible_check_mode": True,
             # "_ansible_diff": True,
-        }
+        },
     )
 
     expected = dict(autopurgeSnapRetainCount="9", tickTime="1111")
@@ -200,7 +201,7 @@ def test_unset_parameters(conn, module_args, zk_service_config):
             "service": zk_service_config.name,
             "parameters": dict(autopurgeSnapRetainCount=None),
             "message": "test_service_config::test_unset_parameters",
-        }
+        },
     )
 
     expected = dict(tickTime="1111")
@@ -235,7 +236,7 @@ def test_set_parameters_with_purge(conn, module_args, zk_service_config):
             "message": "test_service_config::test_set_parameters_with_purge",
             # "_ansible_check_mode": True,
             # "_ansible_diff": True,
-        }
+        },
     )
 
     expected = dict(autopurgeSnapRetainCount="9")
@@ -265,7 +266,7 @@ def test_purge_all_parameters(conn, module_args, zk_service_config):
             "message": "test_service_config::test_purge_all_parameters",
             # "_ansible_check_mode": True,
             # "_ansible_diff": True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

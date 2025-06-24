@@ -32,7 +32,8 @@ from ansible_collections.cloudera.cluster.tests.unit.plugins.modules.utils impor
 
 
 @unittest.skipUnless(
-    os.getenv("CM_USERNAME"), "Cloudera Manager access parameters not set"
+    os.getenv("CM_USERNAME"),
+    "Cloudera Manager access parameters not set",
 )
 class TestCMResourceIntegration(ModuleTestCase):
     def test_post(self):

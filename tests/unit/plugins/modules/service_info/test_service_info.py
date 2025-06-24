@@ -100,7 +100,7 @@ def test_missing_required(conn, module_args):
     module_args(
         {
             **conn,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
@@ -112,7 +112,7 @@ def test_missing_cluster(conn, module_args):
         {
             **conn,
             "service": "example",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
@@ -125,7 +125,7 @@ def test_invalid_cluster(conn, module_args):
             **conn,
             "cluster": "invalid",
             "service": "example",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist") as e:
@@ -138,7 +138,7 @@ def test_invalid_service(conn, module_args, base_cluster):
             **conn,
             "cluster": base_cluster.name,
             "service": "not_found",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -167,7 +167,7 @@ def test_all_services(
             display_name=f"ZooKeeper ({id})",
             # Add a SERVER role (so we can start the service -- a ZK requirement!)
             roles=[
-                ApiRole(type="SERVER", host_ref=ApiHostRef(available_hosts[0].host_id))
+                ApiRole(type="SERVER", host_ref=ApiHostRef(available_hosts[0].host_id)),
             ],
         ),
     )
@@ -176,7 +176,7 @@ def test_all_services(
         {
             **conn,
             "cluster": zookeeper.cluster_ref.cluster_name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -194,7 +194,7 @@ def test_named_service(conn, module_args, zookeeper):
             **conn,
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

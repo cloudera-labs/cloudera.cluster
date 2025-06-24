@@ -37,12 +37,9 @@ from cm_client.rest import ApiException, RESTClientObject
 __maintainer__ = ["wmudge@cloudera.com"]
 
 
-"""
-A common Ansible Lookup plugin for API access to Cloudera Manager.
-"""
-
-
 class ClouderaManagerLookupBase(LookupBase):
+    """A common Ansible Lookup plugin for API access to Cloudera Manager."""
+
     def initialize_client(self):
         # Set up core CM API client parameters
         config = Configuration()
@@ -99,7 +96,9 @@ class ClouderaManagerLookupBase(LookupBase):
             port=self.get_option("port"),
         )
         rendered = rest.pool_manager.request(
-            "GET", pre_rendered.url, headers=headers.copy()
+            "GET",
+            pre_rendered.url,
+            headers=headers.copy(),
         )
         rendered_url = rendered.geturl()
 
@@ -117,10 +116,10 @@ class ClouderaManagerLookupBase(LookupBase):
         path_params = []
         header_params = {}
         header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
+            ["application/json"],
         )
         header_params["Content-Type"] = self.api_client.select_header_content_type(
-            ["application/json"]
+            ["application/json"],
         )
 
         try:
@@ -142,7 +141,7 @@ class ClouderaManagerLookupBase(LookupBase):
             else:
                 raise AnsibleError(
                     "Error interacting with CM resource. Status code: %s"
-                    % to_text(results[1])
+                    % to_text(results[1]),
                 )
         except ApiException as ae:
             body = ae.body.decode("utf-8")

@@ -848,7 +848,7 @@ class ClusterService(ClouderaManagerMutableModule):
 
                         for base_rcg in base_rcg_list:
                             RoleConfigGroupsResourceApi(
-                                self.api_client
+                                self.api_client,
                             ).update_role_config_group(
                                 cluster_name=self.cluster,
                                 service_name=current.name,
@@ -876,7 +876,8 @@ class ClusterService(ClouderaManagerMutableModule):
                                     hostname=role_host,
                                     config=requested_role.get("config", None),
                                     role_config_group=requested_role.get(
-                                        "role_config_group", None
+                                        "role_config_group",
+                                        None,
                                     ),
                                     tags=requested_role.get("tags", None),
                                 )
@@ -912,7 +913,7 @@ class ClusterService(ClouderaManagerMutableModule):
             else:
                 if self.type and self.type.upper() != current.type:
                     self.module.fail_json(
-                        msg="Service name already in use for type: " + current.type
+                        msg="Service name already in use for type: " + current.type,
                     )
 
                 # Set the maintenance
@@ -1049,7 +1050,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         api_client=self.api_client,
                         cluster_name=self.cluster,
                         service_name=self.name,
-                    )
+                    ),
                 )
             else:
                 self.output = parse_service_result(current)
@@ -1072,7 +1073,7 @@ class ClusterService(ClouderaManagerMutableModule):
                 self.changed = True
                 if self.module._diff:
                     self.diff["before"].update(
-                        maintenance_mode=service.maintenance_mode
+                        maintenance_mode=service.maintenance_mode,
                     )
                     self.diff["after"].update(maintenance_mode=self.maintenance)
 

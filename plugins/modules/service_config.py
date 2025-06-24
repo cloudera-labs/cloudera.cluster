@@ -278,7 +278,9 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
             self.config = [
                 p.to_dict()
                 for p in api_instance.read_service_config(
-                    self.cluster, self.service, view=self.view
+                    self.cluster,
+                    self.service,
+                    view=self.view,
                 ).items
             ]
 

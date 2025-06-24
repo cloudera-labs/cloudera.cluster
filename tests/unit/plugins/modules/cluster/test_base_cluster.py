@@ -105,7 +105,8 @@ def test_present_base_hosts_not_found(conn, module_args):
     module_args(conn)
 
     with pytest.raises(
-        AnsibleFailJson, match="Did not find the following hosts: should.not.find"
+        AnsibleFailJson,
+        match="Did not find the following hosts: should.not.find",
     ):
         cluster.main()
 
@@ -433,7 +434,7 @@ def test_pytest_cluster_with_template(module_args):
             "template": "./files/cluster-template.json",
             "add_repositories": "True",
             "state": "present",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

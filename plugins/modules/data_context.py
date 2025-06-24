@@ -209,13 +209,13 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
         except ApiException as ex:
             if ex.status == 404:
                 self.module.fail_json(
-                    msg="Cluster does not exist: " + self.cluster_name
+                    msg="Cluster does not exist: " + self.cluster_name,
                 )
             else:
                 raise ex
         try:
             existing = data_context_api.read_data_context(
-                data_context_name=self.data_contex_name
+                data_context_name=self.data_contex_name,
             ).to_dict()
         except ApiException as ex:
             if (
@@ -244,11 +244,12 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
                     if not self.module.check_mode:
                         update_data_context = data_context_api.update_data_context(
                             body=ApiDataContext(
-                                name=self.data_contex_name, services=services
-                            )
+                                name=self.data_contex_name,
+                                services=services,
+                            ),
                         ).to_dict()
                         self.data_context_output = parse_data_context_result(
-                            ApiDataContextList(items=[update_data_context])
+                            ApiDataContextList(items=[update_data_context]),
                         )
                         self.changed = True
                 else:
@@ -261,12 +262,13 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
                 if not self.module.check_mode:
                     create_data_context = data_context_api.create_data_context(
                         body=ApiDataContext(
-                            name=self.data_contex_name, services=services
-                        )
+                            name=self.data_contex_name,
+                            services=services,
+                        ),
                     ).to_dict()
 
                     self.data_context_output = parse_data_context_result(
-                        ApiDataContextList(items=[create_data_context])
+                        ApiDataContextList(items=[create_data_context]),
                     )
                     self.changed = True
 
@@ -274,7 +276,7 @@ class ClouderaDataContext(ClouderaManagerMutableModule):
             if existing:
                 if not self.module.check_mode:
                     data_context_api.delete_data_context(
-                        data_context_name=self.data_contex_name
+                        data_context_name=self.data_contex_name,
                     ).to_dict()
                     self.changed = True
 
@@ -283,7 +285,9 @@ def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
             name=dict(
-                required=True, type="str", aliases=["context_name", "data_context_name"]
+                required=True,
+                type="str",
+                aliases=["context_name", "data_context_name"],
             ),
             cluster=dict(required=False, type="str", aliases=["cluster_name"]),
             services=dict(required=False, type="list"),

@@ -300,7 +300,8 @@ class ClusterServiceRoleInfo(ClouderaManagerModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -322,8 +323,8 @@ class ClusterServiceRoleInfo(ClouderaManagerModule):
                             cluster_name=self.cluster,
                             service_name=self.service,
                             role_name=self.role,
-                        )
-                    )
+                        ),
+                    ),
                 )
             except ApiException as e:
                 if e.status != 404:

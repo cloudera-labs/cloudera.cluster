@@ -128,12 +128,12 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                     if self.name == mapping.name:
                         self.external_user_mappings_info_output = [
                             api_instance.read_external_user_mapping(
-                                uuid=mapping.uuid
-                            ).to_dict()
+                                uuid=mapping.uuid,
+                            ).to_dict(),
                         ]
             elif self.uuid:
                 self.external_user_mappings_info_output = [
-                    api_instance.read_external_user_mapping(uuid=self.uuid).to_dict()
+                    api_instance.read_external_user_mapping(uuid=self.uuid).to_dict(),
                 ]
             else:
                 self.external_user_mappings_info_output = (

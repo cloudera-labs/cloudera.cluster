@@ -98,7 +98,7 @@ class ClouderaUserInfo(ClouderaManagerModule):
         try:
             if self.account_name:
                 self.user_info_output = [
-                    api_instance.read_user2(self.account_name).to_dict()
+                    api_instance.read_user2(self.account_name).to_dict(),
                 ]
             else:
                 self.user_info_output = api_instance.read_users2().to_dict()["items"]

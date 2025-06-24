@@ -47,14 +47,18 @@ LOG = logging.getLogger(__name__)
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_cm_role_config_group_config_set(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     module_args(
         {
@@ -64,7 +68,7 @@ def test_cm_role_config_group_config_set(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="32", process_start_secs="21")
@@ -89,14 +93,18 @@ def test_cm_role_config_group_config_set(
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_cm_role_config_group_config_unset(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     module_args(
         {
@@ -106,7 +114,7 @@ def test_cm_role_config_group_config_unset(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(process_start_secs="21")
@@ -131,14 +139,18 @@ def test_cm_role_config_group_config_unset(
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_cm_role_config_group_config_set_purge(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     module_args(
         {
@@ -149,7 +161,7 @@ def test_cm_role_config_group_config_set_purge(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="32")
@@ -174,14 +186,18 @@ def test_cm_role_config_group_config_set_purge(
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_cm_role_config_group_config_purge_all(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     module_args(
         {
@@ -192,7 +208,7 @@ def test_cm_role_config_group_config_purge_all(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict()

@@ -41,18 +41,35 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def __init__(
-        self, task, connection, play_context, loader, templar, shared_loader_obj
+        self,
+        task,
+        connection,
+        play_context,
+        loader,
+        templar,
+        shared_loader_obj,
     ):
         super().__init__(
-            task, connection, play_context, loader, templar, shared_loader_obj
+            task,
+            connection,
+            play_context,
+            loader,
+            templar,
+            shared_loader_obj,
         )
         self.TEMPLATE = ClusterTemplate(
-            warn_fn=self._display.warning, error_fn=self._display.error
+            warn_fn=self._display.warning,
+            error_fn=self._display.error,
         )
         self.MERGED = {}
 
     def assemble_fragments(
-        self, assembled_file, src_path, regex=None, ignore_hidden=True, decrypt=True
+        self,
+        assembled_file,
+        src_path,
+        regex=None,
+        ignore_hidden=True,
+        decrypt=True,
     ):
         # By file name sort order
         for f in (
@@ -80,7 +97,8 @@ class ActionModule(ActionBase):
                         self.MERGED = json.loads(fragment_file.read())
                     else:
                         self.TEMPLATE.merge(
-                            self.MERGED, json.loads(fragment_file.read())
+                            self.MERGED,
+                            json.loads(fragment_file.read()),
                         )
                 except json.JSONDecodeError as e:
                     raise AnsibleActionFail(
@@ -133,7 +151,7 @@ class ActionModule(ActionBase):
                     self._execute_module(
                         module_name="cloudera.cluster.assemble_cluster_template",
                         task_vars=task_vars,
-                    )
+                    ),
                 )
                 raise _AnsibleActionDone()
             else:
@@ -152,12 +170,14 @@ class ActionModule(ActionBase):
                     compiled = re.compile(regexp)
                 except re.error as e:
                     raise AnsibleActionFail(
-                        message=f"Regular expression, {regexp}, is invalid: {to_native(e)}"
+                        message=f"Regular expression, {regexp}, is invalid: {to_native(e)}",
                     )
 
             # Assemble the src files into output file
             with tempfile.NamedTemporaryFile(
-                mode="w", encoding="utf-8", dir=C.DEFAULT_LOCAL_TMP
+                mode="w",
+                encoding="utf-8",
+                dir=C.DEFAULT_LOCAL_TMP,
             ) as assembled:
                 self.assemble_fragments(
                     assembled,
@@ -172,7 +192,9 @@ class ActionModule(ActionBase):
 
                 dest = self._remote_expand_user(dest)
                 dest_stat = self._execute_remote_stat(
-                    dest, all_vars=task_vars, follow=follow
+                    dest,
+                    all_vars=task_vars,
+                    follow=follow,
                 )
 
                 # Prepare the task arguments for the called submodules
@@ -201,7 +223,8 @@ class ActionModule(ActionBase):
 
                     # Define a temporary remote path for the remote copy
                     remote_path = self._connection._shell.join_path(
-                        self._connection._shell.tmpdir, "assembled_cluster_template"
+                        self._connection._shell.tmpdir,
+                        "assembled_cluster_template",
                     )
 
                     # Transfer the file to the remote path
@@ -214,7 +237,7 @@ class ActionModule(ActionBase):
                     submodule_args.update(
                         dict(
                             src=transfered,
-                        )
+                        ),
                     )
 
                     # Execute the copy

@@ -118,7 +118,11 @@ class ClouderaResource(ClouderaManagerModule):
     def process(self):
         if not self.module.check_mode:
             self.resources = self.call_api(
-                self.path, self.method, self.query, self.field, self.body
+                self.path,
+                self.method,
+                self.query,
+                self.field,
+                self.body,
             )
 
 
@@ -128,11 +132,16 @@ def main():
             method=dict(required=True, type="str", choices=["POST", "PUT", "DELETE"]),
             path=dict(required=True, type="str"),
             query=dict(
-                required=False, type="dict", aliases=["query_parameters", "parameters"]
+                required=False,
+                type="dict",
+                aliases=["query_parameters", "parameters"],
             ),
             body=dict(required=False, type="dict"),
             field=dict(
-                required=False, type="str", default="items", aliases=["return_field"]
+                required=False,
+                type="str",
+                default="items",
+                aliases=["return_field"],
             ),
         ),
         supports_check_mode=True,

@@ -146,10 +146,10 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
         if self.data_context_name:
             try:
                 data_contex = data_context_api.read_data_context(
-                    data_context_name=self.data_context_name
+                    data_context_name=self.data_context_name,
                 ).to_dict()
                 self.data_context_info = parse_data_context_result(
-                    ApiDataContextList(items=[data_contex])
+                    ApiDataContextList(items=[data_contex]),
                 )
             except ApiException as ex:
                 if ex.status != 500:
@@ -158,7 +158,7 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
             data_contexts_info = data_context_api.read_data_contexts().to_dict()
 
             self.data_context_info = parse_data_context_result(
-                ApiDataContextList(items=data_contexts_info.get("items", []))
+                ApiDataContextList(items=data_contexts_info.get("items", [])),
             )
 
 

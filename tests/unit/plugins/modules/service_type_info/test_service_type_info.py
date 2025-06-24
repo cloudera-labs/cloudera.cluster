@@ -42,7 +42,7 @@ def test_invalid_cluster(conn, module_args):
         {
             **conn,
             "cluster": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -56,7 +56,7 @@ def test_view_all_services_types(conn, module_args, base_cluster):
         {
             **conn,
             "cluster": base_cluster.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

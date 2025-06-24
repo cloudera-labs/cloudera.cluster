@@ -238,7 +238,7 @@ def resettable_cluster(cm_api_client, base_cluster):
                 items=[
                     ApiHostRef(host_id=prior_host.host_id, hostname=prior_host.hostname)
                     for prior_host in prior_hosts
-                ]
+                ],
             ),
         )
 
@@ -275,7 +275,9 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
         else:
             # Tags
             tag_updates = TagUpdates(
-                target_host.tags, {t.name: t.value for t in previous_host.tags}, True
+                target_host.tags,
+                {t.name: t.value for t in previous_host.tags},
+                True,
             )
             if tag_updates.deletions:
                 host_api.delete_tags(
@@ -317,7 +319,7 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
                 and target_host.cluster_ref is not None
             ):
                 decommission_cmd = host_api.remove_hosts_from_cluster(
-                    body=ApiHostsToRemoveArgs(hosts_to_remove=[target_host.hostname])
+                    body=ApiHostsToRemoveArgs(hosts_to_remove=[target_host.hostname]),
                 )
                 wait_command(
                     api_client=cm_api_client,
@@ -340,8 +342,8 @@ def resettable_host(cm_api_client, request) -> Generator[Callable[[ApiHost], Api
                             ApiHostRef(
                                 host_id=target_host.host_id,
                                 hostname=previous_host.hostname,
-                            )
-                        ]
+                            ),
+                        ],
                     ),
                 )
 

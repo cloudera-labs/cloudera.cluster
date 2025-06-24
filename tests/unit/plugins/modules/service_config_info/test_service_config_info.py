@@ -86,7 +86,7 @@ def test_view_default(conn, module_args):
             **conn,
             "cluster": os.getenv("CM_CLUSTER"),
             "service": os.getenv("CM_SERVICE"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -101,7 +101,7 @@ def test_invalid_service(conn, module_args):
             **conn,
             "cluster": os.getenv("CM_CLUSTER"),
             "service": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -116,7 +116,7 @@ def test_invalid_cluster(conn, module_args):
             **conn,
             "cluster": "BOOM",
             "service": os.getenv("CM_SERVICE"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

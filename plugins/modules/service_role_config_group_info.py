@@ -168,7 +168,8 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -188,7 +189,7 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
                         cluster_name=self.cluster,
                         role_config_group_name=self.name,
                         service_name=self.service,
-                    )
+                    ),
                 ]
             except ApiException as e:
                 if e.status != 404:
@@ -222,7 +223,7 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
                 {
                     **parse_role_config_group_result(r),
                     "role_names": [r.name for r in roles.items],
-                }
+                },
             )
 
 

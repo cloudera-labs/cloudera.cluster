@@ -195,7 +195,7 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
                     items=[
                         cm_client.ApiConfig(name=k, value=v)
                         for k, v in change_set.items()
-                    ]
+                    ],
                 )
                 # Return 'summary'
                 refresh = False

@@ -68,7 +68,10 @@ def wait_bulk_commands(
 
 
 def wait_commands(
-    api_client: ApiClient, commands: ApiCommandList, polling: int = 120, delay: int = 10
+    api_client: ApiClient,
+    commands: ApiCommandList,
+    polling: int = 120,
+    delay: int = 10,
 ):
     for cmd in commands.items:
         # Serial monitoring
@@ -208,14 +211,16 @@ def reconcile_config_list_updates(
     after = changeset
 
     reconciled_config = ApiConfigList(
-        items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+        items=[ApiConfig(name=k, value=v) for k, v in changeset.items()],
     )
 
     return (reconciled_config, before, after)
 
 
 def resolve_tag_updates(
-    current: dict, incoming: dict, purge: bool = False
+    current: dict,
+    incoming: dict,
+    purge: bool = False,
 ) -> tuple[dict, dict]:
     incoming_tags = {
         k: str(v)
@@ -242,7 +247,10 @@ def resolve_tag_updates(
 
 class TagUpdates(object):
     def __init__(
-        self, existing: list[ApiEntityTag], updates: dict, purge: bool
+        self,
+        existing: list[ApiEntityTag],
+        updates: dict,
+        purge: bool,
     ) -> None:
         (_additions, _deletions) = resolve_tag_updates(
             current={t.name: t.value for t in existing},
@@ -274,7 +282,7 @@ class ConfigListUpdates(object):
         )
 
         self.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()],
         )
 
     @property
@@ -284,7 +292,7 @@ class ConfigListUpdates(object):
 
 class ClusterTemplate(object):
     IDEMPOTENT_IDS = frozenset(
-        ["refName", "name", "clusterName", "hostName", "product"]
+        ["refName", "name", "clusterName", "hostName", "product"],
     )
     UNIQUE_IDS = frozenset(["repositories"])
 
@@ -299,7 +307,7 @@ class ClusterTemplate(object):
             self._update_list(base, fragment)
         else:
             raise TypeError(
-                f"Base and fragment arguments must be the same type: base[{type(base)}], fragment[{type(fragment)}]"
+                f"Base and fragment arguments must be the same type: base[{type(base)}], fragment[{type(fragment)}]",
             )
 
     def _update_dict(self, base, fragment, breadcrumbs="") -> None:
@@ -326,7 +334,7 @@ class ClusterTemplate(object):
                 # If the value is different, override
                 if base[key] != value:
                     self._warn(
-                        f"Overriding value for key [{crumb}]], Old: [{base[key]}], New: [{value}]"
+                        f"Overriding value for key [{crumb}]], Old: [{base[key]}], New: [{value}]",
                     )
                     base[key] = value
 
@@ -343,9 +351,9 @@ class ClusterTemplate(object):
                         [
                             id
                             for id in set(entry.keys()).intersection(
-                                self.IDEMPOTENT_IDS
+                                self.IDEMPOTENT_IDS,
                             )
-                        ]
+                        ],
                     ),
                     None,
                 )
@@ -360,7 +368,7 @@ class ClusterTemplate(object):
                                 if isinstance(i, dict)
                                 and idempotent_key in i
                                 and i[idempotent_key] == entry[idempotent_key]
-                            ]
+                            ],
                         ),
                         None,
                     )
@@ -410,7 +418,8 @@ class ClouderaManagerModule(object):
                 self.module.fail_json(**_add_log(err))
             except MaxRetryError as maxe:
                 err = dict(
-                    msg="Request error: " + to_text(maxe.reason), url=to_text(maxe.url)
+                    msg="Request error: " + to_text(maxe.reason),
+                    url=to_text(maxe.url),
                 )
                 self.module.fail_json(**_add_log(err))
             except HTTPError as he:
@@ -523,10 +532,14 @@ class ClouderaManagerModule(object):
 
         # Resolve redirects to establish HTTP scheme and port
         pre_rendered = Url(
-            scheme="https" if self.force_tls else "http", host=self.host, port=self.port
+            scheme="https" if self.force_tls else "http",
+            host=self.host,
+            port=self.port,
         )
         rendered = rest.pool_manager.request(
-            "GET", pre_rendered.url, headers=headers.copy()
+            "GET",
+            pre_rendered.url,
+            headers=headers.copy(),
         )
 
         # Normalize to handle redirects
@@ -575,7 +588,7 @@ class ClouderaManagerModule(object):
         command_api_instance = CommandsResourceApi(self.api_client)
         while True:
             get_command_state = command_api_instance.read_command_with_http_info(
-                command_id=command_id
+                command_id=command_id,
             )
             state = get_command_state[0].active
             if not state:
@@ -588,10 +601,10 @@ class ClouderaManagerModule(object):
         path_params = []
         header_params = {}
         header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
+            ["application/json"],
         )
         header_params["Content-Type"] = self.api_client.select_header_content_type(
-            ["application/json"]
+            ["application/json"],
         )
 
         results = self.api_client.call_api(
@@ -639,11 +652,15 @@ class ClouderaManagerModule(object):
             command = CommandsResourceApi(self.api_client).read_command(command.id)
         if not command.success:
             self.module.fail_json(
-                msg=to_text(command.result_message), command_id=to_text(command.id)
+                msg=to_text(command.result_message),
+                command_id=to_text(command.id),
             )
 
     def wait_commands(
-        self, commands: ApiBulkCommandList, polling: int = 10, delay: int = 5
+        self,
+        commands: ApiBulkCommandList,
+        polling: int = 10,
+        delay: int = 5,
     ):
         """
         Waits for a list of commands to complete, polling each status at regular intervals.
@@ -682,7 +699,10 @@ class ClouderaManagerModule(object):
                 version=dict(type="str"),
                 force_tls=dict(type="bool", default=False),
                 verify_tls=dict(
-                    required=False, type="bool", default=True, aliases=["tls"]
+                    required=False,
+                    type="bool",
+                    default=True,
+                    aliases=["tls"],
                 ),
                 ssl_ca_cert=dict(type="path", aliases=["tls_cert", "ssl_cert"]),
                 username=dict(required=True, type="str", aliases=["user"]),
@@ -700,7 +720,9 @@ class ClouderaManagerModule(object):
                     aliases=["user_agent"],
                 ),
                 proxy_server=dict(
-                    required=False, type="str", aliases=["proxy", "http_proxy"]
+                    required=False,
+                    type="str",
+                    aliases=["proxy", "http_proxy"],
                 ),
             ),
             required_together=required_together + [["username", "password"]],

@@ -263,7 +263,8 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -285,7 +286,10 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
                 )
             else:
                 current = get_base_role_config_group(
-                    self.api_client, self.cluster, self.service, self.role_type
+                    self.api_client,
+                    self.cluster,
+                    self.service,
+                    self.role_type,
                 )
 
             current_roles = rcg_api.read_roles(
@@ -303,12 +307,12 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
                 if current.base:
                     self.module.fail_json(
-                        msg="Deletion failed. Role config group is a base (default) group."
+                        msg="Deletion failed. Role config group is a base (default) group.",
                     )
 
                 if current_roles:
                     self.module.fail_json(
-                        msg="Deletion failed. Role config group has existing role associations."
+                        msg="Deletion failed. Role config group has existing role associations.",
                     )
 
                 if self.module._diff:
@@ -331,11 +335,12 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
                 # Check for role type changes
                 if self.role_type and self.role_type != current.role_type:
                     self.module.fail_json(
-                        msg="Invalid role type. To change the role type of an existing role config group, please destroy and recreate the role config group with the designated role type."
+                        msg="Invalid role type. To change the role type of an existing role config group, please destroy and recreate the role config group with the designated role type.",
                     )
 
                 payload = ApiRoleConfigGroup(
-                    name=current.name, role_type=current.role_type
+                    name=current.name,
+                    role_type=current.role_type,
                 )
 
                 # Check for display name changes
@@ -385,7 +390,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
             else:
                 if self.role_type is None:
                     self.module.fail_json(
-                        msg="Role config group needs to be created, but is missing required arguments: role_type"
+                        msg="Role config group needs to be created, but is missing required arguments: role_type",
                     )
 
                 self.changed = True
@@ -437,7 +442,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
                         cluster_name=self.cluster,
                         service_name=self.service,
                         role_config_group_name=current.name,
-                    )
+                    ),
                 )
             else:
                 self.output = parse_role_config_group_result(current)

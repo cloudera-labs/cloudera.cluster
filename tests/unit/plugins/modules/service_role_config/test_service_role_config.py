@@ -137,7 +137,8 @@ def test_present_invalid_parameter(conn, module_args):
     module_args(conn)
 
     with pytest.raises(
-        AnsibleFailJson, match="Unknown configuration attribute 'example'"
+        AnsibleFailJson,
+        match="Unknown configuration attribute 'example'",
     ):
         service_role_config.main()
 
@@ -183,7 +184,8 @@ def test_unset_parameters(conn, module_args):
 
     assert e.value.changed == True
     assert not {c["name"]: c["value"] for c in e.value.config}.get(
-        os.getenv("CM_ROLE_PARAM"), False
+        os.getenv("CM_ROLE_PARAM"),
+        False,
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -191,7 +193,8 @@ def test_unset_parameters(conn, module_args):
 
     assert e.value.changed == False
     assert not {c["name"]: c["value"] for c in e.value.config}.get(
-        os.getenv("CM_ROLE_PARAM"), False
+        os.getenv("CM_ROLE_PARAM"),
+        False,
     )
 
 
@@ -214,7 +217,8 @@ def test_set_parameters_with_purge(conn, module_args):
         os.getenv("CM_ROLE_PARAM2")
     ] == "false"
     assert not {c["name"]: c["value"] for c in e.value.config}.get(
-        os.getenv("CM_ROLE_PARAM"), False
+        os.getenv("CM_ROLE_PARAM"),
+        False,
     )
 
     with pytest.raises(AnsibleExitJson) as e:

@@ -70,7 +70,7 @@ def test_enable_invalid_ssh(module_args, conn):
 
     # Update parameters to enable with invalid ssh key
     module_args(
-        {**conn, "connection_private_key": "invalid-ssh-key", "state": "present"}
+        {**conn, "connection_private_key": "invalid-ssh-key", "state": "present"},
     )
 
     with pytest.raises(AnsibleFailJson, match="Could not authenticate"):

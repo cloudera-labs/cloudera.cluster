@@ -175,7 +175,8 @@ class ClouderaHostConfigInfo(ClouderaManagerModule):
 
         host_api_instance = HostsResourceApi(self.api_client)
         host_configs = host_api_instance.read_host_config(
-            host_id=self.hostname, view=self.view
+            host_id=self.hostname,
+            view=self.view,
         )
 
         self.host_config_info = [s.to_dict() for s in host_configs.items]

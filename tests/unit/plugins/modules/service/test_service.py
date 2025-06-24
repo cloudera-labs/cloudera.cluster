@@ -138,7 +138,7 @@ class TestServiceArgSpec:
             {
                 **conn,
                 "service": "example",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="cluster"):
@@ -149,7 +149,7 @@ class TestServiceArgSpec:
             {
                 **conn,
                 "cluster": "example",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="name"):
@@ -164,9 +164,9 @@ class TestServiceArgSpec:
                 "roles": [
                     {
                         "hostnames": "example",
-                    }
+                    },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="type found in roles"):
@@ -181,9 +181,9 @@ class TestServiceArgSpec:
                 "roles": [
                     {
                         "type": "example",
-                    }
+                    },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="hostnames found in roles"):
@@ -203,7 +203,7 @@ class TestServiceInvalidParameters:
                 **conn,
                 "cluster": base_cluster.name,
                 "service": "test-zookeeper",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="type"):
@@ -222,7 +222,7 @@ class TestServiceProvision:
                     cluster_name=base_cluster.name,
                 )
                 .items
-            ]
+            ],
         )
 
         # Yield to the test
@@ -250,7 +250,7 @@ class TestServiceProvision:
                 "name": id,
                 "type": "ZOOKEEPER",
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -281,7 +281,11 @@ class TestServiceProvision:
         assert e.value.service["roles"] == list()
 
     def test_service_provision_display_name(
-        self, conn, module_args, base_cluster, request
+        self,
+        conn,
+        module_args,
+        base_cluster,
+        request,
     ):
         id = f"pytest-{Path(request.node.name)}"
         name = "Pytest ZooKeeper"
@@ -294,7 +298,7 @@ class TestServiceProvision:
                 "type": "ZOOKEEPER",
                 "display_name": name,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -335,7 +339,7 @@ class TestServiceProvision:
                 "type": "ZOOKEEPER",
                 "config": {"tickTime": 2001},
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -376,7 +380,7 @@ class TestServiceProvision:
                 "type": "ZOOKEEPER",
                 "tags": {"pytest": "example"},
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -424,7 +428,7 @@ class TestServiceModification:
                 "name": zookeeper.name,
                 "type": "GATEWAY",
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="already in use"):
@@ -438,7 +442,7 @@ class TestServiceModification:
                 "name": zookeeper.name,
                 "display_name": "Example",
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -476,7 +480,7 @@ class TestServiceModification:
                 "name": zookeeper.name,
                 "maintenance": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -505,7 +509,11 @@ class TestServiceModification:
         assert len(e.value.service["roles"]) == 1  # SERVER
 
     def test_service_existing_maintenance_disabled(
-        self, conn, module_args, cm_api_client, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
     ):
         ServicesResourceApi(cm_api_client).enter_maintenance_mode(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -519,7 +527,7 @@ class TestServiceModification:
                 "name": zookeeper.name,
                 "maintenance": False,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -548,7 +556,12 @@ class TestServiceModification:
         assert len(e.value.service["roles"]) == 1  # SERVER
 
     def test_service_existing_config(
-        self, conn, module_args, cm_api_client, zookeeper, request
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        request,
     ):
         ServicesResourceApi(cm_api_client).update_service_config(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -558,7 +571,7 @@ class TestServiceModification:
                 items=[
                     ApiConfig(name="tickTime", value="3001"),
                     ApiConfig(name="autopurgeSnapRetainCount", value="9"),
-                ]
+                ],
             ),
         )
 
@@ -573,7 +586,7 @@ class TestServiceModification:
                 },
                 "message": f"{request.node.name}::test",
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -583,7 +596,9 @@ class TestServiceModification:
         assert e.value.service["name"] == zookeeper.name
         assert e.value.service["type"] == zookeeper.type
         assert e.value.service["config"] == dict(
-            tickTime="2001", leaderServes="no", autopurgeSnapRetainCount="9"
+            tickTime="2001",
+            leaderServes="no",
+            autopurgeSnapRetainCount="9",
         )
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
@@ -598,7 +613,9 @@ class TestServiceModification:
         assert e.value.service["name"] == zookeeper.name
         assert e.value.service["type"] == zookeeper.type
         assert e.value.service["config"] == dict(
-            tickTime="2001", leaderServes="no", autopurgeSnapRetainCount="9"
+            tickTime="2001",
+            leaderServes="no",
+            autopurgeSnapRetainCount="9",
         )
         assert e.value.service["tags"] == dict()
         assert e.value.service["maintenance_mode"] == False
@@ -606,7 +623,12 @@ class TestServiceModification:
         assert len(e.value.service["roles"]) == 1  # SERVER
 
     def test_service_existing_config_purge(
-        self, conn, module_args, cm_api_client, zookeeper, request
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        request,
     ):
         ServicesResourceApi(cm_api_client).update_service_config(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -616,7 +638,7 @@ class TestServiceModification:
                 items=[
                     ApiConfig(name="tickTime", value="3001"),
                     ApiConfig(name="autopurgeSnapRetainCount", value="9"),
-                ]
+                ],
             ),
         )
 
@@ -632,7 +654,7 @@ class TestServiceModification:
                 "message": f"{request.node.name}::test",
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -683,7 +705,7 @@ class TestServiceModification:
                     "tag_three": "Added",
                 },
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -694,7 +716,9 @@ class TestServiceModification:
         assert e.value.service["type"] == zookeeper.type
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict(
-            tag_one="Updated", tag_two="Existing", tag_three="Added"
+            tag_one="Updated",
+            tag_two="Existing",
+            tag_three="Added",
         )
         assert e.value.service["maintenance_mode"] == False
         assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
@@ -709,14 +733,20 @@ class TestServiceModification:
         assert e.value.service["type"] == zookeeper.type
         assert e.value.service["config"] == dict()
         assert e.value.service["tags"] == dict(
-            tag_one="Updated", tag_two="Existing", tag_three="Added"
+            tag_one="Updated",
+            tag_two="Existing",
+            tag_three="Added",
         )
         assert e.value.service["maintenance_mode"] == False
         assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
         assert len(e.value.service["roles"]) == 1  # SERVER
 
     def test_service_existing_tags_purge(
-        self, conn, module_args, cm_api_client, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
     ):
         ServicesResourceApi(cm_api_client).add_tags(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -738,7 +768,7 @@ class TestServiceModification:
                 },
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -769,7 +799,11 @@ class TestServiceModification:
 
 class TestServiceStates:
     def test_service_existing_state_started(
-        self, conn, module_args, cm_api_client, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
     ):
         if zookeeper.service_state not in [
             ApiServiceState.STOPPED,
@@ -788,7 +822,7 @@ class TestServiceStates:
                 "cluster": zookeeper.cluster_ref.cluster_name,
                 "name": zookeeper.name,
                 "state": "started",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -805,7 +839,11 @@ class TestServiceStates:
         assert e.value.service["service_state"] == ApiServiceState.STARTED
 
     def test_service_existing_state_stopped(
-        self, conn, module_args, cm_api_client, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
     ):
         if zookeeper.service_state not in [
             ApiServiceState.STARTED,
@@ -824,7 +862,7 @@ class TestServiceStates:
                 "cluster": zookeeper.cluster_ref.cluster_name,
                 "name": zookeeper.name,
                 "state": "stopped",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -841,7 +879,11 @@ class TestServiceStates:
         assert e.value.service["service_state"] == ApiServiceState.STOPPED
 
     def test_service_existing_state_restarted(
-        self, conn, module_args, cm_api_client, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
     ):
         if zookeeper.service_state not in [
             ApiServiceState.STARTED,
@@ -860,7 +902,7 @@ class TestServiceStates:
                 "cluster": zookeeper.cluster_ref.cluster_name,
                 "name": zookeeper.name,
                 "state": "restarted",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -877,7 +919,11 @@ class TestServiceStates:
         assert e.value.service["service_state"] == ApiServiceState.STARTED
 
     def test_service_existing_state_absent(
-        self, conn, module_args, cm_api_client, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
     ):
         if zookeeper.service_state not in [
             ApiServiceState.STARTED,
@@ -896,7 +942,7 @@ class TestServiceStates:
                 "cluster": zookeeper.cluster_ref.cluster_name,
                 "name": zookeeper.name,
                 "state": "absent",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

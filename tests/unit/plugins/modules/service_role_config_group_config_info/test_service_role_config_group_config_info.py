@@ -97,7 +97,7 @@ def test_invalid_service(conn, module_args):
             "cluster": os.getenv("CM_CLUSTER"),
             "service": "BOOM",
             "role_config_group": os.getenv("CM_ROLE_CONFIG_GROUP"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
@@ -111,7 +111,7 @@ def test_invalid_cluster(conn, module_args):
             "cluster": "BOOM",
             "service": os.getenv("CM_SERVICE"),
             "role_config_group": os.getenv("CM_ROLE_CONFIG_GROUP"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
@@ -125,7 +125,7 @@ def test_invalid_role_config_group(conn, module_args):
             "cluster": os.getenv("CM_CLUSTER"),
             "service": os.getenv("CM_SERVICE"),
             "role_config_group": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -141,7 +141,7 @@ def test_summary(conn, module_args):
             "cluster": os.getenv("CM_CLUSTER"),
             "service": os.getenv("CM_SERVICE"),
             "role_config_group": os.getenv("CM_ROLE_CONFIG_GROUP"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -158,7 +158,7 @@ def test_full(conn, module_args):
             "service": os.getenv("CM_SERVICE"),
             "role_config_group": os.getenv("CM_ROLE_CONFIG_GROUP"),
             "view": "full",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

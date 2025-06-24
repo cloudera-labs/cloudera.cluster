@@ -143,7 +143,7 @@ class TestServiceProvisionRoleConfigGroups:
                     cluster_name=base_cluster.name,
                 )
                 .items
-            ]
+            ],
         )
 
         # Yield to the test
@@ -162,7 +162,11 @@ class TestServiceProvisionRoleConfigGroups:
         deregister_service(cm_api_client, services_to_remove)
 
     def test_service_provision_custom_rcg(
-        self, conn, module_args, base_cluster, request
+        self,
+        conn,
+        module_args,
+        base_cluster,
+        request,
     ):
         id = f"pytest-{Path(request.node.name)}"
 
@@ -179,10 +183,10 @@ class TestServiceProvisionRoleConfigGroups:
                         "config": {
                             "minSessionTimeout": 4601,
                         },
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -199,7 +203,7 @@ class TestServiceProvisionRoleConfigGroups:
 
         assert len(e.value.service["role_config_groups"]) == 3  # custom + 2 bases
         rcg = next(
-            iter([r for r in e.value.service["role_config_groups"] if not r["base"]])
+            iter([r for r in e.value.service["role_config_groups"] if not r["base"]]),
         )
         assert rcg["name"] == id
         assert rcg["role_type"] == "SERVER"
@@ -220,7 +224,7 @@ class TestServiceProvisionRoleConfigGroups:
 
         assert len(e.value.service["role_config_groups"]) == 3
         rcg = next(
-            iter([r for r in e.value.service["role_config_groups"] if not r["base"]])
+            iter([r for r in e.value.service["role_config_groups"] if not r["base"]]),
         )
         assert rcg["name"] == id
         assert rcg["role_type"] == "SERVER"
@@ -241,10 +245,10 @@ class TestServiceProvisionRoleConfigGroups:
                         "config": {
                             "minSessionTimeout": 4601,
                         },
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -266,8 +270,8 @@ class TestServiceProvisionRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "SERVER"
-                ]
-            )
+                ],
+            ),
         )
         assert rcg["role_type"] == "SERVER"
         assert rcg["config"]["minSessionTimeout"] == "4601"
@@ -292,8 +296,8 @@ class TestServiceProvisionRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "SERVER"
-                ]
-            )
+                ],
+            ),
         )
         assert rcg["role_type"] == "SERVER"
         assert rcg["config"]["minSessionTimeout"] == "4601"
@@ -313,7 +317,7 @@ class TestServiceModificationRoleConfigGroups:
             items=[
                 ApiConfig(name="minSessionTimeout", value="5500"),
                 ApiConfig(name="maxSessionTimeout", value="45000"),
-            ]
+            ],
         )
 
         return RoleConfigGroupsResourceApi(cm_api_client).update_role_config_group(
@@ -333,7 +337,7 @@ class TestServiceModificationRoleConfigGroups:
         )
 
         base_rcg.config = ApiConfigList(
-            items=[ApiConfig(name="client_config_priority", value="91")]
+            items=[ApiConfig(name="client_config_priority", value="91")],
         )
 
         return RoleConfigGroupsResourceApi(cm_api_client).update_role_config_group(
@@ -345,7 +349,10 @@ class TestServiceModificationRoleConfigGroups:
 
     @pytest.fixture()
     def custom_rcg_server(
-        self, cm_api_client, zookeeper, request
+        self,
+        cm_api_client,
+        zookeeper,
+        request,
     ) -> Generator[ApiRoleConfigGroup]:
         id = Path(request.node.name).stem
 
@@ -372,7 +379,10 @@ class TestServiceModificationRoleConfigGroups:
 
     @pytest.fixture()
     def server_role_custom_rcg(
-        self, cm_api_client, server_role, custom_rcg_server
+        self,
+        cm_api_client,
+        server_role,
+        custom_rcg_server,
     ) -> ApiRole:
         RoleConfigGroupsResourceApi(cm_api_client).move_roles(
             cluster_name=server_role.service_ref.cluster_name,
@@ -383,7 +393,12 @@ class TestServiceModificationRoleConfigGroups:
         return server_role
 
     def test_service_existing_base_rcg(
-        self, conn, module_args, zookeeper, base_rcg_server, base_rcg_gateway
+        self,
+        conn,
+        module_args,
+        zookeeper,
+        base_rcg_server,
+        base_rcg_gateway,
     ):
         module_args(
             {
@@ -397,10 +412,10 @@ class TestServiceModificationRoleConfigGroups:
                             "minSessionTimeout": 5501,
                             "maxSessionTimeout": 45001,
                         },
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -414,8 +429,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "SERVER"
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["minSessionTimeout"] == "5501"
         assert server_rcg["config"]["maxSessionTimeout"] == "45001"
@@ -426,8 +441,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "GATEWAY"
-                ]
-            )
+                ],
+            ),
         )
         assert gateway_rcg["config"]["client_config_priority"] == "91"
 
@@ -443,8 +458,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "SERVER"
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["minSessionTimeout"] == "5501"
         assert server_rcg["config"]["maxSessionTimeout"] == "45001"
@@ -455,13 +470,18 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "GATEWAY"
-                ]
-            )
+                ],
+            ),
         )
         assert gateway_rcg["config"]["client_config_priority"] == "91"
 
     def test_service_existing_base_rcg_purge(
-        self, conn, module_args, zookeeper, base_rcg_server, base_rcg_gateway
+        self,
+        conn,
+        module_args,
+        zookeeper,
+        base_rcg_server,
+        base_rcg_gateway,
     ):
         module_args(
             {
@@ -474,11 +494,11 @@ class TestServiceModificationRoleConfigGroups:
                         "config": {
                             "minSessionTimeout": 5501,
                         },
-                    }
+                    },
                 ],
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -492,8 +512,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "SERVER"
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["minSessionTimeout"] == "5501"
         assert "maxSessionTimeout" not in server_rcg["config"]
@@ -504,8 +524,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "GATEWAY"
-                ]
-            )
+                ],
+            ),
         )
         assert "client_config_priority" not in gateway_rcg["config"]
 
@@ -521,8 +541,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "SERVER"
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["minSessionTimeout"] == "5501"
         assert "maxSessionTimeout" not in server_rcg["config"]
@@ -533,13 +553,17 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["base"] and r["role_type"] == "GATEWAY"
-                ]
-            )
+                ],
+            ),
         )
         assert "client_config_priority" not in gateway_rcg["config"]
 
     def test_service_existing_custom_rcg(
-        self, conn, module_args, zookeeper, custom_rcg_server
+        self,
+        conn,
+        module_args,
+        zookeeper,
+        custom_rcg_server,
     ):
         module_args(
             {
@@ -554,10 +578,10 @@ class TestServiceModificationRoleConfigGroups:
                             "minSessionTimeout": 5501,
                             "maxSessionTimeout": 45001,
                         },
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -571,8 +595,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["name"] == custom_rcg_server.name
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["minSessionTimeout"] == "5501"
         assert server_rcg["config"]["maxSessionTimeout"] == "45001"
@@ -589,14 +613,18 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["name"] == custom_rcg_server.name
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["minSessionTimeout"] == "5501"
         assert server_rcg["config"]["maxSessionTimeout"] == "45001"
 
     def test_service_existing_custom_rcg_purge(
-        self, conn, module_args, zookeeper, custom_rcg_server
+        self,
+        conn,
+        module_args,
+        zookeeper,
+        custom_rcg_server,
     ):
         module_args(
             {
@@ -610,11 +638,11 @@ class TestServiceModificationRoleConfigGroups:
                         "config": {
                             "maxSessionTimeout": 45001,
                         },
-                    }
+                    },
                 ],
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -628,8 +656,8 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["name"] == custom_rcg_server.name
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["maxSessionTimeout"] == "45001"
         assert "minSessionTimeout" not in server_rcg["config"]
@@ -646,14 +674,19 @@ class TestServiceModificationRoleConfigGroups:
                     r
                     for r in e.value.service["role_config_groups"]
                     if r["name"] == custom_rcg_server.name
-                ]
-            )
+                ],
+            ),
         )
         assert server_rcg["config"]["maxSessionTimeout"] == "45001"
         assert "minSessionTimeout" not in server_rcg["config"]
 
     def test_service_existing_custom_rcg_purge_role_assoc(
-        self, conn, module_args, cm_api_client, zookeeper, server_role_custom_rcg
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_role_custom_rcg,
     ):
         module_args(
             {
@@ -662,7 +695,7 @@ class TestServiceModificationRoleConfigGroups:
                 "name": zookeeper.name,
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

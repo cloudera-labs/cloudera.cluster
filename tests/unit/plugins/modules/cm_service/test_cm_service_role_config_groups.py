@@ -47,10 +47,10 @@ def test_new_role_config_group(conn, module_args, cms_cleared, request):
                 {
                     "type": "ALERTPUBLISHER",
                     "config": expected,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -80,12 +80,15 @@ def test_new_role_config_group(conn, module_args, cms_cleared, request):
             items=[
                 ApiConfig(name="mgmt_num_descriptor_fetch_tries", value=16),
                 ApiConfig(name="process_start_secs", value=36),
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_existing_role_config_group_set(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     expected = dict(mgmt_num_descriptor_fetch_tries="16", process_start_secs="96")
 
@@ -96,10 +99,10 @@ def test_existing_role_config_group_set(
                 {
                     "type": "HOSTMONITOR",
                     "config": dict(process_start_secs="96"),
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -129,12 +132,15 @@ def test_existing_role_config_group_set(
             items=[
                 ApiConfig(name="mgmt_num_descriptor_fetch_tries", value=17),
                 ApiConfig(name="process_start_secs", value=37),
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_existing_role_config_group_unset(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     expected = dict(
         mgmt_num_descriptor_fetch_tries="17",
@@ -147,10 +153,10 @@ def test_existing_role_config_group_unset(
                 {
                     "type": "HOSTMONITOR",
                     "config": dict(process_start_secs=None),
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -180,12 +186,15 @@ def test_existing_role_config_group_unset(
             items=[
                 ApiConfig(name="mgmt_num_descriptor_fetch_tries", value=18),
                 ApiConfig(name="process_start_secs", value=38),
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_existing_role_config_group_purge(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     expected = dict(
         mgmt_num_descriptor_fetch_tries="28",
@@ -198,11 +207,11 @@ def test_existing_role_config_group_purge(
                 {
                     "type": "HOSTMONITOR",
                     "config": dict(mgmt_num_descriptor_fetch_tries=28),
-                }
+                },
             ],
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -232,19 +241,22 @@ def test_existing_role_config_group_purge(
             items=[
                 ApiConfig(name="mgmt_num_descriptor_fetch_tries", value=18),
                 ApiConfig(name="process_start_secs", value=38),
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_existing_role_config_group_purge_all(
-    conn, module_args, host_monitor_role_group_config, request
+    conn,
+    module_args,
+    host_monitor_role_group_config,
+    request,
 ):
     module_args(
         {
             **conn,
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

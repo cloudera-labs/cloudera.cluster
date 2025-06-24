@@ -93,10 +93,15 @@ def main():
         argument_spec=dict(
             path=dict(required=True, type="str"),
             query=dict(
-                required=False, type="dict", aliases=["query_parameters", "parameters"]
+                required=False,
+                type="dict",
+                aliases=["query_parameters", "parameters"],
             ),
             field=dict(
-                required=False, type="str", default="items", aliases=["return_field"]
+                required=False,
+                type="str",
+                default="items",
+                aliases=["return_field"],
             ),
         ),
         supports_check_mode=True,

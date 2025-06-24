@@ -901,7 +901,7 @@ class ClouderaCluster(ClouderaManagerModule):
             # Modify cluster
             if existing:
                 self.module.warn(
-                    "Module currently does not support reconcilation of cluster templates with existing clusters."
+                    "Module currently does not support reconcilation of cluster templates with existing clusters.",
                 )
                 refresh = False
 
@@ -928,7 +928,7 @@ class ClouderaCluster(ClouderaManagerModule):
                 if self.auto_tls:
                     enable_tls_cmd = (
                         self.cluster_api.configure_auto_tls_services_command(
-                            cluster_name=self.name
+                            cluster_name=self.name,
                         )
                     )
                     wait_command(
@@ -975,7 +975,7 @@ class ClouderaCluster(ClouderaManagerModule):
                     if self.auto_tls:
                         enable_tls_cmd = (
                             self.cluster_api.configure_auto_tls_services_command(
-                                cluster_name=self.name
+                                cluster_name=self.name,
                             )
                         )
                         wait_command(
@@ -987,7 +987,8 @@ class ClouderaCluster(ClouderaManagerModule):
                             cluster_name=self.name,
                         )
                         wait_command(
-                            api_client=self.api_client, command=disable_tls_cmd
+                            api_client=self.api_client,
+                            command=disable_tls_cmd,
                         )
 
                 self.changed = True
@@ -996,7 +997,9 @@ class ClouderaCluster(ClouderaManagerModule):
                     if not existing or existing.entity_status == "NONE" or self.force:
                         first_run = self.cluster_api.first_run(cluster_name=self.name)
                         self.wait_command(
-                            first_run, polling=self.timeout, delay=self.delay
+                            first_run,
+                            polling=self.timeout,
+                            delay=self.delay,
                         )
                     # Start the existing and previously initialized cluster
                     else:
@@ -1025,7 +1028,7 @@ class ClouderaCluster(ClouderaManagerModule):
                         if self.auto_tls:
                             enable_tls_cmd = (
                                 self.cluster_api.configure_auto_tls_services_command(
-                                    cluster_name=self.name
+                                    cluster_name=self.name,
                                 )
                             )
                             wait_command(
@@ -1037,7 +1040,8 @@ class ClouderaCluster(ClouderaManagerModule):
                                 cluster_name=self.name,
                             )
                             wait_command(
-                                api_client=self.api_client, command=disable_tls_cmd
+                                api_client=self.api_client,
+                                command=disable_tls_cmd,
                             )
                 # Stop an existing cluster
                 else:
@@ -1047,7 +1051,7 @@ class ClouderaCluster(ClouderaManagerModule):
                         if self.auto_tls:
                             enable_tls_cmd = (
                                 self.cluster_api.configure_auto_tls_services_command(
-                                    cluster_name=self.name
+                                    cluster_name=self.name,
                                 )
                             )
                             wait_command(
@@ -1059,7 +1063,8 @@ class ClouderaCluster(ClouderaManagerModule):
                                 cluster_name=self.name,
                             )
                             wait_command(
-                                api_client=self.api_client, command=disable_tls_cmd
+                                api_client=self.api_client,
+                                command=disable_tls_cmd,
                             )
                     if not self.module.check_mode:
                         stop = self.cluster_api.stop_command(cluster_name=self.name)
@@ -1083,7 +1088,7 @@ class ClouderaCluster(ClouderaManagerModule):
                     if self.auto_tls:
                         enable_tls_cmd = (
                             self.cluster_api.configure_auto_tls_services_command(
-                                cluster_name=self.name
+                                cluster_name=self.name,
                             )
                         )
                         wait_command(
@@ -1095,7 +1100,8 @@ class ClouderaCluster(ClouderaManagerModule):
                             cluster_name=self.name,
                         )
                         wait_command(
-                            api_client=self.api_client, command=disable_tls_cmd
+                            api_client=self.api_client,
+                            command=disable_tls_cmd,
                         )
 
                 self.changed = True
@@ -1103,7 +1109,9 @@ class ClouderaCluster(ClouderaManagerModule):
                     if self.force:
                         first_run = self.cluster_api.first_run(cluster_name=self.name)
                         self.wait_command(
-                            first_run, polling=self.timeout, delay=self.delay
+                            first_run,
+                            polling=self.timeout,
+                            delay=self.delay,
                         )
                     restart = self.cluster_api.restart_command(cluster_name=self.name)
                     self.wait_command(restart, polling=self.timeout, delay=self.delay)
@@ -1111,7 +1119,7 @@ class ClouderaCluster(ClouderaManagerModule):
         if refresh:
             # Retrieve the updated cluster details
             self.output = parse_cluster_result(
-                self.cluster_api.read_cluster(cluster_name=self.name)
+                self.cluster_api.read_cluster(cluster_name=self.name),
             )
         elif existing:
             self.output = parse_cluster_result(existing)
@@ -1139,8 +1147,8 @@ class ClouderaCluster(ClouderaManagerModule):
             active_cmd = next(
                 iter(
                     self.cluster_api.list_active_commands(
-                        cluster_name=cluster_name
-                    ).items
+                        cluster_name=cluster_name,
+                    ).items,
                 ),
                 None,
             )
@@ -1165,7 +1173,8 @@ class ClouderaCluster(ClouderaManagerModule):
 
         # Merge/overlay any explicit parameters over the template
         TEMPLATE = ClusterTemplate(
-            warn_fn=self.module.warn, error_fn=self.module.fail_json
+            warn_fn=self.module.warn,
+            error_fn=self.module.fail_json,
         )
         TEMPLATE.merge(template_contents, explicit_params)
         payload.update(body=template_contents)
@@ -1178,18 +1187,19 @@ class ClouderaCluster(ClouderaManagerModule):
         self.changed = True
         if not self.module.check_mode:
             import_template_request = self.cm_api.import_cluster_template(
-                **payload
+                **payload,
             ).to_dict()
 
             command_id = import_template_request["id"]
             self.wait_for_command_state(
-                command_id=command_id, polling_interval=self.delay
+                command_id=command_id,
+                polling_interval=self.delay,
             )
 
     def create_cluster_from_parameters(self):
         if self.cluster_version is None:
             self.module.fail_json(
-                msg=f"Cluster must be created. Missing required parameter: cluster_version"
+                msg=f"Cluster must be created. Missing required parameter: cluster_version",
             )
 
         # Configure the core cluster
@@ -1231,13 +1241,15 @@ class ClouderaCluster(ClouderaManagerModule):
                         name=ht["name"],
                         role_config_group_refs=[
                             ApiRoleConfigGroupRef(
-                                rcg["name"]
-                                if rcg["name"]
-                                else self.find_base_role_group_name(
-                                    service_name=rcg["service"],
-                                    service_type=rcg["service_type"],
-                                    role_type=rcg["type"],
-                                )
+                                (
+                                    rcg["name"]
+                                    if rcg["name"]
+                                    else self.find_base_role_group_name(
+                                        service_name=rcg["service"],
+                                        service_type=rcg["service_type"],
+                                        role_type=rcg["type"],
+                                    )
+                                ),
                             )
                             for rcg in ht["role_groups"]
                         ],
@@ -1304,7 +1316,7 @@ class ClouderaCluster(ClouderaManagerModule):
                             parcel.download()
                 except ApiException as ae:
                     self.module.fail_json(
-                        msg="Error managing parcel states: " + to_native(ae)
+                        msg="Error managing parcel states: " + to_native(ae),
                     )
 
             # Apply host templates
@@ -1328,10 +1340,11 @@ class ClouderaCluster(ClouderaManagerModule):
                         rcg.role_type,
                     )
                     for s in self.service_api.read_services(
-                        cluster_name=self.name
+                        cluster_name=self.name,
                     ).items  # s.name
                     for rcg in self.role_group_api.read_role_config_groups(
-                        cluster_name=self.name, service_name=s.name
+                        cluster_name=self.name,
+                        service_name=s.name,
                     ).items
                 }
 
@@ -1344,7 +1357,7 @@ class ClouderaCluster(ClouderaManagerModule):
                             if rcg["name"] not in all_rcgs:
                                 self.module.fail_json(
                                     msg="Role config group '%s' not found on cluster."
-                                    % rcg["name"]
+                                    % rcg["name"],
                                 )
                             else:
                                 rcg_ref = all_rcgs[rcg["name"]]
@@ -1358,7 +1371,7 @@ class ClouderaCluster(ClouderaManagerModule):
                                         if refs[0]
                                         and refs[1] == rcg["service"]
                                         and refs[2] == rcg["type"]
-                                    ]
+                                    ],
                                 ),
                                 None,
                             )
@@ -1366,7 +1379,7 @@ class ClouderaCluster(ClouderaManagerModule):
                             if rcg_name is None:
                                 self.module.fail_json(
                                     msg="Unable to find base role group, '%s [%s]', on cluster, '%s'"
-                                    % (rcg["service"], rcg["type"], self.name)
+                                    % (rcg["service"], rcg["type"], self.name),
                                 )
 
                             rcg_ref = all_rcgs[rcg_name]
@@ -1376,7 +1389,7 @@ class ClouderaCluster(ClouderaManagerModule):
                             cluster_name=self.name,
                             service_name=rcg_ref[1],
                             body=ApiRoleList(
-                                items=[ApiRole(type=rcg_ref[2], host_ref=hostref)]
+                                items=[ApiRole(type=rcg_ref[2], host_ref=hostref)],
                             ),
                         )
 
@@ -1387,7 +1400,7 @@ class ClouderaCluster(ClouderaManagerModule):
                                 role_config_group_name=rcg["name"],
                                 service_name=rcg_ref[1],
                                 body=ApiRoleNameList(
-                                    items=[direct_roles.items[0].name]
+                                    items=[direct_roles.items[0].name],
                                 ),
                             )
 
@@ -1405,7 +1418,7 @@ class ClouderaCluster(ClouderaManagerModule):
                                 service_name=override["service"],
                                 filter="type==%s;hostId==%s"
                                 % (override["type"], hostref.host_id),
-                            ).items
+                            ).items,
                         ),
                         None,
                     )
@@ -1420,13 +1433,13 @@ class ClouderaCluster(ClouderaManagerModule):
                                 items=[
                                     ApiConfig(name=k, value=v)
                                     for k, v in override["config"].items()
-                                ]
+                                ],
                             ),
                         )
                     else:
                         self.module.fail_json(
                             msg="Role not found. No role type '%s' for service '%s' found on host '%s'"
-                            % (override["type"], override["service"], hostref.hostname)
+                            % (override["type"], override["service"], hostref.hostname),
                         )
             # Configure the experience cluster
             if self.control_plane:
@@ -1445,7 +1458,8 @@ class ClouderaCluster(ClouderaManagerModule):
                     self.control_plane_api.install_embedded_control_plane(body=body)
                 )
                 self.wait_for_command_state(
-                    command_id=setup_control_plane.id, polling_interval=self.delay
+                    command_id=setup_control_plane.id,
+                    polling_interval=self.delay,
                 )
 
             # Execute auto-role assignments
@@ -1461,7 +1475,9 @@ class ClouderaCluster(ClouderaManagerModule):
         # Service-wide configuration
         if options["config"]:
             service.config = ApiServiceConfig(
-                items=[ApiConfig(name=k, value=v) for k, v in options["config"].items()]
+                items=[
+                    ApiConfig(name=k, value=v) for k, v in options["config"].items()
+                ],
             )
 
         if options["role_groups"]:
@@ -1484,7 +1500,7 @@ class ClouderaCluster(ClouderaManagerModule):
                         items=[
                             ApiConfig(name=k, value=v)
                             for k, v in body["config"].items()
-                        ]
+                        ],
                     )
 
                 rcg_list.append(rcg)
@@ -1509,18 +1525,21 @@ class ClouderaCluster(ClouderaManagerModule):
                     and h.cluster_ref.cluster_name != self.name
                 ):
                     self.module.fail_json(
-                        msg=f"Invalid host reference! Host {h.hostname} ({h.host_id}) already in use with cluster '{h.cluster_ref.cluster_name}'!"
+                        msg=f"Invalid host reference! Host {h.hostname} ({h.host_id}) already in use with cluster '{h.cluster_ref.cluster_name}'!",
                     )
                 results.append(ApiHostRef(host_id=h.host_id, hostname=h.hostname))
         if len(results) != len(hosts.keys()):
             self.module.fail_json(
                 msg="Did not find the following hosts: "
-                + ", ".join(set(hosts.keys() - set(results)))
+                + ", ".join(set(hosts.keys() - set(results))),
             )
         return results
 
     def find_base_role_group_name(
-        self, role_type: str, service_name: str = None, service_type: str = None
+        self,
+        role_type: str,
+        service_name: str = None,
+        service_type: str = None,
     ) -> str:
         if service_name:
 
@@ -1528,7 +1547,8 @@ class ClouderaCluster(ClouderaManagerModule):
                 rcg
                 for s in self.service_api.read_services(cluster_name=self.name).items
                 for rcg in self.role_group_api.read_role_config_groups(
-                    cluster_name=self.name, service_name=s.name
+                    cluster_name=self.name,
+                    service_name=s.name,
                 ).items
                 if s.name == service_name
             ]
@@ -1537,7 +1557,8 @@ class ClouderaCluster(ClouderaManagerModule):
                 rcg
                 for s in self.service_api.read_services(cluster_name=self.name).items
                 for rcg in self.role_group_api.read_role_config_groups(
-                    cluster_name=self.name, service_name=s.name
+                    cluster_name=self.name,
+                    service_name=s.name,
                 ).items
                 if s.type == service_type
             ]
@@ -1550,7 +1571,7 @@ class ClouderaCluster(ClouderaManagerModule):
         if base is None:
             self.module.fail_json(
                 "Invalid role group; unable to discover base role group for service role, %s"
-                % role_type
+                % role_type,
             )
         else:
             return base.name
@@ -1615,7 +1636,8 @@ def main():
                         options=dict(
                             name=dict(aliases=["ref", "ref_name"]),
                             service=dict(
-                                required=True, aliases=["service_name", "service_ref"]
+                                required=True,
+                                aliases=["service_name", "service_ref"],
                             ),
                             type=dict(aliases=["role_type"]),
                         ),
@@ -1632,7 +1654,8 @@ def main():
                         elements="dict",
                         options=dict(
                             service=dict(
-                                required=True, aliases=["service_name", "service_ref"]
+                                required=True,
+                                aliases=["service_name", "service_ref"],
                             ),
                             type=dict(required=True, aliases=["role_type"]),
                             config=dict(type="dict", required=True),
@@ -1673,7 +1696,9 @@ def main():
                     remote_repo_url=dict(required=True, type="str"),
                     datalake_cluster_name=dict(required=True, type="str"),
                     control_plane_config=dict(
-                        required=True, type="dict", aliases=["values_yaml"]
+                        required=True,
+                        type="dict",
+                        aliases=["values_yaml"],
                     ),
                 ),
             ),

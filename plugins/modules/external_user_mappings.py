@@ -211,7 +211,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
             for mapping in all_external_user_mappings.items:
                 if self.name == mapping.name:
                     existing = api_instance.read_external_user_mapping(
-                        uuid=mapping.uuid
+                        uuid=mapping.uuid,
                     ).to_dict()
                     break
         if self.uuid:
@@ -247,7 +247,8 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                     if not self.module.check_mode:
                         self.external_user_mappings_output = (
                             api_instance.update_external_user_mapping(
-                                uuid=mapping.uuid, body=update_existing_auth_roles
+                                uuid=mapping.uuid,
+                                body=update_existing_auth_roles,
                             )
                         ).to_dict()
                         self.changed = True
@@ -263,7 +264,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                 if not self.module.check_mode:
                     self.external_user_mappings_output = (
                         api_instance.create_external_user_mappings(
-                            body={"items": [external_user_mappings_body]}
+                            body={"items": [external_user_mappings_body]},
                         )
                     ).to_dict()["items"]
                     self.changed = True
@@ -277,7 +278,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                     incoming_auth_roles = set(self.auth_roles)
 
                     roles_to_delete = existing_auth_roles.intersection(
-                        incoming_auth_roles
+                        incoming_auth_roles,
                     )
                     if self.module._diff:
                         self.diff.update(
@@ -298,7 +299,8 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                         if not self.module.check_mode:
                             self.external_user_mappings_output = (
                                 api_instance.update_external_user_mapping(
-                                    uuid=mapping.uuid, body=update_existing_auth_roles
+                                    uuid=mapping.uuid,
+                                    body=update_existing_auth_roles,
                                 )
                             ).to_dict()
                             self.changed = True

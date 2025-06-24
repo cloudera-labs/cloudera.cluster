@@ -131,7 +131,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
         except ApiException as ex:
             if ex.status == 404:
                 self.module.fail_json(
-                    msg="Cluster does not exist: " + self.cluster_name
+                    msg="Cluster does not exist: " + self.cluster_name,
                 )
             else:
                 raise ex
@@ -145,8 +145,8 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
                         host_template_api.read_host_template(
                             cluster_name=self.cluster_name,
                             host_template_name=self.name,
-                        )
-                    )
+                        ),
+                    ),
                 )
             except ApiException as ex:
                 if ex.status != 404:
@@ -156,7 +156,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
             self.output = [
                 parse_host_template(ht)
                 for ht in host_template_api.read_host_templates(
-                    cluster_name=self.cluster_name
+                    cluster_name=self.cluster_name,
                 ).items
             ]
 

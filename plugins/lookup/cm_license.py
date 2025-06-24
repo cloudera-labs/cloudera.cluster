@@ -130,11 +130,11 @@ class LookupModule(LookupBase):
             license = self.parse(path=terms[0])
         elif len(terms) > 1:
             raise AnsibleLookupError(
-                "Please specify a single path for the Cloudera license file."
+                "Please specify a single path for the Cloudera license file.",
             )
         else:
             raise AnsibleLookupError(
-                "Please specify either the path to the Cloudera license or its contents in the 'contents' parameter."
+                "Please specify either the path to the Cloudera license or its contents in the 'contents' parameter.",
             )
 
         msg = hashlib.sha256(to_bytes(license["name"] + license["uuid"]))

@@ -73,7 +73,7 @@ def test_src_not_directory(module_args, tmp_path):
         {
             "dest": "foo.json",
             "src": str(invalid_src),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="not a directory"):
@@ -91,7 +91,7 @@ def test_src_invalid_file(module_args, tmp_path):
         {
             "dest": "foo.json",
             "src": str(root_dir),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="JSON parsing error"):
@@ -113,7 +113,8 @@ def test_src_filtered(module_args, tmp_path):
 
     filtered = root_dir / "filtered.json"
     filtered.write_text(
-        json.dumps(content, indent=2, sort_keys=False), encoding="utf-8"
+        json.dumps(content, indent=2, sort_keys=False),
+        encoding="utf-8",
     )
 
     results = root_dir / "results.json"
@@ -357,7 +358,7 @@ def test_merge_list_idempotent_multiple_elements(module_args, tmp_path):
 
     assert len(output["test"]) == 4
     assert output["test"] == expected_list(
-        [{"name": "Test"}, {"product": "Product"}, "two", "three"]
+        [{"name": "Test"}, {"product": "Product"}, "two", "three"],
     )
 
 
@@ -389,7 +390,7 @@ def test_merge_list_idempotent_multiple_keys(module_args, tmp_path):
 
     assert len(output["test"]) == 3
     assert output["test"] == expected_list(
-        [{"name": "Test", "product": "Product"}, "two", "three"]
+        [{"name": "Test", "product": "Product"}, "two", "three"],
     )
 
 
@@ -421,7 +422,7 @@ def test_merge_list_idempotent_append(module_args, tmp_path):
 
     assert len(output["test"]) == 4
     assert output["test"] == expected_list(
-        [{"name": "Test"}, "two", {"name": "Additional"}, "three"]
+        [{"name": "Test"}, "two", {"name": "Additional"}, "three"],
     )
 
 
@@ -652,7 +653,7 @@ def test_multiple_services(module_args, tmp_path):
             "https://archive.cloudera.com/",
             "https://archive.cloudera.com/schemaregistry",
             "https://archive.cloudera.com/atlas",
-        ]
+        ],
     )
 
     assert len(output["products"]) == 2
@@ -660,13 +661,18 @@ def test_multiple_services(module_args, tmp_path):
         [
             dict(product="CDH", version="1.2.3"),
             dict(product="FOO", version="9.8.7"),
-        ]
+        ],
     )
 
     assert output["instantiator"]["clusterName"] == "ExampleCluster"
     assert len(output["instantiator"]["hosts"]) == 1
     assert output["instantiator"]["hosts"] == expected_list(
-        [{"hostName": "host.example.com", "hostTemplateRefName": "ExampleHostTemplate"}]
+        [
+            {
+                "hostName": "host.example.com",
+                "hostTemplateRefName": "ExampleHostTemplate",
+            },
+        ],
     )
 
     assert len(output["hostTemplates"]) == 2
@@ -688,7 +694,7 @@ def test_multiple_services(module_args, tmp_path):
                     "atlas-GATEWAY-BASE",
                 ],
             },
-        ]
+        ],
     )
 
     assert len(output["services"]) == 3
@@ -722,7 +728,7 @@ def test_multiple_services(module_args, tmp_path):
                 "serviceType": "SCHEMAREGISTRY",
                 "displayName": "Schema Registry",
                 "serviceConfigs": [
-                    {"name": "database_host", "value": "host.example.com"}
+                    {"name": "database_host", "value": "host.example.com"},
                 ],
                 "roleConfigGroups": [
                     {
@@ -736,7 +742,7 @@ def test_multiple_services(module_args, tmp_path):
                                 "value": "7790",
                             },
                         ],
-                    }
+                    },
                 ],
             },
             {

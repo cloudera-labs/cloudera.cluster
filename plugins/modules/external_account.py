@@ -289,9 +289,9 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                                     items=[
                                         ApiConfig(name=key, value=value)
                                         for key, value in self.params.items()
-                                    ]
+                                    ],
                                 ),
-                            )
+                            ),
                         )
                         self.changed = True
                 else:
@@ -315,9 +315,9 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                                     items=[
                                         ApiConfig(name=key, value=value)
                                         for key, value in self.params.items()
-                                    ]
+                                    ],
                                 ),
-                            )
+                            ),
                         )
                         self.changed = True
 

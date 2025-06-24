@@ -402,8 +402,8 @@ class ClusterServiceInfo(ClouderaManagerModule):
                             api_client=self.api_client,
                             cluster_name=self.cluster,
                             service_name=self.name,
-                        )
-                    )
+                        ),
+                    ),
                 )
             except ApiException as e:
                 if e.status != 404:

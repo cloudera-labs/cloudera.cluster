@@ -229,13 +229,14 @@ class ClouderaHostConfigInfo(ClouderaManagerMutableModule):
                 body = ApiConfigList(
                     items=[
                         ApiConfig(name=k, value=f"{v}") for k, v in change_set.items()
-                    ]
+                    ],
                 )
 
                 self.host_config = [
                     p.to_dict()
                     for p in api_instance.update_host_config(
-                        host_id=self.hostname, body=body
+                        host_id=self.hostname,
+                        body=body,
                     ).items
                 ]
         else:

@@ -123,8 +123,8 @@ class ClusterInfo(ClouderaManagerModule):
             if self.name:
                 self.output = [
                     parse_cluster_result(
-                        cluster_api_instance.read_cluster(cluster_name=self.name)
-                    )
+                        cluster_api_instance.read_cluster(cluster_name=self.name),
+                    ),
                 ]
             else:
                 self.output = [

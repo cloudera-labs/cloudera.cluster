@@ -149,7 +149,7 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
         try:
             if self.name:
                 self.external_accounts = [
-                    api_instance.read_account(self.name).to_dict()
+                    api_instance.read_account(self.name).to_dict(),
                 ]
 
             elif self.type:
@@ -160,7 +160,7 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
             else:
 
                 self.external_accounts = api_instance.read_accounts(
-                    type_name="AWS_ACCESS_KEY_AUTH"
+                    type_name="AWS_ACCESS_KEY_AUTH",
                 ).to_dict()["items"]
                 all_accounts = []
                 for account_type in account_types:

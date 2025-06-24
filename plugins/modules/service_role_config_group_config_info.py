@@ -200,7 +200,8 @@ class ClusterServiceRoleConfigGroupConfigInfo(ClouderaManagerModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -230,7 +231,8 @@ def main():
             cluster=dict(required=True, aliases=["cluster_name"]),
             service=dict(required=True, aliases=["service_name"]),
             role_config_group=dict(
-                required=True, aliases=["role_config_group", "name"]
+                required=True,
+                aliases=["role_config_group", "name"],
             ),
             view=dict(
                 default="summary",

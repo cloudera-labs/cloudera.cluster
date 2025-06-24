@@ -117,7 +117,7 @@ def parse_service_result(service: ApiService) -> dict:
             role_config_groups=[
                 {k: v for k, v in rcg_dict.items() if k != "service_name"}
                 for rcg_dict in parsed_rcgs
-            ]
+            ],
         )
 
     # Parse the roles via util function
@@ -128,14 +128,16 @@ def parse_service_result(service: ApiService) -> dict:
             roles=[
                 {k: v for k, v in role_dict.items() if k != "service_name"}
                 for role_dict in parsed_roles
-            ]
+            ],
         )
 
     return output
 
 
 def read_service(
-    api_client: ApiClient, cluster_name: str, service_name: str
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
 ) -> ApiService:
     """Read a cluster service and its role config group and role dependents.
 
@@ -151,13 +153,15 @@ def read_service(
     rcg_api = RoleConfigGroupsResourceApi(api_client)
 
     service = service_api.read_service(
-        cluster_name=cluster_name, service_name=service_name
+        cluster_name=cluster_name,
+        service_name=service_name,
     )
 
     if service is not None:
         # Gather the service-wide configuration
         service.config = service_api.read_service_config(
-            cluster_name=cluster_name, service_name=service_name
+            cluster_name=cluster_name,
+            service_name=service_name,
         )
 
         # Gather each role config group configuration
@@ -198,7 +202,8 @@ def read_services(api_client: ApiClient, cluster_name: str) -> list[ApiService]:
     for service in discovered_services:
         # Gather the service-wide configuration
         service.config = service_api.read_service_config(
-            cluster_name=cluster_name, service_name=service.name
+            cluster_name=cluster_name,
+            service_name=service.name,
         )
 
         # Gather each role config group configuration
@@ -238,7 +243,7 @@ def create_service_model(
         .items
     ):
         raise InvalidServiceTypeException(
-            f"Invalid service type '{type}' for cluster '{cluster_name}'"
+            f"Invalid service type '{type}' for cluster '{cluster_name}'",
         )
 
     # Set up the service basics
@@ -250,7 +255,7 @@ def create_service_model(
     # Service-wide configurations
     if config:
         service.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()],
         )
 
     # Tags
@@ -261,7 +266,9 @@ def create_service_model(
 
 
 def provision_service(
-    api_client: ApiClient, cluster_name: str, service: ApiService
+    api_client: ApiClient,
+    cluster_name: str,
+    service: ApiService,
 ) -> ApiService:
     service_api = ServicesResourceApi(api_client)
 
@@ -271,7 +278,7 @@ def provision_service(
                 service_api.create_services(
                     cluster_name=cluster_name,
                     body=ApiServiceList(items=[service]),
-                ).items
+                ).items,
             )
         ),
         None,
@@ -299,7 +306,10 @@ def provision_service(
 
 
 def toggle_service_maintenance(
-    api_client: ApiClient, service: ApiService, maintenance: bool, check_mode: bool
+    api_client: ApiClient,
+    service: ApiService,
+    maintenance: bool,
+    check_mode: bool,
 ) -> bool:
     service_api = ServicesResourceApi(api_client)
     changed = False
@@ -319,14 +329,17 @@ def toggle_service_maintenance(
 
         if maintenance_cmd.success is False:
             raise ServiceMaintenanceStateException(
-                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}"
+                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}",
             )
 
     return changed
 
 
 def toggle_service_state(
-    api_client: ApiClient, service: ApiService, state: str, check_mode: bool
+    api_client: ApiClient,
+    service: ApiService,
+    state: str,
+    check_mode: bool,
 ) -> ApiServiceState:
     service_api = ServicesResourceApi(api_client)
     changed = None
@@ -411,7 +424,7 @@ def reconcile_service_config(
         after = changeset
 
         reconciled_config = ApiServiceConfig(
-            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()],
         )
 
         return (reconciled_config, before, after)
@@ -476,7 +489,7 @@ class ServiceConfigUpdates(object):
         )
 
         self.config = ApiServiceConfig(
-            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in changeset.items()],
         )
 
     @property
@@ -772,7 +785,9 @@ def reconcile_service_roles(
                             incoming_tags = dict()
 
                         tag_updates = TagUpdates(
-                            current_role.tags, incoming_tags, purge
+                            current_role.tags,
+                            incoming_tags,
+                            purge,
                         )
 
                         if tag_updates.changed:
@@ -805,7 +820,7 @@ def reconcile_service_roles(
                         != base_rcg.name
                     ):
                         instance_role_before.update(
-                            role_config_group=current_role.role_config_group_ref.role_config_group_name
+                            role_config_group=current_role.role_config_group_ref.role_config_group_name,
                         )
                         instance_role_after.update(role_config_group=base_rcg.name)
 
@@ -822,7 +837,7 @@ def reconcile_service_roles(
                         != current_role.role_config_group_ref.role_config_group_name
                     ):
                         instance_role_before.update(
-                            role_config_group=current_role.role_config_group_ref.role_config_group_name
+                            role_config_group=current_role.role_config_group_ref.role_config_group_name,
                         )
                         instance_role_after.update(role_config_group=incoming_rcg.name)
 

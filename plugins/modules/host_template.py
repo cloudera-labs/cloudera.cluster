@@ -280,7 +280,7 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                     )
                     if base_rcg is None:
                         self.module.fail_json(
-                            msg=f"Role type '{rcg['type']}' not found for service '{rcg['service']}' in cluster '{self.cluster}'"
+                            msg=f"Role type '{rcg['type']}' not found for service '{rcg['service']}' in cluster '{self.cluster}'",
                         )
                     incoming_rcgs.append(base_rcg)
 
@@ -291,7 +291,7 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                     [
                         rcg.role_config_group_name
                         for rcg in current.role_config_group_refs
-                    ]
+                    ],
                 )
                 incoming_rcg_names = set([rcg.name for rcg in incoming_rcgs])
 
@@ -313,7 +313,8 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                             updated_diff = dict(**current_diff)
                             updated_diff.role_config_groups = updated_rcg_names
                             self.diff.update(
-                                before=current_diff, after=dict(updated_diff)
+                                before=current_diff,
+                                after=dict(updated_diff),
                             )
 
                         current.role_config_group_refs = [
@@ -339,7 +340,8 @@ class ClouderaHostTemplate(ClouderaManagerModule):
 
                 if self.module._diff:
                     self.diff.update(
-                        before=dict(), after=parse_host_template(created_host_template)
+                        before=dict(),
+                        after=parse_host_template(created_host_template),
                     )
 
                 if not self.module.check_mode:

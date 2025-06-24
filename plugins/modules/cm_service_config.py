@@ -235,7 +235,8 @@ class ClouderaManagerServiceConfig(ClouderaManagerMutableModule):
                 self.config = [
                     p.to_dict()
                     for p in api_instance.update_service_config(
-                        message=self.message, body=updates.config
+                        message=self.message,
+                        body=updates.config,
                     ).items
                 ]
 

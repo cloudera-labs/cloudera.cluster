@@ -169,7 +169,9 @@ def get_host(
 
 
 def get_host_ref(
-    api_client: ApiClient, hostname: str = None, host_id: str = None
+    api_client: ApiClient,
+    hostname: str = None,
+    host_id: str = None,
 ) -> ApiHostRef:
     """Retrieve a Host Reference by either hostname or host ID.
 
@@ -228,7 +230,7 @@ def create_host_model(
     # Configuration
     if config:
         host.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()],
         )
 
     # Tags
@@ -263,7 +265,7 @@ def reconcile_host_role_configs(
                     service_name=incoming_role_config["service"],
                     type=incoming_role_config["type"],
                     host_id=host.host_id,
-                ).items
+                ).items,
             ),
             None,
         )
@@ -271,7 +273,7 @@ def reconcile_host_role_configs(
         # If no existing role of service and type exists, raise an error
         if current_role is None:
             raise HostException(
-                f"No role of type, '{incoming_role_config['type']}', found for service, '{incoming_role_config['service']}', on cluster, '{host.cluster_ref.cluster_name}'"
+                f"No role of type, '{incoming_role_config['type']}', found for service, '{incoming_role_config['service']}', on cluster, '{host.cluster_ref.cluster_name}'",
             )
 
         # Reconcile role override configurations
@@ -338,7 +340,7 @@ def reconcile_host_role_config_groups(
             )
             if base_rcg is None:
                 raise HostException(
-                    f"Base role config group for type, '{rcg['type']}', not found."
+                    f"Base role config group for type, '{rcg['type']}', not found.",
                 )
             declared_rcgs[base_rcg.name] = base_rcg
         # Else, confirm the custom role config group and use its name
@@ -350,7 +352,7 @@ def reconcile_host_role_config_groups(
             )
             if custom_rcg is None:
                 raise HostException(
-                    f"Named role config group, '{rcg['name']}', not found."
+                    f"Named role config group, '{rcg['name']}', not found.",
                 )
             declared_rcgs[custom_rcg.name] = custom_rcg
 
@@ -390,7 +392,8 @@ def _read_cluster_rcgs(
         rcg.name: rcg
         for service in service_api.read_services(cluster_name=cluster.name).items
         for rcg in rcg_api.read_role_config_groups(
-            cluster_name=cluster.name, service_name=service.name
+            cluster_name=cluster.name,
+            service_name=service.name,
         ).items
     }
 
@@ -409,12 +412,12 @@ def _read_host_rcgs(
             role_name=role_ref.role_name,
         )
         if role.role_config_group_ref.role_config_group_name in cluster_rcgs:
-            current_rcgs[
-                role.role_config_group_ref.role_config_group_name
-            ] = cluster_rcgs[role.role_config_group_ref.role_config_group_name]
+            current_rcgs[role.role_config_group_ref.role_config_group_name] = (
+                cluster_rcgs[role.role_config_group_ref.role_config_group_name]
+            )
         else:
             raise Exception(
-                f"Invalid role config group reference, '{role.role_config_group_ref.role_config_group_name}', on host, {host.hostname}"
+                f"Invalid role config group reference, '{role.role_config_group_ref.role_config_group_name}', on host, {host.hostname}",
             )
     return current_rcgs
 
@@ -482,11 +485,11 @@ def _reconcile_host_rcgs(
 
             if not del_roles:
                 raise Exception(
-                    f"Error reading role type, '{del_rcg.role_type}', for service, '{del_rcg.service_ref.service_name}', on cluster, '{del_rcg.service_ref.cluster_name}'"
+                    f"Error reading role type, '{del_rcg.role_type}', for service, '{del_rcg.service_ref.service_name}', on cluster, '{del_rcg.service_ref.cluster_name}'",
                 )
             if len(del_roles) != 1:
                 raise Exception(
-                    f"Error, multiple instances for role type, '{del_rcg.role_type}', for service, '{del_rcg.service_ref.service_name}', on cluster, '{del_rcg.service_ref.cluster_name}'"
+                    f"Error, multiple instances for role type, '{del_rcg.role_type}', for service, '{del_rcg.service_ref.service_name}', on cluster, '{del_rcg.service_ref.cluster_name}'",
                 )
 
             diff_before.append(del_roles[0].to_dict())
@@ -527,7 +530,7 @@ def reconcile_host_template_assignments(
             ]
         else:
             raise HostTemplateException(
-                f"Invalid role config group reference, '{rcg_ref.role_config_group_name}', in host template, {host_template.name}"
+                f"Invalid role config group reference, '{rcg_ref.role_config_group_name}', in host template, {host_template.name}",
             )
 
     # Retrieve the associated role config groups from each installed role
@@ -551,7 +554,7 @@ def reconcile_host_template_assignments(
                     service_name=add_rcg.service_ref.service_name,
                     role_type=add_rcg.role_type,
                     role_config_group=add_rcg.name,
-                ).to_dict()
+                ).to_dict(),
             )
 
         if not check_mode:
@@ -568,7 +571,9 @@ def reconcile_host_template_assignments(
                     host_template_name=host_template.name,
                     start_roles=False,
                     body=ApiHostRefList(
-                        items=[ApiHostRef(host_id=host.host_id, hostname=host.hostname)]
+                        items=[
+                            ApiHostRef(host_id=host.host_id, hostname=host.hostname),
+                        ],
                     ),
                 )
                 wait_command(
@@ -613,7 +618,10 @@ def reconcile_host_template_assignments(
 
 
 def toggle_host_role_states(
-    api_client: ApiClient, host: ApiHost, state: str, check_mode: bool
+    api_client: ApiClient,
+    host: ApiHost,
+    state: str,
+    check_mode: bool,
 ) -> tuple[list[dict], list[dict]]:
 
     service_api = ServicesResourceApi(api_client)
@@ -644,7 +652,7 @@ def toggle_host_role_states(
             if state == "started" and role.role_state not in [ApiRoleState.STARTED]:
                 before_roles.append(dict(name=role.name, role_state=role.role_state))
                 after_roles.append(
-                    dict(name=role.name, role_state=ApiRoleState.STARTED)
+                    dict(name=role.name, role_state=ApiRoleState.STARTED),
                 )
                 changed_roles.append(role)
                 cmd = role_api.start_command
@@ -654,14 +662,14 @@ def toggle_host_role_states(
             ]:
                 before_roles.append(dict(name=role.name, role_state=role.role_state))
                 after_roles.append(
-                    dict(name=role.name, role_state=ApiRoleState.STOPPED)
+                    dict(name=role.name, role_state=ApiRoleState.STOPPED),
                 )
                 changed_roles.append(role)
                 cmd = role_api.stop_command
             elif state == "restarted":
                 before_roles.append(dict(name=role.name, role_state=role.role_state))
                 after_roles.append(
-                    dict(name=role.name, role_state=ApiRoleState.STARTED)
+                    dict(name=role.name, role_state=ApiRoleState.STARTED),
                 )
                 changed_roles.append(role)
                 cmd = role_api.restart_command
@@ -700,7 +708,7 @@ def toggle_host_maintenance(
 
         if maintenance_cmd.success is False:
             raise HostMaintenanceStateException(
-                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}"
+                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}",
             )
 
     return changed
@@ -727,7 +735,7 @@ def detach_host(
 
     if current_roles and not purge:
         raise HostException(
-            f"Unable to detach from cluster, '{host.cluster_ref.cluster_name}', due to existing role instances."
+            f"Unable to detach from cluster, '{host.cluster_ref.cluster_name}', due to existing role instances.",
         )
 
     # Decommission the entirety of the host's roles

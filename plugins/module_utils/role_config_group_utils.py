@@ -85,7 +85,7 @@ def create_role_config_group(
         .items
     ):
         raise InvalidRoleTypeException(
-            f"Invalid role type '{role_type}' for service '{service_name}'"
+            f"Invalid role type '{role_type}' for service '{service_name}'",
         )
 
     role_config_group = ApiRoleConfigGroup(
@@ -98,7 +98,7 @@ def create_role_config_group(
 
     if config:
         role_config_group.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()],
         )
 
     return role_config_group
@@ -138,7 +138,10 @@ def update_role_config_group(
             config = dict()
 
         (updated_config, config_before, config_after) = reconcile_config_list_updates(
-            role_config_group.config, config, purge, skip_redacted
+            role_config_group.config,
+            config,
+            purge,
+            skip_redacted,
         )
 
         if config_before or config_after:
@@ -151,7 +154,10 @@ def update_role_config_group(
 
 # TODO Normalize the return value to be a list
 def get_base_role_config_group(
-    api_client: ApiClient, cluster_name: str, service_name: str, role_type: str = None
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
+    role_type: str = None,
 ) -> ApiRoleConfigGroup:
     base_rcg_list = [
         r
@@ -170,7 +176,8 @@ def get_base_role_config_group(
 
 
 def get_mgmt_base_role_config_group(
-    api_client: ApiClient, role_type: str
+    api_client: ApiClient,
+    role_type: str,
 ) -> ApiRoleConfigGroup:
     rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
     return next(
@@ -179,7 +186,7 @@ def get_mgmt_base_role_config_group(
                 r
                 for r in rcg_api.read_role_config_groups().items
                 if r.role_type == role_type and r.base
-            ]
+            ],
         ),
         None,
     )

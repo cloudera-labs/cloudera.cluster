@@ -103,7 +103,8 @@ class ClouderaTrial(ClouderaManagerModule):
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-        argument_spec=dict(), supports_check_mode=True
+        argument_spec=dict(),
+        supports_check_mode=True,
     )
 
     result = ClouderaTrial(module)

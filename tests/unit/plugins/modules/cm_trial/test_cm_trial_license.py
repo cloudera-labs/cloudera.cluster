@@ -39,7 +39,7 @@ def test_pytest_cm_trial_license(module_args):
             "port": "7180",
             "verify_tls": "no",
             "debug": "no",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

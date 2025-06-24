@@ -43,7 +43,7 @@ def test_state_present(conn, module_args, cms_cleared, request):
         {
             **conn,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -64,7 +64,7 @@ def test_state_absent(conn, module_args, cm_api_client, cms_cleared, request):
             **conn,
             "state": "absent",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     service_api = MgmtServiceResourceApi(cm_api_client)
@@ -90,7 +90,7 @@ def test_state_absent_running_roles(conn, module_args, cms_auto, request):
             **conn,
             "state": "absent",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -113,7 +113,7 @@ def test_state_started(conn, module_args, cm_api_client, cms_auto_no_start, requ
             **conn,
             "state": "started",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -136,7 +136,7 @@ def test_state_stopped(conn, module_args, cm_api_client, cms_auto, request):
             **conn,
             "state": "stopped",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -159,7 +159,7 @@ def test_state_restarted(conn, module_args, cm_api_client, cms_auto, request):
             **conn,
             "state": "restarted",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -182,7 +182,7 @@ def test_new_maintenance_enabled(conn, module_args, cms_cleared, request):
             **conn,
             "maintenance": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -207,7 +207,7 @@ def test_new_config(conn, module_args, cms_cleared, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_emit_sensitive_data_in_stderr="True")
@@ -232,7 +232,7 @@ def test_existing_maintenance_enabled(conn, module_args, cm_api_client, cms, req
             **conn,
             "maintenance": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     service_api = MgmtServiceResourceApi(cm_api_client)
@@ -258,7 +258,7 @@ def test_existing_maintenance_disabled(conn, module_args, cm_api_client, cms, re
             **conn,
             "maintenance": False,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     service_api = MgmtServiceResourceApi(cm_api_client)
@@ -287,11 +287,12 @@ def test_existing_set_parameters(conn, module_args, cms_config, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(
-        mgmt_emit_sensitive_data_in_stderr="True", log_event_retry_frequency="10"
+        mgmt_emit_sensitive_data_in_stderr="True",
+        log_event_retry_frequency="10",
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -309,7 +310,7 @@ def test_existing_set_parameters(conn, module_args, cms_config, request):
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10),
 )
 def test_existing_unset_parameters(conn, module_args, cms_config, request):
     module_args(
@@ -317,7 +318,7 @@ def test_existing_unset_parameters(conn, module_args, cms_config, request):
             **conn,
             "parameters": dict(mgmt_emit_sensitive_data_in_stderr=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     expected = dict(log_event_retry_frequency="10")
@@ -337,7 +338,7 @@ def test_existing_unset_parameters(conn, module_args, cms_config, request):
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10),
 )
 def test_existing_set_parameters_with_purge(conn, module_args, cms_config, request):
     module_args(
@@ -348,7 +349,7 @@ def test_existing_set_parameters_with_purge(conn, module_args, cms_config, reque
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_emit_sensitive_data_in_stderr="True")
@@ -368,7 +369,7 @@ def test_existing_set_parameters_with_purge(conn, module_args, cms_config, reque
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10),
 )
 def test_existing_purge_all_parameters(conn, module_args, cms_config, request):
     module_args(
@@ -379,7 +380,7 @@ def test_existing_purge_all_parameters(conn, module_args, cms_config, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

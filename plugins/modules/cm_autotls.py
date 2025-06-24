@@ -174,7 +174,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     state: present
     connection_user_name: clouduser
-    connection_private_key: "-----BEGIN RSA PRIVATE KEY-----\n[base-64 encoded key]\n-----END RSA PRIVATE KEY-----"
+    connection_private_key: "-----BEGIN YOUR KEY -----\n[base-64 encoded key]\n-----END YOUR KEY-----"
 
 - name: Disable Auto-TLS
   cloudera.cluster.cm_autotls:
@@ -344,12 +344,12 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                             trusted_ca_certs=self.trusted_ca_certs,
                             host_certs=self.host_certs,
                             configure_all_services=self.configure_all_services,
-                        )
+                        ),
                     )
 
                     if cmca_result.success is False:
                         self.module.fail_json(
-                            msg=f"Unable to enable AutoTLS: {cmca_result.result_message}"
+                            msg=f"Unable to enable AutoTLS: {cmca_result.result_message}",
                         )
 
                     # Retrieve cm_config again after enabling TLS
@@ -382,7 +382,7 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                     body = ApiConfigList(
                         items=[
                             ApiConfig(name=k, value=v) for k, v in reset_params.items()
-                        ]
+                        ],
                     )
 
                     cm_api_instance.update_config(body=body)

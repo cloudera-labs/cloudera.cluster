@@ -33,7 +33,8 @@ from ansible_collections.cloudera.cluster.tests.unit.plugins.modules.utils impor
 
 
 @unittest.skipUnless(
-    os.getenv("CM_USERNAME"), "Cloudera Manager access parameters not set"
+    os.getenv("CM_USERNAME"),
+    "Cloudera Manager access parameters not set",
 )
 class TestCMResourceInfoIntegration(ModuleTestCase):
     def test_list(self):
@@ -46,7 +47,7 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
                 "verify_tls": "no",
                 "debug": "yes",
                 "path": "/clusters",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -63,7 +64,7 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
                 "verify_tls": "no",
                 "debug": "yes",
                 "path": "/cm/license",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -80,14 +81,15 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
                 "verify_tls": "no",
                 "debug": "yes",
                 "path": "/cm/license",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson) as e:
             cm_resource_info.main()
 
         self.assertRegexpMatches(
-            e.value.args[0]["msg"], "nodename nor servname provided, or not known"
+            e.value.args[0]["msg"],
+            "nodename nor servname provided, or not known",
         )
 
     def test_invalid_path(self):
@@ -99,7 +101,7 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
                 "verify_tls": "no",
                 "debug": "yes",
                 "path": "/cm/licenseZ",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson) as e:
@@ -118,7 +120,7 @@ class TestCMResourceInfoIntegration(ModuleTestCase):
                 "path": "/tools/echo",
                 "query": {"message": "foobarbaz"},
                 "field": "message",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

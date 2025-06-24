@@ -151,7 +151,7 @@ class ClouderaServiceRoleConfigGroupInfo(ClouderaManagerModule):
             if current is not None:
                 result = parse_role_config_group_result(current)
                 result.update(
-                    role_names=[r.name for r in rcg_api.read_roles(current.name).items]
+                    role_names=[r.name for r in rcg_api.read_roles(current.name).items],
                 )
                 self.output.append(result)
         else:
@@ -159,7 +159,7 @@ class ClouderaServiceRoleConfigGroupInfo(ClouderaManagerModule):
             def process_result(rcg: ApiRoleConfigGroup) -> dict:
                 result = parse_role_config_group_result(rcg)
                 result.update(
-                    role_names=[r.name for r in rcg_api.read_roles(rcg.name).items]
+                    role_names=[r.name for r in rcg_api.read_roles(rcg.name).items],
                 )
                 return result
 

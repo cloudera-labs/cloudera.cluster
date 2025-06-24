@@ -88,7 +88,7 @@ def test_host_template_info_missing_cluster(conn, module_args):
     module_args(
         {
             **conn,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="missing required arguments: cluster"):
@@ -128,7 +128,7 @@ def test_host_template_info_named(
             **conn,
             "cluster": base_cluster.name,
             "name": id,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -143,7 +143,7 @@ def test_host_template_info_not_found(conn, module_args, base_cluster):
             **conn,
             "cluster": base_cluster.name,
             "name": "not_found",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -184,7 +184,7 @@ def test_host_template_info_all(
         {
             **conn,
             "cluster": base_cluster.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

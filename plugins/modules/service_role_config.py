@@ -249,7 +249,8 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -262,7 +263,9 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
         try:
             existing = api_instance.read_role_config(
-                self.cluster, self.role, self.service
+                self.cluster,
+                self.role,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -289,7 +292,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
             if not self.module.check_mode:
                 body = ApiConfigList(
-                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
+                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()],
                 )
 
                 refresh = False
@@ -309,7 +312,9 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
             self.config = [
                 p.to_dict()
                 for p in api_instance.read_role_config(
-                    self.cluster, self.role, self.service
+                    self.cluster,
+                    self.role,
+                    self.service,
                 ).items
             ]
 

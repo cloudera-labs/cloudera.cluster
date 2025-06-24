@@ -49,12 +49,12 @@ def test_new_role(conn, module_args, cm_api_client, cms_cleared, request):
                 {
                     "type": "HOSTMONITOR",
                     "cluster_host_id": host.host_id,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -89,12 +89,12 @@ def test_new_role_config(conn, module_args, cm_api_client, cms_cleared, request)
                     "type": "HOSTMONITOR",
                     "cluster_host_id": host.host_id,
                     "config": expected,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -126,12 +126,12 @@ def test_existing_role_new(conn, module_args, cm_api_client, cms, request):
                 {
                     "type": "HOSTMONITOR",
                     "cluster_host_id": host.host_id,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -166,12 +166,12 @@ def test_existing_role_new_config_set(conn, module_args, cm_api_client, cms, req
                     "type": "HOSTMONITOR",
                     "cluster_host_id": host.host_id,
                     "config": expected,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -191,10 +191,14 @@ def test_existing_role_new_config_set(conn, module_args, cm_api_client, cms, req
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=15, process_start_secs=35)
+    dict(mgmt_num_descriptor_fetch_tries=15, process_start_secs=35),
 )
 def test_existing_role_existing_config_set(
-    conn, module_args, cm_api_client, host_monitor_config, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor_config,
+    request,
 ):
     expected = dict(process_start_secs="35")
 
@@ -208,12 +212,12 @@ def test_existing_role_existing_config_set(
                     "config": {
                         "mgmt_num_descriptor_fetch_tries": None,
                     },
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -233,10 +237,14 @@ def test_existing_role_existing_config_set(
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=15, process_start_secs=35)
+    dict(mgmt_num_descriptor_fetch_tries=15, process_start_secs=35),
 )
 def test_existing_role_existing_config_unset(
-    conn, module_args, cm_api_client, host_monitor_config, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor_config,
+    request,
 ):
     expected = dict(process_start_secs="35")
 
@@ -250,12 +258,12 @@ def test_existing_role_existing_config_unset(
                     "config": {
                         "mgmt_num_descriptor_fetch_tries": None,
                     },
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -275,10 +283,14 @@ def test_existing_role_existing_config_unset(
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=16, process_start_secs=36)
+    dict(mgmt_num_descriptor_fetch_tries=16, process_start_secs=36),
 )
 def test_existing_role_existing_config_purge(
-    conn, module_args, cm_api_client, host_monitor_config, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor_config,
+    request,
 ):
     expected = dict(process_start_secs="36")
 
@@ -292,13 +304,13 @@ def test_existing_role_existing_config_purge(
                     "config": {
                         "process_start_secs": 36,
                     },
-                }
+                },
             ],
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -318,10 +330,14 @@ def test_existing_role_existing_config_purge(
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=17, process_start_secs=37)
+    dict(mgmt_num_descriptor_fetch_tries=17, process_start_secs=37),
 )
 def test_existing_role_existing_config_purge_all(
-    conn, module_args, cm_api_client, host_monitor_config, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor_config,
+    request,
 ):
     module_args(
         {
@@ -330,13 +346,13 @@ def test_existing_role_existing_config_purge_all(
                 {
                     "type": "HOSTMONITOR",
                     # "cluster_host_id": host.host_id,
-                }
+                },
             ],
             "purge": True,
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -371,12 +387,12 @@ def test_existing_role_config_invalid(conn, module_args, cm_api_client, cms, req
                     "type": "HOSTMONITOR",
                     "cluster_host_id": host.host_id,
                     "config": expected,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Unknown configuration attribute"):
@@ -384,7 +400,11 @@ def test_existing_role_config_invalid(conn, module_args, cm_api_client, cms, req
 
 
 def test_existing_role_relocate(
-    conn, module_args, cm_api_client, host_monitor, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor,
+    request,
 ):
     host_api = HostsResourceApi(cm_api_client)
     host = next(
@@ -405,12 +425,12 @@ def test_existing_role_relocate(
                 {
                     "type": "HOSTMONITOR",
                     "cluster_host_id": host.host_id,
-                }
+                },
             ],
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -437,7 +457,7 @@ def test_existing_role_purge(conn, module_args, host_monitor, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

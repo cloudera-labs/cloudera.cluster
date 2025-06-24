@@ -42,7 +42,7 @@ def test_create_aws_keys(module_args, conn, request):
                 "aws_secret_key": "secret_key11",
             },
             "state": "present",
-        }
+        },
     )
     with pytest.raises(AnsibleExitJson) as e:
         external_account.main()
@@ -59,7 +59,7 @@ def test_create_aws_role(module_args, conn, request):
             "category": "AWS",
             "type": "AWS_IAM_ROLES_AUTH",
             "state": "present",
-        }
+        },
     )
     with pytest.raises(AnsibleExitJson) as e:
         external_account.main()
@@ -81,7 +81,7 @@ def test_create_azure_credentials(module_args, conn, request):
                 "adls_tenant_id": "Tenant_test",
             },
             "state": "present",
-        }
+        },
     )
     with pytest.raises(AnsibleExitJson) as e:
         external_account.main()
@@ -102,7 +102,7 @@ def test_create_external_basic_user(module_args, conn, request):
                 "password": "123456",
             },
             "state": "present",
-        }
+        },
     )
     with pytest.raises(AnsibleExitJson) as e:
         external_account.main()
@@ -124,7 +124,7 @@ def test_update_aws_keys_diff_enabled(module_args, conn, request):
             },
             "state": "present",
             "_ansible_diff": True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -146,7 +146,7 @@ def test_update_aws_keys(module_args, conn, request):
                 "aws_secret_key": "22222222",
             },
             "state": "present",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -162,7 +162,7 @@ def test_remove_external_basic_user(module_args, conn, request):
             **conn,
             "name": "John",
             "state": "absent",
-        }
+        },
     )
     with pytest.raises(AnsibleExitJson) as e:
         external_account.main()

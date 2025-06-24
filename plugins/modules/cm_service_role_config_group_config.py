@@ -234,7 +234,7 @@ class ClouderaManagerServiceRoleConfigGroupConfig(ClouderaManagerMutableModule):
                 rcg = get_mgmt_base_role_config_group(self.api_client, self.type)
                 if rcg is None:
                     self.module.fail_json(
-                        msg=f"Unable to find Cloudera Manager Service base role config group for role type '{self.type}'"
+                        msg=f"Unable to find Cloudera Manager Service base role config group for role type '{self.type}'",
                     )
                 self.name = rcg.name
 
