@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Set OS Distribution for parcel filtering
   when: cluster_os_distribution is undefined
   ansible.builtin.set_fact:

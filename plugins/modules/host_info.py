@@ -23,6 +23,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:
@@ -46,6 +47,7 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full

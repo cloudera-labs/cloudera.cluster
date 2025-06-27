@@ -24,6 +24,7 @@ description:
   - Note that disabling Auto-TLS does not remove the TLS resources (keys, truststores, etc.) created during the enable process.
 author:
   - "Jim Enright (@jimright)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:
@@ -54,7 +55,7 @@ options:
   interpret_as_filenames:
     description:
       - Whether specific parameters are interpreted as filenames local to the Cloudera Manager host.
-      - When V(true), the following parameter are filenames - O(cm_host_cert), O(cm_host_key), O(ca_cert), O(keystore_passwd), O(truststore_passwd), O(trusted_ca_certs), O(host_certs.host_cert) and O(host_certs.host_key).
+      - When V(true), the following parameter are filenames - O(cm_host_cert), O(cm_host_key), O(ca_cert), O(keystore_passwd), O(truststore_passwd), O(trusted_ca_certs), O(host_certs[].certificate) and O(host_certs[].key).
     type: bool
     required: false
     default: true
@@ -80,7 +81,7 @@ options:
   connection_password:
     description:
       - The password used to authenticate with the hosts.
-      - Specify either this or a O(connection_password_private_key).
+      - Specify either this or a O(connection_private_key).
     type: str
   connection_private_key:
     description:
@@ -158,7 +159,7 @@ attributes:
   platform:
     platforms: all
 notes:
-  - Using the C(cm_config) with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
+  - Using the C(cm_config) with O(cloudera.cluster.cm_config#module:purge=yes) will remove the Cloudera Manager configurations set by this module.
   - Requires C(cm_client).
 seealso:
   - module: cloudera.cluster.cm_config
@@ -173,7 +174,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     state: present
     connection_user_name: clouduser
-    connection_private_key: "-----BEGIN RSA PRIVATE KEY-----\n[base-64 encoded key]\n-----END RSA PRIVATE KEY-----"
+    connection_private_key: "-----BEGIN YOUR KEY -----\n[base-64 encoded key]\n-----END YOUR KEY-----"
 
 - name: Disable Auto-TLS
   cloudera.cluster.cm_autotls:
@@ -343,12 +344,12 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                             trusted_ca_certs=self.trusted_ca_certs,
                             host_certs=self.host_certs,
                             configure_all_services=self.configure_all_services,
-                        )
+                        ),
                     )
 
                     if cmca_result.success is False:
                         self.module.fail_json(
-                            msg=f"Unable to enable AutoTLS: {cmca_result.result_message}"
+                            msg=f"Unable to enable AutoTLS: {cmca_result.result_message}",
                         )
 
                     # Retrieve cm_config again after enabling TLS
@@ -381,7 +382,7 @@ class ClouderaManagerAutoTLS(ClouderaManagerModule):
                     body = ApiConfigList(
                         items=[
                             ApiConfig(name=k, value=v) for k, v in reset_params.items()
-                        ]
+                        ],
                     )
 
                     cm_api_instance.update_config(body=body)

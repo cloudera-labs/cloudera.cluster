@@ -12,8 +12,8 @@
     - name: Ensure dbus is enabled and unmasked
       systemd:
         name: dbus
-        enabled: yes
-        masked: no
+        enabled: true
+        masked: false
       ignore_errors: true
 
     - name: Restart DBUS

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
@@ -27,18 +26,18 @@
   ansible.builtin.package:
     lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
     name:
-    - "{{ jdk_package }}"
+      - "{{ jdk_package }}"
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Add missing symlinks (if installed from Cloudera repo)
   block:
     - name: Find Java home directory
       find:
         paths: /usr/java
-        patterns: 'jdk*-cloudera'
+        patterns: "jdk*-cloudera"
         file_type: directory
-        recurse: no
+        recurse: false
       register: jdk_home
     - name: Create alternatives symlink for java
       alternatives:
@@ -76,7 +75,7 @@
   find:
     paths: "{{ jdk_java_security_paths }}"
     pattern: "java.security"
-    follow: yes
+    follow: true
   register: java_security
 
 - fail:
@@ -88,7 +87,7 @@
 - name: Enable Unlimited Strength Policy
   lineinfile:
     path: "{{ item.path }}"
-    regexp: '#?crypto.policy='
+    regexp: "#?crypto.policy="
     line: crypto.policy=unlimited
   with_items: "{{ java_security.files }}"
   when: installed_jdk_version is not match("11.*")
@@ -96,7 +95,7 @@
 - name: Apply workaround for Kerberos issues introduced in OpenJDK 1.8u242 and 11.0.6 (JDK-8215032)
   lineinfile:
     path: "{{ item.path }}"
-    regexp: '^sun.security.krb5.disableReferrals='
+    regexp: "^sun.security.krb5.disableReferrals="
     line: sun.security.krb5.disableReferrals=true
   with_items: "{{ java_security.files }}"
   when: >

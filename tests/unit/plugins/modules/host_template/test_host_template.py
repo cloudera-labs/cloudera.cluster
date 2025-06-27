@@ -131,7 +131,9 @@ def resettable_host_templates(cm_api_client, base_cluster) -> Generator[None]:
 
 @pytest.fixture()
 def existing_host_template(
-    cm_api_client, zookeeper, request
+    cm_api_client,
+    zookeeper,
+    request,
 ) -> Generator[ApiHostTemplate]:
     host_template_api = HostTemplatesResourceApi(cm_api_client)
 
@@ -153,8 +155,8 @@ def existing_host_template(
                     role_config_group_refs=[
                         ApiRoleConfigGroupRef(role_config_group_name=base_rcg.name),
                     ],
-                )
-            ]
+                ),
+            ],
         ),
     ).items[0]
 
@@ -176,11 +178,12 @@ def test_host_template_missing_cluster(conn, module_args):
             **conn,
             "name": "EXAMPLE",
             "role_config_groups": [],
-        }
+        },
     )
 
     with pytest.raises(
-        AnsibleFailJson, match="missing required arguments: cluster"
+        AnsibleFailJson,
+        match="missing required arguments: cluster",
     ) as e:
         host_template.main()
 
@@ -191,7 +194,7 @@ def test_host_template_missing_name(conn, module_args):
             **conn,
             "cluster": "EXAMPLE",
             "role_config_groups": [],
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="missing required arguments: name") as e:
@@ -204,7 +207,7 @@ def test_host_template_missing_role_config_groups_on_present(conn, module_args):
             **conn,
             "cluster": "EXAMPLE",
             "name": "EXAMPLE",
-        }
+        },
     )
 
     with pytest.raises(
@@ -224,9 +227,9 @@ def test_host_template_provision_invalid_cluster(conn, module_args):
                 {
                     "service": "zookeeper",
                     "type": "SERVER",
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: INVALID") as e:
@@ -243,13 +246,14 @@ def test_host_template_provision_invalid_base_rcg_service(conn, module_args, zoo
                 {
                     "service": "INVALID",
                     "type": "SERVER",
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(
-        AnsibleFailJson, match="Service 'INVALID' not found in cluster"
+        AnsibleFailJson,
+        match="Service 'INVALID' not found in cluster",
     ) as e:
         host_template.main()
 
@@ -264,9 +268,9 @@ def test_host_template_provision_invalid_base_rcg_name(conn, module_args, zookee
                 {
                     "service": zookeeper.name,
                     "type": "INVALID",
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(
@@ -277,7 +281,11 @@ def test_host_template_provision_invalid_base_rcg_name(conn, module_args, zookee
 
 
 def test_host_template_provision_base_rcg(
-    conn, module_args, cm_api_client, zookeeper, request
+    conn,
+    module_args,
+    cm_api_client,
+    zookeeper,
+    request,
 ):
     id = f"pytest-{request.node.name}"
 
@@ -297,9 +305,9 @@ def test_host_template_provision_base_rcg(
                 {
                     "service": zookeeper.name,
                     "type": base_rcg.role_type,
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -320,7 +328,11 @@ def test_host_template_provision_base_rcg(
 
 
 def test_host_template_provision_custom_rcg(
-    conn, module_args, zookeeper, role_config_group_factory, request
+    conn,
+    module_args,
+    zookeeper,
+    role_config_group_factory,
+    request,
 ):
     id = f"pytest-{request.node.name}"
 
@@ -338,9 +350,9 @@ def test_host_template_provision_custom_rcg(
                 {
                     "service": zookeeper.name,
                     "name": custom_rcg.name,
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -384,9 +396,9 @@ def test_host_template_existing_duplicate_type(
                 {
                     "service": zookeeper.name,
                     "name": custom_rcg.name,
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(
@@ -423,9 +435,9 @@ def test_host_template_existing_add(
                 {
                     "service": zookeeper.name,
                     "name": custom_rcg.name,
-                }
+                },
             ],
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -443,7 +455,7 @@ def test_host_template_existing_add(
         [
             rcg_ref.role_config_group_name
             for rcg_ref in updated_host_template.role_config_group_refs
-        ]
+        ],
     ) == set(e.value.host_template["role_config_groups"])
 
     # Idempotency
@@ -463,7 +475,7 @@ def test_host_template_existing_add(
         [
             rcg_ref.role_config_group_name
             for rcg_ref in updated_host_template.role_config_group_refs
-        ]
+        ],
     ) == set(e.value.host_template["role_config_groups"])
 
 
@@ -494,10 +506,10 @@ def test_host_template_existing_purge(
                 {
                     "service": zookeeper.name,
                     "name": custom_rcg.name,
-                }
+                },
             ],
             "purge": True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -515,7 +527,7 @@ def test_host_template_existing_purge(
         [
             rcg_ref.role_config_group_name
             for rcg_ref in updated_host_template.role_config_group_refs
-        ]
+        ],
     ) == set(e.value.host_template["role_config_groups"])
 
     # Idempotency
@@ -535,12 +547,15 @@ def test_host_template_existing_purge(
         [
             rcg_ref.role_config_group_name
             for rcg_ref in updated_host_template.role_config_group_refs
-        ]
+        ],
     ) == set(e.value.host_template["role_config_groups"])
 
 
 def test_host_template_state_absent(
-    conn, module_args, cm_api_client, existing_host_template
+    conn,
+    module_args,
+    cm_api_client,
+    existing_host_template,
 ):
     host_template_api = HostTemplatesResourceApi(cm_api_client)
 
@@ -550,7 +565,7 @@ def test_host_template_state_absent(
             "cluster": existing_host_template.cluster_ref.cluster_name,
             "name": existing_host_template.name,
             "state": "absent",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

@@ -13,13 +13,12 @@
 # limitations under the License.
 
 ---
-
 - name: Download parcel manifest information
   delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   uri:
     url: "{{ repository | regex_replace('/?$','') + '/manifest.json' }}"
     status_code: 200
-    return_content: yes
+    return_content: true
     url_username: "{{ parcel_repo_username | default(omit) }}"
     url_password: "{{ parcel_repo_password | default(omit) }}"
   run_once: true
@@ -27,7 +26,7 @@
   loop: "{{ cluster.repositories }}"
   loop_control:
     loop_var: repository
-  check_mode: no
+  check_mode: false
 
 - debug:
     msg: "This Play Host OS Distro is {{ cluster_os_distribution }}"

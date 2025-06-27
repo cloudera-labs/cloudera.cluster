@@ -22,6 +22,7 @@ description:
   - Manage Cloudera Manager configuration settings.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -194,7 +195,7 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
                     items=[
                         cm_client.ApiConfig(name=k, value=v)
                         for k, v in change_set.items()
-                    ]
+                    ],
                 )
                 # Return 'summary'
                 refresh = False

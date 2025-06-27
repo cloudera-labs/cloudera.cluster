@@ -22,6 +22,7 @@ description:
   - Retrieve details of a specific data context or all data contexts within the Cloudera Manager.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:
@@ -37,14 +38,14 @@ options:
 
 EXAMPLES = r"""
 - name: Gather details about specific data context
-  cloudera.cluster.data_context_info
+  cloudera.cluster.data_context_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "SDX"
 
 - name: Gather details about all data contexts within the cluster
-  cloudera.cluster.data_context_info
+  cloudera.cluster.data_context_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -145,10 +146,10 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
         if self.data_context_name:
             try:
                 data_contex = data_context_api.read_data_context(
-                    data_context_name=self.data_context_name
+                    data_context_name=self.data_context_name,
                 ).to_dict()
                 self.data_context_info = parse_data_context_result(
-                    ApiDataContextList(items=[data_contex])
+                    ApiDataContextList(items=[data_contex]),
                 )
             except ApiException as ex:
                 if ex.status != 500:
@@ -157,7 +158,7 @@ class ClouderaDataContextInfo(ClouderaManagerMutableModule):
             data_contexts_info = data_context_api.read_data_contexts().to_dict()
 
             self.data_context_info = parse_data_context_result(
-                ApiDataContextList(items=data_contexts_info.get("items", []))
+                ApiDataContextList(items=data_contexts_info.get("items", [])),
             )
 
 

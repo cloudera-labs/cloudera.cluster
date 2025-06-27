@@ -22,6 +22,7 @@ description:
   - Retrieves details about one or more clusters managed by Cloudera Manager
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 options:
   name:
     description:
@@ -48,7 +49,6 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     port: "7180"
-
 """
 
 RETURN = r"""
@@ -123,8 +123,8 @@ class ClusterInfo(ClouderaManagerModule):
             if self.name:
                 self.output = [
                     parse_cluster_result(
-                        cluster_api_instance.read_cluster(cluster_name=self.name)
-                    )
+                        cluster_api_instance.read_cluster(cluster_name=self.name),
+                    ),
                 ]
             else:
                 self.output = [

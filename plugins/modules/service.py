@@ -22,6 +22,7 @@ description:
   - Manage a service in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:
@@ -90,7 +91,7 @@ options:
       - If O(purge=True), undeclared roles for the service will be removed from the hosts.
     type: list
     elements: dict
-    options:
+    suboptions:
       type:
         description:
           - The role instance type to provision on the designated cluster hosts.
@@ -135,7 +136,7 @@ options:
         config groups cannot be removed.)
     type: list
     elements: dict
-    options:
+    suboptions:
       name:
         description:
           - The name of a custom role config group.
@@ -229,7 +230,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     cluster: example_cluster
     service: example_ecs
-    maintenance: yes
+    maintenance: true
 
 - name: Update (append) several tags on a cluster service
   cloudera.cluster.service:
@@ -251,7 +252,7 @@ EXAMPLES = r"""
     service: example_ecs
     tags:
       tag_three: value_three
-    purge: yes
+    purge: true
 
 - name: Remove all the tags on a cluster service
   cloudera.cluster.service:
@@ -261,7 +262,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     tags: {}
-    purge: yes
+    purge: true
 
 - name: Update (append) several service-wide configurations on a cluster service
   cloudera.cluster.service:
@@ -284,7 +285,7 @@ EXAMPLES = r"""
     config:
       param_one: 1
       param_three: three
-    purge: yes
+    purge: true
 
 - name: Remove all the service-wide configurations on a cluster service
   cloudera.cluster.service:
@@ -294,7 +295,7 @@ EXAMPLES = r"""
     cluster: example_cluster
     service: example_ecs
     config: {}
-    purge: yes
+    purge: true
 
 - name: Provision role instances on cluster hosts for a cluster service
   cloudera.cluster.service:
@@ -847,7 +848,7 @@ class ClusterService(ClouderaManagerMutableModule):
 
                         for base_rcg in base_rcg_list:
                             RoleConfigGroupsResourceApi(
-                                self.api_client
+                                self.api_client,
                             ).update_role_config_group(
                                 cluster_name=self.cluster,
                                 service_name=current.name,
@@ -875,7 +876,8 @@ class ClusterService(ClouderaManagerMutableModule):
                                     hostname=role_host,
                                     config=requested_role.get("config", None),
                                     role_config_group=requested_role.get(
-                                        "role_config_group", None
+                                        "role_config_group",
+                                        None,
                                     ),
                                     tags=requested_role.get("tags", None),
                                 )
@@ -911,7 +913,7 @@ class ClusterService(ClouderaManagerMutableModule):
             else:
                 if self.type and self.type.upper() != current.type:
                     self.module.fail_json(
-                        msg="Service name already in use for type: " + current.type
+                        msg="Service name already in use for type: " + current.type,
                     )
 
                 # Set the maintenance
@@ -1048,7 +1050,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         api_client=self.api_client,
                         cluster_name=self.cluster,
                         service_name=self.name,
-                    )
+                    ),
                 )
             else:
                 self.output = parse_service_result(current)
@@ -1071,7 +1073,7 @@ class ClusterService(ClouderaManagerMutableModule):
                 self.changed = True
                 if self.module._diff:
                     self.diff["before"].update(
-                        maintenance_mode=service.maintenance_mode
+                        maintenance_mode=service.maintenance_mode,
                     )
                     self.diff["after"].update(maintenance_mode=self.maintenance)
 

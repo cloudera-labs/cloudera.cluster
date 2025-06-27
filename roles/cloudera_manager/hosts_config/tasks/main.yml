@@ -1,5 +1,4 @@
 ---
-
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +21,7 @@
   include_role:
     name: cloudera.cluster.cloudera_manager.config
   vars:
-    api_config_keys_uppercase: False
+    api_config_keys_uppercase: false
     api_config_endpoint: cm/allHosts/config
     api_configs: "{{ definition.hosts.configs }}"
   when: definition.hosts.configs is defined

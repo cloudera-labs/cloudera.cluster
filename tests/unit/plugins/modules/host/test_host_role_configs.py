@@ -38,7 +38,13 @@ LOG = logging.getLogger(__name__)
 
 class TestHostRoleConfigs:
     def test_host_update_role_config_invalid_type(
-        self, conn, module_args, cm_api_client, available_hosts, zookeeper, role_factory
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        available_hosts,
+        zookeeper,
+        role_factory,
     ):
         role_model = create_role(
             api_client=cm_api_client,
@@ -69,14 +75,20 @@ class TestHostRoleConfigs:
                         },
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="No role of type, 'BOOM'"):
             host.main()
 
     def test_host_update_role_config(
-        self, conn, module_args, cm_api_client, available_hosts, zookeeper, role_factory
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        available_hosts,
+        zookeeper,
+        role_factory,
     ):
         role_model = create_role(
             api_client=cm_api_client,
@@ -111,7 +123,7 @@ class TestHostRoleConfigs:
                         },
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -158,7 +170,13 @@ class TestHostRoleConfigs:
         )
 
     def test_host_update_role_config_purge(
-        self, conn, module_args, cm_api_client, available_hosts, zookeeper, role_factory
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        available_hosts,
+        zookeeper,
+        role_factory,
     ):
 
         role_model = create_role(
@@ -196,7 +214,7 @@ class TestHostRoleConfigs:
                 ],
                 "purge": True,
                 "cluster": existing_role.service_ref.cluster_name,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

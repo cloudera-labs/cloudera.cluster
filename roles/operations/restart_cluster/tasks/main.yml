@@ -1,5 +1,4 @@
 ---
-
 - name: Restart cluster
   cm_api:
     endpoint: /clusters/{{ cluster_to_restart }}/commands/restart

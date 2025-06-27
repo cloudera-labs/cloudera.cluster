@@ -1,3 +1,4 @@
+---
 # Copyright 2024 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,4 +19,4 @@
 # - https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/config/config.yml
 
 modules:
-  python_requires: '>=3.6'
+  python_requires: ">=3.6"

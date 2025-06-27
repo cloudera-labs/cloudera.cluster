@@ -43,7 +43,7 @@ def test_host_info_host_id_invalid(conn, module_args):
         {
             **conn,
             "host_id": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -57,7 +57,7 @@ def test_host_info_name_invalid(conn, module_args):
         {
             **conn,
             "name": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -71,7 +71,7 @@ def test_host_info_cluster_invalid(conn, module_args):
         {
             **conn,
             "cluster": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
@@ -85,7 +85,7 @@ def test_host_info_host_id(conn, module_args, cm_api_client):
         {
             **conn,
             "host_id": all_hosts[0].host_id,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -102,7 +102,7 @@ def test_host_info_name(conn, module_args, cm_api_client):
         {
             **conn,
             "name": all_hosts[0].hostname,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -122,7 +122,7 @@ def test_host_info_cluster(conn, module_args, cm_api_client, base_cluster):
         {
             **conn,
             "cluster": base_cluster.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

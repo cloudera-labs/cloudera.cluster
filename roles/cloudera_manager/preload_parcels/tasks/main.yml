@@ -32,7 +32,7 @@
     dest: "/opt/cloudera/parcel-repo/{{ __parcel_download_item | urlsplit('path') | basename | replace('.sha1', '.sha') }}"
 
 - name: Track async downloads to completion  [ This may take a while if your files are very large or far away ]
-  when : preload_parcels
+  when: preload_parcels
   loop: "{{ __infra_download_parcels_results.results }}"
   loop_control:
     loop_var: __download_async_item

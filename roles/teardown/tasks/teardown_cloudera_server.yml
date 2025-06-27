@@ -1,3 +1,4 @@
+---
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
   service:
     name: cloudera-scm-server
     state: stopped
-    enabled: no
+    enabled: false
   ignore_errors: true
 
 - name: Remove Cloudera manager package

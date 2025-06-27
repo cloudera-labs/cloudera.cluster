@@ -23,6 +23,7 @@ description:
   - The module supports C(check_mode).
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -50,6 +51,10 @@ options:
     choices:
         - summary
         - full
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -59,7 +64,7 @@ attributes:
 
 EXAMPLES = r"""
 - name: Update host configuration parameters
-  cloudera.cluster.host_config
+  cloudera.cluster.host_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -69,16 +74,15 @@ EXAMPLES = r"""
       port_configuration: 8777
 
 - name: Reset all host configurations and update specified parameters
-  cloudera.cluster.host_config
+  cloudera.cluster.host_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: example.cloudera.com
-    purge: yes
+    purge: true
     parameters:
       some_configuration_path: "/usr/bin/java"
       port_configuration: 8777
-
 """
 
 RETURN = r"""
@@ -225,13 +229,14 @@ class ClouderaHostConfigInfo(ClouderaManagerMutableModule):
                 body = ApiConfigList(
                     items=[
                         ApiConfig(name=k, value=f"{v}") for k, v in change_set.items()
-                    ]
+                    ],
                 )
 
                 self.host_config = [
                     p.to_dict()
                     for p in api_instance.update_host_config(
-                        host_id=self.hostname, body=body
+                        host_id=self.hostname,
+                        body=body,
                     ).items
                 ]
         else:

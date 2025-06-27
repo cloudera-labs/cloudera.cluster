@@ -61,7 +61,7 @@
     loop_var: __tmp_unpack_item
   ansible.builtin.unarchive:
     extra_opts: [--strip-components=1]
-    remote_src: yes
+    remote_src: true
     src: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') }}"
     dest: "/var/www/html{{ __tmp_unpack_item | urlsplit('path') | regex_replace('^(.+)repo.+-(.+)\\.tar\\.gz$', '\\1\\2' + '/yum/') }}"
     keep_newer: "{{ keep_newer }}"

@@ -22,6 +22,7 @@ description:
   - Gather information about services of a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:
@@ -41,6 +42,7 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -400,8 +402,8 @@ class ClusterServiceInfo(ClouderaManagerModule):
                             api_client=self.api_client,
                             cluster_name=self.cluster,
                             service_name=self.name,
-                        )
-                    )
+                        ),
+                    ),
                 )
             except ApiException as e:
                 if e.status != 404:

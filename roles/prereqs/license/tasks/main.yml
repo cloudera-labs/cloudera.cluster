@@ -17,7 +17,7 @@
   copy:
     src: "{{ cloudera_manager_license_file }}"
     dest: "{{ license_local_tmp_path }}"
-    mode: 0600
+    mode: "0600"
   when:
     - cloudera_manager_license_file
     - "'cloudera_manager' in groups"

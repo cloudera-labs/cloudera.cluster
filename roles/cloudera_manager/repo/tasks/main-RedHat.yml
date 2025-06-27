@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Add Cloudera Manager yum repository
   ansible.builtin.yum_repository:
     name: cloudera-manager
@@ -21,7 +20,7 @@
     baseurl: "{{ cloudera_manager_repo_url }}"
     gpgkey: "{{ cloudera_manager_repo_key }}"
     gpgcheck: "{{ cloudera_manager_repo_gpgcheck | default((cloudera_manager_version.split('.')[0] == '5' ) | ternary('no', 'yes')) }}"
-    enabled: yes
+    enabled: true
     username: "{{ cloudera_manager_repo_username | default('') }}"
     password: "{{ cloudera_manager_repo_password | default('') }}"
 

@@ -91,7 +91,7 @@ class TestHostHostTemplates:
                 "name": target_host.hostname,
                 "cluster": target_host.cluster_ref.cluster_name,
                 "host_template": host_template.name,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -101,7 +101,7 @@ class TestHostHostTemplates:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -119,7 +119,7 @@ class TestHostHostTemplates:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -187,7 +187,7 @@ class TestHostHostTemplates:
                 "name": target_host.hostname,
                 "cluster": target_host.cluster_ref.cluster_name,
                 "host_template": host_template.name,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -197,7 +197,7 @@ class TestHostHostTemplates:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -207,12 +207,12 @@ class TestHostHostTemplates:
             [
                 target_rcg.name,
                 existing_role.role_config_group_ref.role_config_group_name,
-            ]
+            ],
         ) == set(
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )
 
         # Idempotency
@@ -223,7 +223,7 @@ class TestHostHostTemplates:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -233,12 +233,12 @@ class TestHostHostTemplates:
             [
                 target_rcg.name,
                 existing_role.role_config_group_ref.role_config_group_name,
-            ]
+            ],
         ) == set(
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )
 
     def test_host_update_host_template_purge(
@@ -300,7 +300,7 @@ class TestHostHostTemplates:
                 "cluster": target_host.cluster_ref.cluster_name,
                 "host_template": host_template.name,
                 "purge": True,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -310,7 +310,7 @@ class TestHostHostTemplates:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -320,7 +320,7 @@ class TestHostHostTemplates:
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )
 
         # Idempotency
@@ -331,7 +331,7 @@ class TestHostHostTemplates:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -341,5 +341,5 @@ class TestHostHostTemplates:
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )

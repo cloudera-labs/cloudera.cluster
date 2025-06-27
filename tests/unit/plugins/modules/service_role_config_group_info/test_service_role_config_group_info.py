@@ -67,7 +67,7 @@ def test_invalid_service(conn, module_args, base_cluster):
             **conn,
             "cluster": base_cluster.name,
             "service": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
@@ -80,7 +80,7 @@ def test_invalid_cluster(conn, module_args, cms_session):
             **conn,
             "cluster": "BOOM",
             "service": "ShouldNotReach",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
@@ -92,7 +92,7 @@ def test_invalid_cluster(conn, module_args, cms_session):
         name="Pytest All",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_all_role_config_groups(conn, module_args, base_cluster, zk_role_config_group):
     module_args(
@@ -100,7 +100,7 @@ def test_all_role_config_groups(conn, module_args, base_cluster, zk_role_config_
             **conn,
             "cluster": base_cluster.name,
             "service": zk_role_config_group.service_ref.service_name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -114,7 +114,7 @@ def test_all_role_config_groups(conn, module_args, base_cluster, zk_role_config_
         name="Pytest Type",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_type_role_config_group(conn, module_args, base_cluster, zk_role_config_group):
     module_args(
@@ -123,7 +123,7 @@ def test_type_role_config_group(conn, module_args, base_cluster, zk_role_config_
             "cluster": base_cluster.name,
             "service": zk_role_config_group.service_ref.service_name,
             "type": "SERVER",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -137,10 +137,14 @@ def test_type_role_config_group(conn, module_args, base_cluster, zk_role_config_
         name="Pytest Base",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_name_base_role_config_group(
-    conn, module_args, cm_api_client, base_cluster, zk_role_config_group
+    conn,
+    module_args,
+    cm_api_client,
+    base_cluster,
+    zk_role_config_group,
 ):
     base_rcg = get_base_role_config_group(
         api_client=cm_api_client,
@@ -155,7 +159,7 @@ def test_name_base_role_config_group(
             "cluster": base_cluster.name,
             "service": zk_role_config_group.name,
             "name": base_rcg.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -171,10 +175,13 @@ def test_name_base_role_config_group(
         name="Pytest Non-Base",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_name_base_role_config_group(
-    conn, module_args, base_cluster, zk_role_config_group
+    conn,
+    module_args,
+    base_cluster,
+    zk_role_config_group,
 ):
     module_args(
         {
@@ -182,7 +189,7 @@ def test_name_base_role_config_group(
             "cluster": base_cluster.name,
             "service": zk_role_config_group.service_ref.service_name,
             "name": "Pytest Non-Base",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

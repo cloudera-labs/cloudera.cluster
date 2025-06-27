@@ -15,11 +15,11 @@
 ---
 
 kernel_flags:
-  - { key: vm.swappiness, value: '1' }
-  - { key: vm.overcommit_memory, value: '1' }
-  - { key: net.ipv6.conf.all.disable_ipv6, value: '1'}
-  - { key: net.ipv6.conf.default.disable_ipv6, value: '1' }
-  - { key: net.ipv6.conf.lo.disable_ipv6, value: '1' }
+  - { key: vm.swappiness, value: "1" }
+  - { key: vm.overcommit_memory, value: "1" }
+  - { key: net.ipv6.conf.all.disable_ipv6, value: "1" }
+  - { key: net.ipv6.conf.default.disable_ipv6, value: "1" }
+  - { key: net.ipv6.conf.lo.disable_ipv6, value: "1" }
 
 unnecessary_services:
   - bluetooth
@@ -28,6 +28,6 @@ unnecessary_services:
   - ip6tables
   - postfix
   - tuned
-  - firewalld  # Added for ECS deployments on RedHat
+  - firewalld # Added for ECS deployments on RedHat
 
 selinux_state: permissive

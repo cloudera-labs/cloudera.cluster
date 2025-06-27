@@ -103,12 +103,15 @@ def parse_role_result(role: ApiRole) -> dict:
 def get_mgmt_roles(api_client: ApiClient, role_type: str) -> ApiRoleList:
     role_api = MgmtRolesResourceApi(api_client)
     return ApiRoleList(
-        items=[r for r in role_api.read_roles().items if r.type == role_type]
+        items=[r for r in role_api.read_roles().items if r.type == role_type],
     )
 
 
 def read_role(
-    api_client: ApiClient, cluster_name: str, service_name: str, role_name: str
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
+    role_name: str,
 ) -> ApiRole:
     """Read a role for a cluster service and populates the role configuration.
 
@@ -126,11 +129,15 @@ def read_role(
     """
     role_api = RolesResourceApi(api_client)
     role = role_api.read_role(
-        cluster_name=cluster_name, service_name=service_name, role_name=role_name
+        cluster_name=cluster_name,
+        service_name=service_name,
+        role_name=role_name,
     )
     if role is not None:
         role.config = role_api.read_role_config(
-            cluster_name=cluster_name, service_name=service_name, role_name=role.name
+            cluster_name=cluster_name,
+            service_name=service_name,
+            role_name=role.name,
         )
     return role
 
@@ -180,7 +187,7 @@ def read_roles(
                 ("hostId", host_id),
             ]
             if f[1] is not None
-        ]
+        ],
     )
 
     if filter != "":
@@ -199,7 +206,10 @@ def read_roles(
 
 
 def read_roles_by_type(
-    api_client: ApiClient, cluster_name: str, service_name: str, role_type: str
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
+    role_type: str,
 ) -> ApiRoleList:
     role_api = RolesResourceApi(api_client)
     roles = [
@@ -258,7 +268,7 @@ def create_role(
             .items
         ):
             raise InvalidRoleTypeException(
-                f"Invalid role type '{role_type}' for service '{service_name}'"
+                f"Invalid role type '{role_type}' for service '{service_name}'",
             )
 
     # Set up the role type
@@ -287,7 +297,7 @@ def create_role(
 
     if host_ref is None:
         raise RoleHostNotFoundException(
-            f"Host not found: hostname='{hostname}', host_id='{host_id}'"
+            f"Host not found: hostname='{hostname}', host_id='{host_id}'",
         )
     else:
         role.host_ref = ApiHostRef(host_id=host_ref.host_id, hostname=host_ref.hostname)
@@ -302,7 +312,7 @@ def create_role(
         )
         if rcg is None:
             raise RoleConfigGroupNotFoundException(
-                f"Role config group not found: {role_config_group}"
+                f"Role config group not found: {role_config_group}",
             )
         else:
             role.role_config_group_ref = ApiRoleConfigGroupRef(rcg.name)
@@ -310,7 +320,7 @@ def create_role(
     # Role override configurations
     if config:
         role.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()],
         )
 
     # Tags
@@ -332,7 +342,7 @@ def create_mgmt_role_model(
         not in MgmtServiceResourceApi(api_client).list_role_types().items
     ):
         raise InvalidRoleTypeException(
-            f"Invalid role type '{role_type}' for Cloudera Management Service"
+            f"Invalid role type '{role_type}' for Cloudera Management Service",
         )
 
     # Set up the role type
@@ -361,24 +371,28 @@ def create_mgmt_role_model(
 
     if host_ref is None:
         raise RoleHostNotFoundException(
-            f"Host not found: hostname='{hostname}', host_id='{host_id}'"
+            f"Host not found: hostname='{hostname}', host_id='{host_id}'",
         )
     else:
         mgmt_role.host_ref = ApiHostRef(
-            host_id=host_ref.host_id, hostname=host_ref.hostname
+            host_id=host_ref.host_id,
+            hostname=host_ref.hostname,
         )
 
     # Role override configurations
     if config:
         mgmt_role.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config.items()],
         )
 
     return mgmt_role
 
 
 def provision_service_role(
-    api_client: ApiClient, cluster_name: str, service_name: str, role: ApiRole
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
+    role: ApiRole,
 ) -> ApiRole:
     role_api = RolesResourceApi(api_client)
 
@@ -389,7 +403,7 @@ def provision_service_role(
                     cluster_name=cluster_name,
                     service_name=service_name,
                     body=ApiRoleList(items=[role]),
-                ).items
+                ).items,
             )
         ),
         None,
@@ -419,7 +433,10 @@ def provision_service_role(
 
 
 def toggle_role_maintenance(
-    api_client: ApiClient, role: ApiRole, maintenance: bool, check_mode: bool
+    api_client: ApiClient,
+    role: ApiRole,
+    maintenance: bool,
+    check_mode: bool,
 ) -> bool:
     role_api = RolesResourceApi(api_client)
     changed = False
@@ -440,14 +457,17 @@ def toggle_role_maintenance(
 
         if maintenance_cmd.success is False:
             raise RoleMaintenanceStateException(
-                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}"
+                f"Unable to set Maintenance mode to '{maintenance}': {maintenance_cmd.result_message}",
             )
 
     return changed
 
 
 def toggle_role_state(
-    api_client: ApiClient, role: ApiRole, state: str, check_mode: bool
+    api_client: ApiClient,
+    role: ApiRole,
+    state: str,
+    check_mode: bool,
 ) -> ApiRoleState:
     role_cmd_api = RoleCommandsResourceApi(api_client)
     changed = None

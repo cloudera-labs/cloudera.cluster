@@ -23,6 +23,7 @@ description:
   - Includes information about authentication roles associated with each user.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -48,7 +49,6 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     account_name: "john"
-
 """
 
 RETURN = r"""
@@ -98,7 +98,7 @@ class ClouderaUserInfo(ClouderaManagerModule):
         try:
             if self.account_name:
                 self.user_info_output = [
-                    api_instance.read_user2(self.account_name).to_dict()
+                    api_instance.read_user2(self.account_name).to_dict(),
                 ]
             else:
                 self.user_info_output = api_instance.read_users2().to_dict()["items"]

@@ -15,7 +15,7 @@
 ---
 - name: Refresh Package cache
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
 
 - name: Ensure pip is upgraded
   ansible.builtin.package:
@@ -43,4 +43,4 @@
         name: fs.protected_regular
         value: 0
         state: present
-        reload: yes
+        reload: true

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - fail:
     msg: You must pass a cluster variable to this role
   when: __cluster_item is not defined
@@ -26,7 +25,7 @@
     url: "{{ ranger_api_url }}/service"
     user: "{{ ranger_keyadmin_username }}"
     password: "{{ ranger_keyadmin_password }}"
-    force_basic_auth: yes
+    force_basic_auth: true
     headers:
       Accept: "application/json"
   register: services
@@ -43,7 +42,7 @@
     url: "{{ ranger_api_url }}/service/{{ kms_service.id }}"
     user: "{{ ranger_keyadmin_username }}"
     password: "{{ ranger_keyadmin_password }}"
-    force_basic_auth: yes
+    force_basic_auth: true
     method: DELETE
     headers:
       Accept: "application/json"

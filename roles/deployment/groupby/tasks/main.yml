@@ -13,18 +13,17 @@
 # limitations under the License.
 
 ---
-
 - name: Group by host template
   group_by:
     key: "{{ 'host_template_' ~ host_template if host_template is defined else 'no_template' }}"
 
 - name: Find the correct host template
   block:
-  - fail:
-      msg: "Unable to host template {{ host_template }} in the cluster definition"
-    when: content | length == 0
-  - set_fact:
-      host_template_content: "{{ content | first }}"
+    - fail:
+        msg: "Unable to host template {{ host_template }} in the cluster definition"
+      when: content | length == 0
+    - set_fact:
+        host_template_content: "{{ content | first }}"
   vars:
     query: "clusters[].host_templates[].\"{{ host_template }}\""
     content: "{{ _pre_template_cluster | json_query(query) }}"

@@ -89,7 +89,7 @@ def test_view_default(conn, module_args):
             "cluster": os.getenv("CM_CLUSTER"),
             "service": os.getenv("CM_SERVICE"),
             "role": os.getenv("CM_ROLE"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -105,7 +105,7 @@ def test_invalid_service(conn, module_args):
             "cluster": os.getenv("CM_CLUSTER"),
             "service": "BOOM",
             "role": os.getenv("CM_ROLE"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
@@ -119,7 +119,7 @@ def test_invalid_cluster(conn, module_args):
             "cluster": "BOOM",
             "service": os.getenv("CM_SERVICE"),
             "role": os.getenv("CM_ROLE"),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):

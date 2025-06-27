@@ -63,7 +63,8 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(
-        AnsibleFailJson, match="cluster, parameters, role_config_group, service"
+        AnsibleFailJson,
+        match="cluster, parameters, role_config_group, service",
     ):
         service_role_config_group_config.main()
 
@@ -178,7 +179,7 @@ def test_create_role_config_group_with_roles(conn, module_args):
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example2"
     assert e.value.role_config_group["roles"] == [
-        "hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1"
+        "hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1",
     ]
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -187,7 +188,7 @@ def test_create_role_config_group_with_roles(conn, module_args):
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
     assert e.value.role_config_group["roles"] == [
-        "hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1"
+        "hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1",
     ]
 
 
@@ -212,7 +213,7 @@ def test_update_role_membership(conn, module_args):
         [
             "hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1",
             "hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac",
-        ]
+        ],
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -224,7 +225,7 @@ def test_update_role_membership(conn, module_args):
         [
             "hdfs-DATANODE-a9a5b7d344404d8a304ff4b3779679a1",
             "hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac",
-        ]
+        ],
     )
 
 
@@ -247,7 +248,7 @@ def test_set_role_membership(conn, module_args):
     assert e.value.changed == True
     assert e.value.role_config_group["name"] == "hdfs-example2"
     assert e.value.role_config_group["roles"] == [
-        "hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac"
+        "hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac",
     ]
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -256,7 +257,7 @@ def test_set_role_membership(conn, module_args):
     assert e.value.changed == False
     assert e.value.role_config_group["name"] == "hdfs-example2"
     assert e.value.role_config_group["roles"] == [
-        "hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac"
+        "hdfs-DATANODE-7f3a9da5805a46e3100bae67424355ac",
     ]
 
 
@@ -348,6 +349,7 @@ def test_remove_role_config_group_invalid_base(conn, module_args):
     module_args(conn)
 
     with pytest.raises(
-        AnsibleFailJson, match="Group 'hdfs-DATANODE-BASE' is a base group"
+        AnsibleFailJson,
+        match="Group 'hdfs-DATANODE-BASE' is a base group",
     ):
         service_role_config_group_config.main()

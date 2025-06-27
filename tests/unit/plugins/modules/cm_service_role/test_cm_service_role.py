@@ -76,7 +76,7 @@ def test_existing_relocate(conn, module_args, cm_api_client, host_monitor, reque
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -109,7 +109,7 @@ def test_new(conn, module_args, cm_api_client, cms, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="55")
@@ -144,7 +144,7 @@ def test_new_maintenance_mode_enabled(conn, module_args, cm_api_client, cms, req
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -162,7 +162,7 @@ def test_new_maintenance_mode_enabled(conn, module_args, cm_api_client, cms, req
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=11, process_start_secs=21)
+    dict(mgmt_num_descriptor_fetch_tries=11, process_start_secs=21),
 )
 def test_existing_set(conn, module_args, host_monitor_config, request):
     module_args(
@@ -173,7 +173,7 @@ def test_existing_set(conn, module_args, host_monitor_config, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="55", process_start_secs="21")
@@ -193,7 +193,7 @@ def test_existing_set(conn, module_args, host_monitor_config, request):
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=12, process_start_secs=22)
+    dict(mgmt_num_descriptor_fetch_tries=12, process_start_secs=22),
 )
 def test_existing_unset(conn, module_args, host_monitor_config, request):
     module_args(
@@ -202,7 +202,7 @@ def test_existing_unset(conn, module_args, host_monitor_config, request):
             "type": host_monitor_config.type,
             "config": dict(mgmt_num_descriptor_fetch_tries=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     expected = dict(process_start_secs="22")
@@ -222,7 +222,7 @@ def test_existing_unset(conn, module_args, host_monitor_config, request):
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=13, process_start_secs=23)
+    dict(mgmt_num_descriptor_fetch_tries=13, process_start_secs=23),
 )
 def test_existing_purge(conn, module_args, host_monitor_config, request):
     module_args(
@@ -234,7 +234,7 @@ def test_existing_purge(conn, module_args, host_monitor_config, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="33")
@@ -254,7 +254,7 @@ def test_existing_purge(conn, module_args, host_monitor_config, request):
 
 
 @pytest.mark.role_config(
-    dict(mgmt_num_descriptor_fetch_tries=14, process_start_secs=24)
+    dict(mgmt_num_descriptor_fetch_tries=14, process_start_secs=24),
 )
 def test_existing_purge_all(conn, module_args, host_monitor_config, request):
     module_args(
@@ -265,7 +265,7 @@ def test_existing_purge_all(conn, module_args, host_monitor_config, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -283,7 +283,11 @@ def test_existing_purge_all(conn, module_args, host_monitor_config, request):
 
 
 def test_existing_maintenance_mode_enabled(
-    conn, module_args, cm_api_client, host_monitor, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor,
+    request,
 ):
     module_args(
         {
@@ -293,7 +297,7 @@ def test_existing_maintenance_mode_enabled(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     role_api = MgmtRolesResourceApi(cm_api_client)
@@ -314,7 +318,11 @@ def test_existing_maintenance_mode_enabled(
 
 
 def test_existing_maintenance_mode_disabled(
-    conn, module_args, cm_api_client, host_monitor, request
+    conn,
+    module_args,
+    cm_api_client,
+    host_monitor,
+    request,
 ):
     module_args(
         {
@@ -324,7 +332,7 @@ def test_existing_maintenance_mode_disabled(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     # TODO Turn this into a fixture - host_monitor_maintenance
@@ -354,7 +362,7 @@ def test_existing_state_present(conn, module_args, host_monitor, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -373,7 +381,11 @@ def test_existing_state_present(conn, module_args, host_monitor, request):
 
 @pytest.mark.role_state(ApiRoleState.STOPPED)
 def test_existing_state_started(
-    conn, module_args, cms_auto, host_monitor_state, request
+    conn,
+    module_args,
+    cms_auto,
+    host_monitor_state,
+    request,
 ):
     module_args(
         {
@@ -383,7 +395,7 @@ def test_existing_state_started(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -402,7 +414,11 @@ def test_existing_state_started(
 
 @pytest.mark.role_state(ApiRoleState.STARTED)
 def test_existing_state_stopped(
-    conn, module_args, cms_auto, host_monitor_state, request
+    conn,
+    module_args,
+    cms_auto,
+    host_monitor_state,
+    request,
 ):
     module_args(
         {
@@ -412,7 +428,7 @@ def test_existing_state_stopped(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -431,7 +447,11 @@ def test_existing_state_stopped(
 
 @pytest.mark.role_state(ApiRoleState.STARTED)
 def test_existing_state_restarted(
-    conn, module_args, cms_auto, host_monitor_state, request
+    conn,
+    module_args,
+    cms_auto,
+    host_monitor_state,
+    request,
 ):
     module_args(
         {
@@ -441,7 +461,7 @@ def test_existing_state_restarted(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -467,7 +487,7 @@ def test_existing_state_absent(conn, module_args, cms_auto, host_monitor, reques
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

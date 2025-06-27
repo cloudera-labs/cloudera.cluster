@@ -22,6 +22,7 @@ description:
   - Gather information about one or all Cloudera Manager service roles.
 author:
   - Webster Mudge (@wmudge)
+version_added: "5.0.0"
 options:
   type:
     description:
@@ -32,6 +33,7 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full

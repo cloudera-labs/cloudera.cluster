@@ -25,6 +25,7 @@ description:
   - The module supports C(check_mode).
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.0.0"
 requirements:
   - cm_client
 extends_documentation_fragment:
@@ -92,10 +93,15 @@ def main():
         argument_spec=dict(
             path=dict(required=True, type="str"),
             query=dict(
-                required=False, type="dict", aliases=["query_parameters", "parameters"]
+                required=False,
+                type="dict",
+                aliases=["query_parameters", "parameters"],
             ),
             field=dict(
-                required=False, type="str", default="items", aliases=["return_field"]
+                required=False,
+                type="str",
+                default="items",
+                aliases=["return_field"],
             ),
         ),
         supports_check_mode=True,

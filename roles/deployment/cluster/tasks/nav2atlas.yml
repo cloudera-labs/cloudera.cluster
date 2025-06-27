@@ -13,12 +13,11 @@
 # limitations under the License.
 
 ---
-
 - name: Get CM Service role description
   cloudera.cluster.cm_api:
     endpoint: /cm/service/roles/
     method: GET
-    return_content: yes
+    return_content: true
   register: cm_roles
 
 - set_fact:
@@ -31,7 +30,7 @@
   cloudera.cluster.cm_api:
     endpoint: "/cm/service/roles/{{ nav_service }}/config"
     method: GET
-    return_content: yes
+    return_content: true
   register: nav_config
 
 - set_fact:
@@ -49,7 +48,7 @@
   ansible.builtin.file:
     state: directory
     path: "{{ nav2atlas_dir }}"
-    mode: 0700
+    mode: "0700"
     owner: atlas
     group: atlas
   delegate_to: "{{ groups.atlas_atlas_server | first }}"
@@ -68,7 +67,8 @@
   delegate_to: "{{ groups.atlas_atlas_server | first }}"
 
 - set_fact:
-    atlas_migration_conf: "atlas.migration.data.filename={{ nav2atlas_dir }}/{{ cluster.name | replace(' ','_') }}-atlas-data.zip\natlas.migration.mode.batch.size=200\natlas.migration.mode.workers=8\natlas.patch.numWorkers=14\natlas.patch.batchSize=3000"
+    atlas_migration_conf: "atlas.migration.data.filename={{ nav2atlas_dir }}/{{ cluster.name | replace(' ','_') }}-atlas-data.zip\natlas.migration.mode.batch.size=200\n\
+      atlas.migration.mode.workers=8\natlas.patch.numWorkers=14\natlas.patch.batchSize=3000"
 
 - name: Update Capacity Scheduler Config in CM
   cloudera.cluster.cm_api:

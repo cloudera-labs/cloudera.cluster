@@ -22,6 +22,7 @@ description:
   - Gather configuration information about a service of a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -191,7 +192,9 @@ class ClusterServiceConfigInfo(ClouderaManagerModule):
 
         try:
             results = api_instance.read_service_config(
-                cluster_name=self.cluster, service_name=self.service, view=self.view
+                cluster_name=self.cluster,
+                service_name=self.service,
+                view=self.view,
             )
 
             self.config = [s.to_dict() for s in results.items]

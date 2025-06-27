@@ -27,7 +27,7 @@
   template:
     src: "{{ ansible_os_family }}/kdc.conf.j2"
     dest: "{{ krb5_kdc_state_directory }}/kdc.conf"
-    backup: yes
+    backup: true
 
 - name: Create KDC database
   command: "/usr/sbin/kdb5_util create -s -P {{ krb5_kdc_master_password }}"
@@ -38,7 +38,7 @@
   template:
     src: kadm5.acl.j2
     dest: "{{ krb5_kdc_state_directory }}/kadm5.acl"
-    backup: yes
+    backup: true
 
 - name: Create Cloudera Manager admin principal
   command: /usr/sbin/kadmin.local -q "addprinc -pw {{ krb5_kdc_admin_password }} {{ krb5_kdc_admin_user }}"
@@ -47,6 +47,6 @@
   service:
     name: "{{ item }}"
     state: restarted
-    enabled: yes
+    enabled: true
   with_items:
     - "{{ krb5_services }}"

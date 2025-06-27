@@ -1,5 +1,4 @@
 ---
-
 - name: Set session timeout to 30 days
   cloudera.cluster.cm_api:
     endpoint: /cm/config

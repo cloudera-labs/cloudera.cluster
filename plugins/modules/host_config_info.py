@@ -22,6 +22,7 @@ description:
   - Gather configuration information about a specific host.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -45,7 +46,7 @@ options:
 
 EXAMPLES = r"""
 - name: Gather the configuration details for a host
-  cloudera.cluster.host_config_info
+  cloudera.cluster.host_config_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -53,7 +54,7 @@ EXAMPLES = r"""
     view: summary
 
 - name: Gather the configuration details in 'full' for a host
-  cloudera.cluster.host_config_info
+  cloudera.cluster.host_config_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -174,7 +175,8 @@ class ClouderaHostConfigInfo(ClouderaManagerModule):
 
         host_api_instance = HostsResourceApi(self.api_client)
         host_configs = host_api_instance.read_host_config(
-            host_id=self.hostname, view=self.view
+            host_id=self.hostname,
+            view=self.view,
         )
 
         self.host_config_info = [s.to_dict() for s in host_configs.items]

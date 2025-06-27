@@ -73,7 +73,7 @@ def krb_disabled(cm_api_client, request) -> None:
     )
 
     body = ApiConfigList(
-        items=[ApiConfig(name=k, value=v) for k, v in reset_params.items()]
+        items=[ApiConfig(name=k, value=v) for k, v in reset_params.items()],
     )
 
     cm_api.update_config(
@@ -102,7 +102,7 @@ def krb_freeipa(cm_api_client, request, krb_disabled) -> None:
     )
 
     body = ApiConfigList(
-        items=[ApiConfig(name=k, value=v) for k, v in setup_params.items()]
+        items=[ApiConfig(name=k, value=v) for k, v in setup_params.items()],
     )
 
     cm_api.update_config(
@@ -147,7 +147,7 @@ def test_pytest_enable_kerberos(module_args, conn, krb_disabled, request):
             "krb_enc_types": ["aes256-cts", "aes128-cts", "rc4-hmac"],
             "security_realm": "CLDR.INTERNAL",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -180,7 +180,7 @@ def test_enable_invalid_admin_password(module_args, conn, krb_disabled, request)
             "security_realm": "CLDR.INTERNAL",
             "kdc_admin_password": "wrongPass",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(
@@ -226,7 +226,7 @@ def test_force_enable_kerberos(module_args, conn, krb_freeipa, request):
             "krb_enc_types": ["aes256-cts", "aes128-cts", "rc4-hmac"],
             "security_realm": "CLDR.INTERNAL",
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

@@ -15,19 +15,19 @@
 ---
 
 custom_config_templates:
-# Explicit defaults - only run if we're neither updating services nor doing an upgrade
+  # Explicit defaults - only run if we're neither updating services nor doing an upgrade
   - template: configs/defaults.j2
     condition: "{{ not(update_services|default(false)|bool or cdh_cdp_upgrade|default(false)|bool) }}"
-# Custom configurations for databases
+  # Custom configurations for databases
   - template: configs/databases.j2
   - template: configs/databases-7.1.0.j2
     condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and cloudera_runtime_version is version('7.1.9','<') }}"
   - template: configs/databases-7.1.9.j2
     condition: "{{ cloudera_runtime_version is version('7.1.9','>=') }}"
-# Custom configurations for Infra Solr
+  # Custom configurations for Infra Solr
   - template: configs/infra-solr.j2
     condition: "{{ 'INFRA_SOLR' in cluster.services }}"
-# Custom configurations for logging
+  # Custom configurations for logging
   - template: configs/logdirs.j2
   - template: configs/logdirs-6.x.j2
     condition: "{{ cloudera_runtime_version is version('6.0.0','>=') and cloudera_runtime_version is version('7.0.0','<') }}"
@@ -36,26 +36,30 @@ custom_config_templates:
   - template: configs/logdirs-7.1.9.j2
     condition: "{{ cloudera_runtime_version is version('7.1.9','>=') }}"
   - template: configs/logdirs-ranger-spooldirs.j2
-    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) and cloudera_runtime_version is version('7.1.9','<') }}"
+    condition: "{{ cloudera_runtime_version is version('7.1.0','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>='))
+      and cloudera_runtime_version is version('7.1.9','<') }}"
   - template: configs/logdirs-ranger-spooldirs-7.1.9.j2
     condition: "{{ cloudera_runtime_version is version('7.1.9','>=') }}"
-# Custom configurations for out-of-memory behaviour, heap dumps etc
+  # Custom configurations for out-of-memory behaviour, heap dumps etc
   - template: configs/oom.j2
     condition: "{{ cluster.oom is defined }}"
   - template: configs/oom-6.3.0.j2
     condition: "{{ cluster.oom is defined and cloudera_runtime_version is version('6.0.0','>=') }}"
   - template: configs/oom-7.1.0.j2
     condition: "{{ cluster.oom is defined and cloudera_runtime_version is version('7.1.0','>=') }}"
-# Custom configurations for Kerberos
+  # Custom configurations for Kerberos
   - template: configs/kerberos-5.x.j2
-    condition: "{{ cluster.security.kerberos | default(False) and (cloudera_manager_version is version('6.0.0','<') or cluster.type | default('base') == 'compute') }}"
+    condition: "{{ cluster.security.kerberos | default(False) and (cloudera_manager_version is version('6.0.0','<') or cluster.type | default('base') == 'compute')
+      }}"
   - template: configs/kerberos-6.x-7.x.j2
     condition: "{{ cluster.security.kerberos | default(False) and cloudera_manager_version is version('6.0.0','>=') }}"
   - template: configs/kerberos-7.x.j2
-    condition: "{{ cluster.security.kerberos | default(False) and cloudera_runtime_version is version('7.1.0','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) }}"
+    condition: "{{ cluster.security.kerberos | default(False) and cloudera_runtime_version is version('7.1.0','>=') and (cloudera_runtime_pre_upgrade is undefined
+      or cloudera_runtime_pre_upgrade is version('7.1.0','>=')) }}"
   - template: configs/trusted-realms.j2
-    condition: "{{ cluster.security.kerberos | default(False) and auth_providers | default({}) | dict2items | json_query('[?value.type == `KERBEROS`]') | length > 0 }}"
-# Custom configurations for TLS
+    condition: "{{ cluster.security.kerberos | default(False) and auth_providers | default({}) | dict2items | json_query('[?value.type == `KERBEROS`]') | length >
+      0 }}"
+  # Custom configurations for TLS
   - template: configs/tls.j2
     condition: "{{ cluster.security.tls | default(False) }}"
   - template: configs/tls-6.x.j2
@@ -63,12 +67,13 @@ custom_config_templates:
   - template: configs/tls-7.1.0.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.0','>=') }}"
   - template: configs/tls-7.1.4.j2
-    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade is version('7.1.4','>=')) }}"
+    condition: "{{ cluster.security.tls | default(False) and cloudera_runtime_version is version('7.1.4','>=') and (cloudera_runtime_pre_upgrade is undefined or cloudera_runtime_pre_upgrade
+      is version('7.1.4','>=')) }}"
   - template: configs/tls-7.3.1.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.3.1', '>=') }}"
   - template: configs/tls-cm-7.j2
     condition: "{{ cluster.security.tls | default(False) and cloudera_manager_version is version('7.1.0','>=') }}"
-# Custom configurations for Cloudera Streams Processing components on CDH 6.x
+  # Custom configurations for Cloudera Streams Processing components on CDH 6.x
   - template: configs/schemaregistry.j2
     condition: >-
       {{ cloudera_runtime_version is version('7.0.0','<')
@@ -77,32 +82,32 @@ custom_config_templates:
     condition: >-
       {{ cloudera_runtime_version is version('7.0.0','<')
       and 'STREAMS_MESSAGING_MANAGER' in cluster.services }}
-# Custom configurations for Phoenix
+  # Custom configurations for Phoenix
   - template: configs/phoenix.j2
     condition: "{{ 'PHOENIX' in cluster.services }}"
-# Custom configurations for Ranger
+  # Custom configurations for Ranger
   - template: configs/ranger.j2
     condition: "{{ 'RANGER' in cluster.services }}"
-# Custom configurations for Sentry
+  # Custom configurations for Sentry
   - template: configs/sentry.j2
     condition: "{{ 'SENTRY' in cluster.services }}"
-# Custom configurations for WorkloadXM
+  # Custom configurations for WorkloadXM
   - template: configs/wxm.j2
     condition: "{{ 'WXM' in cluster.services }}"
-# Custom configuration for /var/lib directory
+  # Custom configuration for /var/lib directory
   - template: configs/varlib-7.1.0.j2
     condition: "{{ cluster.varlib_base is defined and cloudera_runtime_version is version('7.1.3','>=') }}"
-# LDAP configuration
+  # LDAP configuration
   - template: configs/ldap.j2
     condition: >-
       {{ service_auth_provider is defined
          and service_auth_provider in auth_providers | default({})
          and auth_providers[service_auth_provider].type | default('LDAP') == "LDAP"
        }}
-# Custom configuration for when adding services
+  # Custom configuration for when adding services
   - template: configs/inter-service-dependencies.j2
     condition: "{{ (update_services | default(false) or (cdh_cdp_upgrade|default(false)|bool)) }}"
-# Workarounds for bugs / known issues
+  # Workarounds for bugs / known issues
   - template: workarounds/OPSAPS-56076.j2
     # TODO update fix version
     condition: >-

@@ -22,6 +22,7 @@ description:
   - Gathers details about a single parcel or about all parcels on the cluster
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:

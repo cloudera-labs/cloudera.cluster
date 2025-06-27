@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Import GPG Key
   rpm_key:
     key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
@@ -29,7 +28,6 @@
     state: present
   when:
     - not (skip_rdbms_repo_setup | default(False))
-
 
 - name: Install MySQL
   include_role:

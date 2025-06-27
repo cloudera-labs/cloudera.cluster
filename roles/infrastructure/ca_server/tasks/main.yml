@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Include OS-specific variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
@@ -82,9 +81,9 @@
 - name: Ensure the intermediate CA config has the correct section ([ cloudera_req ])
   lineinfile:
     path: "{{ ca_server_intermediate_path }}/openssl.cnf"
-    regexp: '\[\s*cloudera_req\s*\]'
+    regexp: "\\[\\s*cloudera_req\\s*\\]"
     state: absent
-  check_mode: yes
+  check_mode: true
   changed_when: false
   register: intermediate_conf_check
   when: intermediate_ca_conf_exists

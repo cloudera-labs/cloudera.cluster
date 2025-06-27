@@ -22,6 +22,7 @@ description:
   - Manage a Cloudera Manager Service role.
 author:
   - Webster Mudge (@wmudge)
+version_added: "5.0.0"
 options:
   cluster_hostname:
     description:
@@ -81,6 +82,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -110,7 +112,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
-    maintenance: yes
+    maintenance: true
 
 - name: Update (append) role configurations to a Cloudera Manager Service role
   cloudera.cluster.cm_service_role:
@@ -129,7 +131,7 @@ EXAMPLES = r"""
     type: HOSTMONITOR
     config:
       yet_another_config: value_three
-    purge: yes
+    purge: true
 
 - name: Remove all role configurations on a Cloudera Manager Service role
   cloudera.cluster.cm_service_role:
@@ -137,7 +139,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
-    purge: yes
+    purge: true
 
 - name: Start a Cloudera Manager Service role
   cloudera.cluster.cm_service_role:
@@ -454,21 +456,27 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
 
             # Handle the various states
             if self.state == "started" and current.role_state not in [
-                ApiRoleState.STARTED
+                ApiRoleState.STARTED,
             ]:
                 self.exec_role_command(
-                    current, ApiRoleState.STARTED, role_cmd_api.start_command
+                    current,
+                    ApiRoleState.STARTED,
+                    role_cmd_api.start_command,
                 )
             elif self.state == "stopped" and current.role_state not in [
                 ApiRoleState.STOPPED,
                 ApiRoleState.NA,
             ]:
                 self.exec_role_command(
-                    current, ApiRoleState.STOPPED, role_cmd_api.stop_command
+                    current,
+                    ApiRoleState.STOPPED,
+                    role_cmd_api.stop_command,
                 )
             elif self.state == "restarted":
                 self.exec_role_command(
-                    current, ApiRoleState.STARTED, role_cmd_api.restart_command
+                    current,
+                    ApiRoleState.STARTED,
+                    role_cmd_api.restart_command,
                 )
 
             # If there are changes, get a fresh read
@@ -483,7 +491,10 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
             self.module.fail_json(msg=f"Invalid state: {self.state}")
 
     def exec_role_command(
-        self, role: ApiRole, value: str, cmd: Callable[[ApiRoleNameList], ApiCommand]
+        self,
+        role: ApiRole,
+        value: str,
+        cmd: Callable[[ApiRoleNameList], ApiCommand],
     ):
         self.changed = True
         if self.module._diff:
@@ -509,7 +520,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
 
                 if maintenance_cmd.success is False:
                     self.module.fail_json(
-                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
+                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}",
                     )
 
     def provision_role(self, role_api: MgmtRolesResourceApi, role: ApiRole) -> ApiRole:
@@ -527,19 +538,23 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                     iter(
                         role_api.create_roles(
                             body=ApiRoleList(items=[role]),
-                        ).items
+                        ).items,
                     )
                 ),
                 {},
             )
             if not created_role:
                 self.module.fail_json(
-                    msg="Unable to create new role", role=to_native(role.to_dict())
+                    msg="Unable to create new role",
+                    role=to_native(role.to_dict()),
                 )
             return created_role
 
     def reprovision_role(
-        self, role_api: MgmtRolesResourceApi, existing_role: ApiRole, new_role: ApiRole
+        self,
+        role_api: MgmtRolesResourceApi,
+        existing_role: ApiRole,
+        new_role: ApiRole,
     ) -> ApiRole:
         self.changed = True
 
@@ -557,7 +572,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
                     iter(
                         role_api.create_roles(
                             body=ApiRoleList(items=[new_role]),
-                        ).items
+                        ).items,
                     )
                 ),
                 {},

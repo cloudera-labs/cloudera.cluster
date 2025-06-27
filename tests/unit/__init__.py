@@ -78,7 +78,7 @@ class AnsibleExitJson(Exception):
 
     def __init__(self, kwargs):
         super(AnsibleExitJson, self).__init__(
-            kwargs.get("msg", "General module success")
+            kwargs.get("msg", "General module success"),
         )
         self.__dict__.update(kwargs)
 
@@ -88,13 +88,16 @@ class AnsibleFailJson(Exception):
 
     def __init__(self, kwargs):
         super(AnsibleFailJson, self).__init__(
-            kwargs.get("msg", "General module failure")
+            kwargs.get("msg", "General module failure"),
         )
         self.__dict__.update(kwargs)
 
 
 def wait_for_command(
-    api_client: ApiClient, command: ApiCommand, polling: int = 120, delay: int = 5
+    api_client: ApiClient,
+    command: ApiCommand,
+    polling: int = 120,
+    delay: int = 5,
 ):
     """Polls Cloudera Manager to wait for given Command to succeed or fail."""
 
@@ -110,7 +113,10 @@ def wait_for_command(
 
 
 def yield_service(
-    api_client: ApiClient, cluster: ApiCluster, service_name: str, service_type: str
+    api_client: ApiClient,
+    cluster: ApiCluster,
+    service_name: str,
+    service_type: str,
 ) -> Generator[ApiService]:
     """Provisions a new cluster service as a generator.
        Use with 'yield from' to delegate within a pytest fixture.
@@ -168,12 +174,13 @@ def register_service(
 
     if len(hosts) != 3:
         raise Exception(
-            "Not enough available hosts to assign service roles; the cluster must have 3 or more hosts."
+            "Not enough available hosts to assign service roles; the cluster must have 3 or more hosts.",
         )
 
     # Create the service
     created_service = service_api.create_services(
-        cluster_name=cluster.name, body=ApiServiceList(items=[service])
+        cluster_name=cluster.name,
+        body=ApiServiceList(items=[service]),
     ).items[0]
 
     # Record the service
@@ -188,17 +195,20 @@ def register_service(
 
     # Refresh the service
     created_service = service_api.read_service(
-        cluster_name=cluster.name, service_name=created_service.name
+        cluster_name=cluster.name,
+        service_name=created_service.name,
     )
 
     # Establish the maintenance mode of the service
     if service.maintenance_mode:
         maintenance_cmd = service_api.enter_maintenance_mode(
-            cluster_name=cluster.name, service_name=created_service.name
+            cluster_name=cluster.name,
+            service_name=created_service.name,
         )
         wait_for_command(api_client, maintenance_cmd)
         created_service = service_api.read_service(
-            cluster_name=cluster.name, service_name=created_service.name
+            cluster_name=cluster.name,
+            service_name=created_service.name,
         )
 
     # Establish the state the of the service
@@ -210,11 +220,12 @@ def register_service(
             )
             wait_for_command(api_client, stop_cmd)
             created_service = service_api.read_service(
-                cluster_name=cluster.name, service_name=created_service.name
+                cluster_name=cluster.name,
+                service_name=created_service.name,
             )
         else:
             raise Exception(
-                "Unsupported service state for fixture: " + service.service_state
+                "Unsupported service state for fixture: " + service.service_state,
             )
 
     # Return the provisioned service
@@ -266,7 +277,10 @@ def deregister_service(api_client: ApiClient, registry: list[ApiService]) -> Non
 
 
 def register_role(
-    api_client: ApiClient, registry: list[ApiRole], service: ApiService, role: ApiRole
+    api_client: ApiClient,
+    registry: list[ApiRole],
+    service: ApiService,
+    role: ApiRole,
 ) -> ApiRole:
     # Create the role
     created_role = provision_service_role(
@@ -391,7 +405,9 @@ def register_role_config_group(
 
 
 def deregister_role_config_group(
-    api_client: ApiClient, registry: list[ApiRoleConfigGroup], message: str
+    api_client: ApiClient,
+    registry: list[ApiRoleConfigGroup],
+    message: str,
 ) -> None:
     rcg_api = RoleConfigGroupsResourceApi(api_client)
     for rcg in registry:
@@ -439,7 +455,9 @@ def deregister_role_config_group(
 
             if config_revert:
                 rcg.config = ApiConfigList(
-                    items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
+                    items=[
+                        ApiConfig(name=k, value=v) for k, v in config_revert.items()
+                    ],
                 )
 
                 rcg_api.update_role_config_group(
@@ -461,7 +479,8 @@ def register_host_template(
 
     # Create the host template
     created_host_template = host_template_api.create_host_templates(
-        cluster_name=cluster.name, body=ApiHostTemplateList(items=[host_template])
+        cluster_name=cluster.name,
+        body=ApiHostTemplateList(items=[host_template]),
     ).items[0]
 
     # Record the host template
@@ -490,7 +509,10 @@ def deregister_host_template(
 
 
 def service_wide_config(
-    api_client: ApiClient, service: ApiService, params: dict, message: str
+    api_client: ApiClient,
+    service: ApiService,
+    params: dict,
+    message: str,
 ) -> Generator[ApiService]:
     """Update a service-wide configuration for a given service. Yields the
        service, resetting the configuration to its prior state. Use with
@@ -550,7 +572,7 @@ def service_wide_config(
             ApiConfig(name=k.name, value=None)
             for k in post.items
             if k.name not in pre_set
-        ]
+        ],
     )
 
     service_api.update_service_config(
@@ -562,7 +584,10 @@ def service_wide_config(
 
 
 def provision_cm_role(
-    api_client: ApiClient, role_name: str, role_type: str, host_id: str
+    api_client: ApiClient,
+    role_name: str,
+    role_type: str,
+    host_id: str,
 ) -> Generator[ApiRole]:
     """Yield a newly-created Cloudera Manager Service role, deleting the
        role after use. Use with 'yield from' within a pytest fixture.
@@ -585,7 +610,8 @@ def provision_cm_role(
     )
 
     provisioned_role = next(
-        iter(api.create_roles(body=ApiRoleList(items=[role])).items), None
+        iter(api.create_roles(body=ApiRoleList(items=[role])).items),
+        None,
     )
 
     yield provisioned_role
@@ -598,7 +624,9 @@ def provision_cm_role(
 
 
 def set_cm_role(
-    api_client: ApiClient, cluster: ApiCluster, role: ApiRole
+    api_client: ApiClient,
+    cluster: ApiCluster,
+    role: ApiRole,
 ) -> Generator[ApiRole]:
     """Set a net-new Cloudera Manager Service role. Yields the new role,
     resetting to any existing role upon completion. Use with 'yield from'
@@ -609,7 +637,8 @@ def set_cm_role(
 
     # Check for existing management role
     pre_role = next(
-        iter([r for r in get_mgmt_roles(api_client, role.type).items]), None
+        iter([r for r in get_mgmt_roles(api_client, role.type).items]),
+        None,
     )
 
     if pre_role is not None:
@@ -627,14 +656,15 @@ def set_cm_role(
 
         if not hosts.items:
             raise Exception(
-                "No available hosts to assign the Cloudera Manager Service role."
+                "No available hosts to assign the Cloudera Manager Service role.",
             )
 
         role.host_ref = get_host_ref(api_client, host_id=hosts.items[0].host_id)
 
     # Create the role under test
     current_role = next(
-        iter(role_api.create_roles(body=ApiRoleList(items=[role])).items), None
+        iter(role_api.create_roles(body=ApiRoleList(items=[role])).items),
+        None,
     )
     current_role.config = role_api.read_role_config(role_name=current_role.name)
 
@@ -643,7 +673,7 @@ def set_cm_role(
 
     if role.role_state in [ApiRoleState.STARTING, ApiRoleState.STARTED]:
         start_cmds = role_cmd_api.start_command(
-            body=ApiRoleNameList(items=[current_role.name])
+            body=ApiRoleNameList(items=[current_role.name]),
         )
         if start_cmds.errors:
             error_msg = "\n".join(start_cmds.errors)
@@ -666,7 +696,7 @@ def set_cm_role(
             role_api.enter_maintenance_mode(pre_role.name)
         if pre_role.role_state in [ApiRoleState.STARTED, ApiRoleState.STARTING]:
             restart_cmds = role_cmd_api.restart_command(
-                body=ApiRoleNameList(items=[pre_role.name])
+                body=ApiRoleNameList(items=[pre_role.name]),
             )
             if restart_cmds.errors:
                 error_msg = "\n".join(restart_cmds.errors)
@@ -678,7 +708,10 @@ def set_cm_role(
 
 
 def set_cm_role_config(
-    api_client: ApiClient, role: ApiRole, params: dict, message: str
+    api_client: ApiClient,
+    role: ApiRole,
+    params: dict,
+    message: str,
 ) -> Generator[ApiRole]:
     """Update a role configuration for a given role. Yields the
        role, resetting the configuration to its prior state. Use with
@@ -731,7 +764,7 @@ def set_cm_role_config(
             ApiConfig(name=k.name, value=None)
             for k in post.items
             if k.name not in pre_set
-        ]
+        ],
     )
 
     role_api.update_role_config(
@@ -768,7 +801,9 @@ def set_cm_role_config_group(
 
     # Update the role config group
     pre_rcg = rcg_api.update_role_config_group(
-        role_config_group.name, message=f"{message}::set", body=update
+        role_config_group.name,
+        message=f"{message}::set",
+        body=update,
     )
 
     yield pre_rcg
@@ -785,11 +820,13 @@ def set_cm_role_config_group(
 
     if config_revert:
         role_config_group.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()],
         )
 
         rcg_api.update_role_config_group(
-            role_config_group.name, message=f"{message}::reset", body=role_config_group
+            role_config_group.name,
+            message=f"{message}::reset",
+            body=role_config_group,
         )
 
 
@@ -849,7 +886,7 @@ def set_role_config_group(
 
     if config_revert:
         role_config_group.config = ApiConfigList(
-            items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()]
+            items=[ApiConfig(name=k, value=v) for k, v in config_revert.items()],
         )
 
         rcg_api.update_role_config_group(
@@ -862,7 +899,9 @@ def set_role_config_group(
 
 
 def read_expected_roles(
-    api_client: ApiClient, cluster_name: str, service_name: str
+    api_client: ApiClient,
+    cluster_name: str,
+    service_name: str,
 ) -> list[ApiRole]:
     return (
         RolesResourceApi(api_client)

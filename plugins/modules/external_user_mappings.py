@@ -26,6 +26,7 @@ description:
   - The module supports C(check_mode).
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:
@@ -67,6 +68,10 @@ options:
       - If I(purge=False), the provided authorization roles will be added to the existing ones, and any duplicates will be ignored.
     type: bool
     default: False
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -93,7 +98,7 @@ EXAMPLES = r"""
     name: "basic_user"
     state: "present"
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER","ROLE_CLUSTER_CREATOR"]
+    auth_roles: ["ROLE_DASHBOARD_USER", "ROLE_USER", "ROLE_CLUSTER_CREATOR"]
 
 - name: Replace current permissions in external user mapping
   cloudera.cluster.external_user_mappings:
@@ -104,7 +109,7 @@ EXAMPLES = r"""
     state: "present"
     purge: "True"
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
+    auth_roles: ["ROLE_DASHBOARD_USER", "ROLE_USER"]
 
 - name: Remove specified authorization roles from external user mapping
   cloudera.cluster.external_user_mappings:
@@ -114,7 +119,7 @@ EXAMPLES = r"""
     name: "default_user"
     state: "absent"
     type: "LDAP"
-    auth_roles: ["ROLE_DASHBOARD_USER","ROLE_USER"]
+    auth_roles: ["ROLE_DASHBOARD_USER", "ROLE_USER"]
 
 - name: Remove external user mapping
   cloudera.cluster.external_user_mappings:
@@ -131,7 +136,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     name: "basic_user"
-    purge: True
+    purge: true
     auth_roles: []
 """
 
@@ -206,7 +211,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
             for mapping in all_external_user_mappings.items:
                 if self.name == mapping.name:
                     existing = api_instance.read_external_user_mapping(
-                        uuid=mapping.uuid
+                        uuid=mapping.uuid,
                     ).to_dict()
                     break
         if self.uuid:
@@ -242,7 +247,8 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                     if not self.module.check_mode:
                         self.external_user_mappings_output = (
                             api_instance.update_external_user_mapping(
-                                uuid=mapping.uuid, body=update_existing_auth_roles
+                                uuid=mapping.uuid,
+                                body=update_existing_auth_roles,
                             )
                         ).to_dict()
                         self.changed = True
@@ -258,7 +264,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                 if not self.module.check_mode:
                     self.external_user_mappings_output = (
                         api_instance.create_external_user_mappings(
-                            body={"items": [external_user_mappings_body]}
+                            body={"items": [external_user_mappings_body]},
                         )
                     ).to_dict()["items"]
                     self.changed = True
@@ -272,7 +278,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                     incoming_auth_roles = set(self.auth_roles)
 
                     roles_to_delete = existing_auth_roles.intersection(
-                        incoming_auth_roles
+                        incoming_auth_roles,
                     )
                     if self.module._diff:
                         self.diff.update(
@@ -293,7 +299,8 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                         if not self.module.check_mode:
                             self.external_user_mappings_output = (
                                 api_instance.update_external_user_mapping(
-                                    uuid=mapping.uuid, body=update_existing_auth_roles
+                                    uuid=mapping.uuid,
+                                    body=update_existing_auth_roles,
                                 )
                             ).to_dict()
                             self.changed = True

@@ -13,12 +13,11 @@
 # limitations under the License.
 
 ---
-
 - name: Create database roles
   postgresql_user:
     name: "{{ databases[item].user }}"
     password: "{{ databases[item].password }}"
-  become: yes
+  become: true
   become_user: postgres
   with_items: "{{ databases }}"
   delegate_to: "{{ databases[item].host }}"
@@ -30,7 +29,7 @@
     name: "{{ databases[item].name }}"
     owner: "{{ databases[item].user }}"
     encoding: UTF-8
-  become: yes
+  become: true
   become_user: postgres
   with_items: "{{ databases }}"
   delegate_to: "{{ databases[item].host }}"

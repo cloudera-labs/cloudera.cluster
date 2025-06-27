@@ -70,7 +70,7 @@ class ActionModule(ActionBase):
         args = self.build_args(
             task_vars,
             additional_args=dict(
-                url=self.build_url(api_base_url, "/commands/" + str(command_id))
+                url=self.build_url(api_base_url, "/commands/" + str(command_id)),
             ),
         )
         result = self._execute_module(
@@ -104,7 +104,7 @@ class ActionModule(ActionBase):
 
         poll_duration = int(self._task.args.get("poll_duration") or 10)
         poll_max_failed_retries = int(
-            self._task.args.get("poll_max_failed_retries") or 3
+            self._task.args.get("poll_max_failed_retries") or 3,
         )
 
         # Add request body if necessary
@@ -132,11 +132,14 @@ class ActionModule(ActionBase):
                     time.sleep(poll_duration)
                     display.vv(
                         "Waiting for {} command ({}) to complete...".format(
-                            command_name, command_id
-                        )
+                            command_name,
+                            command_id,
+                        ),
                     )
                     command_status = self.poll_command_status(
-                        task_vars, api_base_url, command_id
+                        task_vars,
+                        api_base_url,
+                        command_id,
                     )
                     if "json" in command_status:
                         failed_polls = 0
@@ -147,8 +150,10 @@ class ActionModule(ActionBase):
                         response = {"success": False}
                         display.vv(
                             "Failed to poll command ({}) for status (attempt {} of {})...".format(
-                                command_id, failed_polls, poll_max_failed_retries
-                            )
+                                command_id,
+                                failed_polls,
+                                poll_max_failed_retries,
+                            ),
                         )
                     result.update(command_status)
                 result["failed"] = not response["success"]

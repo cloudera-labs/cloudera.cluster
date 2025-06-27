@@ -56,7 +56,7 @@ def test_missing_required_if(conn, module_args):
         {
             **conn,
             "parameters": dict(),
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="name, type"):
@@ -69,11 +69,12 @@ def test_present_invalid_parameter(conn, module_args, host_monitor):
             **conn,
             "name": host_monitor.role_config_group_ref.role_config_group_name,
             "parameters": dict(example="Example"),
-        }
+        },
     )
 
     with pytest.raises(
-        AnsibleFailJson, match="Unknown configuration attribute 'example'"
+        AnsibleFailJson,
+        match="Unknown configuration attribute 'example'",
     ):
         cm_service_role_config_group_config.main()
 
@@ -84,11 +85,12 @@ def test_present_invalid_parameter(conn, module_args, host_monitor):
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_set_parameters(conn, module_args, host_monitor_role_group_config, request):
     module_args(
@@ -99,7 +101,7 @@ def test_set_parameters(conn, module_args, host_monitor_role_group_config, reque
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="32", process_start_secs="21")
@@ -124,11 +126,12 @@ def test_set_parameters(conn, module_args, host_monitor_role_group_config, reque
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_set_parameters_role_type(conn, module_args, host_monitor_config, request):
     module_args(
@@ -139,7 +142,7 @@ def test_set_parameters_role_type(conn, module_args, host_monitor_config, reques
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="32", process_start_secs="21")
@@ -164,11 +167,12 @@ def test_set_parameters_role_type(conn, module_args, host_monitor_config, reques
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_unset_parameters(conn, module_args, host_monitor_config, request):
     module_args(
@@ -177,7 +181,7 @@ def test_unset_parameters(conn, module_args, host_monitor_config, request):
             "name": host_monitor_config.name,
             "parameters": dict(mgmt_num_descriptor_fetch_tries=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     expected = dict(process_start_secs="21")
@@ -202,11 +206,12 @@ def test_unset_parameters(conn, module_args, host_monitor_config, request):
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_unset_parameters_role_type(conn, module_args, host_monitor_config, request):
     module_args(
@@ -215,7 +220,7 @@ def test_unset_parameters_role_type(conn, module_args, host_monitor_config, requ
             "type": host_monitor_config.role_type,
             "parameters": dict(mgmt_num_descriptor_fetch_tries=None),
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
-        }
+        },
     )
 
     expected = dict(process_start_secs="21")
@@ -240,11 +245,12 @@ def test_unset_parameters_role_type(conn, module_args, host_monitor_config, requ
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_set_parameters_with_purge(conn, module_args, host_monitor_config, request):
     module_args(
@@ -256,7 +262,7 @@ def test_set_parameters_with_purge(conn, module_args, host_monitor_config, reque
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="32")
@@ -281,14 +287,18 @@ def test_set_parameters_with_purge(conn, module_args, host_monitor_config, reque
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_set_parameters_with_purge_role_type(
-    conn, module_args, host_monitor_config, request
+    conn,
+    module_args,
+    host_monitor_config,
+    request,
 ):
     module_args(
         {
@@ -299,7 +309,7 @@ def test_set_parameters_with_purge_role_type(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_num_descriptor_fetch_tries="32")
@@ -324,11 +334,12 @@ def test_set_parameters_with_purge_role_type(
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_purge_all_parameters(conn, module_args, host_monitor_config, request):
     module_args(
@@ -340,7 +351,7 @@ def test_purge_all_parameters(conn, module_args, host_monitor_config, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -363,14 +374,18 @@ def test_purge_all_parameters(conn, module_args, host_monitor_config, request):
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(
-                    mgmt_num_descriptor_fetch_tries=11, process_start_secs=21
+                    mgmt_num_descriptor_fetch_tries=11,
+                    process_start_secs=21,
                 ).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_purge_all_parameters_role_type(
-    conn, module_args, host_monitor_config, request
+    conn,
+    module_args,
+    host_monitor_config,
+    request,
 ):
     module_args(
         {
@@ -381,7 +396,7 @@ def test_purge_all_parameters_role_type(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

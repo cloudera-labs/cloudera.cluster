@@ -21,7 +21,7 @@
     - name: Gather facts from KRB5 Server
       ansible.builtin.setup:
         gather_subset:
-          - 'default_ipv4'
+          - "default_ipv4"
       delegate_to: "{{ krb5_ip_collect_item }}"
       delegate_facts: true
       loop: "{{ groups['krb5_server'] }}"
@@ -41,7 +41,7 @@
       file:
         path: /etc/NetworkManager/conf.d/
         state: directory
-        recurse: yes
+        recurse: true
 
     - name: Ensure dns configuration persists through reboot
       ansible.builtin.copy:
@@ -49,7 +49,7 @@
           [main]
           dns=none
         dest: /etc/NetworkManager/conf.d/disable-resolve.conf-managing.conf
-        backup: yes
+        backup: true
 
 - name: Disable nm-cloud-setup if present
   when:
@@ -57,7 +57,7 @@
     - ansible_os_family == 'RedHat'
   block:
     - name: Disable nm-cloud-setup if present
-      ignore_errors: yes
+      ignore_errors: true
       loop_control:
         loop_var: __nm_cloud_setup_disable_item
       loop:

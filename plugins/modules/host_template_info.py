@@ -23,6 +23,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
   - "Webster Mudge (@wmudge)"
+version_added: "5.0.0"
 options:
   cluster:
     description:
@@ -55,7 +56,7 @@ seealso:
 
 EXAMPLES = r"""
 - name: Retrieve the defailts about a specific host template
-  cloudera.cluster.host_template_info
+  cloudera.cluster.host_template_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -63,7 +64,7 @@ EXAMPLES = r"""
     name: "example_host_template"
 
 - name: Retrieve the details about all host templates within the cluster
-  cloudera.cluster.host_template_info
+  cloudera.cluster.host_template_info:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -130,7 +131,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
         except ApiException as ex:
             if ex.status == 404:
                 self.module.fail_json(
-                    msg="Cluster does not exist: " + self.cluster_name
+                    msg="Cluster does not exist: " + self.cluster_name,
                 )
             else:
                 raise ex
@@ -144,8 +145,8 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
                         host_template_api.read_host_template(
                             cluster_name=self.cluster_name,
                             host_template_name=self.name,
-                        )
-                    )
+                        ),
+                    ),
                 )
             except ApiException as ex:
                 if ex.status != 404:
@@ -155,7 +156,7 @@ class ClouderaHostTemplateInfo(ClouderaManagerModule):
             self.output = [
                 parse_host_template(ht)
                 for ht in host_template_api.read_host_templates(
-                    cluster_name=self.cluster_name
+                    cluster_name=self.cluster_name,
                 ).items
             ]
 

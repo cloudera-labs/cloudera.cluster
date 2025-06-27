@@ -123,7 +123,7 @@ EXAMPLES = r"""
   cloudera.cluster.assemble_cluster_template:
     src: /tmp/examples
     dest: /opt/cloudera/cluster-template.json
-    remote_src: yes
+    remote_src: true
 """
 
 RETURN = r"""#"""
@@ -191,7 +191,8 @@ class AssembleClusterTemplate(object):
                         self.merged = json.loads(fragment_file.read())
                     else:
                         self.template.merge(
-                            self.merged, json.loads(fragment_file.read())
+                            self.merged,
+                            json.loads(fragment_file.read()),
                         )
                 except json.JSONDecodeError as e:
                     self.module.fail_json(
@@ -218,13 +219,16 @@ class AssembleClusterTemplate(object):
                 self.compiled = re.compile(self.regexp)
             except re.error as e:
                 self.module.fail_json(
-                    msg=f"Regular expression, {self.regexp} is invalid: {to_native(e)}"
+                    msg=f"Regular expression, {self.regexp} is invalid: {to_native(e)}",
                 )
 
         # Assemble the src files into output file
         # No deletion on close; atomic_move "removes" the file
         with tempfile.NamedTemporaryFile(
-            mode="w", encoding="utf-8", dir=self.module.tmpdir, delete=False
+            mode="w",
+            encoding="utf-8",
+            dir=self.module.tmpdir,
+            delete=False,
         ) as assembled:
             # Process fragments into temporary file
             self.assemble_fragments(assembled)
@@ -249,14 +253,17 @@ class AssembleClusterTemplate(object):
                     self.output.update(backup_file=self.module.backup_local(self.dest))
 
                 self.module.atomic_move(
-                    assembled.name, self.dest, unsafe_writes=self.unsafe_writes
+                    assembled.name,
+                    self.dest,
+                    unsafe_writes=self.unsafe_writes,
                 )
 
                 self.changed = True
 
         # Notify file permissions
         self.changed = self.module.set_fs_attributes_if_different(
-            self.file_perms, self.changed
+            self.file_perms,
+            self.changed,
         )
 
         # Finalize output

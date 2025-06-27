@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - block:
     - set_fact:
         invalid_roles: >-

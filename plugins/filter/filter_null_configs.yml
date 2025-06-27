@@ -1,8 +1,8 @@
+---
 DOCUMENTATION:
   name: fill_null_configs
   short_description: fill_null_configs
   description: fill_null_configs
-
+  version_added: "3.0.3"
 EXAMPLES:
-
 RETURN:

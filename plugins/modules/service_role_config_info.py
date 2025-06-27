@@ -22,6 +22,7 @@ description:
   - Gather configuration information about a service role of a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -200,7 +201,8 @@ class ClusterServiceRoleConfigInfo(ClouderaManagerModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:

@@ -55,7 +55,7 @@ jobs:
             let fs = require('fs');
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_number.zip`, Buffer.from(download.data));
 
-      - name: 'Unzip artifact'
+      - name: "Unzip artifact"
         run: unzip pr_number.zip
 
       - name: Read the PR number

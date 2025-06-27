@@ -1,5 +1,4 @@
 ---
-
 # Add access key for Altus to base CM
 
 - name: Set Altus private Key into one line
@@ -22,7 +21,6 @@
     endpoint: "/externalAccounts/create"
     method: POST
     body: "{{ lookup('template', 'add_altus_key.json') }}"
-
 
 # Get host Id of this host as it is required to add it as the TP host
 - set_fact:

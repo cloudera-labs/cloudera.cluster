@@ -22,6 +22,7 @@ description:
   - Manage a service role configuration (role-specific) in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:
@@ -89,7 +90,7 @@ EXAMPLES = r"""
       another_configuration: 234
 
 - name: Reset a role parameter
-  cloudera.cluster.cluster_service_role_config:
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -99,7 +100,7 @@ EXAMPLES = r"""
       more_configuration: None
 
 - name: Update (purge) role parameters
-  cloudera.cluster.cluster_service_role_config:
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -111,14 +112,14 @@ EXAMPLES = r"""
       config_three: 2345
 
 - name: Reset all role parameters
-  cloudera.cluster.cluster_service_role_config:
+  cloudera.cluster.service_role_config:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     cluster: example-cluster
     service: example-service
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""
@@ -248,7 +249,8 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -261,7 +263,9 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
         try:
             existing = api_instance.read_role_config(
-                self.cluster, self.role, self.service
+                self.cluster,
+                self.role,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -288,7 +292,7 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
 
             if not self.module.check_mode:
                 body = ApiConfigList(
-                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()]
+                    items=[ApiConfig(name=k, value=v) for k, v in change_set.items()],
                 )
 
                 refresh = False
@@ -308,7 +312,9 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
             self.config = [
                 p.to_dict()
                 for p in api_instance.read_role_config(
-                    self.cluster, self.role, self.service
+                    self.cluster,
+                    self.role,
+                    self.service,
                 ).items
             ]
 

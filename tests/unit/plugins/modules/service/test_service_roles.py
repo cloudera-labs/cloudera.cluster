@@ -84,7 +84,7 @@ class TestServiceProvisionRoles:
                     cluster_name=base_cluster.name,
                 )
                 .items
-            ]
+            ],
         )
 
         # Yield to the test
@@ -103,12 +103,18 @@ class TestServiceProvisionRoles:
         deregister_service(cm_api_client, services_to_remove)
 
     def test_service_provision_roles(
-        self, conn, module_args, cm_api_client, resettable_cluster, request
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        resettable_cluster,
+        request,
     ):
         service_name = f"pytest-{Path(request.node.name)}"
 
         available_hosts = get_cluster_hosts(
-            api_client=cm_api_client, cluster=resettable_cluster
+            api_client=cm_api_client,
+            cluster=resettable_cluster,
         )
 
         module_args(
@@ -121,10 +127,10 @@ class TestServiceProvisionRoles:
                     {
                         "type": "SERVER",
                         "hostnames": [h.hostname for h in available_hosts],
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -155,12 +161,18 @@ class TestServiceProvisionRoles:
         assert len(e.value.service["role_config_groups"]) == 2  # SERVER, GATEWAY bases
 
     def test_service_provision_roles_custom_rcg(
-        self, conn, module_args, cm_api_client, resettable_cluster, request
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        resettable_cluster,
+        request,
     ):
         service_name = f"pytest-{Path(request.node.name)}"
 
         available_hosts = get_cluster_hosts(
-            api_client=cm_api_client, cluster=resettable_cluster
+            api_client=cm_api_client,
+            cluster=resettable_cluster,
         )
 
         module_args(
@@ -183,7 +195,7 @@ class TestServiceProvisionRoles:
                     },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -222,12 +234,18 @@ class TestServiceProvisionRoles:
         assert e.value.service["roles"][0]["role_config_group_name"] == "PYTEST_SERVER"
 
     def test_service_provision_roles_config(
-        self, conn, module_args, cm_api_client, resettable_cluster, request
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        resettable_cluster,
+        request,
     ):
         service_name = f"pytest-{Path(request.node.name)}"
 
         available_hosts = get_cluster_hosts(
-            api_client=cm_api_client, cluster=resettable_cluster
+            api_client=cm_api_client,
+            cluster=resettable_cluster,
         )
 
         module_args(
@@ -246,7 +264,7 @@ class TestServiceProvisionRoles:
                     },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -281,12 +299,18 @@ class TestServiceProvisionRoles:
         assert e.value.service["roles"][0]["config"]["minSessionTimeout"] == "4801"
 
     def test_service_provision_roles_tags(
-        self, conn, module_args, cm_api_client, resettable_cluster, request
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        resettable_cluster,
+        request,
     ):
         service_name = f"pytest-{Path(request.node.name)}"
 
         available_hosts = get_cluster_hosts(
-            api_client=cm_api_client, cluster=resettable_cluster
+            api_client=cm_api_client,
+            cluster=resettable_cluster,
         )
 
         module_args(
@@ -305,7 +329,7 @@ class TestServiceProvisionRoles:
                     },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -449,7 +473,12 @@ class TestServiceModificationRoles:
         return moved_roles.items[0]
 
     def test_service_existing_role_rcg(
-        self, conn, module_args, cm_api_client, zookeeper, server_rcg
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_rcg,
     ):
         existing_hosts = get_service_hosts(
             api_client=cm_api_client,
@@ -466,10 +495,10 @@ class TestServiceModificationRoles:
                         "type": "SERVER",
                         "hostnames": [h.hostname for h in existing_hosts],
                         "role_config_group": server_rcg.name,
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -496,7 +525,12 @@ class TestServiceModificationRoles:
         assert e.value.service["roles"][0]["role_config_group_name"] == server_rcg.name
 
     def test_service_existing_role_rcg_base(
-        self, conn, module_args, cm_api_client, zookeeper, server_rcg_role
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_rcg_role,
     ):
         base_rcg = get_base_role_config_group(
             api_client=cm_api_client,
@@ -514,10 +548,10 @@ class TestServiceModificationRoles:
                     {
                         "type": server_rcg_role.type,
                         "hostnames": [server_rcg_role.host_ref.hostname],
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -556,7 +590,12 @@ class TestServiceModificationRoles:
         assert result_role["role_config_group_name"] == base_rcg.name
 
     def test_service_existing_role_tags(
-        self, conn, module_args, cm_api_client, zookeeper, server_role
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_role,
     ):
         RolesResourceApi(cm_api_client).add_tags(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -581,10 +620,10 @@ class TestServiceModificationRoles:
                             "tag_one": "Updated",
                             "tag_three": "Added",
                         },
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -601,7 +640,9 @@ class TestServiceModificationRoles:
             and r["hostname"] == server_role.host_ref.hostname
         ][0]
         assert result_role["tags"] == dict(
-            tag_one="Updated", tag_two="Existing", tag_three="Added"
+            tag_one="Updated",
+            tag_two="Existing",
+            tag_three="Added",
         )
 
         # Idempotency
@@ -619,11 +660,18 @@ class TestServiceModificationRoles:
             and r["hostname"] == server_role.host_ref.hostname
         ][0]
         assert result_role["tags"] == dict(
-            tag_one="Updated", tag_two="Existing", tag_three="Added"
+            tag_one="Updated",
+            tag_two="Existing",
+            tag_three="Added",
         )
 
     def test_service_existing_role_tags_purge(
-        self, conn, module_args, cm_api_client, zookeeper, server_role
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_role,
     ):
         RolesResourceApi(cm_api_client).add_tags(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -648,11 +696,11 @@ class TestServiceModificationRoles:
                             "tag_one": "Updated",
                             "tag_three": "Added",
                         },
-                    }
+                    },
                 ],
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -687,7 +735,12 @@ class TestServiceModificationRoles:
         assert result_role["tags"] == dict(tag_one="Updated", tag_three="Added")
 
     def test_service_existing_role_config(
-        self, conn, module_args, cm_api_client, zookeeper, server_role
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_role,
     ):
         RolesResourceApi(cm_api_client).update_role_config(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -697,7 +750,7 @@ class TestServiceModificationRoles:
                 items=[
                     ApiConfig(name="minSessionTimeout", value="5501"),
                     ApiConfig(name="maxSessionTimeout", value="45001"),
-                ]
+                ],
             ),
         )
 
@@ -714,10 +767,10 @@ class TestServiceModificationRoles:
                             "minSessionTimeout": 5601,
                             "maxClientCnxns": 56,
                         },
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -736,7 +789,9 @@ class TestServiceModificationRoles:
         assert (
             result_role["config"].items()
             >= dict(
-                minSessionTimeout="5601", maxSessionTimeout="45001", maxClientCnxns="56"
+                minSessionTimeout="5601",
+                maxSessionTimeout="45001",
+                maxClientCnxns="56",
             ).items()
         )
 
@@ -757,12 +812,19 @@ class TestServiceModificationRoles:
         assert (
             result_role["config"].items()
             >= dict(
-                minSessionTimeout="5601", maxSessionTimeout="45001", maxClientCnxns="56"
+                minSessionTimeout="5601",
+                maxSessionTimeout="45001",
+                maxClientCnxns="56",
             ).items()
         )
 
     def test_service_existing_role_config_purge(
-        self, conn, module_args, cm_api_client, zookeeper, server_role
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        zookeeper,
+        server_role,
     ):
         RolesResourceApi(cm_api_client).update_role_config(
             cluster_name=zookeeper.cluster_ref.cluster_name,
@@ -772,7 +834,7 @@ class TestServiceModificationRoles:
                 items=[
                     ApiConfig(name="minSessionTimeout", value="5501"),
                     ApiConfig(name="maxSessionTimeout", value="45001"),
-                ]
+                ],
             ),
         )
 
@@ -789,11 +851,11 @@ class TestServiceModificationRoles:
                             "minSessionTimeout": 5601,
                             "maxClientCnxns": 56,
                         },
-                    }
+                    },
                 ],
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -834,7 +896,11 @@ class TestServiceModificationRoles:
         )
 
     def test_service_existing_role_add(
-        self, conn, module_args, zookeeper, available_hosts
+        self,
+        conn,
+        module_args,
+        zookeeper,
+        available_hosts,
     ):
         module_args(
             {
@@ -845,10 +911,10 @@ class TestServiceModificationRoles:
                     {
                         "type": "SERVER",
                         "hostnames": [available_hosts[0].hostname],
-                    }
+                    },
                 ],
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -873,7 +939,11 @@ class TestServiceModificationRoles:
         ]
 
     def test_service_existing_role_purge(
-        self, conn, module_args, zookeeper, available_hosts
+        self,
+        conn,
+        module_args,
+        zookeeper,
+        available_hosts,
     ):
         module_args(
             {
@@ -887,11 +957,11 @@ class TestServiceModificationRoles:
                         "config": {
                             "serverId": 9,
                         },
-                    }
+                    },
                 ],
                 "purge": True,
                 "state": "present",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

@@ -25,6 +25,7 @@ DOCUMENTATION = """
     description:
         - Parses and verifies the contents of a Cloudera license.
         - Returns the license details, including the computed C(password).
+    version_added: "5.0.0"
     options:
         _terms:
             description:
@@ -78,7 +79,7 @@ RETURN = """
     description:
       - The contents of the license.
     type: dict
-    options:
+    contains:
       deactivation_date:
         description: Date of license deactivation.
         returned: always
@@ -95,7 +96,7 @@ RETURN = """
         returned: always
       password:
         description: Computed password of the license.
-        return: always
+        returned: always
       start_date:
         description: Date of license activation.
         returned: always
@@ -129,11 +130,11 @@ class LookupModule(LookupBase):
             license = self.parse(path=terms[0])
         elif len(terms) > 1:
             raise AnsibleLookupError(
-                "Please specify a single path for the Cloudera license file."
+                "Please specify a single path for the Cloudera license file.",
             )
         else:
             raise AnsibleLookupError(
-                "Please specify either the path to the Cloudera license or its contents in the 'contents' parameter."
+                "Please specify either the path to the Cloudera license or its contents in the 'contents' parameter.",
             )
 
         msg = hashlib.sha256(to_bytes(license["name"] + license["uuid"]))

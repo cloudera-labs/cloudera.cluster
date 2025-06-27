@@ -34,7 +34,11 @@ LOG = logging.getLogger(__name__)
 
 class TestHostAttachedCluster:
     def test_host_attach_invalid_cluster(
-        self, conn, module_args, resettable_host, detached_hosts
+        self,
+        conn,
+        module_args,
+        resettable_host,
+        detached_hosts,
     ):
         target_host = resettable_host(random.choice(detached_hosts))
 
@@ -43,7 +47,7 @@ class TestHostAttachedCluster:
                 **conn,
                 "name": target_host.hostname,
                 "cluster": "BOOM",
-            }
+            },
         )
 
         with pytest.raises(
@@ -53,7 +57,12 @@ class TestHostAttachedCluster:
             host.main()
 
     def test_host_attach_cluster(
-        self, conn, module_args, base_cluster, resettable_host, detached_hosts
+        self,
+        conn,
+        module_args,
+        base_cluster,
+        resettable_host,
+        detached_hosts,
     ):
         target_host = resettable_host(random.choice(detached_hosts))
 
@@ -62,7 +71,7 @@ class TestHostAttachedCluster:
                 **conn,
                 "name": target_host.hostname,
                 "cluster": base_cluster.name,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -82,7 +91,12 @@ class TestHostAttachedCluster:
 @pytest.mark.skip("Requires set up of two clusters")
 class TestHostMigrateClusters:
     def test_host_migrate_cluster(
-        self, conn, module_args, base_cluster, resettable_host, detached_hosts
+        self,
+        conn,
+        module_args,
+        base_cluster,
+        resettable_host,
+        detached_hosts,
     ):
         target_host = resettable_host(random.choice(detached_hosts))
 
@@ -91,7 +105,7 @@ class TestHostMigrateClusters:
                 **conn,
                 "name": target_host.hostname,
                 "cluster": base_cluster.name,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -117,7 +131,7 @@ class TestHostDetachedCluster:
                 **conn,
                 "name": target_host.hostname,
                 "purge": True,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

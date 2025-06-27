@@ -22,6 +22,7 @@ description:
   - Gather details about a role config group or groups of a service in a CDP cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:
@@ -46,15 +47,6 @@ options:
     aliases:
       - role_type
   name:
-  type:
-    description:
-      - The role type defining the role config group(s).
-      - If specified, will return all role config groups for the type.
-      - Mutually exclusive with O(name).
-    type: str
-    aliases:
-      - role_type
-  name:
     description:
       - The role config group to examine.
       - If defined, the module will return the role config group.
@@ -65,13 +57,7 @@ options:
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-attributes:
-  check_mode:
-    support: full
-requirements:
-  - cm-client
-seealso:
-  - module: cloudera.cluster.service_role_config_group
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -182,7 +168,8 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -202,7 +189,7 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
                         cluster_name=self.cluster,
                         role_config_group_name=self.name,
                         service_name=self.service,
-                    )
+                    ),
                 ]
             except ApiException as e:
                 if e.status != 404:
@@ -236,7 +223,7 @@ class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
                 {
                     **parse_role_config_group_result(r),
                     "role_names": [r.name for r in roles.items],
-                }
+                },
             )
 
 

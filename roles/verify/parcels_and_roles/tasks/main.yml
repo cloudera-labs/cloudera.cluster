@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Ensure cluster services and roles are valid
   include_tasks: check_cluster.yml
   loop: "{{ definition.clusters }}"

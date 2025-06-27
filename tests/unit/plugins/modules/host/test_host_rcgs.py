@@ -52,7 +52,11 @@ LOG = logging.getLogger(__name__)
 
 class TestHostRoleConfigGroups:
     def test_host_update_role_config_group_invalid_service(
-        self, conn, module_args, available_hosts, zookeeper
+        self,
+        conn,
+        module_args,
+        available_hosts,
+        zookeeper,
     ):
 
         target_host = available_hosts[0]
@@ -69,14 +73,18 @@ class TestHostRoleConfigGroups:
                         "type": "Example",
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="Service 'BOOM' not found"):
             host.main()
 
     def test_host_update_role_config_group_invalid_type(
-        self, conn, module_args, available_hosts, zookeeper
+        self,
+        conn,
+        module_args,
+        available_hosts,
+        zookeeper,
     ):
         target_host = available_hosts[0]
 
@@ -92,11 +100,12 @@ class TestHostRoleConfigGroups:
                         "type": "BOOM",
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(
-            AnsibleFailJson, match="Base role config group for type, 'BOOM', not found"
+            AnsibleFailJson,
+            match="Base role config group for type, 'BOOM', not found",
         ):
             host.main()
 
@@ -137,11 +146,12 @@ class TestHostRoleConfigGroups:
                         "name": "BOOM",
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(
-            AnsibleFailJson, match="The role config group 'BOOM' does not exist"
+            AnsibleFailJson,
+            match="The role config group 'BOOM' does not exist",
         ):
             host.main()
 
@@ -183,7 +193,7 @@ class TestHostRoleConfigGroups:
                         "name": target_rcg.name,
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -193,7 +203,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -211,7 +221,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -222,7 +232,12 @@ class TestHostRoleConfigGroups:
         ]
 
     def test_host_update_role_config_group_new_base(
-        self, conn, module_args, cm_api_client, available_hosts, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        available_hosts,
+        zookeeper,
     ):
         target_rcg = get_base_role_config_group(
             api_client=cm_api_client,
@@ -246,7 +261,7 @@ class TestHostRoleConfigGroups:
                         "name": target_rcg.name,
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -256,7 +271,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -274,7 +289,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -341,7 +356,7 @@ class TestHostRoleConfigGroups:
                         "name": target_rcg.name,
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -351,7 +366,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -369,7 +384,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -380,7 +395,13 @@ class TestHostRoleConfigGroups:
         ]
 
     def test_host_update_role_config_group_existing_base(
-        self, conn, module_args, cm_api_client, available_hosts, base_cluster, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        available_hosts,
+        base_cluster,
+        zookeeper,
     ):
         # Get an existing, non-ZK SERVER host
         target_host = available_hosts[0]
@@ -422,7 +443,7 @@ class TestHostRoleConfigGroups:
                         "name": target_rcg.name,
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -432,7 +453,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -450,7 +471,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -518,7 +539,7 @@ class TestHostRoleConfigGroups:
                     },
                 ],
                 "purge": True,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -528,7 +549,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -538,7 +559,7 @@ class TestHostRoleConfigGroups:
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )
 
         # Idempotency
@@ -549,7 +570,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -559,11 +580,17 @@ class TestHostRoleConfigGroups:
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )
 
     def test_host_update_role_config_group_purge_base(
-        self, conn, module_args, cm_api_client, available_hosts, base_cluster, zookeeper
+        self,
+        conn,
+        module_args,
+        cm_api_client,
+        available_hosts,
+        base_cluster,
+        zookeeper,
     ):
         # Get an existing, non-ZK SERVER host
         target_host = available_hosts[0]
@@ -606,7 +633,7 @@ class TestHostRoleConfigGroups:
                     },
                 ],
                 "purge": True,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -616,7 +643,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -626,7 +653,7 @@ class TestHostRoleConfigGroups:
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )
 
         # Idempotency
@@ -637,7 +664,7 @@ class TestHostRoleConfigGroups:
 
         # Reread the host
         updated_host = HostsResourceApi(cm_api_client).read_host(
-            host_id=target_host.host_id
+            host_id=target_host.host_id,
         )
 
         # Retrieve the current running roles on the host
@@ -647,5 +674,5 @@ class TestHostRoleConfigGroups:
             [
                 role.role_config_group_ref.role_config_group_name
                 for role in current_roles
-            ]
+            ],
         )

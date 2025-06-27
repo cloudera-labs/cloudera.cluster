@@ -1,3 +1,4 @@
+---
 # Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +101,6 @@ base_cluster_directories:
       - zk_server_log_dir
 
 kts_cluster_directories: {}
-
 cms_directories:
   ACTIVITYMONITOR:
     - mgmt_log_dir

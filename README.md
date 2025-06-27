@@ -159,24 +159,42 @@ ansible-galaxy collection build
 
 ## Building the API Documentation
 
-To create a local copy of the API documentation, first make sure the collection is in your `ANSIBLE_COLLECTIONS_PATHS`. Then run the following:
+To create a local copy of the API documentation, first make sure the collection is in your `ANSIBLE_COLLECTIONS_PATH`.
 
 ```bash
-# change into the /docsbuild directory
-cd docsbuild
-
-# install the build requirements (antsibull-docs); you may want to set up a
-# dedicated virtual environment
-pip install ansible-core https://github.com/cloudera-labs/antsibull-docs/archive/cldr-docsite.tar.gz
-
-# Install the collection's build dependencies
-pip install requirements.txt
-
-# Then run the build script
-./build.sh
+hatch run docs:build
 ```
 
 Your local documentation will be found at `docsbuild/build/html`.
+
+You can also lint the documentation with the following command:
+
+```bash
+hatch run docs:lint
+```
+
+## Preparing a New Version
+
+To prepare a version release, first set the following variables for `antsichaut`:
+
+```bash
+export GITHUB_REPOSITORY=cloudera-labs/cloudera.cluster
+export GITHUB_TOKEN=some_gh_token_value
+```
+
+Update the collection version using [`hatch version`](https://hatch.pypa.io/latest/version/). For example, to increment to the next minor release:
+
+```bash
+hatch version minor
+```
+
+Then update the changelog to query the pull requests since the last release.
+
+```bash
+hatch run docs:changelog
+```
+
+You can then examine (and update if needed) the resulting `changelog.yaml` and `CHANGELOG.rst` files before committing to the release branch.
 
 ## Tested Platforms
 

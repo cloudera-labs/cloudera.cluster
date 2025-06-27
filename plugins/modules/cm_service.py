@@ -23,6 +23,7 @@ description:
 author:
   - Ronald Suplina (@rsuplina)
   - Webster Mudge (@wmudge)
+version_added: "4.4.0"
 options:
   config:
     description:
@@ -35,7 +36,7 @@ options:
   role_config_groups:
     description:
       - A list of one or more role config groups to manage.
-      - Each role config group is the I(base) for the O(type).
+      - Each role config group is the I(base) for the O(role_config_groups[].type).
     type: list
     elements: dict
     suboptions:
@@ -66,16 +67,16 @@ options:
       cluster_hostname:
         description:
           - The hostname of an instance for the role.
-          - If the hostname is different than that of the existing instance for the O(type), the role will be destroyed and rebuilt on the declared host.
-          - Mutually exclusive with O(cluster_host_id).
+          - If the hostname is different than that of the existing instance for the O(roles[].type), the role will be destroyed and rebuilt on the declared host.
+          - Mutually exclusive with O(roles[].cluster_host_id).
         type: str
         aliases:
           - cluster_host
       cluster_host_id:
         description:
           - The host ID of the instance for the role.
-          - If the host ID is different than that of the existing instance for the O(type), the role will be destroyed and rebuilt on the declared host.
-          - Mutually exclusive with O(cluster_hostname).
+          - If the host ID is different than that of the existing instance for the O(roles[].type), the role will be destroyed and rebuilt on the declared host.
+          - Mutually exclusive with O(roles[].cluster_hostname).
         type: str
       config:
         description:
@@ -110,7 +111,7 @@ options:
   state:
     description:
       - The operating state of the service.
-      - The V(restarted) value will always restart the service and set RV(changed=True).
+      - The V(restarted) value will always restart the service and set RV(ignore:changed=True).
     type: str
     default: started
     choices:
@@ -124,6 +125,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -162,7 +164,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     config:
       mgmt_pause_duration_window: 10
-      ldap_monitoring_enabled: no
+      ldap_monitoring_enabled: false
 
 - name: Unset a service-wide configuration for Cloudera Manager service
   cloudera.cluster.cm_service:
@@ -217,12 +219,12 @@ EXAMPLES = r"""
           process_start_secs: None
 
 - name: Update the service state to only the declared configuration
-  cloudera.cluster.cm_service
+  cloudera.cluster.cm_service:
     host: "cm.example.com"
     username: "jane_smith"
     password: "S&peR4Ec*re"
     state: started
-    purge: yes
+    purge: true
     config:
       mgmt_pause_duration_window: 10
     role_config_groups:
@@ -243,14 +245,14 @@ EXAMPLES = r"""
         cluster_hostname: "services01.example.com"
 
 - name: Stop the Cloudera Manager service
-  cloudera.cluster.cm_service
+  cloudera.cluster.cm_service:
     host: "cm.example.com"
     username: "jane_smith"
     password: "S&peR4Ec*re"
     state: "stopped"
 
 - name: Remove the Cloudera Manager service and its roles and role config groups
-  cloudera.cluster.cm_service
+  cloudera.cluster.cm_service:
     host: "cm.example.com"
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -668,7 +670,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
                 if maintenance_cmd.success is False:
                     self.module.fail_json(
-                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}"
+                        msg=f"Unable to set Maintenance mode to '{self.maintenance}': {maintenance_cmd.result_message}",
                     )
 
             # Handle service-wide changes
@@ -688,7 +690,8 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
                     if not self.module.check_mode:
                         service_api.update_service_config(
-                            message=self.message, body=updates.config
+                            message=self.message,
+                            body=updates.config,
                         )
 
             # Manage role config groups (base only)
@@ -733,7 +736,9 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                     # Reconcile configurations
                     if existing_rcg.config or self.purge:
                         updates = ConfigListUpdates(
-                            existing_rcg.config, incoming_rcg["config"], self.purge
+                            existing_rcg.config,
+                            incoming_rcg["config"],
+                            self.purge,
                         )
 
                         if updates.changed:
@@ -750,7 +755,9 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                         payload.display_name is not None or payload.config is not None
                     ) and not self.module.check_mode:
                         rcg_api.update_role_config_group(
-                            existing_rcg.name, message=self.message, body=payload
+                            existing_rcg.name,
+                            message=self.message,
+                            body=payload,
                         )
 
                 # Add any new role config groups
@@ -761,7 +768,8 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                         rcg_diff = dict(before=dict(), after=dict())
 
                     existing_rcg = get_mgmt_base_role_config_group(
-                        self.api_client, rcg_type
+                        self.api_client,
+                        rcg_type,
                     )
                     incoming_rcg = incoming_rcgs_map[rcg_type]
 
@@ -771,7 +779,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                     if incoming_display_name is not None:
                         if self.module._diff:
                             rcg_diff["before"].update(
-                                display_name=existing_rcg.display_name
+                                display_name=existing_rcg.display_name,
                             )
                             rcg_diff["after"].update(display_name=incoming_display_name)
                         payload.display_name = incoming_display_name
@@ -779,7 +787,9 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                     incoming_rcg_config = incoming_rcg.get("config")
                     if incoming_rcg_config:
                         updates = ConfigListUpdates(
-                            existing_rcg.config, incoming_rcg_config, self.purge
+                            existing_rcg.config,
+                            incoming_rcg_config,
+                            self.purge,
                         )
 
                         if self.module._diff:
@@ -792,7 +802,9 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
                     if not self.module.check_mode:
                         rcg_api.update_role_config_group(
-                            existing_rcg.name, message=self.message, body=payload
+                            existing_rcg.name,
+                            message=self.message,
+                            body=payload,
                         )
 
                 # Remove any undeclared role config groups
@@ -804,15 +816,18 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                             rcg_diff = dict(before=dict(), after=dict())
 
                         existing_rcg = get_mgmt_base_role_config_group(
-                            self.api_client, rcg_type
+                            self.api_client,
+                            rcg_type,
                         )
 
                         payload = ApiRoleConfigGroup(
-                            display_name=f"mgmt-{rcg_type}-BASE"
+                            display_name=f"mgmt-{rcg_type}-BASE",
                         )
 
                         updates = ConfigListUpdates(
-                            existing_rcg.config, dict(), self.purge
+                            existing_rcg.config,
+                            dict(),
+                            self.purge,
                         )
 
                         if self.module._diff:
@@ -823,7 +838,9 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
                         if not self.module.check_mode:
                             rcg_api.update_role_config_group(
-                                existing_rcg.name, message=self.message, body=payload
+                                existing_rcg.name,
+                                message=self.message,
+                                body=payload,
                             )
 
             # Manage roles
@@ -883,8 +900,8 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                                 (
                                     iter(
                                         role_api.create_roles(
-                                            body=ApiRoleList(items=[new_role])
-                                        ).items
+                                            body=ApiRoleList(items=[new_role]),
+                                        ).items,
                                     )
                                 ),
                                 {},
@@ -933,8 +950,8 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                             (
                                 iter(
                                     role_api.create_roles(
-                                        body=ApiRoleList(items=[new_role])
-                                    ).items
+                                        body=ApiRoleList(items=[new_role]),
+                                    ).items,
                                 )
                             ),
                             {},
@@ -957,21 +974,27 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
             # Handle various states
             if self.state == "started" and current.service_state not in [
-                ApiServiceState.STARTED
+                ApiServiceState.STARTED,
             ]:
                 self.exec_service_command(
-                    current, ApiServiceState.STARTED, service_api.start_command
+                    current,
+                    ApiServiceState.STARTED,
+                    service_api.start_command,
                 )
             elif self.state == "stopped" and current.service_state not in [
                 ApiServiceState.STOPPED,
                 ApiServiceState.NA,
             ]:
                 self.exec_service_command(
-                    current, ApiServiceState.STOPPED, service_api.stop_command
+                    current,
+                    ApiServiceState.STOPPED,
+                    service_api.stop_command,
                 )
             elif self.state == "restarted":
                 self.exec_service_command(
-                    current, ApiServiceState.STARTED, service_api.restart_command
+                    current,
+                    ApiServiceState.STARTED,
+                    service_api.restart_command,
                 )
 
             # If there are changes, get a fresh read
@@ -985,7 +1008,10 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
             self.module.fail_json(msg=f"Invalid state: {self.state}")
 
     def exec_service_command(
-        self, service: ApiService, value: str, cmd: Callable[[None], ApiCommand]
+        self,
+        service: ApiService,
+        value: str,
+        cmd: Callable[[None], ApiCommand],
     ):
         self.changed = True
         if self.module._diff:
@@ -1016,7 +1042,9 @@ def main():
                     display_name=dict(),  # TODO Remove display_name as an option
                     type=dict(required=True, aliases=["role_type"]),
                     config=dict(
-                        required=True, type="dict", aliases=["params", "parameters"]
+                        required=True,
+                        type="dict",
+                        aliases=["params", "parameters"],
                     ),
                 ),
             ),

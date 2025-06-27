@@ -22,6 +22,7 @@ description:
   - Retrieve details of a specific or all external user mappings within the Cloudera Manager.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:
@@ -35,6 +36,9 @@ options:
       - The uuid of the external mapping.
     type: str
     required: no
+extends_documentation_fragment:
+  - cloudera.cluster.cm_options
+  - cloudera.cluster.cm_endpoint
 """
 
 EXAMPLES = r"""
@@ -124,12 +128,12 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                     if self.name == mapping.name:
                         self.external_user_mappings_info_output = [
                             api_instance.read_external_user_mapping(
-                                uuid=mapping.uuid
-                            ).to_dict()
+                                uuid=mapping.uuid,
+                            ).to_dict(),
                         ]
             elif self.uuid:
                 self.external_user_mappings_info_output = [
-                    api_instance.read_external_user_mapping(uuid=self.uuid).to_dict()
+                    api_instance.read_external_user_mapping(uuid=self.uuid).to_dict(),
                 ]
             else:
                 self.external_user_mappings_info_output = (

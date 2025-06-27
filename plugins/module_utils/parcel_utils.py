@@ -72,7 +72,7 @@ class Parcel(object):
                     cluster_name=self.cluster,
                     product=self.product,
                     version=self.version,
-                ).stage
+                ).stage,
             ).upper()
         ]
 
@@ -85,18 +85,20 @@ class Parcel(object):
 
         while end_time > time.time():
             parcel_status = self.parcel_api.read_parcel(
-                cluster_name=self.cluster, product=self.product, version=self.version
+                cluster_name=self.cluster,
+                product=self.product,
+                version=self.version,
             )
             if parcel_status.stage == stage.name:
                 return
             else:
                 self.log(
-                    f"[RETRY] Waiting for parcel stage, {stage.name}, for cluster '{self.cluster}': Product {self.product}[{self.version}]"
+                    f"[RETRY] Waiting for parcel stage, {stage.name}, for cluster '{self.cluster}': Product {self.product}[{self.version}]",
                 )
                 time.sleep(self.delay)
 
         return Exception(
-            f"Failed to reach parcel stage, {stage.name}: timeout ({self.timeout} secs)"
+            f"Failed to reach parcel stage, {stage.name}: timeout ({self.timeout} secs)",
         )
 
     def _exec(self, stage: STAGE, func) -> None:
@@ -115,7 +117,7 @@ class Parcel(object):
             except ApiException as e:
                 if e.status == 400:
                     self.log(
-                        f"[RETRY] Attempting to execute parcel function, {func}, for cluster '{self.cluster}': Product {self.product}[{self.version}]"
+                        f"[RETRY] Attempting to execute parcel function, {func}, for cluster '{self.cluster}': Product {self.product}[{self.version}]",
                     )
                     time.sleep(self.delay)
                     continue
@@ -128,7 +130,8 @@ class Parcel(object):
         if self.current > self.STAGE.AVAILABLE_REMOTELY:
             self.download(self.STAGE.AVAILABLE_REMOTELY)
             self._exec(
-                self.STAGE.AVAILABLE_REMOTELY, self.parcel_api.remove_download_command
+                self.STAGE.AVAILABLE_REMOTELY,
+                self.parcel_api.remove_download_command,
             )
 
     def download(self, target: STAGE = STAGE.DOWNLOADED):
@@ -151,7 +154,8 @@ class Parcel(object):
         elif self.current < self.STAGE.DISTRIBUTING:
             self.download(target)
             self._exec(
-                self.STAGE.DISTRIBUTED, self.parcel_api.start_distribution_command
+                self.STAGE.DISTRIBUTED,
+                self.parcel_api.start_distribution_command,
             )
 
     def activate(self):
@@ -181,7 +185,10 @@ def parse_parcel_result(parcel: ApiParcel) -> dict:
 
 
 def wait_parcel_staging(
-    api_client: ApiClient, cluster: ApiCluster, delay: int = 15, timeout: int = 3600
+    api_client: ApiClient,
+    cluster: ApiCluster,
+    delay: int = 15,
+    timeout: int = 3600,
 ) -> None:
     parcels_api = ParcelsResourceApi(api_client)
 
@@ -207,5 +214,5 @@ def wait_parcel_staging(
             time.sleep(delay)
 
     raise ParcelException(
-        f"Failed to reach stable parcel stages for cluster, '{cluster.name}': timeout ({timeout} secs)"
+        f"Failed to reach stable parcel stages for cluster, '{cluster.name}': timeout ({timeout} secs)",
     )

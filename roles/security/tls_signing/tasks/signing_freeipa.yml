@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 # ZOOKEEPER-3832
 # - name: Sign the private key
 #   shell:
@@ -33,14 +32,14 @@
 - name: Sign the private key
   shell:
     cmd: |
-        kinit -kt /etc/krb5.keytab "host/{{ inventory_hostname }}"
-        trap kdestroy EXIT
-        ipa cert-request \
-        "{{ base_dir_security_pki }}/{{ inventory_hostname }}.csr" \
-        --principal "host/{{ inventory_hostname }}" \
-        --certificate-out "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem" || (
-          rm "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
-          exit 1
-        )
-        chmod 644 "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+      kinit -kt /etc/krb5.keytab "host/{{ inventory_hostname }}"
+      trap kdestroy EXIT
+      ipa cert-request \
+      "{{ base_dir_security_pki }}/{{ inventory_hostname }}.csr" \
+      --principal "host/{{ inventory_hostname }}" \
+      --certificate-out "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem" || (
+        rm "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
+        exit 1
+      )
+      chmod 644 "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"
     creates: "{{ base_dir_security_pki }}/{{ inventory_hostname }}.pem"

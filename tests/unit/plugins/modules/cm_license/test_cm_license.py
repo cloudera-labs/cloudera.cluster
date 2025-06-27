@@ -40,7 +40,7 @@ def test_pytest_cm_license(module_args):
             "verify_tls": "no",
             "debug": "no",
             "license": "./files/license.txt",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

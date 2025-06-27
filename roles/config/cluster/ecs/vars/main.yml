@@ -15,5 +15,5 @@
 ---
 
 custom_config_templates:
-# Custom configurations for ECS
+  # Custom configurations for ECS
   - template: configs/ecs.j2

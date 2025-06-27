@@ -23,6 +23,7 @@ description:
   - Imports the KDC Account Manager credentials needed by Cloudera Manager to create kerberos principals.
 author:
   - "Jim Enright (@jimright)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 options:
@@ -116,7 +117,7 @@ options:
     description:
       - Custom Kerberos Keytab Retrieval Script.
       - Specify the path to a custom script, or executable, to retrieve a Kerberos keytab.
-      - The target script should accept two arguments: a destination path for the resulting keytab and the full principal name of the owner of the keytab.
+      - "The target script should accept two arguments: a destination path for the resulting keytab and the full principal name of the owner of the keytab."
     type: str
     required: false
   kdc_admin_user:
@@ -134,7 +135,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
 notes:
-  - Using the C(cm_config) module with O(purge=yes) will remove the Cloudera Manager configurations set by this module.
+  - Using O(cloudera.cluster.cm_config#module:purge=yes) will remove the Cloudera Manager configurations set by this module.
   - Requires C(cm_client).
 seealso:
   - module: cloudera.cluster.cm_config
@@ -267,7 +268,7 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
         self.ad_delete_on_regenerate = self.get_param("ad_delete_on_regenerate")
         self.ad_set_encryption_types = self.get_param("ad_set_encryption_types")
         self.kdc_account_creation_host_override = self.get_param(
-            "kdc_account_creation_host_override"
+            "kdc_account_creation_host_override",
         )
         self.gen_keytab_script = self.get_param("gen_keytab_script")
         self.kdc_admin_user = self.get_param("kdc_admin_user")
@@ -298,7 +299,7 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
             or self.ad_set_encryption_types
         ):
             self.module.fail_json(
-                msg="Parameters 'ad_account_prefix', 'ad_kdc_domain', 'ad_delete_on_regenerate' or 'ad_set_encryption_types' can only be used with 'kdc_type = Active Directory'"
+                msg="Parameters 'ad_account_prefix', 'ad_kdc_domain', 'ad_delete_on_regenerate' or 'ad_set_encryption_types' can only be used with 'kdc_type = Active Directory'",
             )
 
         # Convert encryption types to space separated string
@@ -348,7 +349,7 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                     body = ApiConfigList(
                         items=[
                             ApiConfig(name=k, value=v) for k, v in change_set.items()
-                        ]
+                        ],
                     )
                     cm_api_instance.update_config(message=self.message, body=body).items
 
@@ -369,8 +370,9 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                         creds_cmd_result = next(
                             iter(
                                 self.wait_for_command_state(
-                                    command_id=cmd.id, polling_interval=self.delay
-                                )
+                                    command_id=cmd.id,
+                                    polling_interval=self.delay,
+                                ),
                             ),
                             None,
                         )
@@ -416,7 +418,8 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
             )
             # NOTE: Change set is always > 0
             change_set = resolve_parameter_changeset(
-                current, {k.upper(): v for k, v in reset_params.items()}
+                current,
+                {k.upper(): v for k, v in reset_params.items()},
             )
 
             if change_set:
@@ -432,14 +435,14 @@ class ClouderaManagerKerberos(ClouderaManagerMutableModule):
                     body = ApiConfigList(
                         items=[
                             ApiConfig(name=k, value=v) for k, v in reset_params.items()
-                        ]
+                        ],
                     )
                     cm_api_instance.update_config(body=body).items
 
                 # Set output
                 # Retrieve cm_config again after enabling Kerberos
                 self.output.update(
-                    cm_config=[r.to_dict() for r in self.get_cm_config()]
+                    cm_config=[r.to_dict() for r in self.get_cm_config()],
                 )
 
 

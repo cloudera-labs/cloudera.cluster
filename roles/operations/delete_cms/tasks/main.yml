@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Check cms exists
   cloudera.cluster.cm_api:
     endpoint: /cm/service

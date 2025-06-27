@@ -24,6 +24,7 @@ description:
   - Return information about the trial license.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 """
@@ -102,7 +103,8 @@ class ClouderaTrial(ClouderaManagerModule):
 
 def main():
     module = ClouderaManagerModule.ansible_module(
-        argument_spec=dict(), supports_check_mode=True
+        argument_spec=dict(),
+        supports_check_mode=True,
     )
 
     result = ClouderaTrial(module)

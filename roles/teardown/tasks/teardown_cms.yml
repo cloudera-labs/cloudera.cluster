@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate merged configs
   include_role:
     name: cloudera.cluster.config.services.mgmt

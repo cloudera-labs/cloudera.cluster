@@ -46,7 +46,7 @@ def test_read_role(conn, module_args, cms_auto):
         {
             **conn,
             "type": "HOSTMONITOR",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -61,7 +61,7 @@ def test_read_role_nonexistent(conn, module_args, cms_auto):
         {
             **conn,
             "type": "DOESNOTEXIST",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -74,6 +74,7 @@ def test_read_service_nonexistent(conn, module_args):
     module_args({**conn})
 
     with pytest.raises(
-        AnsibleFailJson, match="Cloudera Management service does not exist"
+        AnsibleFailJson,
+        match="Cloudera Management service does not exist",
     ) as e:
         cm_service_role_info.main()

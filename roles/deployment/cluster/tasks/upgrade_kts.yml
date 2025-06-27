@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate complete kts cluster configs
   include_role:
     name: config/cluster/kts
@@ -35,7 +34,8 @@
   register: cm_config
 
 - set_fact:
-    parcel_repos: "{{ (cm_config.json | json_query('items[?name==`REMOTE_PARCEL_REPO_URLS`].value') | default(['']))[0].split(',') | default([]) | union(cluster.repositories) }}"
+    parcel_repos: "{{ (cm_config.json | json_query('items[?name==`REMOTE_PARCEL_REPO_URLS`].value') | default(['']))[0].split(',') | default([]) | union(cluster.repositories)
+      }}"
 
 - name: Update parcelrepos
   cloudera.cluster.cm_api:
@@ -61,7 +61,8 @@
   register: installed_parcels
 
 - set_fact:
-    installed_parcel_version: "{{ installed_parcels.json | json_query('items[?product==`KEYTRUSTEE_SERVER` && stage==`ACTIVATED`]') | cloudera.cluster.get_product_version('KEYTRUSTEE_SERVER') }}"
+    installed_parcel_version: "{{ installed_parcels.json | json_query('items[?product==`KEYTRUSTEE_SERVER` && stage==`ACTIVATED`]') | cloudera.cluster.get_product_version('KEYTRUSTEE_SERVER')
+      }}"
 
 - name: Download and upgrade KTS Parcel
   block:

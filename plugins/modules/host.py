@@ -24,6 +24,7 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   name:
     description:
@@ -74,7 +75,7 @@ options:
       - Role configuration overrides for the host.
     type: list
     elements: dict
-    options:
+    suboptions:
       service:
         description:
           - The service of the role instance on the host.
@@ -102,7 +103,7 @@ options:
       - Role config groups (and associated role instances) to apply to the host.
     type: list
     elements: dict
-    options:
+    suboptions:
       service:
         description:
           - The service of the role config group (and associated role instance) on the host.
@@ -113,14 +114,14 @@ options:
       type:
         description:
           - The base role type of the role config group (and associated role instance) on the host.
-          - One of O(type) or O(name) is required.
+          - One of O(role_config_groups[].type) or O(role_config_groups[].name) is required.
         type: str
         aliases:
           - role_type
       name:
         description:
           - The name of the role config group (and associated role instance) on the host.
-          - One of O(type) or O(name) is required.
+          - One of O(role_config_groups[].type) or O(role_config_groups[].name) is required.
         type: str
   tags:
     description:
@@ -484,7 +485,7 @@ class Host(ClouderaManagerMutableModule):
 
                 if not self.module.check_mode:
                     current = host_api.create_hosts(
-                        body=ApiHostList(items=[host])
+                        body=ApiHostList(items=[host]),
                     ).items[0]
 
                     if not current:
@@ -504,7 +505,7 @@ class Host(ClouderaManagerMutableModule):
                 # Handle IP address configuration
                 if self.ip_address and self.ip_address != current.ip_address:
                     self.module.fail_json(
-                        msg="Invalid host configuration. To update the host IP address, please remove and then add the host."
+                        msg="Invalid host configuration. To update the host IP address, please remove and then add the host.",
                     )
 
                 # Handle rack ID
@@ -520,7 +521,8 @@ class Host(ClouderaManagerMutableModule):
                     # Currently, update_host() only handles rack_id, so executing here, not further in the logic
                     if not self.module.check_mode:
                         current = host_api.update_host(
-                            host_id=current.host_id, body=current
+                            host_id=current.host_id,
+                            body=current,
                         )
 
                 # Handle host configs
@@ -594,7 +596,8 @@ class Host(ClouderaManagerMutableModule):
 
                         if self.module._diff:
                             self.diff["before"].update(
-                                cluster=current.cluster_ref.cluster_name, roles=[]
+                                cluster=current.cluster_ref.cluster_name,
+                                roles=[],
                             )
                             self.diff["after"].update(cluster="", roles=[])
 
@@ -602,7 +605,7 @@ class Host(ClouderaManagerMutableModule):
                             if role.service_ref.cluster_name is not None:
                                 if self.module._diff:
                                     self.diff["before"]["roles"].append(
-                                        parse_role_result(role)
+                                        parse_role_result(role),
                                     )
 
                                 if not self.module.check_mode:
@@ -624,7 +627,7 @@ class Host(ClouderaManagerMutableModule):
                     except ApiException as ex:
                         if ex.status == 404:
                             self.module.fail_json(
-                                msg=f"Cluster not found: {self.cluster}."
+                                msg=f"Cluster not found: {self.cluster}.",
                             )
 
                     # Handle new cluster membership
@@ -648,15 +651,15 @@ class Host(ClouderaManagerMutableModule):
                                                 ApiHostRef(
                                                     host_id=current.host_id,
                                                     hostname=current.hostname,
-                                                )
-                                            ]
+                                                ),
+                                            ],
                                         ),
                                     )
                                     break
                                 except ApiException as ae:
                                     if ae.status == 400:
                                         self.module.log(
-                                            f"[RETRY] Attempting to add host, {current.hostname}, to cluster, {cluster.name}"
+                                            f"[RETRY] Attempting to add host, {current.hostname}, to cluster, {cluster.name}",
                                         )
                                         time.sleep(self.delay)
                                         continue
@@ -684,8 +687,8 @@ class Host(ClouderaManagerMutableModule):
                                         ApiHostRef(
                                             host_id=current.host_id,
                                             hostname=current.hostname,
-                                        )
-                                    ]
+                                        ),
+                                    ],
                                 ),
                             )
 
@@ -709,7 +712,7 @@ class Host(ClouderaManagerMutableModule):
                 except ApiException as ex:
                     if ex.status == 404:
                         self.module.fail_json(
-                            msg=f"Host template, '{self.host_template}', does not exist on cluster, '{cluster.name}'"
+                            msg=f"Host template, '{self.host_template}', does not exist on cluster, '{cluster.name}'",
                         )
 
                 try:
@@ -723,7 +726,7 @@ class Host(ClouderaManagerMutableModule):
                     )
                 except ApiException as ex:
                     self.module.fail_json(
-                        msg=f"Error whil reconciling host template assignments: {to_native(ex)}"
+                        msg=f"Error whil reconciling host template assignments: {to_native(ex)}",
                     )
 
                 if before_ht or after_ht:
@@ -797,7 +800,7 @@ class Host(ClouderaManagerMutableModule):
                         api_client=self.api_client,
                         host_id=current.host_id,
                         view="full",
-                    )
+                    ),
                 )
             else:
                 self.output = parse_host_result(current)

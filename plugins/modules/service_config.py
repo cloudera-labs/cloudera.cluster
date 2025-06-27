@@ -22,6 +22,7 @@ description:
   - Manage a configuration (service-wide) for a cluster service.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:
@@ -103,7 +104,7 @@ EXAMPLES = r"""
     parameters:
       config_one: ValueOne
       config_two: 4567
-    purge: yes
+    purge: true
 
 - name: Reset all service-wide parameters
   cloudera.cluster.service_config:
@@ -113,7 +114,7 @@ EXAMPLES = r"""
     cluster: example-cluster
     service: example-service
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""
@@ -277,7 +278,9 @@ class ClusterServiceConfig(ClouderaManagerMutableModule):
             self.config = [
                 p.to_dict()
                 for p in api_instance.read_service_config(
-                    self.cluster, self.service, view=self.view
+                    self.cluster,
+                    self.service,
+                    view=self.view,
                 ).items
             ]
 

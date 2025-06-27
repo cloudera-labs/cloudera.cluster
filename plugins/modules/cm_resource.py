@@ -25,6 +25,7 @@ description:
   - The module supports C(check_mode).
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.0.0"
 requirements:
   - cm_client
 options:
@@ -34,9 +35,9 @@ options:
     type: str
     required: True
     choices:
-        - DELETE
-        - POST
-        - PUT
+      - DELETE
+      - POST
+      - PUT
   body:
     description:
       - HTTP body for the CM API endpoint call.
@@ -72,7 +73,8 @@ EXAMPLES = r"""
         - name: "ROLE_LIMITED"
 
 - name: Delete a Cloudera Manager user using a custom SSL certificate
-  host: example.cloudera.com
+  cloudera.cluster.cm_resource:
+    host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
     path: "/user/existing_user"
@@ -116,7 +118,11 @@ class ClouderaResource(ClouderaManagerModule):
     def process(self):
         if not self.module.check_mode:
             self.resources = self.call_api(
-                self.path, self.method, self.query, self.field, self.body
+                self.path,
+                self.method,
+                self.query,
+                self.field,
+                self.body,
             )
 
 
@@ -126,11 +132,16 @@ def main():
             method=dict(required=True, type="str", choices=["POST", "PUT", "DELETE"]),
             path=dict(required=True, type="str"),
             query=dict(
-                required=False, type="dict", aliases=["query_parameters", "parameters"]
+                required=False,
+                type="dict",
+                aliases=["query_parameters", "parameters"],
             ),
             body=dict(required=False, type="dict"),
             field=dict(
-                required=False, type="str", default="items", aliases=["return_field"]
+                required=False,
+                type="str",
+                default="items",
+                aliases=["return_field"],
             ),
         ),
         supports_check_mode=True,

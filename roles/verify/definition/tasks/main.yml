@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 # Inventory specific
 - block:
     - set_fact:
@@ -104,7 +103,7 @@
         that: "{{ krb5_kdc_host is not defined and 'krb5_server' not in groups }}"
         success_msg: "Kerberos is not configured on any cluster and the KDC host is not set"
         fail_msg: "The KDC host is configured but no cluster is configured to use Kerberos"
-      ignore_errors: yes
+      ignore_errors: true
       when: not expect_kerberos
 
     - name: Ensure that Kerberos is specified when used
@@ -201,20 +200,20 @@
 - block:
     - set_fact:
         kerberos_clusters: >-
-         {{
-         definition
-         | json_query("clusters[?security.kerberos].name")
-         }}
+          {{
+          definition
+          | json_query("clusters[?security.kerberos].name")
+          }}
         ranger_clusters: >-
-         {{
-         definition
-         | json_query('clusters[?services] | [?contains(services, `RANGER`)].name')
-         }}
+          {{
+          definition
+          | json_query('clusters[?services] | [?contains(services, `RANGER`)].name')
+          }}
         sentry_clusters: >-
-         {{
-         definition
-         | json_query('clusters[?services] | [?contains(services, `SENTRY`)].name')
-         }}
+          {{
+          definition
+          | json_query('clusters[?services] | [?contains(services, `SENTRY`)].name')
+          }}
     - name: Ensure that Kerberos is enabled alongside Ranger and Sentry
       assert:
         that: "{{ ranger_clusters | union(sentry_clusters) | difference(kerberos_clusters) | length == 0 }}"
@@ -226,7 +225,7 @@
         that: "{{ kerberos_clusters | difference(ranger_clusters | union(sentry_clusters)) | length == 0 }}"
         success_msg: "Ranger or Sentry is present on each cluster with Kerberos"
         fail_msg: "Ranger or Sentry should be present on each cluster with Kerberos"
-      ignore_errors: yes
+      ignore_errors: true
       when: kerberos_clusters | length > 0
 
 ## ZooKeeper

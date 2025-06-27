@@ -47,11 +47,12 @@ class TestHostArgSpec:
         module_args(
             {
                 **conn,
-            }
+            },
         )
 
         with pytest.raises(
-            AnsibleFailJson, match="one of the following is required: name, host_id"
+            AnsibleFailJson,
+            match="one of the following is required: name, host_id",
         ) as e:
             host.main()
 
@@ -61,7 +62,7 @@ class TestHostArgSpec:
                 **conn,
                 "name": "example",
                 "host_template": "example",
-            }
+            },
         )
 
         with pytest.raises(
@@ -81,7 +82,7 @@ class TestHostArgSpec:
                         "type": "example",
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(
@@ -101,7 +102,7 @@ class TestHostArgSpec:
                         "type": "example",
                     },
                 ],
-            }
+            },
         )
 
         with pytest.raises(
@@ -119,7 +120,7 @@ class TestHostProvision:
             {
                 **conn,
                 "name": "pytest-host",
-            }
+            },
         )
 
         with pytest.raises(
@@ -134,7 +135,7 @@ class TestHostProvision:
                 **conn,
                 "name": "pytest-host",
                 "ip_address": detached_hosts[0].ip_address,
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="boom") as e:
@@ -144,7 +145,7 @@ class TestHostProvision:
         module_args(
             {
                 **conn,
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="boom") as e:
@@ -154,7 +155,7 @@ class TestHostProvision:
         module_args(
             {
                 **conn,
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="boom") as e:
@@ -164,7 +165,7 @@ class TestHostProvision:
         module_args(
             {
                 **conn,
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="boom") as e:
@@ -174,7 +175,7 @@ class TestHostProvision:
         module_args(
             {
                 **conn,
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="boom") as e:
@@ -184,7 +185,9 @@ class TestHostProvision:
 class TestHostModification:
     @pytest.fixture()
     def maintenance_enabled_host(
-        self, cm_api_client, detached_hosts
+        self,
+        cm_api_client,
+        detached_hosts,
     ) -> Generator[ApiHost]:
         target_host = detached_hosts[0]
 
@@ -203,7 +206,9 @@ class TestHostModification:
 
     @pytest.fixture()
     def maintenance_disabled_host(
-        self, cm_api_client, detached_hosts
+        self,
+        cm_api_client,
+        detached_hosts,
     ) -> Generator[ApiHost]:
         target_host = detached_hosts[0]
 
@@ -228,7 +233,7 @@ class TestHostModification:
                 **conn,
                 "name": target_host.hostname,
                 "ip_address": "10.0.0.1",
-            }
+            },
         )
 
         with pytest.raises(AnsibleFailJson, match="To update the host IP address") as e:
@@ -242,7 +247,7 @@ class TestHostModification:
                 **conn,
                 "name": target_host.hostname,
                 "rack_id": "/pytest1",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -289,7 +294,7 @@ class TestHostModification:
                     "tag_one": "Updated",
                     "tag_three": "Added",
                 },
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -297,7 +302,9 @@ class TestHostModification:
 
         assert e.value.changed == True
         assert e.value.host["tags"] == dict(
-            tag_one="Updated", tag_two="Existing", tag_three="Added"
+            tag_one="Updated",
+            tag_two="Existing",
+            tag_three="Added",
         )
 
         # Idempotency
@@ -306,7 +313,9 @@ class TestHostModification:
 
         assert e.value.changed == False
         assert e.value.host["tags"] == dict(
-            tag_one="Updated", tag_two="Existing", tag_three="Added"
+            tag_one="Updated",
+            tag_two="Existing",
+            tag_three="Added",
         )
 
     def test_host_update_tags_purge(
@@ -343,7 +352,7 @@ class TestHostModification:
                 # Note that if using an attached host, be sure to include the cluster name
                 # or purge will detach the host from the cluster!
                 "purge": True,
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -382,7 +391,7 @@ class TestHostModification:
                 items=[
                     ApiConfig(name="memory_overcommit_threshold", value="0.85"),
                     ApiConfig(name="host_memswap_window", value="16"),
-                ]
+                ],
             ),
         )
 
@@ -395,7 +404,7 @@ class TestHostModification:
                     "host_network_frame_errors_window": "20",
                     "host_memswap_window": "20",
                 },
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -442,7 +451,7 @@ class TestHostModification:
                 items=[
                     ApiConfig(name="memory_overcommit_threshold", value="0.85"),
                     ApiConfig(name="host_memswap_window", value="16"),
-                ]
+                ],
             ),
         )
 
@@ -458,7 +467,7 @@ class TestHostModification:
                 "purge": True,
                 # Note that if using an attached host, be sure to set 'cluster' or it will
                 # be detached due to the 'purge' flag!
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -481,14 +490,17 @@ class TestHostModification:
         )
 
     def test_host_update_maintenance_enabled(
-        self, conn, module_args, maintenance_disabled_host
+        self,
+        conn,
+        module_args,
+        maintenance_disabled_host,
     ):
         module_args(
             {
                 **conn,
                 "name": maintenance_disabled_host.hostname,
                 "maintenance": True,
-            }
+            },
         )
 
         with pytest.raises(
@@ -510,14 +522,17 @@ class TestHostModification:
         assert e.value.host["maintenance_mode"] == True
 
     def test_host_update_maintenance_disabled(
-        self, conn, module_args, maintenance_enabled_host
+        self,
+        conn,
+        module_args,
+        maintenance_enabled_host,
     ):
         module_args(
             {
                 **conn,
                 "name": maintenance_enabled_host.hostname,
                 "maintenance": False,
-            }
+            },
         )
 
         with pytest.raises(

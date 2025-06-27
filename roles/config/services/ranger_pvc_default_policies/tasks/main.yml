@@ -1,5 +1,4 @@
 ---
-
 - name: Post Ranger policies declared in policies directory
   register: __ranger_pol_response
   uri:
@@ -7,13 +6,13 @@
     method: POST
     user: "{{ ranger_user }}"
     password: "{{ ranger_password }}"
-    return_content: yes
+    return_content: true
     body: "{{ lookup('template', '{{ item.src }}' ) }}"
     body_format: json
     status_code: 200
-    validate_certs: no
-    force_basic_auth: yes
-  no_log: True
+    validate_certs: false
+    force_basic_auth: true
+  no_log: true
   with_filetree: "{{ role_path }}/policies"
   failed_when:
     - __ranger_pol_response is failed

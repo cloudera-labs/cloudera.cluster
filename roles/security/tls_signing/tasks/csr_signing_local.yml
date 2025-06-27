@@ -13,12 +13,11 @@
 # limitations under the License.
 
 ---
-
 - name: Copy CSRs to CA server
   ansible.builtin.copy:
     src: "{{ local_csrs_dir }}/{{ inventory_hostname }}.csr"
     dest: "{{ ca_server_intermediate_path_csr }}/"
-    mode: 0644
+    mode: "0644"
   delegate_to: "{{ groups.ca_server | first }}"
   connection: ssh
 
@@ -46,6 +45,6 @@
   ansible.builtin.fetch:
     src: "{{ ca_server_intermediate_path_certs }}/{{ inventory_hostname }}.pem"
     dest: "{{ local_certs_dir }}/"
-    flat: yes
+    flat: true
   delegate_to: "{{ groups.ca_server | first }}"
   connection: ssh

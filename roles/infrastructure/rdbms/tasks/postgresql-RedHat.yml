@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Install PostgreSQL common repository
   yum_repository:
     name: pgdg-common

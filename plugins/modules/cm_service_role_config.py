@@ -22,6 +22,7 @@ description:
   - Manage a service role configuration (role-specific) in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:
@@ -115,7 +116,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""
@@ -236,13 +237,13 @@ class ClouderaManagerServiceRoleConfig(ClouderaManagerMutableModule):
             if self.name is None:
                 role = next(
                     iter(
-                        [r for r in role_api.read_roles().items if r.type == self.type]
+                        [r for r in role_api.read_roles().items if r.type == self.type],
                     ),
                     None,
                 )
                 if role is None:
                     self.module.fail_json(
-                        msg=f"Unable to find Cloudera Manager Service role type '{self.type}"
+                        msg=f"Unable to find Cloudera Manager Service role type '{self.type}",
                     )
                 else:
                     self.name = role.name

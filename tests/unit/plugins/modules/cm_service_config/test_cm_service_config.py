@@ -45,17 +45,18 @@ def test_present_invalid_parameter(conn, module_args):
         {
             **conn,
             "parameters": dict(example="Example"),
-        }
+        },
     )
 
     with pytest.raises(
-        AnsibleFailJson, match="Unknown configuration attribute 'example'"
+        AnsibleFailJson,
+        match="Unknown configuration attribute 'example'",
     ):
         cm_service_config.main()
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=False, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=False, log_event_retry_frequency=10),
 )
 def test_set_parameters(conn, module_args, cms_config):
     module_args(
@@ -65,11 +66,12 @@ def test_set_parameters(conn, module_args, cms_config):
             "message": "test_cm_service_config::test_set_parameters",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(
-        mgmt_emit_sensitive_data_in_stderr="True", log_event_retry_frequency="10"
+        mgmt_emit_sensitive_data_in_stderr="True",
+        log_event_retry_frequency="10",
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -87,7 +89,7 @@ def test_set_parameters(conn, module_args, cms_config):
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10),
 )
 def test_unset_parameters(conn, module_args, cms_config):
     module_args(
@@ -95,7 +97,7 @@ def test_unset_parameters(conn, module_args, cms_config):
             **conn,
             "parameters": dict(mgmt_emit_sensitive_data_in_stderr=None),
             "message": "test_cm_service_config::test_unset_parameters",
-        }
+        },
     )
 
     expected = dict(log_event_retry_frequency="10")
@@ -115,7 +117,7 @@ def test_unset_parameters(conn, module_args, cms_config):
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10),
 )
 def test_set_parameters_with_purge(conn, module_args, cms_config):
     module_args(
@@ -126,7 +128,7 @@ def test_set_parameters_with_purge(conn, module_args, cms_config):
             "message": "test_cm_service_config::test_set_parameters_with_purge",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(mgmt_emit_sensitive_data_in_stderr="True")
@@ -146,7 +148,7 @@ def test_set_parameters_with_purge(conn, module_args, cms_config):
 
 
 @pytest.mark.service_config(
-    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10)
+    dict(mgmt_emit_sensitive_data_in_stderr=True, log_event_retry_frequency=10),
 )
 def test_purge_all_parameters(conn, module_args, cms_config):
     module_args(
@@ -157,7 +159,7 @@ def test_purge_all_parameters(conn, module_args, cms_config):
             "message": "test_cm_service_config::test_purge_all_parameters",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

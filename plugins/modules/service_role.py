@@ -22,6 +22,7 @@ description:
   - Manage a service role in a cluster.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 options:
   cluster:
     description:
@@ -122,6 +123,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -154,7 +156,7 @@ EXAMPLES = r"""
     cluster: example-cluster
     service: example-hdfs
     name: example-GATEWAY
-    maintenance: yes
+    maintenance: true
 
 - name: Update (append) tags to a service role
   cloudera.cluster.service_role:
@@ -179,7 +181,7 @@ EXAMPLES = r"""
     cluster_hostname: worker-01.cloudera.internal
     tags:
       tag_three: value_three
-    purge: yes
+    purge: true
 
 - name: Remove all tags on a service role
   cloudera.cluster.service_role:
@@ -191,7 +193,7 @@ EXAMPLES = r"""
     type: GATEWAY
     cluster_hostname: worker-01.cloudera.internal
     tags: {}
-    purge: yes
+    purge: true
 
 - name: Start a service role
   cloudera.cluster.service_role:
@@ -420,7 +422,7 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
             if not self.cluster_hostname and not self.cluster_host_id:
                 self.module.fail_json(
                     msg="one of the following is required: %s"
-                    % ", ".join(["cluster_hostname", "cluster_host_id"])
+                    % ", ".join(["cluster_hostname", "cluster_host_id"]),
                 )
 
         try:
@@ -433,7 +435,8 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
 
         try:
             ServicesResourceApi(self.api_client).read_service(
-                self.cluster, self.service
+                self.cluster,
+                self.service,
             )
         except ApiException as ex:
             if ex.status == 404:
@@ -469,7 +472,7 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
                         type=self.type,
                         hostname=self.cluster_hostname,
                         host_id=self.cluster_host_id,
-                    ).items
+                    ).items,
                 ),
                 None,
             )
@@ -585,13 +588,13 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
 
                             if self.module._diff:
                                 self.diff["before"].update(
-                                    role_config_group=current.role_config_group_ref.role_config_group_name
+                                    role_config_group=current.role_config_group_ref.role_config_group_name,
                                 )
                                 self.diff["after"].update(role_config_group=None)
 
                             if not self.module.check_mode:
                                 RoleConfigGroupsResourceApi(
-                                    self.api_client
+                                    self.api_client,
                                 ).move_roles_to_base_group(
                                     cluster_name=self.cluster,
                                     service_name=self.service,
@@ -602,10 +605,10 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
                         self.changed = True
                         if self.module._diff:
                             self.diff["before"].update(
-                                role_config_group=current.role_config_group_ref.role_config_group_name
+                                role_config_group=current.role_config_group_ref.role_config_group_name,
                             )
                             self.diff["after"].update(
-                                role_config_group=self.role_config_group
+                                role_config_group=self.role_config_group,
                             )
 
                         if not self.module.check_mode:
@@ -669,7 +672,7 @@ class ClusterServiceRole(ClouderaManagerMutableModule):
                         cluster_name=self.cluster,
                         service_name=self.service,
                         role_name=current.name,
-                    )
+                    ),
                 )
             else:
                 self.output = parse_role_result(current)

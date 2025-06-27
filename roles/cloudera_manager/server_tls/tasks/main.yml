@@ -13,13 +13,12 @@
 # limitations under the License.
 
 ---
-
 - name: Set Cloudera Manager TLS configs
   include_role:
     name: cloudera.cluster.cloudera_manager.config
   when: tls | default(False)
   vars:
-    api_config_keys_uppercase: True
+    api_config_keys_uppercase: true
     api_configs: "{{ lookup('template', 'tls_configs.j2') | from_yaml }}"
 
 - fail:
@@ -30,8 +29,9 @@
 - name: Customize CMF_JAVA_OPTS
   lineinfile:
     path: /etc/default/cloudera-scm-server
-    regexp: '^export CMF_JAVA_OPTS='
-    line: 'export CMF_JAVA_OPTS="{{ opts }} -Djavax.net.ssl.trustStore={{ tls_uber_truststore_path }} -Djavax.net.ssl.trustStorePassword={{ tls_truststore_password }}"'
+    regexp: "^export CMF_JAVA_OPTS="
+    line: 'export CMF_JAVA_OPTS="{{ opts }} -Djavax.net.ssl.trustStore={{ tls_uber_truststore_path }} -Djavax.net.ssl.trustStorePassword={{ tls_truststore_password
+      }}"'
   vars:
     opts: "{{ cloudera_manager_cmf_java_opts | default(cloudera_manager_cmf_java_opts_default) }}"
   when:

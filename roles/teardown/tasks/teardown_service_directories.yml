@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Remove all cluster role directories
   include_tasks: teardown_role_directories.yml
   loop: "{{ service.roles|dict2items(key_name='name', value_name='directories_confs') }}"

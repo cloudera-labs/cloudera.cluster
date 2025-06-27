@@ -1,8 +1,9 @@
+---
 DOCUMENTATION:
   name: flatten_dict_list
   short_description: flatten_dict_list
   description: flatten_dict_list
+  version_added: "2.0.0"
 
 EXAMPLES:
-
 RETURN:

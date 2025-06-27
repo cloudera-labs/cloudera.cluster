@@ -22,6 +22,7 @@ description:
   - Manage a Cloudera Manager Service role config group.
 author:
   - Webster Mudge (@wmudge)
+version_added: "5.0.0"
 options:
   type:
     description:
@@ -50,6 +51,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -73,7 +75,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
     config:
-      some_parameter: True
+      some_parameter: true
 
 - name: Update the configuration of a Cloudera Manager service role config group, purging undeclared parameters
   cloudera.cluster.cm_service_role_config_group:
@@ -83,7 +85,7 @@ EXAMPLES = r"""
     type: HOSTMONITOR
     config:
       another_parameter: 3456
-    purge: yes
+    purge: true
 
 - name: Reset the configuration of a Cloudera Manager service role config group
   cloudera.cluster.cm_service_role_config_group:
@@ -91,7 +93,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""
@@ -183,7 +185,7 @@ class ClouderaManagerServiceRoleConfigGroup(ClouderaManagerMutableModule):
             current = get_mgmt_base_role_config_group(self.api_client, self.type)
             if current is None:
                 self.module.fail_json(
-                    msg=f"Unable to find Cloudera Manager service base role config group for role type '{self.type}'"
+                    msg=f"Unable to find Cloudera Manager service base role config group for role type '{self.type}'",
                 )
         except ApiException as ex:
             if ex.status != 404:
@@ -221,7 +223,7 @@ class ClouderaManagerServiceRoleConfigGroup(ClouderaManagerMutableModule):
 
         # Report on any role associations
         self.output.update(
-            role_names=[r.name for r in rcg_api.read_roles(current.name).items]
+            role_names=[r.name for r in rcg_api.read_roles(current.name).items],
         )
 
 

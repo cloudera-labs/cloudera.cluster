@@ -15,7 +15,6 @@
 ---
 skip_user_group_init: false
 local_accounts:
-
   - user: accumulo
     home: /var/lib/accumulo
     comment: Accumulo
@@ -28,15 +27,15 @@ local_accounts:
   - user: cloudera-scm
     home: /var/lib/cloudera-scm-server
     comment: Cloudera Manager
-    mode: '770'
-    keystore_acl: True
-    key_acl: True
-    key_password_acl: True
+    mode: "770"
+    keystore_acl: true
+    key_acl: true
+    key_password_acl: true
 
   - user: cruisecontrol
     home: /var/lib/cruise_control
     comment: Cruise Control
-    keystore_acl: True
+    keystore_acl: true
 
   - user: druid
     home: /var/lib/druid
@@ -46,24 +45,24 @@ local_accounts:
   - user: flink
     home: /var/lib/flink
     comment: Flink
-    keystore_acl: True
+    keystore_acl: true
 
   - user: ssb
     home: /var/lib/ssb
     comment: SQL Stream Builder
-    keystore_acl: True
-    key_acl: True
-    key_password_acl: True
+    keystore_acl: true
+    key_acl: true
+    key_password_acl: true
 
   - user: flume
     home: /var/lib/flume-ng
     comment: Flume
-    keystore_acl: True
+    keystore_acl: true
 
   - user: hbase
     home: /var/lib/hbase
     comment: HBase
-    keystore_acl: True
+    keystore_acl: true
 
   - user: hdfs
     home: /var/lib/hadoop-hdfs
@@ -73,59 +72,59 @@ local_accounts:
   - user: hive
     home: /var/lib/hive
     comment: Hive
-    keystore_acl: True
+    keystore_acl: true
 
   - user: httpfs
     home: /var/lib/hadoop-httpfs
     comment: Hadoop HTTPFS
-    keystore_acl: True
+    keystore_acl: true
 
   - user: hue
     home: /usr/lib/hue
     comment: Hue
-    key_acl: True
-    key_password_acl: True
+    key_acl: true
+    key_password_acl: true
 
   - user: impala
     home: /var/lib/impala
     comment: Impala
     extra_groups: [hive]
-    key_acl: True
-    key_password_acl: True
+    key_acl: true
+    key_password_acl: true
 
   - user: kafka
     home: /var/lib/kafka
     comment: Kafka
-    keystore_acl: True
+    keystore_acl: true
 
   - user: keytrustee
     home: /var/lib/keytrustee
     comment: KeyTrustee KMS
-    keystore_acl: True
-    key_acl: True
-    key_password_acl: True
+    keystore_acl: true
+    key_acl: true
+    key_password_acl: true
 
   - user: kms
     home: /var/lib/hadoop-kms
     comment: Hadoop KMS
-    keystore_acl: True
+    keystore_acl: true
 
   - user: knox
     home: /var/lib/knox
     comment: Knox
     extra_groups: [hadoop]
-    keystore_acl: True
+    keystore_acl: true
 
   - user: kudu
     home: /var/lib/kudu
     comment: Kudu
-    key_acl: True
-    key_password_acl: True
+    key_acl: true
+    key_password_acl: true
 
   - user: livy
     home: /var/lib/livy
     comment: Livy
-    keystore_acl: True
+    keystore_acl: true
 
   - user: mapred
     home: /var/lib/hadoop-mapreduce
@@ -135,12 +134,12 @@ local_accounts:
   - user: nifi
     home: /var/lib/nifi
     command: NiFi
-    keystore_acl: True
+    keystore_acl: true
 
   - user: nifiregistry
     home: /var/lib/nifiregistry
     command: NiFi Registry
-    keystore_acl: True
+    keystore_acl: true
 
   - user: nifi
     home: /var/lib/nifi
@@ -153,7 +152,7 @@ local_accounts:
   - user: oozie
     home: /var/lib/oozie
     comment: Oozie User
-    keystore_acl: True
+    keystore_acl: true
 
   - user: phoenix
     home: /var/lib/phoenix
@@ -177,7 +176,7 @@ local_accounts:
   - user: schemaregistry
     home: /var/lib/schemaregistry
     comment: Schema Registry
-    keystore_acl: True
+    keystore_acl: true
 
   - user: sentry
     home: /var/lib/sentry
@@ -186,12 +185,12 @@ local_accounts:
   - user: solr
     home: /var/lib/solr
     comment: Solr
-    keystore_acl: True
+    keystore_acl: true
 
   - user: spark
     home: /var/lib/spark
     comment: Spark
-    keystore_acl: True
+    keystore_acl: true
 
   - user: spark2
     home: /var/lib/spark2
@@ -209,13 +208,13 @@ local_accounts:
   - user: streamsmsgmgr
     home: /var/lib/streams_messaging_manager
     comment: Streams Messaging Manager
-    keystore_acl: True
-    key_acl: True
+    keystore_acl: true
+    key_acl: true
 
   - user: streamsrepmgr
     home: /var/lib/streams_replication_manager
     comment: Streams Replication Manager
-    keystore_acl: True
+    keystore_acl: true
 
   - user: superset
     home: /var/lib/superset
@@ -229,19 +228,19 @@ local_accounts:
   - user: zeppelin
     home: /var/lib/zeppelin
     comment: Zeppelin
-    keystore_acl: True
+    keystore_acl: true
 
   - user: zookeeper
     home: /var/lib/zookeeper
     comment: ZooKeeper
-    keystore_acl: True
+    keystore_acl: true
 
 postgres_accounts:
   - user: postgres
     home: /var/lib/pgsql
     uid: 26
     comment: PostgreSQL Server
-    mode: '770'
+    mode: "770"
     shell: /bin/bash
     unencrypted_key_acl: "{{ database_tls }}"
 
@@ -250,7 +249,7 @@ mariadb_accounts:
     home: /var/lib/mysql
     uid: 27
     comment: MariaDB Server
-    mode: '770'
+    mode: "770"
     shell: /bin/bash
     unencrypted_key_acl: "{{ database_tls }}"
 
@@ -258,7 +257,7 @@ ecs_accounts:
   - user: cloudera-scm
     home: /var/lib/cloudera-scm-server
     comment: Cloudera Manager
-    mode: '770'
-    keystore_acl: True
-    key_acl: True
-    key_password_acl: True
+    mode: "770"
+    keystore_acl: true
+    key_acl: true
+    key_password_acl: true

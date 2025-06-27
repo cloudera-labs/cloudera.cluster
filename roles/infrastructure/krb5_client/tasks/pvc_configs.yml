@@ -16,7 +16,7 @@
 - name: Add Renewable ticket lifetime
   blockinfile:
     dest: "/etc/krb5.conf"
-    insertafter: 'ticket_lifetime = 24h'
+    insertafter: "ticket_lifetime = 24h"
     block: |
       renew_lifetime = 7d
       max_life = 365d
@@ -26,14 +26,14 @@
 - name: Comment default_ccache_name in krb5.conf
   replace:
     dest: /etc/krb5.conf
-    regexp: 'default_ccache_name = KEYRING:persistent:%{uid}'
-    replace: '#default_ccache_name = KEYRING:persistent:%{uid}'
+    regexp: "default_ccache_name = KEYRING:persistent:%{uid}"
+    replace: "#default_ccache_name = KEYRING:persistent:%{uid}"
   ignore_errors: true
 
 - name: Adding enctypes for Hue
   blockinfile:
     dest: "/etc/krb5.conf"
-    insertafter: 'ticket_lifetime = 24h'
+    insertafter: "ticket_lifetime = 24h"
     block: |
       default_tgs_enctypes= des3-cbc-sha1 aes256-cts-hmac-sha1-96 arcfour-hmac aes128-cts-hmac-sha1-96 des-cbc-md5
       default_tkt_enctypes = des3-cbc-sha1 aes256-cts-hmac-sha1-96 arcfour-hmac aes128-cts-hmac-sha1-96 des-cbc-md5

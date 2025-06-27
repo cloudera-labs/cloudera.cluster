@@ -137,7 +137,7 @@ def test_service_role_info_missing_cluster(conn, module_args):
         {
             **conn,
             "service": "example",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
@@ -150,7 +150,7 @@ def test_service_role_info_invalid_service(conn, module_args, zookeeper):
             **conn,
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Service 'BOOM' not found in cluster"):
@@ -163,7 +163,7 @@ def test_service_role_info_invalid_cluster(conn, module_args, zookeeper):
             **conn,
             "cluster": "BOOM",
             "service": zookeeper.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
@@ -181,7 +181,7 @@ def test_service_role_info_all(conn, module_args, cm_api_client, zookeeper):
             **conn,
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -202,7 +202,7 @@ def test_service_role_info_all_full(conn, module_args, cm_api_client, zookeeper)
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
             "view": "full",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -223,7 +223,7 @@ def test_service_role_info_by_name(conn, module_args, cm_api_client, zookeeper):
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
             "role": expected_roles[0].name,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -234,7 +234,11 @@ def test_service_role_info_by_name(conn, module_args, cm_api_client, zookeeper):
 
 
 def test_service_role_info_by_type(
-    conn, module_args, cm_api_client, zookeeper, server_role
+    conn,
+    module_args,
+    cm_api_client,
+    zookeeper,
+    server_role,
 ):
     role_type = "SERVER"
 
@@ -253,7 +257,7 @@ def test_service_role_info_by_type(
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
             "type": role_type,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -263,7 +267,11 @@ def test_service_role_info_by_type(
 
 
 def test_service_role_info_by_hostname(
-    conn, module_args, cm_api_client, zookeeper, server_role
+    conn,
+    module_args,
+    cm_api_client,
+    zookeeper,
+    server_role,
 ):
     expected_roles = gather_server_roles(
         api_client=cm_api_client,
@@ -276,7 +284,7 @@ def test_service_role_info_by_hostname(
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
             "cluster_hostname": expected_roles[0].host_ref.hostname,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -288,7 +296,11 @@ def test_service_role_info_by_hostname(
 
 
 def test_service_role_info_by_host_id(
-    conn, module_args, cm_api_client, zookeeper, server_role
+    conn,
+    module_args,
+    cm_api_client,
+    zookeeper,
+    server_role,
 ):
     expected_roles = gather_server_roles(
         api_client=cm_api_client,
@@ -301,7 +313,7 @@ def test_service_role_info_by_host_id(
             "cluster": zookeeper.cluster_ref.cluster_name,
             "service": zookeeper.name,
             "cluster_host_id": expected_roles[0].host_ref.host_id,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:

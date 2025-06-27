@@ -78,7 +78,9 @@ class FilterModule(object):
         return state
 
     def extract_products_from_manifests(
-        self, manifests, os_distribution: Optional[str] = None
+        self,
+        manifests,
+        os_distribution: Optional[str] = None,
     ):
         products = dict()
         for manifest in manifests:
@@ -224,9 +226,9 @@ class FilterModule(object):
     def extract_custom_role_groups(self, host_templates):
         custom_role_groups = set([])
         for role_mapping in host_templates.values():
-            for (service, roles) in role_mapping.items():
+            for service, roles in role_mapping.items():
                 for custom_role in filter(lambda x: "/" in x, roles):
                     custom_role_groups.add(
-                        "-".join([service.lower()] + custom_role.split("/"))
+                        "-".join([service.lower()] + custom_role.split("/")),
                     )
         return list(custom_role_groups)

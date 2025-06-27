@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Work out temp and repo paths
   set_fact:
     temp_dir: "{{ local_temp_dir }}/{{ repo_tar_file | regex_replace('.tar.gz','') }}"
@@ -28,22 +27,22 @@
 - name: Find parcel files
   find:
     path: "{{ temp_dir }}"
-    patterns: '*.parcel,*.parcel.sha,*.parcel.sha1,.*.parcel.sha256,manifest.json'
-    recurse: yes
+    patterns: "*.parcel,*.parcel.sha,*.parcel.sha1,.*.parcel.sha256,manifest.json"
+    recurse: true
   register: files
 
 - name: Create parcel repo directory
   file:
     path: "{{ repo_dir }}"
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Copy parcel files into correct location
   copy:
     src: "{{ item.path }}"
     dest: "{{ repo_dir }}"
-    remote_src: yes
-    mode: 0644
+    remote_src: true
+    mode: "0644"
   with_items: "{{ files.files }}"
 
 - name: Remove temp directory

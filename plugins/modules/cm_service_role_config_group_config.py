@@ -22,6 +22,7 @@ description:
   - Manage the configuration details of a role config group of the Cloudera Manager Service.
 author:
   - "Webster Mudge (@wmudge)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:
@@ -61,6 +62,7 @@ extends_documentation_fragment:
   - cloudera.cluster.cm_endpoint
   - cloudera.cluster.purge
   - cloudera.cluster.message
+  - ansible.builtin.action_common_attributes
 attributes:
   check_mode:
     support: full
@@ -99,7 +101,7 @@ EXAMPLES = r"""
     parameters:
       config_one: ValueOne
       config_two: 4567
-    purge: yes
+    purge: true
 
 - name: Reset all role config group parameters for a Cloudera Manager Service role type
   cloudera.cluster.service_role_config_group_config:
@@ -108,7 +110,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     type: HOSTMONITOR
     parameters: {}
-    purge: yes
+    purge: true
 """
 
 RETURN = r"""
@@ -232,7 +234,7 @@ class ClouderaManagerServiceRoleConfigGroupConfig(ClouderaManagerMutableModule):
                 rcg = get_mgmt_base_role_config_group(self.api_client, self.type)
                 if rcg is None:
                     self.module.fail_json(
-                        msg=f"Unable to find Cloudera Manager Service base role config group for role type '{self.type}'"
+                        msg=f"Unable to find Cloudera Manager Service base role config group for role type '{self.type}'",
                     )
                 self.name = rcg.name
 

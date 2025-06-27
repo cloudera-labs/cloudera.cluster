@@ -56,7 +56,7 @@ def test_missing_required(conn, module_args):
             "service": "SERVICE",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="name, role_type"):
@@ -70,7 +70,7 @@ def test_invalid_service(conn, module_args, base_cluster):
             "cluster": base_cluster.name,
             "service": "BOOM",
             "type": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
@@ -84,7 +84,7 @@ def test_invalid_cluster(conn, module_args, cms_session):
             "cluster": "BOOM",
             "service": "BOOM",
             "type": "BOOM",
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
@@ -97,9 +97,9 @@ def test_invalid_cluster(conn, module_args, cms_session):
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=2500, process_start_secs=25).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_base_role_config_group_set(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -112,7 +112,7 @@ def test_base_role_config_group_set(conn, module_args, zk_role_config_group, req
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(minSessionTimeout="3000", process_start_secs="25")
@@ -137,9 +137,9 @@ def test_base_role_config_group_set(conn, module_args, zk_role_config_group, req
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=2600, process_start_secs=26).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_base_role_config_group_unset(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -152,7 +152,7 @@ def test_base_role_config_group_unset(conn, module_args, zk_role_config_group, r
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(process_start_secs="26")
@@ -177,9 +177,9 @@ def test_base_role_config_group_unset(conn, module_args, zk_role_config_group, r
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=2700, process_start_secs=27).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_base_role_config_group_purge(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -193,7 +193,7 @@ def test_base_role_config_group_purge(conn, module_args, zk_role_config_group, r
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(minSessionTimeout="2701")
@@ -218,12 +218,15 @@ def test_base_role_config_group_purge(conn, module_args, zk_role_config_group, r
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=2800, process_start_secs=28).items()
-            ]
-        )
-    )
+            ],
+        ),
+    ),
 )
 def test_base_role_config_group_purge_all(
-    conn, module_args, zk_role_config_group, request
+    conn,
+    module_args,
+    zk_role_config_group,
+    request,
 ):
     module_args(
         {
@@ -236,7 +239,7 @@ def test_base_role_config_group_purge_all(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict()
@@ -256,7 +259,11 @@ def test_base_role_config_group_purge_all(
 
 
 def test_base_role_config_group_absent(
-    conn, module_args, cm_api_client, zk_session, request
+    conn,
+    module_args,
+    cm_api_client,
+    zk_session,
+    request,
 ):
     rcg = get_base_role_config_group(
         api_client=cm_api_client,
@@ -275,7 +282,7 @@ def test_base_role_config_group_absent(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(
@@ -297,7 +304,7 @@ def test_role_config_group_create(conn, module_args, zk_session, request):
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(minSessionTimeout="3000")
@@ -324,9 +331,9 @@ def test_role_config_group_create(conn, module_args, zk_session, request):
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=2800, process_start_secs=28).items()
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_role_config_group_set(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -339,7 +346,7 @@ def test_role_config_group_set(conn, module_args, zk_role_config_group, request)
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(minSessionTimeout="3000", process_start_secs="28")
@@ -366,9 +373,9 @@ def test_role_config_group_set(conn, module_args, zk_role_config_group, request)
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=2900, process_start_secs=29).items()
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_role_config_group_unset(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -381,7 +388,7 @@ def test_role_config_group_unset(conn, module_args, zk_role_config_group, reques
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(process_start_secs="29")
@@ -408,9 +415,9 @@ def test_role_config_group_unset(conn, module_args, zk_role_config_group, reques
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=3100, process_start_secs=31).items()
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_role_config_group_purge(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -424,7 +431,7 @@ def test_role_config_group_purge(conn, module_args, zk_role_config_group, reques
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict(minSessionTimeout="3000")
@@ -451,9 +458,9 @@ def test_role_config_group_purge(conn, module_args, zk_role_config_group, reques
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=3200, process_start_secs=32).items()
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_role_config_group_purge_all(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -467,7 +474,7 @@ def test_role_config_group_purge_all(conn, module_args, zk_role_config_group, re
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     expected = dict()
@@ -494,9 +501,9 @@ def test_role_config_group_purge_all(conn, module_args, zk_role_config_group, re
             items=[
                 ApiConfig(k, v)
                 for k, v in dict(minSessionTimeout=3100, process_start_secs=31).items()
-            ]
+            ],
         ),
-    )
+    ),
 )
 def test_role_config_group_absent(conn, module_args, zk_role_config_group, request):
     module_args(
@@ -509,7 +516,7 @@ def test_role_config_group_absent(conn, module_args, zk_role_config_group, reque
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -531,10 +538,13 @@ def test_role_config_group_absent(conn, module_args, zk_role_config_group, reque
         name="Pytest Invalid Type",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_role_config_group_invalid_type(
-    conn, module_args, zk_role_config_group, request
+    conn,
+    module_args,
+    zk_role_config_group,
+    request,
 ):
     module_args(
         {
@@ -546,7 +556,7 @@ def test_role_config_group_invalid_type(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Invalid role type") as e:
@@ -558,10 +568,13 @@ def test_role_config_group_invalid_type(
         name="Pytest Invalid Configuration",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_role_config_group_invalid_config(
-    conn, module_args, zk_role_config_group, request
+    conn,
+    module_args,
+    zk_role_config_group,
+    request,
 ):
     module_args(
         {
@@ -573,7 +586,7 @@ def test_role_config_group_invalid_config(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="Unknown configuration attribute") as e:
@@ -585,10 +598,14 @@ def test_role_config_group_invalid_config(
         name="Pytest Absent",
         role_type="SERVER",
         config=ApiConfigList(items=[]),
-    )
+    ),
 )
 def test_role_config_group_existing_roles(
-    conn, module_args, cm_api_client, zk_role_config_group, request
+    conn,
+    module_args,
+    cm_api_client,
+    zk_role_config_group,
+    request,
 ):
     base_rcg = get_base_role_config_group(
         api_client=cm_api_client,
@@ -621,7 +638,7 @@ def test_role_config_group_existing_roles(
             "message": f"{Path(request.node.parent.name).stem}::{request.node.name}",
             # _ansible_check_mode=True,
             # _ansible_diff=True,
-        }
+        },
     )
 
     with pytest.raises(AnsibleFailJson, match="existing role associations") as e:

@@ -24,6 +24,7 @@ description:
   - Enables the deletion of a user along with its associated roles if desired.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm_client
 options:
@@ -84,7 +85,7 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     account_name: "john"
     account_password: "Password123"
-    roles: ["Configurator","Dashboard User","Limited Operator"]
+    roles: ["Configurator", "Dashboard User", "Limited Operator"]
     state: "present"
 
 - name: Reduce permissions on user to a single role
@@ -237,9 +238,9 @@ class ClouderaUserInfo(ClouderaManagerModule):
                                 name=self.account_name,
                                 auth_roles=auth_roles,
                                 password=self.account_password,
-                            )
-                        ]
-                    )
+                            ),
+                        ],
+                    ),
                 )
                 self.user_output = api_instance.read_user2(self.account_name).to_dict()
 
@@ -248,7 +249,7 @@ class ClouderaUserInfo(ClouderaManagerModule):
         if self.state == "absent":
             if existing:
                 self.user_output = api_instance.delete_user2(
-                    self.account_name
+                    self.account_name,
                 ).to_dict()
                 self.changed = True
 

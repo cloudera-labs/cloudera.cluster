@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 # This variable is used by other roles
 # please take care when changing it
 - set_fact:

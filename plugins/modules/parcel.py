@@ -24,6 +24,7 @@ description:
   - The module manages the transitions between these states, e.g. if a parcel is I(distributed) and I(state=downloaded), the module will deactivate the parcel from the cluster hosts.
 author:
   - "Ronald Suplina (@rsuplina)"
+version_added: "4.4.0"
 requirements:
   - cm-client
 options:
@@ -231,7 +232,7 @@ class ClouderaParcel(ClouderaManagerModule):
         except ApiException as ex:
             if ex.status == 404:
                 self.module.fail_json(
-                    msg=f"Parcel {self.parcel_name} (version: {self.parcel_version}) not found on cluster '{self.cluster}'"
+                    msg=f"Parcel {self.parcel_name} (version: {self.parcel_version}) not found on cluster '{self.cluster}'",
                 )
 
         # Normalize self.state
@@ -257,7 +258,7 @@ class ClouderaParcel(ClouderaManagerModule):
                 cluster_name=self.cluster,
                 product=self.parcel_name,
                 version=self.parcel_version,
-            )
+            ),
         )
 
 
@@ -268,10 +269,16 @@ def main():
             name=dict(required=True, aliases=["parcel", "product"]),
             parcel_version=dict(required=True),
             delay=dict(
-                required=False, type="int", default=15, aliases=["polling_interval"]
+                required=False,
+                type="int",
+                default=15,
+                aliases=["polling_interval"],
             ),
             timeout=dict(
-                required=False, type="int", default=1200, aliases=["polling_timeout"]
+                required=False,
+                type="int",
+                default=1200,
+                aliases=["polling_timeout"],
             ),
             state=dict(
                 default="present",

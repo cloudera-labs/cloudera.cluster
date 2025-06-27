@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Gather the package facts
   ansible.builtin.package_facts:
     manager: auto
@@ -44,7 +43,7 @@
 - name: Customize CMF_SERVER_ARGS
   lineinfile:
     path: /etc/default/cloudera-scm-server
-    regexp: '^CMF_SERVER_ARGS='
+    regexp: "^CMF_SERVER_ARGS="
     line: 'CMF_SERVER_ARGS="{{ cloudera_manager_cmf_server_args }}"'
   when: cloudera_manager_cmf_server_args is defined
 
@@ -52,7 +51,7 @@
 - name: Customize CMF_JAVA_OPTS
   lineinfile:
     path: /etc/default/cloudera-scm-server
-    regexp: '^export CMF_JAVA_OPTS='
+    regexp: "^export CMF_JAVA_OPTS="
     line: 'export CMF_JAVA_OPTS="{{ cloudera_manager_cmf_java_opts }}"'
   when: cloudera_manager_cmf_java_opts is defined
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Generate merged configs (base, compute)
   include_role:
     name: cloudera.cluster.config.cluster.base
@@ -66,5 +65,5 @@
     loop_var: database
   run_once: true
   when:
-   - cluster.services is defined
-   - database.key in cluster.services
+    - cluster.services is defined
+    - database.key in cluster.services

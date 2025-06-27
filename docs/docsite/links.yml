@@ -3,10 +3,10 @@
 edit_on_github:
   repository: cloudera-labs/cloudera.cluster
   branch: main
-  path_prefix: ''
+  path_prefix: ""
 
 extra_links:
-  - description: Submit a bug report
+  - description: Submit a Bug Report
     url: https://github.com/cloudera-labs/cloudera.cluster/issues/new?labels=bug
-  - description: Request a feature
+  - description: Request a Feature
     url: https://github.com/cloudera-labs/cloudera.cluster/issues/new?labels=enhancement

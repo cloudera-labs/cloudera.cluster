@@ -33,7 +33,8 @@ from ansible_collections.cloudera.cluster.tests.unit.plugins.modules.utils impor
 
 
 @unittest.skipUnless(
-    os.getenv("CM_USERNAME"), "Cloudera Manager access parameters not set"
+    os.getenv("CM_USERNAME"),
+    "Cloudera Manager access parameters not set",
 )
 class TestCMVersionIntegration(ModuleTestCase):
     def test_host_discovery(self):
@@ -45,7 +46,7 @@ class TestCMVersionIntegration(ModuleTestCase):
                 "port": "7180",
                 "verify_tls": "no",
                 "debug": "yes",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:
@@ -66,7 +67,7 @@ class TestCMVersionIntegration(ModuleTestCase):
                 + os.getenv("CM_VERSION"),
                 "verify_tls": "no",
                 "debug": "yes",
-            }
+            },
         )
 
         with pytest.raises(AnsibleExitJson) as e:

@@ -1,4 +1,4 @@
-# Copyright 2023 Cloudera, Inc.
+# Copyright 2025 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,43 +14,44 @@
 
 ---
 
-namespace:  cloudera
-name:       cluster
-version:    4.5.0-rc1
-readme:     README.md
+namespace: cloudera
+name: cluster
+version: 5.0.0-rc.1
+readme: README.md
 authors:
-- Webster Mudge @wmudge
-- Ronald Suplina @rsuplina
-- Jim Enright @jimright
+  - Webster Mudge @wmudge
+  - Ronald Suplina @rsuplina
+  - Jim Enright @jimright
 
 description: >
   A set of roles, modules, and other plugins for interacting with the services
-  and endpoints provided by Cloudera on Premises and Cloudera Manager (CM).
+  and endpoints provided by Cloudera Manager (CM).
 license_file: LICENSE
 tags:
-- cloudera
-- cdp
-- cdh
-- private_cloud
-- on_premise
-- data_services
-- cloudera_manager
-- cm
+  - application
+  - cloud
+  - tools
+  - cloudera
+  - cdp
+  - cdh
+  - private_cloud
+  - on_premise
+  - data_services
+  - cloudera_manager
+  - cm
 
 dependencies:
-  'ansible.posix':      '1.3.0'
-  'community.crypto':   '2.2.1'
-  'community.general':  '4.5.0'
+  "ansible.posix": "1.3.0"
+  "community.crypto": "2.2.1"
+  "community.general": "4.5.0"
 
-repository:     https://github.com/cloudera-labs/cloudera.cluster
-homepage:       https://github.com/cloudera-labs/cloudera.cluster
-issues:         https://github.com/cloudera-labs/cloudera.cluster/issues
-documentation:  https://cloudera-labs.github.io/cloudera.cluster
+repository: https://github.com/cloudera-labs/cloudera.cluster
+homepage: https://github.com/cloudera-labs/cloudera.cluster
+issues: https://github.com/cloudera-labs/cloudera.cluster/issues
+documentation: https://cloudera-labs.github.io/cloudera.cluster
 
 build_ignore:
-- '.*'
-- docs
-- docsrc
-- site
-
-...
+  - ".*"
+  - docs
+  - docsrc
+  - site

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Get current Cloudera license status
   cloudera.cluster.cm_api:
     endpoint: /cm/license
@@ -44,7 +43,7 @@
   ansible.builtin.assert:
     that: __cloudera_license_file.stat.exists
     fail_msg: "Expected to find Cloudera License file at {{ license_local_tmp_path }}"
-    quiet: yes
+    quiet: true
 
 - name: Post license file to Cloudera Manager API
   ansible.builtin.shell: >

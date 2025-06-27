@@ -22,6 +22,7 @@ description:
   - Retrieve Cloudera Manager configurations for Auto-TLS
 author:
   - "Jim Enright (@jimright)"
+version_added: "5.0.0"
 requirements:
   - cm_client
 extends_documentation_fragment:

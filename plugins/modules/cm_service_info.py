@@ -23,12 +23,11 @@ description:
 author:
   - Ronald Suplina (@rsuplina)
   - Webster Mudge (@wmudge)
+version_added: "4.4.0"
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
-attributes:
-  check_mode:
-    support: full
+  - ansible.builtin.action_common_attributes
 requirements:
   - cm-client
 seealso:

@@ -23,6 +23,7 @@ description:
 author:
   - "Webster Mudge (@wmudge)"
   - "Ronald Suplina (@rsuplina)"
+version_added: "5.0.0"
 options:
   cluster:
     description:
@@ -50,7 +51,7 @@ options:
       name:
         description:
           - The name of the custom role config group for the specified service.
-          - Mutually exclusive with O(type).
+          - Mutually exclusive with O(role_config_groups[].type).
         type: str
         required: no
       service:
@@ -59,30 +60,30 @@ options:
         type: str
         required: yes
         aliases:
-            - service_name
+          - service_name
       type:
         description:
           - The name of the role type of the base role config group for the specified service.
-          - Mutually exclusive with O(name).
+          - Mutually exclusive with O(role_config_groups[].name).
         type: str
         required: no
         aliases:
-            - role_type
-    purge:
-      description:
-        - Flag for whether the declared role config groups should append or overwrite any existing entries.
-        - To clear all configuration overrides or tags, set O(role_config_groups={}), i.e. an empty dictionary, and set O(purge=True).
-        type: bool
-        default: False
-    state:
-      description:
-        - The state of the host template.
-      type: str
-      required: no
-      choices:
-        - present
-        - absent
-      default: present
+          - role_type
+  purge:
+    description:
+      - Flag for whether the declared role config groups should append or overwrite any existing entries.
+      - To clear all configuration overrides or tags, set O(role_config_groups={}), i.e. an empty dictionary, and set O(purge=True).
+    type: bool
+    default: False
+  state:
+    description:
+      - The state of the host template.
+    type: str
+    required: no
+    choices:
+      - present
+      - absent
+    default: present
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -102,7 +103,7 @@ seealso:
 
 EXAMPLES = r"""
 - name: Provision a host template with a base role config group assignment
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -113,7 +114,7 @@ EXAMPLES = r"""
         service: hdfs-service-1
 
 - name: Provision a host template with a named (custom) role config group assignment
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -124,7 +125,7 @@ EXAMPLES = r"""
         service: zookeeper-service-1
 
 - name: Update (append) a role config group to a host template
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -135,7 +136,7 @@ EXAMPLES = r"""
         service: ozone-service-2
 
 - name: Update (reset) the role config groups of a host template
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -146,10 +147,10 @@ EXAMPLES = r"""
         service: hdfs-service-1
       - type: OZONE_DATANODE
         service: ozone-service-2
-    purge: yes
+    purge: true
 
 - name: Remove a host template
-  cloudera.cluster.host_template
+  cloudera.cluster.host_template:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -279,7 +280,7 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                     )
                     if base_rcg is None:
                         self.module.fail_json(
-                            msg=f"Role type '{rcg['type']}' not found for service '{rcg['service']}' in cluster '{self.cluster}'"
+                            msg=f"Role type '{rcg['type']}' not found for service '{rcg['service']}' in cluster '{self.cluster}'",
                         )
                     incoming_rcgs.append(base_rcg)
 
@@ -290,7 +291,7 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                     [
                         rcg.role_config_group_name
                         for rcg in current.role_config_group_refs
-                    ]
+                    ],
                 )
                 incoming_rcg_names = set([rcg.name for rcg in incoming_rcgs])
 
@@ -312,7 +313,8 @@ class ClouderaHostTemplate(ClouderaManagerModule):
                             updated_diff = dict(**current_diff)
                             updated_diff.role_config_groups = updated_rcg_names
                             self.diff.update(
-                                before=current_diff, after=dict(updated_diff)
+                                before=current_diff,
+                                after=dict(updated_diff),
                             )
 
                         current.role_config_group_refs = [
@@ -338,7 +340,8 @@ class ClouderaHostTemplate(ClouderaManagerModule):
 
                 if self.module._diff:
                     self.diff.update(
-                        before=dict(), after=parse_host_template(created_host_template)
+                        before=dict(),
+                        after=parse_host_template(created_host_template),
                     )
 
                 if not self.module.check_mode:

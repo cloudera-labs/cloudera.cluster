@@ -19,11 +19,10 @@ name: Validate Pull Request documentation
 on:
   pull_request:
     branches:
-      - 'release/**'
-      - 'devel'
+      - "release/**"
+      - "devel"
 
   workflow_dispatch:
-
 jobs:
   validate-docs:
     name: Validate Ansible Docs

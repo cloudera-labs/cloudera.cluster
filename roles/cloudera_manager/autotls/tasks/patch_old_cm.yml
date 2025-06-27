@@ -5,7 +5,7 @@
     dest: /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py_patch
     owner: cloudera-scm
     group: cloudera-scm
-    mode: '0644'
+    mode: "0644"
 
 - name: Backup cert.py
   shell: cp /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py /opt/cloudera/cm-agent/lib/python2.7/site-packages/cmf/tools/cert.py.backup

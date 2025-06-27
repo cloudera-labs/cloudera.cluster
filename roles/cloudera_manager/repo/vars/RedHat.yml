@@ -17,8 +17,10 @@ __cloudera_manager_major_version: "{{ cloudera_manager_version.split('.')[0] }}"
 __cloudera_manager_cm5_path: "{{ ansible_os_family | lower }}/{{ ansible_distribution_major_version }}/x86_64/cm/{{ cloudera_manager_version }}"
 __cloudera_manager_cm6_path: "{{ cloudera_manager_version }}/{{ cloudera_manager_distro_name }}{{ cloudera_manager_distro_version }}/yum"
 
-__cloudera_manager_repo_url_trial: "{{ cloudera_archive_base_url | regex_replace('/?$','') }}/cm{{ __cloudera_manager_major_version }}/{{ cloudera_manager_version }}/{{ cloudera_manager_distro_name }}{{ cloudera_manager_distro_version }}/yum"
-__cloudera_manager_repo_url_paywall: "{{ cloudera_archive_base_url | regex_replace('/?$','') }}/p/cm{{ __cloudera_manager_major_version }}/{{ (__cloudera_manager_major_version == '5' ) | ternary(__cloudera_manager_cm5_path, __cloudera_manager_cm6_path) }}"
+__cloudera_manager_repo_url_trial: "{{ cloudera_archive_base_url | regex_replace('/?$','') }}/cm{{ __cloudera_manager_major_version }}/{{ cloudera_manager_version
+  }}/{{ cloudera_manager_distro_name }}{{ cloudera_manager_distro_version }}/yum"
+__cloudera_manager_repo_url_paywall: "{{ cloudera_archive_base_url | regex_replace('/?$','') }}/p/cm{{ __cloudera_manager_major_version }}/{{ (__cloudera_manager_major_version
+  == '5' ) | ternary(__cloudera_manager_cm5_path, __cloudera_manager_cm6_path) }}"
 
 __cloudera_manager_repo_key_filename: "RPM-GPG-KEY-cloudera"
 __cloudera_manager_repo_key_trial: "{{ __cloudera_manager_repo_url_trial }}/{{ __cloudera_manager_repo_key_filename }}"

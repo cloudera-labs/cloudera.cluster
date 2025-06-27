@@ -23,7 +23,7 @@
   selinux:
     policy: targeted
     state: permissive
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Setup FreeIPA Server
   ansible.builtin.include_role:
@@ -71,7 +71,7 @@
     - name: Gather facts from ECS Server
       ansible.builtin.setup:
         gather_subset:
-          - 'default_ipv4'
+          - "default_ipv4"
       delegate_to: "{{ ecs_ip_collect_item }}"
       delegate_facts: true
       loop: "{{ groups['ecs_ecs_server'] }}"

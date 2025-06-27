@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Remove cluster role directory
   file:
     path: "{{ directory }}"

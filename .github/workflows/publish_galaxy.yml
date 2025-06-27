@@ -19,7 +19,6 @@ name: Publish to Ansible Galaxy
 on:
   release:
     types: [published]
-
 jobs:
   galaxy_release:
     runs-on: ubuntu-latest

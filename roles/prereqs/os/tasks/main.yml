@@ -13,7 +13,6 @@
 # limitations under the License.
 
 ---
-
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"
@@ -28,8 +27,8 @@
     name: "{{ flag.key }}"
     value: "{{ flag.value }}"
     state: present
-    sysctl_set: yes
-    reload: yes
+    sysctl_set: true
+    reload: true
   loop: "{{ kernel_flags }}"
   loop_control:
     loop_var: flag
@@ -43,8 +42,8 @@
   ansible.builtin.service:
     name: "{{ item }}"
     state: stopped
-    enabled: no
-  ignore_errors: yes  # fails sometimes with systemd on centos7 where ip6tables are not present
+    enabled: false
+  ignore_errors: true # fails sometimes with systemd on centos7 where ip6tables are not present
   when: "item + '.service' in ansible_facts.services"
   with_items: "{{ unnecessary_services }}"
 
@@ -74,7 +73,7 @@
   service:
     name: "{{ ntp_service }}"
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Install nscd service
   ansible.builtin.package:
@@ -86,13 +85,13 @@
   service:
     name: "{{ nscd_service }}"
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Disable nscd caches for services 'passwd', 'group', 'netgroup'
   replace:
     path: /etc/nscd.conf
-    regexp: '^(.*enable-cache.*(passwd|group|netgroup).*)yes$'
-    replace: '\1no'
+    regexp: "^(.*enable-cache.*(passwd|group|netgroup).*)yes$"
+    replace: "\\1no"
   notify:
     - restart nscd
 

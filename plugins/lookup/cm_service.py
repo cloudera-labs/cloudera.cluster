@@ -28,6 +28,7 @@ DOCUMENTATION = """
         - Otherwise, the lookup entry will be an empty list.
         - If the cluster is not found or is ambigious, the lookup will return an error.
         - If the Cloudera Manager endpoint is not found or is not available, the lookup will return an error.
+    version_added: "4.0.0"
     options:
         _terms:
             description:
@@ -110,7 +111,7 @@ class LookupModule(ClouderaManagerLookupBase):
             service["type"]: service
             for service in self.get(
                 "/%s/clusters/%s/services"
-                % (self.get_option("version"), self.get_option("cluster"))
+                % (self.get_option("version"), self.get_option("cluster")),
             )
         }
 
@@ -118,9 +119,11 @@ class LookupModule(ClouderaManagerLookupBase):
         for term in LookupModule._flatten(terms):
             if term in all_services:
                 results.append(
-                    all_services[term]
-                    if self.get_option("detailed")
-                    else all_services[term]["name"]
+                    (
+                        all_services[term]
+                        if self.get_option("detailed")
+                        else all_services[term]["name"]
+                    ),
                 )
             else:
                 if self.get_option("default") is not None:
