@@ -1,6 +1,6 @@
 ---
 
 sections:
-  - title: Guides
-    toctree:
-      - api-design
+#  - title: Guides
+#    toctree:
+#      - api-design
