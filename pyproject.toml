@@ -35,10 +35,14 @@ dependencies = [
   "cm-client",
   "python-gnupg",
   "ansible-lint",
+  "antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs@cldr-docsite#egg=antsibull-docs",
 ]
 
 [tool.hatch.envs.default.scripts]
-lint = "pre-commit run -a"
+lint = [
+  "pre-commit run -a",
+  "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck .",
+]
 
 [tool.hatch.envs.docs]
 python = "3.12"
@@ -48,12 +52,10 @@ extra-dependencies = [
   "ansible-pygments",
   "sphinx",
   "sphinx-ansible-theme >= 0.9.0",
-  "antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs@cldr-docsite#egg=antsibull-docs",
   "antsichaut",
 ]
 
 [tool.hatch.envs.docs.scripts]
-lint = "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck ."
 build = "docsbuild/build.sh"
 changelog = [
   # Read the version in galaxy.yml via hatch itself (normalizes release candidates, etc.)
