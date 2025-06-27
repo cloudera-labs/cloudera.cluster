@@ -38,13 +38,16 @@ repos:
     rev: v3.2.0
     hooks:
       - id: add-trailing-comma
+        name: ensure trailing commas
         args:
           - --py36-plus
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
+        name: lint python
   - repo: https://github.com/ansible/ansible-lint
     rev: v25.6.1
     hooks:
       - id: ansible-lint
+        name: lint ansible
