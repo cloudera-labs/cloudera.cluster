@@ -35,7 +35,7 @@ dependencies = [
   "cm-client",
   "python-gnupg",
   "ansible-lint",
-  "antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs@cldr-docsite#egg=antsibull-docs",
+  "antsibull-docs >= 2.0.0, < 3.0.0",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -48,7 +48,8 @@ lint = [
 python = "3.12"
 detached = true
 extra-dependencies = [
-  # "antsibull-docs >= 2.0.0, < 3.0.0",
+  "ansible-core<2.17",     # For RHEL 8 support
+  "antsibull-docs @ git+https://github.com/cloudera-labs/antsibull-docs@cldr-docsite#egg=antsibull-docs",
   "ansible-pygments",
   "sphinx",
   "sphinx-ansible-theme >= 0.9.0",
