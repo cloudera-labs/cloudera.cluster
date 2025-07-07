@@ -256,7 +256,6 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                 auth_roles = [ApiAuthRoleRef(name=role) for role in self.auth_roles]
                 external_user_mappings_body = ApiExternalUserMapping(
                     name=self.name,
-                    uuid=mapping.uuid,
                     type=self.type,
                     auth_roles=auth_roles,
                 )
