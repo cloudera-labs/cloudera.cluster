@@ -153,6 +153,10 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, get_database_encoding_mysql, is no longer supported.
+    to_ldap_type_enum:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, to_ldap_type_enum, is no longer supported.
   action:
     host_config:
       deprecation:
