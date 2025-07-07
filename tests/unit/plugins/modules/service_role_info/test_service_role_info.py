@@ -30,7 +30,7 @@ from cm_client import (
     ApiService,
 )
 
-from ansible_collections.cloudera.cluster.plugins.modules import service_role_info
+from ansible_collections.cloudera.cluster.plugins.modules import role_info
 from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
     get_cluster_hosts,
 )
@@ -129,7 +129,7 @@ def test_service_role_info_missing_required(conn, module_args):
     module_args({**conn})
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        service_role_info.main()
+        role_info.main()
 
 
 def test_service_role_info_missing_cluster(conn, module_args):
@@ -141,7 +141,7 @@ def test_service_role_info_missing_cluster(conn, module_args):
     )
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        service_role_info.main()
+        role_info.main()
 
 
 def test_service_role_info_invalid_service(conn, module_args, zookeeper):
@@ -154,7 +154,7 @@ def test_service_role_info_invalid_service(conn, module_args, zookeeper):
     )
 
     with pytest.raises(AnsibleFailJson, match="Service 'BOOM' not found in cluster"):
-        service_role_info.main()
+        role_info.main()
 
 
 def test_service_role_info_invalid_cluster(conn, module_args, zookeeper):
@@ -167,7 +167,7 @@ def test_service_role_info_invalid_cluster(conn, module_args, zookeeper):
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
-        service_role_info.main()
+        role_info.main()
 
 
 def test_service_role_info_all(conn, module_args, cm_api_client, zookeeper):
@@ -185,7 +185,7 @@ def test_service_role_info_all(conn, module_args, cm_api_client, zookeeper):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_info.main()
+        role_info.main()
 
     assert len(e.value.roles) == len(expected_roles)
 
@@ -206,7 +206,7 @@ def test_service_role_info_all_full(conn, module_args, cm_api_client, zookeeper)
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_info.main()
+        role_info.main()
 
     assert len(e.value.roles) == len(expected_roles)
 
@@ -227,7 +227,7 @@ def test_service_role_info_by_name(conn, module_args, cm_api_client, zookeeper):
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_info.main()
+        role_info.main()
 
     assert len(e.value.roles) == 1
     assert e.value.roles[0]["name"] == expected_roles[0].name
@@ -261,7 +261,7 @@ def test_service_role_info_by_type(
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_info.main()
+        role_info.main()
 
     assert len(e.value.roles) == len(expected_roles)
 
@@ -288,7 +288,7 @@ def test_service_role_info_by_hostname(
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_info.main()
+        role_info.main()
 
     assert len(e.value.roles) == 1
     assert e.value.roles[0]["host_id"] == expected_roles[0].host_ref.host_id
@@ -317,7 +317,7 @@ def test_service_role_info_by_host_id(
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_info.main()
+        role_info.main()
 
     assert len(e.value.roles) == 1
     assert e.value.roles[0]["host_id"] == expected_roles[0].host_ref.host_id

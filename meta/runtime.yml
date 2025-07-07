@@ -162,3 +162,14 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Use M(cloudera.cluster.cm_resource).
+  modules:
+    service_role:
+      redirect: cloudera.cluster.role
+      deprecation:
+        removal_version: "5.0.0"
+        warning_text: Use M(cloudera.cluster.role).
+    service_role_info:
+      redirect: cloudera.cluster.role_info
+      deprecation:
+        removal_version: "5.0.0"
+        warning_text: Use M(cloudera.cluster.role_info).
