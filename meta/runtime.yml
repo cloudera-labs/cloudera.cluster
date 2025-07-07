@@ -93,3 +93,8 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, cluster_service_role_hosts, is no longer supported.
+  action:
+    host_config:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Use M(cloudera.cluster.cm_resource).
