@@ -133,6 +133,14 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, flatten_dict_list, is no longer supported.
+    get_major_version:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, get_major_version, is no longer supported.
+    get_product_version:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, get_product_version, is no longer supported.
   action:
     host_config:
       deprecation:

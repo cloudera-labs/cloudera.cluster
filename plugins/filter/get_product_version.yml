@@ -4,5 +4,9 @@ DOCUMENTATION:
   short_description: get_product_version
   description: get_product_version
   version_added: "3.0.3"
+  deprecated:
+    removed_in: "6.0.0"
+    alternative: none
+    why: No longer supported.
 EXAMPLES:
 RETURN:
