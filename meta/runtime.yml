@@ -129,6 +129,10 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, find_clusters, is no longer supported.
+    flatten_dict_list:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, flatten_dict_list, is no longer supported.
   action:
     host_config:
       deprecation:

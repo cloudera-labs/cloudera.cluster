@@ -4,6 +4,9 @@ DOCUMENTATION:
   short_description: flatten_dict_list
   description: flatten_dict_list
   version_added: "2.0.0"
-
+  deprecated:
+    removed_in: "6.0.0"
+    alternative: none
+    why: No longer supported.
 EXAMPLES:
 RETURN:
