@@ -101,6 +101,26 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, default_database_port, is no longer supported.
+    extract_custom_role_groups:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, extract_custom_role_groups, is no longer supported.
+    extract_custom_roles:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, extract_custom_roles, is no longer supported.
+    extract_parcel_urls:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, extract_parcel_urls, is no longer supported.
+    extract_products_from_manifests:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, extract_products_from_manifests, is no longer supported.
+    extract_role_and_group:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, extract_role_and_group, is no longer supported.
   action:
     host_config:
       deprecation:

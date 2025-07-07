@@ -4,5 +4,9 @@ DOCUMENTATION:
   short_description: extract_role_and_group
   description: extract_role_and_group
   version_added: "3.0.4"
+  deprecated:
+    removed_in: "6.0.0"
+    alternative: none
+    why: No longer supported.
 EXAMPLES:
 RETURN:
