@@ -145,6 +145,14 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, format_database_type, is no longer supported.
+    get_database_collation_mysql:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, get_database_collation_mysql, is no longer supported.
+    get_database_encoding_mysql:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, get_database_encoding_mysql, is no longer supported.
   action:
     host_config:
       deprecation:

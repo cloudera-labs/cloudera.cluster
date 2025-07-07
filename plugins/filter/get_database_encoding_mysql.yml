@@ -4,5 +4,9 @@ DOCUMENTATION:
   short_description: get_database_encoding_mysql
   description: get_database_encoding_mysql
   version_added: "3.0.3"
+  deprecated:
+    removed_in: "6.0.0"
+    alternative: none
+    why: No longer supported.
 EXAMPLES:
 RETURN:
