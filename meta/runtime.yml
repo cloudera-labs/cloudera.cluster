@@ -121,6 +121,10 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, extract_role_and_group, is no longer supported.
+    filter_null_configs:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, filter_null_configs, is no longer supported.
   action:
     host_config:
       deprecation:
