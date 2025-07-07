@@ -23,6 +23,10 @@ description:
 author:
   - "Ronald Suplina (@rsuplina)"
 version_added: "4.4.0"
+deprecated:
+  removed_in: "6.0.0"
+  alternative: Use M(cloudera.cluster.host_info)
+  why: Consolidation of configuration management.
 requirements:
   - cm_client
 options:
