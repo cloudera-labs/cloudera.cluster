@@ -4,5 +4,9 @@ DOCUMENTATION:
   short_description: extract_parcel_urls
   description: extract_parcel_urls
   version_added: "3.0.3"
+  deprecated:
+    removed_in: "6.0.0"
+    alternative: none
+    why: No longer supported.
 EXAMPLES:
 RETURN:

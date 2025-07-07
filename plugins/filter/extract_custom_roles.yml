@@ -4,5 +4,9 @@ DOCUMENTATION:
   short_description: extract_custom_roles
   description: extract_custom_roles
   version_added: "3.0.4"
+  deprecated:
+    removed_in: "6.0.0"
+    alternative: none
+    why: No longer supported.
 EXAMPLES:
 RETURN:
