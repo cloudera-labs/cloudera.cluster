@@ -125,6 +125,10 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, filter_null_configs, is no longer supported.
+    find_clusters:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, find_clusters, is no longer supported.
   action:
     host_config:
       deprecation:
