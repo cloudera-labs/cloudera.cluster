@@ -97,6 +97,10 @@ plugin_routing:
       deprecation:
         removal_version: "6.0.0"
         warning_text: Filter, append_database_port, is no longer supported.
+    default_database_port:
+      deprecation:
+        removal_version: "6.0.0"
+        warning_text: Filter, default_database_port, is no longer supported.
   action:
     host_config:
       deprecation:
