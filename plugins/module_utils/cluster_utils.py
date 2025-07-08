@@ -73,12 +73,15 @@ def get_cluster_hosts(api_client: ApiClient, cluster: ApiCluster) -> list[ApiHos
 
     return hosts
 
+
 def parse_control_plane_result(control_plane):
     """Parse a control plane API result into a dictionary format."""
     result = control_plane.to_dict()
-    
+
     # Convert tags list to a more readable format if present
-    if result.get('tags'):
-        result['tags'] = [{'name': tag.name, 'value': tag.value} for tag in control_plane.tags]
-    
+    if result.get("tags"):
+        result["tags"] = [
+            {"name": tag.name, "value": tag.value} for tag in control_plane.tags
+        ]
+
     return result

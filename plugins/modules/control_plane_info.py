@@ -130,9 +130,7 @@ class ControlPlaneInfo(ClouderaManagerModule):
             api_instance = ControlPlanesResourceApi(self.api_client)
             control_planes = api_instance.get_control_planes().items
 
-            self.output = [
-              parse_control_plane_result(cp) for cp in control_planes
-            ]
+            self.output = [parse_control_plane_result(cp) for cp in control_planes]
 
         except ApiException as e:
             if e.status == 404:

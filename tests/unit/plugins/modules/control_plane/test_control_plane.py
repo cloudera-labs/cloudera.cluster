@@ -46,7 +46,7 @@ def test_create_embedded_control_plane(module_args, conn):
         conn.update(remote_repo_url=os.getenv("CONTROL_PLANE_REMOTE_REPO_URL"))
     else:
         conn.update(
-            remote_repo_url="https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1"
+            remote_repo_url="https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1",
         )
 
     values_yaml_args = """
@@ -68,7 +68,7 @@ def test_create_embedded_control_plane(module_args, conn):
             **conn,
             "state": "present",
             "type": "embedded",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
@@ -89,7 +89,7 @@ def test_remove_embedded_control_plane(module_args, conn):
             **conn,
             "state": "absent",
             "type": "embedded",
-        }
+        },
     )
 
     with pytest.raises(AnsibleExitJson) as e:
