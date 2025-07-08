@@ -301,7 +301,8 @@ class ControlPlane(ClouderaManagerModule):
 
         # Find matching control plane
         existing_cp = self._find_matching_control_plane(
-            current_cps, existing_experience_cluster,
+            current_cps,
+            existing_experience_cluster,
         )
 
         if self.state == "present":
@@ -399,7 +400,8 @@ class ControlPlane(ClouderaManagerModule):
                 command = self.cp_api_instance.install_embedded_control_plane(body=body)
                 # Wait for command completion
                 command_state = self.wait_for_command_state(
-                    command_id=command.id, polling_interval=self.delay,
+                    command_id=command.id,
+                    polling_interval=self.delay,
                 )
 
                 # Retry logic if command failed and can be retried
@@ -423,7 +425,8 @@ class ControlPlane(ClouderaManagerModule):
 
                     # Wait for command completion
                     command_state = self.wait_for_command_state(
-                        command_id=retry_command.id, polling_interval=self.delay,
+                        command_id=retry_command.id,
+                        polling_interval=self.delay,
                     )
 
             else:  # TODO: Install external control plane
@@ -465,7 +468,8 @@ class ControlPlane(ClouderaManagerModule):
 
             # Find the newly installed control plane
             new_cp = self._find_matching_control_plane(
-                updated_cps, existing_experience_cluster,
+                updated_cps,
+                existing_experience_cluster,
             )
             if new_cp:
                 self.output = parse_control_plane_result(new_cp)
@@ -480,7 +484,8 @@ class ControlPlane(ClouderaManagerModule):
 
     def _uninstall_control_plane(self, experience_cluster):
         """Uninstall a control plane.
-        For embedded control planes, this will delete the associated experience cluster."""
+        For embedded control planes, this will delete the associated experience cluster.
+        """
 
         try:
 
@@ -492,7 +497,8 @@ class ControlPlane(ClouderaManagerModule):
                     )
                     # self.wait_command(stop, polling=self.timeout, delay=self.delay)
                     self.wait_for_command_state(
-                        command_id=stop.id, polling_interval=self.delay,
+                        command_id=stop.id,
+                        polling_interval=self.delay,
                     )
 
                 delete = self.cluster_api_instance.delete_cluster(
@@ -505,7 +511,8 @@ class ControlPlane(ClouderaManagerModule):
 
         except ApiException as e:
             self.module.fail_json(
-                msg=f"Failed to uninstall control plane: {str(e)}", details=str(e),
+                msg=f"Failed to uninstall control plane: {str(e)}",
+                details=str(e),
             )
 
 
@@ -518,7 +525,8 @@ def main():
             remote_repo_url=dict(type="str"),
             values_yaml=dict(type="dict", aliases=["control_plane_config"]),
             name=dict(
-                type="str", aliases=["containerized_cluster_name", "control_plane_name"],
+                type="str",
+                aliases=["containerized_cluster_name", "control_plane_name"],
             ),
             datalake_cluster_name=dict(type="str"),
             selected_features=dict(type="list", elements="str"),
