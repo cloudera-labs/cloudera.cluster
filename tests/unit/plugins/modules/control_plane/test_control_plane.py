@@ -38,6 +38,9 @@ def test_create_embedded_control_plane(module_args, conn):
     if os.getenv("CONTROL_PLANE_DATALAKE_NAME", None):
         conn.update(datalake_cluster_name=os.getenv("CONTROL_PLANE_DATALAKE_NAME"))
 
+    if os.getenv("CONTROL_PLANE_NAME", None):
+        conn.update(name=os.getenv("CONTROL_PLANE_NAME"))
+
     if os.getenv("CONTROL_PLANE_REMOTE_REPO_URL", None):
         conn.update(remote_repo_url=os.getenv("CONTROL_PLANE_REMOTE_REPO_URL"))
     else:
@@ -60,8 +63,6 @@ def test_create_embedded_control_plane(module_args, conn):
     module_args({**conn, 
                  "state": "present",
                  "type": "embedded",
-                #  "name": "je-aio-ecs-cluster",
-                 "name": "je-ce-ecs-cluster",
                  })
     
     with pytest.raises(AnsibleExitJson) as e:
@@ -74,11 +75,12 @@ def test_create_embedded_control_plane(module_args, conn):
 
 def test_remove_embedded_control_plane(module_args, conn):
 
+    if os.getenv("CONTROL_PLANE_NAME", None):
+        conn.update(name=os.getenv("CONTROL_PLANE_NAME"))
+
     module_args({**conn, 
                  "state": "absent",
                  "type": "embedded",
-                #  "name": "je-aio-ecs-cluster",
-                 "name": "je-ce-ecs-cluster",
                  })
     
     with pytest.raises(AnsibleExitJson) as e:

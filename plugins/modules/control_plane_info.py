@@ -105,21 +105,21 @@ from cm_client.rest import ApiException
 from cm_client import ControlPlanesResourceApi
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule
+    ClouderaManagerModule,
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
-    parse_control_plane_result
+    parse_control_plane_result,
 )
 
 
 class ControlPlaneInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ControlPlaneInfo, self).__init__(module)
-        
+
         # Initialize the return values
         self.output = []
-        
+
         # Execute the logic
         self.process()
 
@@ -128,19 +128,12 @@ class ControlPlaneInfo(ClouderaManagerModule):
         """Retrieve control plane information from Cloudera Manager API."""
         try:
             api_instance = ControlPlanesResourceApi(self.api_client)
-            control_planes = api_instance.get_control_planes()
-            
-            if control_planes and hasattr(control_planes, 'items'):
-                self.output = [
-                    parse_control_plane_result(cp) for cp in control_planes.items
-                ]
-            elif control_planes:
-                # Handle case where response is a list directly
-                if isinstance(control_planes, list):
-                    self.output = [parse_control_plane_result(cp) for cp in control_planes]
-                else:
-                    self.output = [parse_control_plane_result(control_planes)]
-                    
+            control_planes = api_instance.get_control_planes().items
+
+            self.output = [
+              parse_control_plane_result(cp) for cp in control_planes
+            ]
+
         except ApiException as e:
             if e.status == 404:
                 # No control planes found, return empty list

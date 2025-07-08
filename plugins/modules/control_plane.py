@@ -20,7 +20,8 @@ from cm_client import (
     ClustersResourceApi,
     ControlPlanesResourceApi,
     ApiInstallControlPlaneArgs,
-    ApiInstallEmbeddedControlPlaneArgs
+    ApiInstallEmbeddedControlPlaneArgs,
+    CommandsResourceApi
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
@@ -261,19 +262,19 @@ class ControlPlane(ClouderaManagerModule):
                       
         try:
             self.cp_api_instance = ControlPlanesResourceApi(self.api_client)
-            current_cps = self.cp_api_instance.get_control_planes()
-            current_cp_list = []
+            current_cps = self.cp_api_instance.get_control_planes().items
+            # current_cp_list = []
             
-            if current_cps and hasattr(current_cps, 'items'):
-                current_cp_list = current_cps.items
-            elif current_cps and isinstance(current_cps, list):
-                current_cp_list = current_cps
-            elif current_cps:
-                current_cp_list = [current_cps]
+            # if current_cps and hasattr(current_cps, 'items'):
+            # current_cp_list = current_cps.items
+            # elif current_cps and isinstance(current_cps, list):
+            #     current_cp_list = current_cps
+            # elif current_cps:
+            #     current_cp_list = [current_cps]
                 
         except ApiException as e:
             if e.status == 404:
-                current_cp_list = []
+                current_cps = []
             else:
                 raise e
 
@@ -298,10 +299,8 @@ class ControlPlane(ClouderaManagerModule):
                 raise e
 
         # Find matching control plane
-        existing_cp = self._find_matching_control_plane(current_cp_list, existing_experience_cluster)
-        
-        print("Existing control plane found:", existing_cp)
-
+        existing_cp = self._find_matching_control_plane(current_cps, existing_experience_cluster)
+       
         if self.state == 'present':
             if existing_cp:
                 # Control plane already exists
@@ -387,19 +386,17 @@ class ControlPlane(ClouderaManagerModule):
                 )
                                
                 command =  self.cp_api_instance.install_embedded_control_plane(body=body)
-                print(f"Command id: {command.id}")
                 # Wait for command completion
                 command_state = self.wait_for_command_state(
                     command_id=command.id, polling_interval=self.delay
                 )
 
-                print(f"Command state: {command_state}")
-
                 # Retry logic if command failed and can be retried
-                # if isinstance(command_state, dict):
-                can_retry = command_state.get('can_retry', False)
-                success = command_state.get('success', True)
-                command_id = command_state.get('id', None)
+                # command_state is a tuple from read_command_with_http_info, where [0] is the ApiCommand object
+                api_command = command_state[0]
+                can_retry = getattr(api_command, "can_retry", False)
+                success = getattr(api_command, "success", True)
+                command_id = getattr(api_command, "id", None)
                 # else:
                 #     can_retry = getattr(command_state, 'can_retry', False)
                 #     success = getattr(command_state, 'success', True)
@@ -433,22 +430,28 @@ class ControlPlane(ClouderaManagerModule):
                 # )
                                 
                 # command = api_instance.install_control_plane(body=body)
-                       
+
             # Get the installed control plane info
-            updated_cps = self.cp_api_instance.get_control_planes()
-            if updated_cps and hasattr(updated_cps, 'items') and updated_cps.items:
+            updated_cps = self.cp_api_instance.get_control_planes().items
+
+            # if updated_cps and hasattr(updated_cps, 'items'):
+            #     updated_cps_list = updated_cps.items
+            # elif updated_cps and isinstance(updated_cps, list):
+            #     updated_cps_list = updated_cps
+            # elif updated_cps:
+            #     updated_cps_list = [updated_cps]
                 
-              if self.name:
-                existing_experience_cluster = parse_cluster_result(
-                      self.cluster_api_instance.read_cluster(cluster_name=self.name)
-                    )
-              else:
-                existing_experience_cluster = None
-                            
-                # Find the newly installed control plane
-                new_cp = self._find_matching_control_plane(updated_cps.items, existing_experience_cluster)
-                if new_cp:
-                    self.output = parse_control_plane_result(new_cp)
+            if self.name:
+              existing_experience_cluster = parse_cluster_result(
+                    self.cluster_api_instance.read_cluster(cluster_name=self.name)
+                  )                
+            else:
+              existing_experience_cluster = None
+                        
+            # Find the newly installed control plane
+            new_cp = self._find_matching_control_plane(updated_cps, existing_experience_cluster)
+            if new_cp:
+                self.output = parse_control_plane_result(new_cp)
             
             self.msg = f"Successfully installed {self.type} control plane"
             
@@ -465,13 +468,6 @@ class ControlPlane(ClouderaManagerModule):
         try:
             
             if self.type == 'embedded':
-
-              # try:
-              #     # Access the experience cluster to check its status
-              #     # print(experience_cluster.get('entity_status', 'STOPPED'))
-              #     print(experience_cluster['entity_status'])
-              # except e:
-              #     print(f"Error accessing experience cluster dict: {str(e)}")
 
               if experience_cluster['entity_status'] != "STOPPED":
                   stop = self.cluster_api_instance.stop_command(cluster_name=self.name)
