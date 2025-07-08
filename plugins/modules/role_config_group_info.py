@@ -16,7 +16,7 @@
 # limitations under the License.
 
 DOCUMENTATION = r"""
-module: service_role_config_group_info
+module: role_config_group_info
 short_description: Retrieve information about a cluster service role config group or groups
 description:
   - Gather details about a role config group or groups of a service in a CDP cluster.
@@ -51,6 +51,7 @@ options:
       - The role config group to examine.
       - If defined, the module will return the role config group.
       - If the role config group does not exist, the module will return an empty result.
+      - Mutually exclusive with O(type).
     type: str
     aliases:
       - role_config_group
@@ -64,28 +65,35 @@ attributes:
 requirements:
   - cm-client
 seealso:
-  - module: cloudera.cluster.service_role_config_group
+  - module: cloudera.cluster.role_config_group
 """
 
 EXAMPLES = r"""
-- name: Gather the configuration details for a cluster service role
-  cloudera.cluster.service_role_config_info:
+- name: Gather the configuration details for all role config groups for a service
+  cloudera.cluster.role_config_group_info:
     host: "example.cloudera.internal"
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
     service: knox
-    role: GATEWAY
 
-- name: Gather the configuration details in 'full' for a cluster service role
-  cloudera.cluster.service_role_config_info:
+- name: Gather the configuration details for a base role config group
+  cloudera.cluster.role_config_group_info:
     host: "example.cloudera.internal"
     username: "jane_person"
     password: "S&peR4Ec*re"
     cluster: ExampleCluster
-    service: ecs
-    role: ECS
-    view: full
+    service: knox
+    type: GATEWAY
+
+- name: Gather the configuration details for a custom role config group
+  cloudera.cluster.role_config_group_info:
+    host: "example.cloudera.internal"
+    username: "jane_person"
+    password: "S&peR4Ec*re"
+    cluster: ExampleCluster
+    service: knox
+    name: custom_rcg_knox_gateway
 """
 
 RETURN = r"""
@@ -136,13 +144,12 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
     parse_role_config_group_result,
-    get_base_role_config_group,
 )
 
 
-class ClusterServiceRoleConfigGroupInfo(ClouderaManagerModule):
+class RoleConfigGroupInfo(ClouderaManagerModule):
     def __init__(self, module):
-        super(ClusterServiceRoleConfigGroupInfo, self).__init__(module)
+        super(RoleConfigGroupInfo, self).__init__(module)
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
@@ -239,7 +246,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterServiceRoleConfigGroupInfo(module)
+    result = RoleConfigGroupInfo(module)
 
     output = dict(
         changed=False,

@@ -173,3 +173,13 @@ plugin_routing:
       deprecation:
         removal_version: "5.0.0"
         warning_text: Use M(cloudera.cluster.role_info).
+    service_role_config_group:
+      redirect: cloudera.cluster.role_config_group
+      deprecation:
+        removal_version: "5.0.0"
+        warning_text: Use M(cloudera.cluster.role_config_group).
+    service_role_config_group_info:
+      redirect: cloudera.cluster.role_config_group_info
+      deprecation:
+        removal_version: "5.0.0"
+        warning_text: Use M(cloudera.cluster.role_config_group_info).

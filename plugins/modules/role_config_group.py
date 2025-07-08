@@ -16,7 +16,7 @@
 # limitations under the License.
 
 DOCUMENTATION = r"""
-module: service_role_config_group
+module: role_config_group
 short_description: Manage a cluster service role config group.
 description:
   - Manage a cluster service role config group.
@@ -103,12 +103,12 @@ attributes:
 requirements:
   - cm-client
 seealso:
-  - module: cloudera.cluster.service_role_config_group_info
+  - module: cloudera.cluster.role_config_group_info
 """
 
 EXAMPLES = r"""
 - name: Create or update a role config group
-  cloudera.cluster.service_role_config_group:
+  cloudera.cluster.role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -120,7 +120,7 @@ EXAMPLES = r"""
       tickTime: 2500
 
 - name: Create or update a role config group, purging undeclared parameters
-  cloudera.cluster.service_role_config_group:
+  cloudera.cluster.role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -133,7 +133,7 @@ EXAMPLES = r"""
     purge: true
 
 - name: Update the base role config group for a role type
-  cloudera.cluster.service_role_config_group:
+  cloudera.cluster.role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -145,7 +145,7 @@ EXAMPLES = r"""
       tickTime: 3500
 
 - name: Reset the configuration of a role config group
-  cloudera.cluster.service_role_config_group:
+  cloudera.cluster.role_config_group:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -206,7 +206,6 @@ role_config_group:
 """
 
 from cm_client import (
-    ApiConfigList,
     ApiRoleConfigGroup,
     ApiRoleConfigGroupList,
     ClustersResourceApi,
@@ -227,9 +226,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group
 )
 
 
-class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
+class RoleConfigGroup(ClouderaManagerMutableModule):
     def __init__(self, module):
-        super(ClusterServiceRoleConfig, self).__init__(module)
+        super(RoleConfigGroup, self).__init__(module)
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
@@ -406,20 +405,6 @@ class ClusterServiceRoleConfig(ClouderaManagerMutableModule):
                     config=self.config,
                 )
 
-                # payload = ApiRoleConfigGroup(
-                #     name=self.name,
-                #     role_type=self.role_type,
-                # )
-
-                # if self.display_name:
-                #     payload.display_name = self.display_name
-
-                # # Set the configuration
-                # if self.config:
-                #     payload.config = ConfigListUpdates(
-                #         ApiConfigList(items=[]), self.config, self.purge
-                #     ).config
-
                 if self.module._diff:
                     self.diff = dict(
                         before={},
@@ -473,7 +458,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterServiceRoleConfig(module)
+    result = RoleConfigGroup(module)
 
     output = dict(
         changed=result.changed,
