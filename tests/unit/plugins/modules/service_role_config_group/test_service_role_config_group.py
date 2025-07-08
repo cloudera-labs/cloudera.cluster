@@ -33,7 +33,7 @@ from cm_client import (
 )
 
 from ansible_collections.cloudera.cluster.plugins.modules import (
-    service_role_config_group,
+    role_config_group,
 )
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
@@ -60,7 +60,7 @@ def test_missing_required(conn, module_args):
     )
 
     with pytest.raises(AnsibleFailJson, match="name, role_type"):
-        service_role_config_group.main()
+        role_config_group.main()
 
 
 def test_invalid_service(conn, module_args, base_cluster):
@@ -74,7 +74,7 @@ def test_invalid_service(conn, module_args, base_cluster):
     )
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
-        service_role_config_group.main()
+        role_config_group.main()
 
 
 def test_invalid_cluster(conn, module_args, cms_session):
@@ -88,7 +88,7 @@ def test_invalid_cluster(conn, module_args, cms_session):
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
-        service_role_config_group.main()
+        role_config_group.main()
 
 
 @pytest.mark.role_config_group(
@@ -118,14 +118,14 @@ def test_base_role_config_group_set(conn, module_args, zk_role_config_group, req
     expected = dict(minSessionTimeout="3000", process_start_secs="25")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -158,14 +158,14 @@ def test_base_role_config_group_unset(conn, module_args, zk_role_config_group, r
     expected = dict(process_start_secs="26")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -199,14 +199,14 @@ def test_base_role_config_group_purge(conn, module_args, zk_role_config_group, r
     expected = dict(minSessionTimeout="2701")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -245,14 +245,14 @@ def test_base_role_config_group_purge_all(
     expected = dict()
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -289,7 +289,7 @@ def test_base_role_config_group_absent(
         AnsibleFailJson,
         match="Deletion failed\. Role config group is a base \(default\) group\.",
     ) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
 
 def test_role_config_group_create(conn, module_args, zk_session, request):
@@ -310,14 +310,14 @@ def test_role_config_group_create(conn, module_args, zk_session, request):
     expected = dict(minSessionTimeout="3000")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -352,14 +352,14 @@ def test_role_config_group_set(conn, module_args, zk_role_config_group, request)
     expected = dict(minSessionTimeout="3000", process_start_secs="28")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -394,14 +394,14 @@ def test_role_config_group_unset(conn, module_args, zk_role_config_group, reques
     expected = dict(process_start_secs="29")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -437,14 +437,14 @@ def test_role_config_group_purge(conn, module_args, zk_role_config_group, reques
     expected = dict(minSessionTimeout="3000")
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -480,14 +480,14 @@ def test_role_config_group_purge_all(conn, module_args, zk_role_config_group, re
     expected = dict()
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert expected.items() <= e.value.role_config_group["config"].items()
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert expected.items() <= e.value.role_config_group["config"].items()
@@ -520,14 +520,14 @@ def test_role_config_group_absent(conn, module_args, zk_role_config_group, reque
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == True
     assert not e.value.role_config_group
 
     # Idempotency
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     assert e.value.changed == False
     assert not e.value.role_config_group
@@ -560,7 +560,7 @@ def test_role_config_group_invalid_type(
     )
 
     with pytest.raises(AnsibleFailJson, match="Invalid role type") as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
 
 @pytest.mark.role_config_group(
@@ -590,7 +590,7 @@ def test_role_config_group_invalid_config(
     )
 
     with pytest.raises(AnsibleFailJson, match="Unknown configuration attribute") as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
 
 @pytest.mark.role_config_group(
@@ -642,7 +642,7 @@ def test_role_config_group_existing_roles(
     )
 
     with pytest.raises(AnsibleFailJson, match="existing role associations") as e:
-        service_role_config_group.main()
+        role_config_group.main()
 
     rcg_api.move_roles_to_base_group(
         cluster_name=zk_role_config_group.service_ref.cluster_name,

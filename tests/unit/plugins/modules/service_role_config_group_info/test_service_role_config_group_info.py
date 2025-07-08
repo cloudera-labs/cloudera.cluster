@@ -27,7 +27,7 @@ from cm_client import (
 )
 
 from ansible_collections.cloudera.cluster.plugins.modules import (
-    service_role_config_group_info,
+    role_config_group_info,
 )
 from ansible_collections.cloudera.cluster.plugins.module_utils.role_config_group_utils import (
     get_base_role_config_group,
@@ -44,21 +44,21 @@ def test_missing_required(conn, module_args):
     module_args(conn)
 
     with pytest.raises(AnsibleFailJson, match="cluster, service"):
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
 
 def test_missing_cluster(conn, module_args):
     module_args({**conn, "service": "example"})
 
     with pytest.raises(AnsibleFailJson, match="cluster"):
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
 
 def test_missing_service(conn, module_args, base_cluster):
     module_args({**conn, "cluster": base_cluster.name})
 
     with pytest.raises(AnsibleFailJson, match="service"):
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
 
 def test_invalid_service(conn, module_args, base_cluster):
@@ -71,7 +71,7 @@ def test_invalid_service(conn, module_args, base_cluster):
     )
 
     with pytest.raises(AnsibleFailJson, match="Service does not exist: BOOM"):
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
 
 def test_invalid_cluster(conn, module_args, cms_session):
@@ -84,7 +84,7 @@ def test_invalid_cluster(conn, module_args, cms_session):
     )
 
     with pytest.raises(AnsibleFailJson, match="Cluster does not exist: BOOM"):
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
 
 @pytest.mark.role_config_group(
@@ -104,7 +104,7 @@ def test_all_role_config_groups(conn, module_args, base_cluster, zk_role_config_
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
     assert len(e.value.role_config_groups) == 2
 
@@ -127,7 +127,7 @@ def test_type_role_config_group(conn, module_args, base_cluster, zk_role_config_
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
     assert len(e.value.role_config_groups) == 2
 
@@ -163,7 +163,7 @@ def test_name_base_role_config_group(
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
     # Should be only one BASE for the SERVER
     assert len(e.value.role_config_groups) == 1
@@ -193,7 +193,7 @@ def test_name_base_role_config_group(
     )
 
     with pytest.raises(AnsibleExitJson) as e:
-        service_role_config_group_info.main()
+        role_config_group_info.main()
 
     # Should be only one non-BASE for the SERVER
     assert len(e.value.role_config_groups) == 1
