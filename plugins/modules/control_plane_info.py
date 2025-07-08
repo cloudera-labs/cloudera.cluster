@@ -42,7 +42,6 @@ EXAMPLES = r"""
     username: "admin"
     password: "admin_password"
   register: control_planes_output
-
 """
 
 RETURN = r"""
