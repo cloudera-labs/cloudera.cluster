@@ -16,25 +16,35 @@
 # limitations under the License.
 
 DOCUMENTATION = r"""
-module: warn
-short_description: Display a warning
+module: deprecation
+short_description: Display a deprecation warning
 description:
-  - Displays a standard Ansible module warning.
+  - Displays a standard Ansible deprecation warning
 author:
   - "Webster Mudge (@wmudge)"
 version_added: "5.0.0"
 options:
   msg:
     description:
-      - The warning message.
+      - The deprecation warning message.
     type: str
     required: true
+  version:
+    description:
+      - Version details for the warning message.
+    type: str
+    required: false
 """
 
 EXAMPLES = r"""
-- name: Display a warning
-  cloudera.cluster.warn:
-    msg: This is a warning message.
+- name: Display a deprecation warning
+  cloudera.cluster.deprecation:
+    msg: A custom warning
+
+- name: Display the deprecation warning with version details
+  cloudera.cluster.deprecation:
+    msg: A custom warning with version info
+    version: "5.0.0"
 """
 
 RETURN = r""""""
@@ -46,8 +56,9 @@ if __name__ == "__main__":
     module = AnsibleModule(
         argument_spec=dict(
             msg=dict(required="True"),
+            version=dict(),
         ),
     )
 
-    module.warn(module.params["msg"])
+    module.deprecate(module.params.get("msg"), module.params.get("version", None))
     module.exit_json()

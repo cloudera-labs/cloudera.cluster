@@ -15,10 +15,10 @@
 ---
 
 - name: Deprecation warning
-  when: deprecation_msg is defined
   run_once: true
-  cloudera.cluster.warn:
-    msg: "{{ deprecation_msg }}"
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
 
 - name: Wait for Cloudera Manager Port to be up
   delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
