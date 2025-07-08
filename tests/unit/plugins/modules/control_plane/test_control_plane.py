@@ -33,6 +33,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+
 def test_create_embedded_control_plane(module_args, conn):
 
     if os.getenv("CONTROL_PLANE_DATALAKE_NAME", None):
@@ -44,7 +45,9 @@ def test_create_embedded_control_plane(module_args, conn):
     if os.getenv("CONTROL_PLANE_REMOTE_REPO_URL", None):
         conn.update(remote_repo_url=os.getenv("CONTROL_PLANE_REMOTE_REPO_URL"))
     else:
-        conn.update(remote_repo_url="https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1")
+        conn.update(
+            remote_repo_url="https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1"
+        )
 
     values_yaml_args = """
     values_yaml:
@@ -60,11 +63,14 @@ def test_create_embedded_control_plane(module_args, conn):
     """
     conn.update(yaml.safe_load(values_yaml_args))
 
-    module_args({**conn, 
-                 "state": "present",
-                 "type": "embedded",
-                 })
-    
+    module_args(
+        {
+            **conn,
+            "state": "present",
+            "type": "embedded",
+        }
+    )
+
     with pytest.raises(AnsibleExitJson) as e:
         control_plane.main()
 
@@ -78,11 +84,14 @@ def test_remove_embedded_control_plane(module_args, conn):
     if os.getenv("CONTROL_PLANE_NAME", None):
         conn.update(name=os.getenv("CONTROL_PLANE_NAME"))
 
-    module_args({**conn, 
-                 "state": "absent",
-                 "type": "embedded",
-                 })
-    
+    module_args(
+        {
+            **conn,
+            "state": "absent",
+            "type": "embedded",
+        }
+    )
+
     with pytest.raises(AnsibleExitJson) as e:
         control_plane.main()
 
