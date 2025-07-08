@@ -16,7 +16,7 @@
 # limitations under the License.
 
 DOCUMENTATION = r"""
-module: service_role
+module: role
 short_description: Manage a service role in cluster
 description:
   - Manage a service role in a cluster.
@@ -134,12 +134,12 @@ attributes:
 requirements:
   - cm-client
 seealso:
-  - module: cloudera.cluster.service_role_info
+  - module: cloudera.cluster.role_info
 """
 
 EXAMPLES = r"""
 - name: Provision a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -149,7 +149,7 @@ EXAMPLES = r"""
     cluster_hostname: worker-01.cloudera.internal
 
 - name: Set a service role to maintenance mode (using role name)
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -159,7 +159,7 @@ EXAMPLES = r"""
     maintenance: true
 
 - name: Update (append) tags to a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -172,7 +172,7 @@ EXAMPLES = r"""
       tag_two: value_two
 
 - name: Set (purge) tags to a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     cluster: example-cluster
@@ -184,7 +184,7 @@ EXAMPLES = r"""
     purge: true
 
 - name: Remove all tags on a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -196,7 +196,7 @@ EXAMPLES = r"""
     purge: true
 
 - name: Start a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -207,7 +207,7 @@ EXAMPLES = r"""
     state: started
 
 - name: Force a restart to a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -218,7 +218,7 @@ EXAMPLES = r"""
     state: restarted
 
 - name: Remove a service role
-  cloudera.cluster.service_role:
+  cloudera.cluster.role:
     host: example.cloudera.com
     username: "jane_smith"
     password: "S&peR4Ec*re"
@@ -389,9 +389,9 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.role_utils import
 )
 
 
-class ClusterServiceRole(ClouderaManagerMutableModule):
+class Role(ClouderaManagerMutableModule):
     def __init__(self, module):
-        super(ClusterServiceRole, self).__init__(module)
+        super(Role, self).__init__(module)
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
@@ -729,7 +729,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterServiceRole(module)
+    result = Role(module)
 
     output = dict(
         changed=result.changed,

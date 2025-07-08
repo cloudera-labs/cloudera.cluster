@@ -39,7 +39,7 @@ from cm_client import (
     RoleCommandsResourceApi,
 )
 
-from ansible_collections.cloudera.cluster.plugins.modules import service_role
+from ansible_collections.cloudera.cluster.plugins.modules import role
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     wait_bulk_commands,
 )
@@ -161,7 +161,7 @@ class TestServiceRoleArgSpec:
         module_args(conn)
 
         with pytest.raises(AnsibleFailJson, match="cluster, service"):
-            service_role.main()
+            role.main()
 
     def test_service_role_missing_one_of(self, conn, module_args):
         module_args(
@@ -173,7 +173,7 @@ class TestServiceRoleArgSpec:
         )
 
         with pytest.raises(AnsibleFailJson, match="type, name"):
-            service_role.main()
+            role.main()
 
     def test_service_role_missing_required_by_type(self, conn, module_args):
         module_args(
@@ -186,7 +186,7 @@ class TestServiceRoleArgSpec:
         )
 
         with pytest.raises(AnsibleFailJson, match="cluster_hostname, cluster_host_id"):
-            service_role.main()
+            role.main()
 
     def test_service_role_missing_required_by_type_exclusives(self, conn, module_args):
         module_args(
@@ -204,7 +204,7 @@ class TestServiceRoleArgSpec:
             AnsibleFailJson,
             match="mutually exclusive: cluster_hostname\|cluster_host_id",
         ):
-            service_role.main()
+            role.main()
 
 
 class TestServiceRoleInvalidParams:
@@ -220,7 +220,7 @@ class TestServiceRoleInvalidParams:
         )
 
         with pytest.raises(AnsibleFailJson, match="Cluster does not exist"):
-            service_role.main()
+            role.main()
 
     def test_service_role_invalid_service(
         self,
@@ -245,7 +245,7 @@ class TestServiceRoleInvalidParams:
         )
 
         with pytest.raises(AnsibleFailJson, match="Service does not exist"):
-            service_role.main()
+            role.main()
 
     def test_service_role_invalid_type(
         self,
@@ -273,7 +273,7 @@ class TestServiceRoleInvalidParams:
             AnsibleFailJson,
             match="Base role config group of type EXAMPLE not found in service",
         ):
-            service_role.main()
+            role.main()
 
     def test_service_role_invalid_host(
         self,
@@ -298,7 +298,7 @@ class TestServiceRoleInvalidParams:
         )
 
         with pytest.raises(AnsibleFailJson, match="Host not found"):
-            service_role.main()
+            role.main()
 
     def test_service_role_invalid_role_name(self, conn, module_args, zookeeper):
         module_args(
@@ -311,7 +311,7 @@ class TestServiceRoleInvalidParams:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert not e.value.role
 
@@ -351,7 +351,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -391,7 +391,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["host_id"] == hosts[0].host_id
@@ -434,7 +434,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -490,7 +490,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -535,7 +535,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -577,7 +577,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -618,7 +618,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -658,7 +658,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -698,7 +698,7 @@ class TestServiceRoleProvision:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.role["type"] == "SERVER"
         assert e.value.role["hostname"] == hosts[0].hostname
@@ -804,7 +804,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["type"] == server_role.type
@@ -830,7 +830,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["type"] == server_role.type
@@ -856,7 +856,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["type"] == server_role.type
@@ -882,7 +882,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == server_role.type
@@ -892,7 +892,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["maintenance_mode"] == True
@@ -919,7 +919,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == updated_server_role_config.type
@@ -930,7 +930,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["config"]["minSessionTimeout"] == "5001"
@@ -958,7 +958,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == updated_server_role_config.type
@@ -969,7 +969,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert "minSessionTimeout" not in e.value.role["config"]
@@ -995,7 +995,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == server_role.type
@@ -1005,7 +1005,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["config"]["minSessionTimeout"] == "4501"
@@ -1029,7 +1029,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == updated_server_role_rcg.type
@@ -1039,7 +1039,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert "minSessionTimeout" not in e.value.role["config"]
@@ -1065,7 +1065,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == updated_server_role_tags.type
@@ -1076,7 +1076,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["tags"]["existing"] == "tag"
@@ -1104,7 +1104,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == updated_server_role_tags.type
@@ -1115,7 +1115,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert "existing" not in e.value.role["tags"]
@@ -1139,7 +1139,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == stopped_server_role.type
@@ -1148,7 +1148,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["role_state"] == ApiRoleState.STARTED
@@ -1171,7 +1171,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == server_role.type
@@ -1180,7 +1180,7 @@ class TestServiceRoleModification:
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert e.value.role["role_state"] == ApiRoleState.STOPPED
@@ -1203,7 +1203,7 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["type"] == server_role.type
@@ -1212,7 +1212,7 @@ class TestServiceRoleModification:
 
         # Idempotency (rather, 'restarted' is not idempotent)
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert e.value.role["role_state"] == ApiRoleState.STARTED
@@ -1235,14 +1235,14 @@ class TestServiceRoleModification:
         )
 
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == True
         assert not e.value.role
 
         # Idempotency
         with pytest.raises(AnsibleExitJson) as e:
-            service_role.main()
+            role.main()
 
         assert e.value.changed == False
         assert not e.value.role

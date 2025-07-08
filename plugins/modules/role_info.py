@@ -16,7 +16,7 @@
 # limitations under the License.
 
 DOCUMENTATION = r"""
-module: service_role_info
+module: role_info
 short_description: Retrieve information about the service roles of cluster
 description:
   - Gather information about one or all service roles of a CDP cluster.
@@ -85,12 +85,12 @@ extends_documentation_fragment:
 requirements:
   - cm_client
 seealso:
-  - module: cloudera.cluster.service_role
+  - module: cloudera.cluster.role
 """
 
 EXAMPLES = r"""
 - name: Gather details of the roles for the 'yarn' service
-  cloudera.cluster.service_role_info:
+  cloudera.cluster.role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -98,7 +98,7 @@ EXAMPLES = r"""
     service: yarn
 
 - name: Gather the details with additional healthcheck information for the roles in the 'ecs' service
-  cloudera.cluster.service_role_info:
+  cloudera.cluster.role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -107,7 +107,7 @@ EXAMPLES = r"""
     view: healthcheck
 
 - name: Gather details of the 'NODEMANAGER' roles for the 'yarn' service
-  cloudera.cluster.service_role_info:
+  cloudera.cluster.role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -116,7 +116,7 @@ EXAMPLES = r"""
     type: NODEMANAGER
 
 - name: Gather details of the roles for the 'yarn' service on a particular cluster host
-  cloudera.cluster.service_role_info:
+  cloudera.cluster.role_info:
     host: "example.cloudera.host"
     username: "jane_person"
     password: "S&peR4Ec*re"
@@ -269,9 +269,9 @@ from cm_client import ClustersResourceApi, ServicesResourceApi
 from cm_client.rest import ApiException
 
 
-class ClusterServiceRoleInfo(ClouderaManagerModule):
+class RoleInfo(ClouderaManagerModule):
     def __init__(self, module):
-        super(ClusterServiceRoleInfo, self).__init__(module)
+        super(RoleInfo, self).__init__(module)
 
         # Set the parameters
         self.cluster = self.get_param("cluster")
@@ -367,7 +367,7 @@ def main():
         supports_check_mode=True,
     )
 
-    result = ClusterServiceRoleInfo(module)
+    result = RoleInfo(module)
 
     output = dict(
         changed=False,
