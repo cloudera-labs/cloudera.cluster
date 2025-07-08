@@ -258,7 +258,7 @@ class ControlPlane(ClouderaManagerModule):
                 ]
             ):
                 self.module.fail_json(
-                    msg="Parameter 'name', 'remote_repo_url' and 'datalake_cluster_name' are required when creating an embedded control plane."
+                    msg="Parameter 'name', 'remote_repo_url' and 'datalake_cluster_name' are required when creating an embedded control plane.",
                 )
 
         try:
@@ -285,7 +285,7 @@ class ControlPlane(ClouderaManagerModule):
 
             if self.name:
                 existing_experience_cluster = parse_cluster_result(
-                    self.cluster_api_instance.read_cluster(cluster_name=self.name)
+                    self.cluster_api_instance.read_cluster(cluster_name=self.name),
                 )
 
         except ApiException as e:
@@ -301,7 +301,7 @@ class ControlPlane(ClouderaManagerModule):
 
         # Find matching control plane
         existing_cp = self._find_matching_control_plane(
-            current_cps, existing_experience_cluster
+            current_cps, existing_experience_cluster,
         )
 
         if self.state == "present":
@@ -309,7 +309,7 @@ class ControlPlane(ClouderaManagerModule):
                 # Control plane already exists
                 self.changed = False
                 self.module.warn(
-                    "Control plane matching the required parameters already exists. Reconciliation is not currently supported."
+                    "Control plane matching the required parameters already exists. Reconciliation is not currently supported.",
                 )
                 self.output = parse_control_plane_result(existing_cp)
                 self.msg = "Control plane matching the required parameters already exists. Reconciliation is not currently supported."
@@ -347,7 +347,7 @@ class ControlPlane(ClouderaManagerModule):
                 # experience_cluster_uuid = experience_cluster.get('tags', []).tag.get('_cldr_cm_ek8s_control_plane')
 
                 experience_cluster_uuid = experience_cluster.get("tags", {}).get(
-                    "_cldr_cm_ek8s_control_plane"
+                    "_cldr_cm_ek8s_control_plane",
                 )
 
                 # For embedded control planes, we need to check the control plane uuid
@@ -399,7 +399,7 @@ class ControlPlane(ClouderaManagerModule):
                 command = self.cp_api_instance.install_embedded_control_plane(body=body)
                 # Wait for command completion
                 command_state = self.wait_for_command_state(
-                    command_id=command.id, polling_interval=self.delay
+                    command_id=command.id, polling_interval=self.delay,
                 )
 
                 # Retry logic if command failed and can be retried
@@ -415,15 +415,15 @@ class ControlPlane(ClouderaManagerModule):
 
                 if not success and can_retry and command_id:
                     self.module.warn(
-                        f"Command failed but can be retried. Retrying command {command_id}."
+                        f"Command failed but can be retried. Retrying command {command_id}.",
                     )
                     retry_command = self.command_api_instance.api_instance.retry(
-                        command_id
+                        command_id,
                     )
 
                     # Wait for command completion
                     command_state = self.wait_for_command_state(
-                        command_id=retry_command.id, polling_interval=self.delay
+                        command_id=retry_command.id, polling_interval=self.delay,
                     )
 
             else:  # TODO: Install external control plane
@@ -458,14 +458,14 @@ class ControlPlane(ClouderaManagerModule):
 
             if self.name:
                 existing_experience_cluster = parse_cluster_result(
-                    self.cluster_api_instance.read_cluster(cluster_name=self.name)
+                    self.cluster_api_instance.read_cluster(cluster_name=self.name),
                 )
             else:
                 existing_experience_cluster = None
 
             # Find the newly installed control plane
             new_cp = self._find_matching_control_plane(
-                updated_cps, existing_experience_cluster
+                updated_cps, existing_experience_cluster,
             )
             if new_cp:
                 self.output = parse_control_plane_result(new_cp)
@@ -488,15 +488,15 @@ class ControlPlane(ClouderaManagerModule):
 
                 if experience_cluster["entity_status"] != "STOPPED":
                     stop = self.cluster_api_instance.stop_command(
-                        cluster_name=self.name
+                        cluster_name=self.name,
                     )
                     # self.wait_command(stop, polling=self.timeout, delay=self.delay)
                     self.wait_for_command_state(
-                        command_id=stop.id, polling_interval=self.delay
+                        command_id=stop.id, polling_interval=self.delay,
                     )
 
                 delete = self.cluster_api_instance.delete_cluster(
-                    cluster_name=self.name
+                    cluster_name=self.name,
                 )
                 self.wait_command(delete, polling=self.timeout, delay=30)
 
@@ -505,7 +505,7 @@ class ControlPlane(ClouderaManagerModule):
 
         except ApiException as e:
             self.module.fail_json(
-                msg=f"Failed to uninstall control plane: {str(e)}", details=str(e)
+                msg=f"Failed to uninstall control plane: {str(e)}", details=str(e),
             )
 
 
@@ -518,7 +518,7 @@ def main():
             remote_repo_url=dict(type="str"),
             values_yaml=dict(type="dict", aliases=["control_plane_config"]),
             name=dict(
-                type="str", aliases=["containerized_cluster_name", "control_plane_name"]
+                type="str", aliases=["containerized_cluster_name", "control_plane_name"],
             ),
             datalake_cluster_name=dict(type="str"),
             selected_features=dict(type="list", elements="str"),
