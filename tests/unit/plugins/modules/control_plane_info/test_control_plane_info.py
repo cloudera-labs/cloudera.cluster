@@ -31,6 +31,7 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 
 LOG = logging.getLogger(__name__)
 
+
 def test_list_all_control_planes_simple(module_args, conn):
 
     module_args({**conn})
@@ -45,6 +46,7 @@ def test_list_all_control_planes_simple(module_args, conn):
     # Log the results for debugging
     LOG.info(f"Found {len(e.value.control_planes)} control planes")
 
+
 def test_invalid_credentials(module_args, conn):
     """Test behavior with invalid credentials"""
 
@@ -54,6 +56,6 @@ def test_invalid_credentials(module_args, conn):
 
     with pytest.raises(AnsibleFailJson) as e:
         control_plane_info.main()
-    
+
     # Should fail with authentication error
     assert e.value.failed == True
