@@ -13,6 +13,13 @@
 # limitations under the License.
 
 ---
+
+- name: Deprecation warning
+  when: deprecation_msg is defined
+  run_once: true
+  cloudera.cluster.warn:
+    msg: "{{ deprecation_msg }}"
+
 - name: Include variables
   include_vars:
     file: "{{ ansible_os_family }}.yml"

@@ -25,6 +25,7 @@ roles/cloudera_manager/autotls/tasks/patch_old_cm.yml command-instead-of-shell
 roles/cloudera_manager/autotls/tasks/patch_old_cm.yml fqcn[action-core]
 roles/cloudera_manager/autotls/tasks/patch_old_cm.yml jinja[spacing]
 roles/cloudera_manager/autotls/tasks/patch_old_cm.yml no-changed-when
+roles/cloudera_manager/common/defaults/main.yml var-naming[no-role-prefix]
 roles/cloudera_manager/common/handlers/main.yml fqcn[action-core]
 roles/cloudera_manager/common/handlers/main.yml name[casing]
 roles/cloudera_manager/config/defaults/main.yml var-naming[no-role-prefix]

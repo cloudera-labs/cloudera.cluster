@@ -13,6 +13,19 @@
 # limitations under the License.
 
 ---
+
+- name: Load defaults
+  when: deprecation_msg is defined
+  run_once: true
+  ansible.builtin.include_role:
+    name: cloudera.cluster.cloudera_manager.common
+
+- name: Deprecation warning
+  when: deprecation_msg is defined
+  run_once: true
+  cloudera.cluster.warn:
+    msg: "{{ deprecation_msg }}"
+
 - name: Create temp directory for keys
   file:
     path: "{{ local_temp_dir }}/kms"

@@ -13,6 +13,13 @@
 # limitations under the License.
 
 ---
+
+- name: Deprecation warning
+  when: deprecation_msg is defined
+  run_once: true
+  cloudera.cluster.warn:
+    msg: "{{ deprecation_msg }}"
+
 - name: Wait for Cloudera Manager Port to be up
   delegate_to: "{{ groups.cloudera_manager[0] if 'cloudera_manager' in groups else 'localhost' }}"
   ansible.builtin.wait_for:

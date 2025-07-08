@@ -13,6 +13,13 @@
 # limitations under the License.
 
 ---
+
+- name: Deprecation warning
+  when: deprecation_msg is defined
+  run_once: true
+  cloudera.cluster.warn:
+    msg: "{{ deprecation_msg }}"
+
 - name: Read the Cloudera Manager agent UUID
   slurp:
     path: "{{ cloudera_manager_agent_lib_directory }}/uuid"
