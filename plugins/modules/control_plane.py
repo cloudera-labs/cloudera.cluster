@@ -147,13 +147,13 @@ options:
     type: int
     default: 15
     aliases:
-      - polling_interval    
+      - polling_interval
 seealso:
   - module: cloudera.cluster.control_plane_info
   - module: cloudera.cluster.cluster
 notes:
   - Removing an embedded control plane is not possible with this module.
-  - Instead use the O(cloudera.cluster.cluster) module to remove embedded control planes. 
+  - Instead use the O(cloudera.cluster.cluster) module to remove embedded control planes.
 """
 
 EXAMPLES = r"""
@@ -167,7 +167,7 @@ EXAMPLES = r"""
     namespace: "example-namespace"
     remote_repo_url: "https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1"
     kubernetes_type: "openshift"
-    kubeconfig: {{ lookup('ansible.builtin.file', 'kubeconfig.yml') }}
+    kubeconfig: "{{ lookup('ansible.builtin.file', 'kubeconfig.yml') }}"
     control_plane_config:
       ContainerInfo:
         Mode: public
@@ -176,7 +176,7 @@ EXAMPLES = r"""
         Mode: embedded
         EmbeddedDbStorage: 200
       Vault:
-        Mode: embedded        
+        Mode: embedded
         EmbeddedDbStorage: 20
 
 - name: Install an embedded control plane
@@ -197,9 +197,9 @@ EXAMPLES = r"""
         Mode: embedded
         EmbeddedDbStorage: 200
       Vault:
-        Mode: embedded        
+        Mode: embedded
         EmbeddedDbStorage: 20
-           
+
 - name: Uninstall a control plane
   cloudera.cluster.control_plane:
     host: "example.cloudera.host"
@@ -243,6 +243,7 @@ control_plane:
 
 # Constant for the tag used to identify the control plane in Experience Cluster
 CONTROL_PLANE_IDENTIFIER_TAG = "_cldr_cm_ek8s_control_plane"
+
 
 class ControlPlane(ClouderaManagerModule):
     def __init__(self, module):
@@ -349,8 +350,8 @@ class ControlPlane(ClouderaManagerModule):
                 # Control plane doesn't exist
                 self.changed = False
                 self.module.info(
-                  f"Control plane does not exist, nothing to uninstall.",
-              )
+                    f"Control plane does not exist, nothing to uninstall.",
+                )
 
     def _find_matching_control_plane(self, control_planes, experience_cluster):
         """Find a control plane that matches the target parameters."""
@@ -482,7 +483,6 @@ class ControlPlane(ClouderaManagerModule):
             if new_cp:
                 self.output = parse_control_plane_result(new_cp)
 
-
         except ApiException as e:
             self.module.fail_json(
                 msg=f"Failed to install {self.type} control plane: {to_native(e)}",
@@ -498,9 +498,9 @@ class ControlPlane(ClouderaManagerModule):
 
             if self.type == "embedded":
 
-              self.module.info(
-                  f"Removing embedded control plane is not possible. Use the cloudera.cluster.cluster module to remove the {self.name} experience cluster.",
-              )
+                self.module.info(
+                    f"Removing embedded control plane is not possible. Use the cloudera.cluster.cluster module to remove the {self.name} experience cluster.",
+                )
 
             else:  # TODO: Remove External control plane
                 pass
@@ -510,6 +510,7 @@ class ControlPlane(ClouderaManagerModule):
                 msg=f"Failed to uninstall control plane: {to_native(e)}",
                 details=to_native(e),
             )
+
 
 def main():
     module = ClouderaManagerModule.ansible_module(

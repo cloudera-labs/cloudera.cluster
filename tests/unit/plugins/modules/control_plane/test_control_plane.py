@@ -68,7 +68,7 @@ def test_create_embedded_control_plane(module_args, conn):
             "type": "embedded",
             "remote_repo_url": remote_repo_url,
             "datalake_cluster_name": datalake_cluster_name,
-            "control_plane_config": yaml.safe_load(values_yaml_args)
+            "control_plane_config": yaml.safe_load(values_yaml_args),
         },
     )
 
@@ -90,7 +90,7 @@ def test_remove_embedded_control_plane(module_args, conn):
             **conn,
             "state": "absent",
             "type": "embedded",
-            "name": control_plane_name
+            "name": control_plane_name,
         },
     )
 

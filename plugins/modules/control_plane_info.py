@@ -135,6 +135,7 @@ class ControlPlaneInfo(ClouderaManagerModule):
                 # No control planes found, return empty list
                 self.output = []
 
+
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(),
@@ -153,6 +154,7 @@ def main():
         output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
+
 
 if __name__ == "__main__":
     main()
