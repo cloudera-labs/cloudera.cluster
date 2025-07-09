@@ -37,17 +37,15 @@ LOG = logging.getLogger(__name__)
 def test_create_embedded_control_plane(module_args, conn):
 
     if os.getenv("CONTROL_PLANE_DATALAKE_NAME", None):
-        conn.update(datalake_cluster_name=os.getenv("CONTROL_PLANE_DATALAKE_NAME"))
+        datalake_cluster_name = os.getenv("CONTROL_PLANE_DATALAKE_NAME")
 
     if os.getenv("CONTROL_PLANE_NAME", None):
-        conn.update(name=os.getenv("CONTROL_PLANE_NAME"))
+        control_plane_name = os.getenv("CONTROL_PLANE_NAME")
 
     if os.getenv("CONTROL_PLANE_REMOTE_REPO_URL", None):
-        conn.update(remote_repo_url=os.getenv("CONTROL_PLANE_REMOTE_REPO_URL"))
+        remote_repo_url = os.getenv("CONTROL_PLANE_REMOTE_REPO_URL")
     else:
-        conn.update(
-            remote_repo_url="https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1",
-        )
+        remote_repo_url = "https://archive.cloudera.com/p/cdp-pvc-ds/1.5.5-h1"
 
     values_yaml_args = """
     values_yaml:
@@ -61,13 +59,16 @@ def test_create_embedded_control_plane(module_args, conn):
             Mode: embedded
             EmbeddedDbStorage: 20
     """
-    conn.update(yaml.safe_load(values_yaml_args))
 
     module_args(
         {
             **conn,
+            "name": control_plane_name,
             "state": "present",
             "type": "embedded",
+            "remote_repo_url": remote_repo_url,
+            "datalake_cluster_name": datalake_cluster_name,
+            "control_plane_config": yaml.safe_load(values_yaml_args)
         },
     )
 
@@ -82,13 +83,14 @@ def test_create_embedded_control_plane(module_args, conn):
 def test_remove_embedded_control_plane(module_args, conn):
 
     if os.getenv("CONTROL_PLANE_NAME", None):
-        conn.update(name=os.getenv("CONTROL_PLANE_NAME"))
+        control_plane_name = os.getenv("CONTROL_PLANE_NAME")
 
     module_args(
         {
             **conn,
             "state": "absent",
             "type": "embedded",
+            "name": control_plane_name
         },
     )
 

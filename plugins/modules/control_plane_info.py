@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2024 Cloudera, Inc. All Rights Reserved.
+# Copyright 2025 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ control_planes:
       description: The domain where the control plane is installed.
       type: str
       returned: optional
-
     uuid:
       description: The universally unique ID of this control plane in Cloudera Manager.
       type: str
@@ -135,10 +134,6 @@ class ControlPlaneInfo(ClouderaManagerModule):
             if e.status == 404:
                 # No control planes found, return empty list
                 self.output = []
-            else:
-                # Re-raise other API exceptions
-                raise e
-
 
 def main():
     module = ClouderaManagerModule.ansible_module(
@@ -158,7 +153,6 @@ def main():
         output.update(debug=log, debug_lines=log.split("\n"))
 
     module.exit_json(**output)
-
 
 if __name__ == "__main__":
     main()
