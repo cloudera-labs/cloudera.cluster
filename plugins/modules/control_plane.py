@@ -153,7 +153,7 @@ seealso:
   - module: cloudera.cluster.cluster
 notes:
   - Removing an embedded control plane is not possible with this module.
-  - Instead use the O(cloudera.cluster.cluster) module to remove embedded control planes.
+  - Instead use the M(cloudera.cluster.cluster) module to remove embedded control planes.
 """
 
 EXAMPLES = r"""
