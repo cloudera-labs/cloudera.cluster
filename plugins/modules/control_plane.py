@@ -54,6 +54,8 @@ extends_documentation_fragment:
 attributes:
   check_mode:
     support: full
+  diff_mode:
+    support: full    
 requirements:
   - cm-client
 options:
@@ -271,6 +273,7 @@ class ControlPlane(ClouderaManagerModule):
         # Initialize the output
         self.changed = False
         self.output = {}
+        self.diff = dict(before={}, after={})
 
         # Execute the logic
         self.process()
@@ -341,11 +344,20 @@ class ControlPlane(ClouderaManagerModule):
                     "Control plane matching the required parameters already exists. Reconciliation is not currently supported.",
                 )
                 self.output = parse_control_plane_result(existing_cp)
+
+                if self.module._diff:
+                    self.before.update(control_plane=parse_control_plane_result(existing_cp))
+                    self.after.update(control_plane=parse_control_plane_result(existing_cp))
+
             else:
                 # Install new control plane
                 if not self.module.check_mode:
                     self._install_control_plane(self.cp_api_instance, self.cluster_api_instance)
                 self.changed = True
+
+                if self.module._diff:
+                    self.before.update(control_plane={})
+                    self.after.update(control_plane=self.output)
 
         elif self.state == "absent":
             if existing_cp:
@@ -360,7 +372,7 @@ class ControlPlane(ClouderaManagerModule):
                     f"Control plane does not exist, nothing to uninstall.",
                 )
 
-    def _find_matching_control_plane(self, control_planes: list, experience_cluster: dict) -> bool | None:
+    def _find_matching_control_plane(self, control_planes: list, experience_cluster: dict) -> dict | None:
         """Find a control plane that matches the target parameters."""
         if not control_planes:
             return None
@@ -552,6 +564,9 @@ def main():
         changed=result.changed,
         control_plane=result.output,
     )
+
+    if module._diff:
+        output.update(diff=result.diff)
 
     if result.debug:
         log = result.log_capture.getvalue()
