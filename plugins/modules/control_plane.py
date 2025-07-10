@@ -33,6 +33,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils imp
     parse_cluster_result,
     parse_control_plane_result,
 )
+from ansible.module_utils.common.validation import check_missing_parameters
 from ansible.module_utils.common.text.converters import to_native
 
 from cm_client.rest import ApiException
@@ -280,17 +281,25 @@ class ControlPlane(ClouderaManagerModule):
 
         # Check parameters that are required depending on control plane type
         if self.type == "embedded" and self.state == "present":
-            if any(
-                param is None
-                for param in [
-                    self.name,
-                    self.remote_repo_url,
-                    self.datalake_cluster_name,
-                ]
-            ):
-                self.module.fail_json(
-                    msg="Parameter 'name', 'remote_repo_url' and 'datalake_cluster_name' are required when creating an embedded control plane.",
-                )
+            # Define the required parameters for embedded control plane creation
+            embedded_cp_required_params = {
+                'name': {'required': True},
+                'remote_repo_url': {'required': True},
+                'datalake_cluster_name': {'required': True},
+            }
+
+            # Get current parameter values
+            params = {
+              'name': self.name,
+              'remote_repo_url': self.remote_repo_url,
+              'datalake_cluster_name': self.datalake_cluster_name,
+              }
+            
+            # Check for missing parameters
+            try:
+              check_missing_parameters(params, embedded_cp_required_params)
+            except TypeError as e:
+              self.module.fail_json(msg=to_native(e))
 
         try:
             self.cp_api_instance = ControlPlanesResourceApi(self.api_client)
@@ -299,8 +308,6 @@ class ControlPlane(ClouderaManagerModule):
         except ApiException as e:
             if e.status == 404:
                 current_cps = []
-            else:
-                raise e
 
         # Search for experience clusters matching the control plane name
         try:
@@ -337,7 +344,7 @@ class ControlPlane(ClouderaManagerModule):
             else:
                 # Install new control plane
                 if not self.module.check_mode:
-                    self._install_control_plane()
+                    self._install_control_plane(self.cp_api_instance, self.cluster_api_instance)
                 self.changed = True
 
         elif self.state == "absent":
@@ -353,7 +360,7 @@ class ControlPlane(ClouderaManagerModule):
                     f"Control plane does not exist, nothing to uninstall.",
                 )
 
-    def _find_matching_control_plane(self, control_planes, experience_cluster):
+    def _find_matching_control_plane(self, control_planes: list, experience_cluster: dict) -> bool | None:
         """Find a control plane that matches the target parameters."""
         if not control_planes:
             return None
@@ -396,7 +403,7 @@ class ControlPlane(ClouderaManagerModule):
 
         return None
 
-    def _install_control_plane(self):
+    def _install_control_plane(self, cp_api_instance: ControlPlanesResourceApi, cluster_api_instance: ClustersResourceApi) -> None:
         """Install a control plane based on the type."""
 
         try:
@@ -409,7 +416,7 @@ class ControlPlane(ClouderaManagerModule):
                     values_yaml_str = None
 
                 body = ApiInstallEmbeddedControlPlaneArgs(
-                    remote_repo_url=self.get_param("remote_repo_url"),
+                    remote_repo_url=self.remote_repo_url,
                     values_yaml=values_yaml_str,
                     experience_cluster_name=self.name,
                     containerized_cluster_name=self.name,
@@ -417,33 +424,34 @@ class ControlPlane(ClouderaManagerModule):
                     selected_features=self.features,
                 )
 
-                command = self.cp_api_instance.install_embedded_control_plane(body=body)
-                # Wait for command completion
-                command_state = self.wait_for_command_state(
-                    command_id=command.id,
-                    polling_interval=self.delay,
-                )
+                # command = cp_api_instance.install_embedded_control_plane(body=body)
+                # # Wait for command completion
+                # command_state = self.wait_for_command_state(
+                #     command_id=command.id,
+                #     polling_interval=self.delay,
+                # )
 
-                # Retry logic if command failed and can be retried
-                # command_state is a tuple from read_command_with_http_info, where [0] is the ApiCommand object
-                api_command = command_state[0]
-                can_retry = getattr(api_command, "can_retry", False)
-                success = getattr(api_command, "success", True)
-                command_id = getattr(api_command, "id", None)
+                # # Retry logic if command failed and can be retried
+                # # command_state is a tuple from read_command_with_http_info, where [0] is the ApiCommand object
+                # api_command = command_state[0]
+                # can_retry = getattr(api_command, "can_retry", False)
+                # success = getattr(api_command, "success", True)
+                # command_id = getattr(api_command, "id", None)
 
-                if not success and can_retry and command_id:
-                    self.module.info(
-                        f"Command failed but can be retried. Retrying command {command_id}.",
-                    )
-                    retry_command = self.command_api_instance.api_instance.retry(
-                        command_id,
-                    )
+                # if not success and can_retry and command_id:
+                #     self.module.info(
+                #         f"Command failed but can be retried. Retrying command {command_id}.",
+                #     )
+                #     command_api_instance = CommandsResourceApi(self.api_client)
+                #     retry_command = command_api_instance.retry(
+                #         command_id,
+                #     )
 
-                    # Wait for command completion
-                    command_state = self.wait_for_command_state(
-                        command_id=retry_command.id,
-                        polling_interval=self.delay,
-                    )
+                #     # Wait for command completion
+                #     command_state = self.wait_for_command_state(
+                #         command_id=retry_command.id,
+                #         polling_interval=self.delay,
+                #     )
 
             else:  # TODO: Install external control plane
                 pass
@@ -463,14 +471,14 @@ class ControlPlane(ClouderaManagerModule):
                 #     is_override_allowed=self.override
                 # )
 
-                # command = api_instance.install_control_plane(body=body)
+                # command = cp_api_instance.install_control_plane(body=body)
 
             # Get the installed control plane info
-            updated_cps = self.cp_api_instance.get_control_planes().items
+            updated_cps = cp_api_instance.get_control_planes().items
 
             if self.name:
                 existing_experience_cluster = parse_cluster_result(
-                    self.cluster_api_instance.read_cluster(cluster_name=self.name),
+                    cluster_api_instance.read_cluster(cluster_name=self.name),
                 )
             else:
                 existing_experience_cluster = None
@@ -489,7 +497,7 @@ class ControlPlane(ClouderaManagerModule):
                 details=to_native(e),
             )
 
-    def _uninstall_control_plane(self, experience_cluster):
+    def _uninstall_control_plane(self, experience_cluster: dict ) -> None:
         """Uninstall a control plane.
         For embedded control planes, this will delete the associated experience cluster.
         """
