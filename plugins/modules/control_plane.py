@@ -424,34 +424,34 @@ class ControlPlane(ClouderaManagerModule):
                     selected_features=self.features,
                 )
 
-                # command = cp_api_instance.install_embedded_control_plane(body=body)
-                # # Wait for command completion
-                # command_state = self.wait_for_command_state(
-                #     command_id=command.id,
-                #     polling_interval=self.delay,
-                # )
+                command = cp_api_instance.install_embedded_control_plane(body=body)
+                # Wait for command completion
+                command_state = self.wait_for_command_state(
+                    command_id=command.id,
+                    polling_interval=self.delay,
+                )
 
-                # # Retry logic if command failed and can be retried
-                # # command_state is a tuple from read_command_with_http_info, where [0] is the ApiCommand object
-                # api_command = command_state[0]
-                # can_retry = getattr(api_command, "can_retry", False)
-                # success = getattr(api_command, "success", True)
-                # command_id = getattr(api_command, "id", None)
+                # Retry logic if command failed and can be retried
+                # command_state is a tuple from read_command_with_http_info, where [0] is the ApiCommand object
+                api_command = command_state[0]
+                can_retry = getattr(api_command, "can_retry", False)
+                success = getattr(api_command, "success", True)
+                command_id = getattr(api_command, "id", None)
 
-                # if not success and can_retry and command_id:
-                #     self.module.info(
-                #         f"Command failed but can be retried. Retrying command {command_id}.",
-                #     )
-                #     command_api_instance = CommandsResourceApi(self.api_client)
-                #     retry_command = command_api_instance.retry(
-                #         command_id,
-                #     )
+                if not success and can_retry and command_id:
+                    self.module.info(
+                        f"Command failed but can be retried. Retrying command {command_id}.",
+                    )
+                    command_api_instance = CommandsResourceApi(self.api_client)
+                    retry_command = command_api_instance.retry(
+                        command_id,
+                    )
 
-                #     # Wait for command completion
-                #     command_state = self.wait_for_command_state(
-                #         command_id=retry_command.id,
-                #         polling_interval=self.delay,
-                #     )
+                    # Wait for command completion
+                    command_state = self.wait_for_command_state(
+                        command_id=retry_command.id,
+                        polling_interval=self.delay,
+                    )
 
             else:  # TODO: Install external control plane
                 pass
