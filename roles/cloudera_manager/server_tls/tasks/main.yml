@@ -13,6 +13,13 @@
 # limitations under the License.
 
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Set Cloudera Manager TLS configs
   include_role:
     name: cloudera.cluster.cloudera_manager.config

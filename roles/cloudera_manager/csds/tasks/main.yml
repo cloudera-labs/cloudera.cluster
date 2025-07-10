@@ -13,6 +13,13 @@
 # limitations under the License.
 
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Create CSD directory
   file:
     path: "{{ cloudera_manager_csd_directory }}"

@@ -1,4 +1,11 @@
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Setup TLS for Activity Monitor
   cm_api:
     method: PUT

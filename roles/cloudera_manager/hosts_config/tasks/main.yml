@@ -17,6 +17,12 @@
 # Edit with extreme caution
 # This plays are imported from a separate playbook so that Ansible tags are intuitively propagated from main.yml
 
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Apply "all hosts" configs
   include_role:
     name: cloudera.cluster.cloudera_manager.config

@@ -1,4 +1,11 @@
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Fix Hue ticket lifetime for Free IPA
   shell: |
     kadmin -p "{{ ipa_admin_user }}" -w "{{ ipaadmin_password }}" -q "modprinc -maxrenewlife 90day +allow_renewable hue/{{ __hue_ticket_item }}@{{ krb5_realm }}" ;

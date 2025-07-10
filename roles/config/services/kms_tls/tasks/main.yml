@@ -1,4 +1,11 @@
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Push TLS settings for Ranger KMS
   cloudera.cluster.cm_api:
     endpoint: "/clusters/{{ cluster_name | urlencode() }}/services/{{ kms_service_name | lower }}/roleConfigGroups/{{ kms_service_name | lower }}-RANGER_KMS_SERVER_KTS-BASE/config"

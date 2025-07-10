@@ -13,6 +13,13 @@
 # limitations under the License.
 
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 - name: Install HAProxy
   ansible.builtin.package:
     lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"

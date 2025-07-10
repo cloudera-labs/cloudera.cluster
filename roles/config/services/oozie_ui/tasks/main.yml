@@ -1,4 +1,11 @@
 ---
+
+- name: Deprecation warning
+  run_once: true
+  cloudera.cluster.deprecation:
+    msg: "Role, {{ ansible_role_name }}, is no longer supported."
+    version: 6.0.0
+
 # From:  https://docs.cloudera.com/cdp-private-cloud-base/7.1.7/configuring-oozie/topics/oozie-enabling-the-oozie-web-console-on-managed-clusters.html
 
 - name: Download ext-2.2 file
