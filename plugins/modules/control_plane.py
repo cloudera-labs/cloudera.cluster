@@ -17,6 +17,7 @@
 
 
 import yaml
+from typing import Optional
 from cm_client import (
     ClustersResourceApi,
     ControlPlanesResourceApi,
@@ -55,7 +56,7 @@ attributes:
   check_mode:
     support: full
   diff_mode:
-    support: full    
+    support: full
 requirements:
   - cm-client
 options:
@@ -286,23 +287,23 @@ class ControlPlane(ClouderaManagerModule):
         if self.type == "embedded" and self.state == "present":
             # Define the required parameters for embedded control plane creation
             embedded_cp_required_params = {
-                'name': {'required': True},
-                'remote_repo_url': {'required': True},
-                'datalake_cluster_name': {'required': True},
+                "name": {"required": True},
+                "remote_repo_url": {"required": True},
+                "datalake_cluster_name": {"required": True},
             }
 
             # Get current parameter values
             params = {
-              'name': self.name,
-              'remote_repo_url': self.remote_repo_url,
-              'datalake_cluster_name': self.datalake_cluster_name,
-              }
-            
+                "name": self.name,
+                "remote_repo_url": self.remote_repo_url,
+                "datalake_cluster_name": self.datalake_cluster_name,
+            }
+
             # Check for missing parameters
             try:
-              check_missing_parameters(params, embedded_cp_required_params)
+                check_missing_parameters(params, embedded_cp_required_params)
             except TypeError as e:
-              self.module.fail_json(msg=to_native(e))
+                self.module.fail_json(msg=to_native(e))
 
         try:
             self.cp_api_instance = ControlPlanesResourceApi(self.api_client)
@@ -346,13 +347,20 @@ class ControlPlane(ClouderaManagerModule):
                 self.output = parse_control_plane_result(existing_cp)
 
                 if self.module._diff:
-                    self.before.update(control_plane=parse_control_plane_result(existing_cp))
-                    self.after.update(control_plane=parse_control_plane_result(existing_cp))
+                    self.before.update(
+                        control_plane=parse_control_plane_result(existing_cp),
+                    )
+                    self.after.update(
+                        control_plane=parse_control_plane_result(existing_cp),
+                    )
 
             else:
                 # Install new control plane
                 if not self.module.check_mode:
-                    self._install_control_plane(self.cp_api_instance, self.cluster_api_instance)
+                    self._install_control_plane(
+                        self.cp_api_instance,
+                        self.cluster_api_instance,
+                    )
                 self.changed = True
 
                 if self.module._diff:
@@ -372,8 +380,13 @@ class ControlPlane(ClouderaManagerModule):
                     f"Control plane does not exist, nothing to uninstall.",
                 )
 
-    def _find_matching_control_plane(self, control_planes: list, experience_cluster: dict) -> dict | None:
+    def _find_matching_control_plane(
+        self,
+        control_planes: list,
+        experience_cluster: dict,
+    ) -> Optional[dict]:
         """Find a control plane that matches the target parameters."""
+
         if not control_planes:
             return None
 
@@ -415,7 +428,11 @@ class ControlPlane(ClouderaManagerModule):
 
         return None
 
-    def _install_control_plane(self, cp_api_instance: ControlPlanesResourceApi, cluster_api_instance: ClustersResourceApi) -> None:
+    def _install_control_plane(
+        self,
+        cp_api_instance: ControlPlanesResourceApi,
+        cluster_api_instance: ClustersResourceApi,
+    ) -> None:
         """Install a control plane based on the type."""
 
         try:
@@ -509,7 +526,7 @@ class ControlPlane(ClouderaManagerModule):
                 details=to_native(e),
             )
 
-    def _uninstall_control_plane(self, experience_cluster: dict ) -> None:
+    def _uninstall_control_plane(self, experience_cluster: dict) -> None:
         """Uninstall a control plane.
         For embedded control planes, this will delete the associated experience cluster.
         """
