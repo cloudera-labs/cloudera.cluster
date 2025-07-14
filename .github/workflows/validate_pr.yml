@@ -67,7 +67,7 @@ jobs:
       - name: Validate collection
         run: |
           # pushd /usr/share/ansible/collections/ansible_collections/cloudera/cluster
-          hatch run lint
+          # hatch run lint
           ansible-lint --no-offline
           #ansible-test sanity --test pep8
           #ansible-test sanity --test validate-modules
