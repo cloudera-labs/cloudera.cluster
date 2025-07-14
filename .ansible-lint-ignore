@@ -2,6 +2,8 @@
 
 roles/assemble_template/defaults/main.yml var-naming[no-role-prefix]
 roles/assemble_template/tasks/main.yml risky-file-permissions
+roles/cm_agent/molecule/default/create.yml syntax-check[unknown-module]
+roles/cm_agent/molecule/default/destroy.yml syntax-check[unknown-module]
 
 # Scheduled for removal
 roles/cloudera_manager/admin_password/check/tasks/main.yml fqcn[action-core]
