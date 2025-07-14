@@ -41,6 +41,7 @@ dependencies = [
 [tool.hatch.envs.default.scripts]
 lint = [
   "pre-commit run -a",
+  "ansible-lint",
   "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck .",
 ]
 
