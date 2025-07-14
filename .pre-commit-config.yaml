@@ -46,8 +46,3 @@ repos:
     hooks:
       - id: black
         name: lint python
-  - repo: https://github.com/ansible/ansible-lint
-    rev: v25.6.1
-    hooks:
-      - id: ansible-lint
-        name: lint ansible
