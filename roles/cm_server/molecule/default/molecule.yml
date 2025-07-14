@@ -1,0 +1,60 @@
+# Copyright 2024 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Requires a preexisting AWS VPC and subnet, the latter referenced by the
+# environment variable, TEST_VPC_SUBNET_ID
+
+# Requires AWS credentials, including region
+
+# Requires the following Python libraries on localhost
+# - netattr
+# - boto3
+
+driver:
+  name: ec2
+platforms:
+  - name: rhel9-4.molecule.internal
+    image_owner: "309956199498"
+    image_name: RHEL-9.4.0_HVM-*
+    instance_type: t3a.xlarge
+    image_filters:
+      architecture: x86_64
+    boot_wait_seconds: 15
+    vpc_subnet_id: ${TEST_VPC_SUBNET_ID}
+    groups:
+      - redhat
+    tags:
+      Name: rhel9-4.cm_server.molecule
+      Project: Molecule testing for cm_server
+  # - name: rhel8-10.molecule.internal  # Enable once prereq_supported matrix is expanded
+  #   image_owner: "309956199498"
+  #   image_name: RHEL-8.10.0_HVM-*
+  #   image_filters:
+  #     architecture: x86_64
+  #   instance_type: t3.medium
+  #   boot_wait_seconds: 15
+  #   vpc_subnet_id: ${TEST_VPC_SUBNET_ID}
+  #   groups:
+  #     - redhat
+  #   tags:
+  #     Name: rhel8-10.cm_repo.molecule
+  #     Project: Molecule testing for cm_repo
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        cloudera_manager_repo_username: "{{ lookup('env', 'CDP_CM_REPO_USERNAME') }}"
+        cloudera_manager_repo_password: "{{ lookup('env', 'CDP_CM_REPO_PASSWORD') }}"
+        # cloudera_manager_version: 7.11.3.16

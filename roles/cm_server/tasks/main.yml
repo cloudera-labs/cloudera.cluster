@@ -1,0 +1,77 @@
+# Copyright 2025 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Install Cloudera Manager server embedded database
+  when: cloudera_manager_database_type == 'embedded'
+  ansible.builtin.package:
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
+    name: "{{ cloudera_manager_server_embedded_db_packages }}"
+    state: present
+  notify: Restart CM embedded server
+
+- name: Install Cloudera Manager server
+  ansible.builtin.package:
+    lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(60, omit) }}"
+    name: "{{ cloudera_manager_server_packages }}"
+    state: present
+  notify: Restart Cloudera Manager server
+
+- name: Update Cloudera Manager server arguments (CMF_SERVER_ARGS)
+  when: cloudera_manager_cmf_server_args is defined
+  ansible.builtin.lineinfile:
+    path: /etc/default/cloudera-scm-server
+    regexp: "^CMF_SERVER_ARGS="
+    line: 'CMF_SERVER_ARGS="{{ cloudera_manager_cmf_server_args }}"'
+  notify: Restart Cloudera Manager server
+
+- name: Update Cloudera Manager server Java options (CMF_JAVA_OPTS)
+  when: cloudera_manager_cmf_java_opts is defined
+  ansible.builtin.lineinfile:
+    path: /etc/default/cloudera-scm-server
+    regexp: "^export CMF_JAVA_OPTS="
+    line: 'export CMF_JAVA_OPTS="{{ cloudera_manager_cmf_java_opts }}"'
+  notify: Restart Cloudera Manager server
+
+# TODO Check no_log
+- name: Install Cloudera Manager server external database
+  when: cloudera_manager_database_type != 'embedded'
+  block:
+    - name: Validate Cloudera Manager server external database parameters
+      ansible.builtin.assert:
+        that:
+          - cloudera_manager_database_host is defined
+          - cloudera_manager_database_port is defined
+          - cloudera_manager_database_password is defined
+        fail_msg: Unable to prepare external database due to missing or invalid required parameters.
+        quiet: true
+
+    - name: Retrieve package details
+      ansible.builtin.package_facts:
+
+    - name: Prepare Cloudera Manager server external database
+      cm_prepare_db:
+        script: "{{
+          (ansible_facts.packages['cloudera-manager-server'] | map(attribute='version') | first is version('6.0.0', '>=')) |
+          ternary('/opt/cloudera/cm/schema/scm_prepare_database.sh', '/usr/share/cmf/schema/scm_prepare_database.sh')
+        }}"
+        type: "{{ cloudera_manager_database_type }}"
+        host: "{{ cloudera_manager_database_host }}"
+        port: "{{ cloudera_manager_database_port }}"
+        database: "{{ cloudera_manager_database_name }}"
+        username: "{{ cloudera_manager_database_user }}"
+        password: "{{ cloudera_manager_database_password }}"
+      notify: Restart Cloudera Manager server
+
+- name: Flush Cloudera Manager server handlers
+  ansible.builtin.meta: flush_handlers

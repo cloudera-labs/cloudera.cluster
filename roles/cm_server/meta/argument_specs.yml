@@ -1,0 +1,83 @@
+# Copyright 2024 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+argument_specs:
+  main:
+    short_description: Install Cloudera Manager server
+    description:
+      - Install Cloudera Manager server packages.
+      - Configure Cloudera Manager server arguments.
+      - Configure Cloudera Manager server Java options.
+      - Prepare Cloudera Manager server database.
+      - Optionally, install the Cloudera Manager server embedded database. (Requires PostgreSQL 10, which is not installed.)
+      - For external databases, the database server and the Java client libraries must be installed prior.
+      - Version management is via the package repository profile.
+      - Requires a valid JDK.
+      - Requires a valid Cloudera Manager package repository.
+    author:
+      - "Webster Mudge <wmudge@cloudera.com>"
+    version_added: 5.0.0
+    options:
+      cloudera_manager_server_packages:
+        description:
+          - List of packages to install for Cloudera Manager server.
+        type: list
+        elements: str
+        default:
+          - cloudera-manager-server
+      cloudera_manager_cmf_server_args:
+        description:
+          - Cloudera Manager server command line arguments.
+      cloudera_manager_cmf_java_opts:
+        description:
+          - Cloudera Manager server Java options.
+        default: "-Xmx4G -XX:MaxPermSize=256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      cloudera_manager_server_embedded_db_packages:
+        description:
+          - List of packages to install for Cloudera Manager server embedded database.
+        type: list
+        elements: str
+        default:
+          - cloudera-manager-server-db-2
+      cloudera_manager_database_type:
+        description:
+          - Database type for the Cloudera Manager server.
+          - If not I(embedded), then the external database must be configured prior.
+        choices:
+          - postgresql
+          - oracle
+          - mysql
+          - embedded
+        default: postgreql
+      cloudera_manager_database_host:
+        description:
+          - Database hostname for the Cloudera Manager server.
+          - Required if I(cloudera_manager_database_type != embedded).
+      cloudera_manager_database_port:
+        description:
+          - Database port for the Cloudera Manager server.
+          - Required if I(cloudera_manager_database_type != embedded).
+        type: int
+      cloudera_manager_database_name:
+        description:
+          - Database name for the Cloudera Manager server.
+        default: scm
+      cloudera_manager_database_user:
+        description:
+          - Database username for the Cloudera Manager server.
+        default: scm
+      cloudera_manager_database_password:
+        description:
+          - Database password for the Cloudera Manager server.
+          - Required if I(cloudera_manager_database_type != embedded).
