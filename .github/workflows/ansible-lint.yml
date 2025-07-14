@@ -24,26 +24,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python and caching
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-          cache: "pip"
-      - name: Set up Ansible and Ansible collections and roles
-        run: |
-          sudo update-alternatives --install /usr/bin/python python $(which python3) 1
-          pip install --upgrade pip
-          pip install ansible-core~=2.18.0 ansible-builder bindep pycodestyle voluptuous pylint pyyaml
-          ansible-galaxy collection install -r builder/requirements.yml -p ./ansible/collections
-          ansible-galaxy role install -r builder/requirements.yml -p ./ansible/roles
-      - name: Set up Ansible collection dependencies
-        run: |
-          ansible-builder introspect --write-pip final_python.txt --write-bindep final_bindep.txt ./ansible/collections
-          [[ -f final_python.txt ]] && pip install -r final_python.txt || echo "No Python dependencies found."
-          [[ -f final_bindep.txt ]] && bindep --file final_bindep.txt || echo "No system dependencies found."    
       - name: Run ansible-lint
         uses: ansible/ansible-lint@main
         with:
           # args: "--no-offline"
-          setup_python: false
+          setup_python: true
           # requirements_file: "requirements.yml"
