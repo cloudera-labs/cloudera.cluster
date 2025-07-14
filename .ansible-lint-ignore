@@ -4,482 +4,481 @@ roles/assemble_template/defaults/main.yml var-naming[no-role-prefix]
 roles/assemble_template/tasks/main.yml risky-file-permissions
 
 # Scheduled for removal
-roles/cloudera_manager/admin_password/check/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/admin_password/check/tasks/main.yml name[missing]
-roles/cloudera_manager/agent/meta/main.yml role-name[path]
-roles/cloudera_manager/agent/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/agent/tasks/main.yml package-latest
-roles/cloudera_manager/agent_config/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/api_client/handlers/main.yml name[casing]
-roles/cloudera_manager/api_client/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/api_client/tasks/main.yml name[missing]
-roles/cloudera_manager/api_hosts/meta/main.yml role-name[path]
-roles/cloudera_manager/api_hosts/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/autotls/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/autotls/defaults/main.yml var-naming[pattern]
-roles/cloudera_manager/autotls/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/autotls/tasks/main.yml ignore-errors
-roles/cloudera_manager/autotls/tasks/main.yml jinja[spacing]
-roles/cloudera_manager/autotls/tasks/main.yml name[missing]
-roles/cloudera_manager/autotls/tasks/patch_old_cm.yml command-instead-of-shell
-roles/cloudera_manager/autotls/tasks/patch_old_cm.yml fqcn[action-core]
-roles/cloudera_manager/autotls/tasks/patch_old_cm.yml jinja[spacing]
-roles/cloudera_manager/autotls/tasks/patch_old_cm.yml no-changed-when
-roles/cloudera_manager/common/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/common/handlers/main.yml fqcn[action-core]
-roles/cloudera_manager/common/handlers/main.yml name[casing]
-roles/cloudera_manager/config/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/config/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/config/tasks/main.yml jinja[spacing]
-roles/cloudera_manager/csds/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/database/defaults/main.yml yaml[line-length]
-roles/cloudera_manager/database/handlers/main.yml fqcn[action-core]
-roles/cloudera_manager/database/handlers/main.yml name[casing]
-roles/cloudera_manager/database/meta/main.yml role-name[path]
-roles/cloudera_manager/database/tasks/external.yml fqcn[action-core]
-roles/cloudera_manager/database/tasks/external.yml fqcn[action]
-roles/cloudera_manager/database/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/external_auth/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/external_auth/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/external_auth/tasks/main.yml key-order[task]
-roles/cloudera_manager/external_auth/tasks/main.yml name[missing]
-roles/cloudera_manager/external_auth/vars/freeipa.yml var-naming[no-role-prefix]
-roles/cloudera_manager/external_auth/vars/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/hosts_config/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/kerberos/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/license/tasks/enterprise.yml command-instead-of-module
-roles/cloudera_manager/license/tasks/enterprise.yml jinja[spacing]
-roles/cloudera_manager/license/tasks/enterprise.yml no-changed-when
-roles/cloudera_manager/license/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/license/tasks/trial.yml ignore-errors
-roles/cloudera_manager/preload_parcels/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/preload_parcels/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/preload_parcels/tasks/main.yml risky-file-permissions
-roles/cloudera_manager/repo/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/repo/tasks/main-Debian.yml fqcn[action-core]
-roles/cloudera_manager/repo/tasks/main-Debian.yml jinja[spacing]
-roles/cloudera_manager/repo/tasks/main-Debian.yml yaml[line-length]
-roles/cloudera_manager/repo/tasks/main-RedHat.yml jinja[spacing]
-roles/cloudera_manager/repo/tasks/main-RedHat.yml name[casing]
-roles/cloudera_manager/repo/tasks/main-RedHat.yml no-changed-when
-roles/cloudera_manager/repo/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/repo/tasks/main.yml jinja[spacing]
-roles/cloudera_manager/repo/tasks/main.yml yaml[line-length]
-roles/cloudera_manager/repo/vars/Debian.yml jinja[spacing]
-roles/cloudera_manager/repo/vars/Debian.yml yaml[line-length]
-roles/cloudera_manager/repo/vars/RedHat.yml jinja[spacing]
-roles/cloudera_manager/repo/vars/RedHat.yml yaml[line-length]
-roles/cloudera_manager/server/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/server/tasks/main.yml package-latest
-roles/cloudera_manager/server_tls/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/server_tls/tasks/main.yml name[missing]
-roles/cloudera_manager/server_tls/tasks/main.yml yaml[line-length]
-roles/cloudera_manager/services_info/defaults/main.yml var-naming[no-role-prefix]
-roles/cloudera_manager/services_info/tasks/main.yml fqcn[action-core]
-roles/cloudera_manager/services_info/tasks/main.yml jinja[invalid]
-roles/cloudera_manager/services_info/tasks/main.yml name[missing]
-roles/cloudera_manager/services_info/tasks/main.yml var-naming[no-reserved]
-roles/cloudera_manager/services_info/tasks/main.yml yaml[line-length]
-roles/cloudera_manager/wait_for_heartbeat/tasks/main.yml fqcn[action-core]
-roles/config/cluster/base/tasks/main.yml fqcn[action-core]
-roles/config/cluster/base/tasks/main.yml name[missing]
-roles/config/cluster/base/vars/main.yml jinja[spacing]
-roles/config/cluster/base/vars/main.yml var-naming[no-role-prefix]
-roles/config/cluster/base/vars/main.yml yaml[line-length]
-roles/config/cluster/common/defaults/main.yml var-naming[no-role-prefix]
-roles/config/cluster/ecs/tasks/main.yml fqcn[action-core]
-roles/config/cluster/ecs/tasks/main.yml name[missing]
-roles/config/cluster/ecs/vars/main.yml var-naming[no-role-prefix]
-roles/config/cluster/kts/tasks/main.yml fqcn[action-core]
-roles/config/cluster/kts/vars/main.yml var-naming[no-role-prefix]
-roles/config/services/hue_ticket_lifetime/tasks/main.yml fqcn[action-core]
-roles/config/services/hue_ticket_lifetime/tasks/main.yml ignore-errors
-roles/config/services/hue_ticket_lifetime/tasks/main.yml no-changed-when
-roles/config/services/hue_ticket_lifetime/tasks/main.yml yaml[line-length]
-roles/config/services/kms/tasks/main.yml fqcn[action-core]
-roles/config/services/kms/vars/main.yml var-naming[no-role-prefix]
-roles/config/services/kms_tls/tasks/main.yml fqcn[action-core]
-roles/config/services/kms_tls/tasks/main.yml ignore-errors
-roles/config/services/kms_tls/tasks/main.yml jinja[invalid]
-roles/config/services/kms_tls/tasks/main.yml jinja[spacing]
-roles/config/services/kms_tls/tasks/main.yml yaml[line-length]
-roles/config/services/mgmt/tasks/main.yml fqcn[action-core]
-roles/config/services/mgmt/tasks/main.yml name[missing]
-roles/config/services/mgmt/vars/main.yml jinja[spacing]
-roles/config/services/mgmt/vars/main.yml var-naming[no-role-prefix]
-roles/config/services/oozie_ui/tasks/main.yml command-instead-of-module
-roles/config/services/oozie_ui/tasks/main.yml command-instead-of-shell
-roles/config/services/oozie_ui/tasks/main.yml fqcn[action-core]
-roles/config/services/oozie_ui/tasks/main.yml ignore-errors
-roles/config/services/oozie_ui/tasks/main.yml no-changed-when
-roles/config/services/oozie_ui/tasks/main.yml package-latest
-roles/config/services/oozie_ui/tasks/main.yml risky-file-permissions
-roles/config/services/ranger_pvc_default_policies/tasks/main.yml fqcn[action-core]
-roles/config/services/ranger_pvc_default_policies/tasks/main.yml jinja[spacing]
-roles/config/services/ranger_pvc_default_policies/tasks/main.yml schema[moves]
-roles/config/services/solr_knox/tasks/add_solr_knox_host.yml fqcn[action-core]
-roles/config/services/solr_knox/tasks/add_solr_knox_host.yml jinja[spacing]
-roles/config/services/solr_knox/tasks/add_solr_knox_host.yml name[missing]
-roles/config/services/solr_knox/tasks/add_solr_knox_host.yml yaml[line-length]
-roles/config/services/solr_knox/tasks/main.yml fqcn[action-core]
-roles/config/services/solr_knox/tasks/main.yml name[casing]
-roles/config/services/solr_ranger_plugin/tasks/main.yml fqcn[action-core]
-roles/config/services/solr_ranger_plugin/tasks/main.yml jinja[spacing]
-roles/config/services/solr_ranger_plugin/tasks/main.yml no-handler
-roles/deployment/cluster/tasks/create_base.yml fqcn[action-core]
-roles/deployment/cluster/tasks/create_base.yml jinja[spacing]
-roles/deployment/cluster/tasks/create_base.yml role-name[path]
-roles/deployment/cluster/tasks/create_base.yml yaml[comments]
-roles/deployment/cluster/tasks/create_ecs.yml fqcn[action-core]
-roles/deployment/cluster/tasks/create_ecs.yml jinja[invalid]
-roles/deployment/cluster/tasks/create_ecs.yml jinja[spacing]
-roles/deployment/cluster/tasks/create_ecs.yml name[missing]
-roles/deployment/cluster/tasks/create_ecs.yml yaml[line-length]
-roles/deployment/cluster/tasks/create_kts.yml fqcn[action-core]
-roles/deployment/cluster/tasks/create_kts.yml jinja[invalid]
-roles/deployment/cluster/tasks/create_kts.yml jinja[spacing]
-roles/deployment/cluster/tasks/create_kts.yml key-order[task]
-roles/deployment/cluster/tasks/create_kts.yml name[missing]
-roles/deployment/cluster/tasks/create_kts.yml risky-file-permissions
-roles/deployment/cluster/tasks/create_kts.yml yaml[comments]
-roles/deployment/cluster/tasks/fs2cs.yml fqcn[action-core]
-roles/deployment/cluster/tasks/fs2cs.yml jinja[invalid]
-roles/deployment/cluster/tasks/fs2cs.yml jinja[spacing]
-roles/deployment/cluster/tasks/fs2cs.yml name[missing]
-roles/deployment/cluster/tasks/fs2cs.yml yaml[line-length]
-roles/deployment/cluster/tasks/main.yml fqcn[action-core]
-roles/deployment/cluster/tasks/main.yml jinja[invalid]
-roles/deployment/cluster/tasks/main.yml name[missing]
-roles/deployment/cluster/tasks/nav2atlas.yml fqcn[action-core]
-roles/deployment/cluster/tasks/nav2atlas.yml jinja[invalid]
-roles/deployment/cluster/tasks/nav2atlas.yml jinja[spacing]
-roles/deployment/cluster/tasks/nav2atlas.yml name[missing]
-roles/deployment/cluster/tasks/nav2atlas.yml yaml[line-length]
-roles/deployment/cluster/tasks/update_base.yml fqcn[action-core]
-roles/deployment/cluster/tasks/update_base.yml jinja[invalid]
-roles/deployment/cluster/tasks/update_base.yml jinja[spacing]
-roles/deployment/cluster/tasks/update_base.yml name[missing]
-roles/deployment/cluster/tasks/update_base.yml role-name[path]
-roles/deployment/cluster/tasks/update_base.yml var-naming[no-role-prefix]
-roles/deployment/cluster/tasks/update_base.yml yaml[line-length]
-roles/deployment/cluster/tasks/upgrade_kts.yml fqcn[action-core]
-roles/deployment/cluster/tasks/upgrade_kts.yml jinja[invalid]
-roles/deployment/cluster/tasks/upgrade_kts.yml jinja[spacing]
-roles/deployment/cluster/tasks/upgrade_kts.yml key-order[task]
-roles/deployment/cluster/tasks/upgrade_kts.yml name[missing]
-roles/deployment/cluster/tasks/upgrade_kts.yml role-name[path]
-roles/deployment/cluster/tasks/upgrade_kts.yml yaml[line-length]
-roles/deployment/credential/tasks/main.yml fqcn[action-core]
-roles/deployment/credential/tasks/main.yml jinja[spacing]
-roles/deployment/credential/tasks/main.yml no-changed-when
-roles/deployment/credential/tasks/main.yml risky-shell-pipe
-roles/deployment/databases/tasks/main.yml fqcn[action-core]
-roles/deployment/databases/tasks/mariadb.yml fqcn[action]
-roles/deployment/databases/tasks/mysql.yml fqcn[action]
-roles/deployment/databases/tasks/postgresql.yml fqcn[action]
-roles/deployment/definition/defaults/main.yml var-naming[no-role-prefix]
-roles/deployment/definition/defaults/main.yml yaml[comments]
-roles/deployment/definition/tasks/main.yml jinja[invalid]
-roles/deployment/groupby/tasks/main.yml fqcn[action-core]
-roles/deployment/groupby/tasks/main.yml jinja[invalid]
-roles/deployment/groupby/tasks/main.yml key-order[task]
-roles/deployment/groupby/tasks/main.yml name[missing]
-roles/deployment/groupby/tasks/main.yml var-naming[no-reserved]
-roles/deployment/repometa/defaults/main.yml var-naming[no-role-prefix]
-roles/deployment/repometa/tasks/main.yml fqcn[action-core]
-roles/deployment/repometa/tasks/parcels.yml fqcn[action-core]
-roles/deployment/repometa/tasks/parcels.yml jinja[spacing]
-roles/deployment/repometa/tasks/parcels.yml name[missing]
-roles/deployment/services/kms/tasks/create_kms.yml fqcn[action-core]
-roles/deployment/services/kms/tasks/create_kms.yml jinja[invalid]
-roles/deployment/services/kms/tasks/create_kms.yml name[missing]
-roles/deployment/services/kms/tasks/create_kms.yml var-naming[no-reserved]
-roles/deployment/services/kms/tasks/main.yml fqcn[action-core]
-roles/deployment/services/kms/tasks/main.yml no-changed-when
-roles/deployment/services/kms_ha/defaults/main.yml var-naming[no-role-prefix]
-roles/deployment/services/kms_ha/tasks/main.yml fqcn[action-core]
-roles/deployment/services/kts_common/defaults/main.yml var-naming[no-role-prefix]
-roles/deployment/services/kts_high_availability/tasks/main.yml command-instead-of-shell
-roles/deployment/services/kts_high_availability/tasks/main.yml fqcn[action-core]
-roles/deployment/services/kts_high_availability/tasks/main.yml jinja[invalid]
-roles/deployment/services/kts_high_availability/tasks/main.yml no-changed-when
-roles/deployment/services/kts_high_availability/tasks/main.yml risky-shell-pipe
-roles/deployment/services/mgmt/tasks/main.yml fqcn[action-core]
-roles/deployment/services/wxm/defaults/main.yml var-naming[no-role-prefix]
-roles/deployment/services/wxm/tasks/configure_telemetry.yml fqcn[action-core]
-roles/deployment/services/wxm/tasks/configure_telemetry.yml ignore-errors
-roles/deployment/services/wxm/tasks/configure_telemetry.yml jinja[invalid]
-roles/deployment/services/wxm/tasks/configure_telemetry.yml name[missing]
-roles/deployment/services/wxm/tasks/configure_telemetry.yml var-naming[no-reserved]
-roles/deployment/services/wxm/tasks/main.yml fqcn[action-core]
-roles/deployment/services/wxm/tasks/main.yml name[missing]
-roles/deployment/services/wxm/tasks/truststore_to_base.yml fqcn[action-core]
-roles/deployment/services/wxm/tasks/truststore_to_base.yml ignore-errors
-roles/deployment/services/wxm/tasks/truststore_to_base.yml no-changed-when
-roles/deployment/services/wxm/tasks/truststore_to_base.yml yaml[line-length]
-roles/infrastructure/ca_common/defaults/main.yml var-naming[no-role-prefix]
-roles/infrastructure/ca_server/molecule/default/converge.yml fqcn[action-core]
-roles/infrastructure/ca_server/molecule/default/verify.yml command-instead-of-shell
-roles/infrastructure/ca_server/molecule/default/verify.yml fqcn[action-core]
-roles/infrastructure/ca_server/molecule/default/verify.yml no-changed-when
-roles/infrastructure/ca_server/tasks/create_ca.yml fqcn[action-core]
-roles/infrastructure/ca_server/tasks/create_ca.yml fqcn[action]
-roles/infrastructure/ca_server/tasks/create_ca.yml name[missing]
-roles/infrastructure/ca_server/tasks/main.yml fqcn[action-core]
-roles/infrastructure/ca_server/tasks/main.yml name[missing]
-roles/infrastructure/ca_server/vars/Debian.yml var-naming[no-role-prefix]
-roles/infrastructure/ca_server/vars/RedHat.yml var-naming[no-role-prefix]
-roles/infrastructure/custom_repo/defaults/main.yml var-naming[no-role-prefix]
-roles/infrastructure/custom_repo/tasks/install_parcels.yml fqcn[action-core]
-roles/infrastructure/custom_repo/tasks/install_parcels.yml jinja[spacing]
-roles/infrastructure/custom_repo/tasks/install_parcels_from_tars_on_controller.yml fqcn[action-core]
-roles/infrastructure/custom_repo/tasks/install_parcels_from_tars_on_controller.yml jinja[spacing]
-roles/infrastructure/custom_repo/tasks/main.yml fqcn[action-core]
-roles/infrastructure/custom_repo/tasks/rehost_files_from_download.yml fqcn[action-core]
-roles/infrastructure/custom_repo/tasks/rehost_files_from_download.yml risky-file-permissions
-roles/infrastructure/custom_repo/vars/Debian.yml var-naming[no-role-prefix]
-roles/infrastructure/custom_repo/vars/RedHat.yml var-naming[no-role-prefix]
-roles/infrastructure/haproxy/tasks/main.yml fqcn[action-core]
-roles/infrastructure/haproxy/tasks/main.yml package-latest
-roles/infrastructure/krb5_client/defaults/main.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_client/handlers/main.yml fqcn[action-core]
-roles/infrastructure/krb5_client/handlers/main.yml name[casing]
-roles/infrastructure/krb5_client/tasks/freeipa.yml fqcn[action-core]
-roles/infrastructure/krb5_client/tasks/freeipa.yml literal-compare
-roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml fqcn[action-core]
-roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml ignore-errors
-roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml name[missing]
-roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml no-changed-when
-roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml risky-file-permissions
-roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml fqcn[action-core]
-roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml ignore-errors
-roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml name[casing]
-roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml no-handler
-roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml risky-file-permissions
-roles/infrastructure/krb5_client/tasks/mit.yml fqcn[action-core]
-roles/infrastructure/krb5_client/tasks/pvc_configs.yml fqcn[action-core]
-roles/infrastructure/krb5_client/tasks/pvc_configs.yml ignore-errors
-roles/infrastructure/krb5_client/vars/Debian.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_client/vars/RedHat.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_client/vars/Suse.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_common/defaults/main.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_conf/tasks/mit.yml fqcn[action-core]
-roles/infrastructure/krb5_conf/tasks/mit.yml risky-file-permissions
-roles/infrastructure/krb5_server/defaults/main.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml fqcn[action-core]
-roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml ignore-errors
-roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml name[casing]
-roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml package-latest
-roles/infrastructure/krb5_server/tasks/freeipa.yml fqcn[action-core]
-roles/infrastructure/krb5_server/tasks/freeipa.yml fqcn[action]
-roles/infrastructure/krb5_server/tasks/freeipa.yml ignore-errors
-roles/infrastructure/krb5_server/tasks/freeipa.yml name[missing]
-roles/infrastructure/krb5_server/tasks/mit.yml fqcn[action-core]
-roles/infrastructure/krb5_server/tasks/mit.yml no-changed-when
-roles/infrastructure/krb5_server/tasks/mit.yml risky-file-permissions
-roles/infrastructure/krb5_server/vars/Debian.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/vars/RedHat-7.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/vars/RedHat-8.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/vars/RedHat.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/vars/Suse.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/vars/Ubuntu.yml var-naming[no-role-prefix]
-roles/infrastructure/krb5_server/vars/default.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/handlers/main.yml name[casing]
-roles/infrastructure/rdbms/handlers/main.yml no-changed-when
-roles/infrastructure/rdbms/tasks/main.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/mariadb-Debian.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/mariadb-RedHat.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/mysql-RedHat.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/mysql-RedHat.yml jinja[spacing]
-roles/infrastructure/rdbms/tasks/postgresql-Debian.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/postgresql-Debian.yml package-latest
-roles/infrastructure/rdbms/tasks/postgresql-RedHat.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/postgresql-RedHat.yml name[casing]
-roles/infrastructure/rdbms/tasks/template_fix.yml fqcn[action-core]
-roles/infrastructure/rdbms/tasks/template_fix.yml no-changed-when
-roles/infrastructure/rdbms/vars/mariadb-Debian.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/vars/mariadb.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/vars/mysql-RedHat.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/vars/mysql.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/vars/postgresql-Debian.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/vars/postgresql-RedHat.yml jinja[spacing]
-roles/infrastructure/rdbms/vars/postgresql-RedHat.yml var-naming[no-role-prefix]
-roles/infrastructure/rdbms/vars/postgresql.yml var-naming[no-role-prefix]
-roles/operations/delete_cluster/meta/main.yml role-name[path]
-roles/operations/delete_cluster/tasks/main.yml fqcn[action-core]
-roles/operations/delete_cluster/tasks/main.yml jinja[invalid]
-roles/operations/delete_cluster/tasks/main.yml jinja[spacing]
-roles/operations/delete_cluster/tasks/main.yml key-order[task]
-roles/operations/delete_cluster/tasks/main.yml name[missing]
-roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml fqcn[action-core]
-roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml jinja[invalid]
-roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml jinja[spacing]
-roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml name[missing]
-roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml var-naming[no-reserved]
-roles/operations/refresh_ranger_kms_repo/tasks/main.yml fqcn[action-core]
-roles/operations/refresh_ranger_kms_repo/tasks/setup_cluster.yml fqcn[action-core]
-roles/operations/refresh_ranger_kms_repo/tasks/setup_cluster.yml jinja[invalid]
-roles/operations/refresh_ranger_kms_repo/tasks/setup_cluster.yml name[missing]
-roles/operations/restart_cluster_services/tasks/main.yml fqcn[action-core]
-roles/operations/restart_cluster_services/tasks/service_restart.yml fqcn[action-core]
-roles/operations/restart_cluster_services/tasks/service_restart.yml jinja[invalid]
-roles/operations/restart_cluster_services/tasks/service_restart.yml var-naming[no-reserved]
-roles/operations/restart_stale/tasks/main.yml fqcn[action-core]
-roles/operations/restart_stale/tasks/restart.yml fqcn[action-core]
-roles/operations/restart_stale/tasks/restart.yml jinja[invalid]
-roles/operations/restart_stale/tasks/restart.yml name[missing]
-roles/operations/stop_cluster/meta/main.yml role-name[path]
-roles/prereqs/jdk/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/jdk/tasks/main.yml fqcn[action-core]
-roles/prereqs/jdk/tasks/main.yml fqcn[action]
-roles/prereqs/jdk/tasks/main.yml jinja[spacing]
-roles/prereqs/jdk/tasks/main.yml name[missing]
-roles/prereqs/jdk/tasks/main.yml no-changed-when
-roles/prereqs/jdk/tasks/main.yml risky-shell-pipe
-roles/prereqs/jdk/vars/Debian.yml var-naming[no-role-prefix]
-roles/prereqs/jdk/vars/RedHat.yml var-naming[no-role-prefix]
-roles/prereqs/jdk/vars/Suse.yml var-naming[no-role-prefix]
-roles/prereqs/kerberos/tasks/main.yml fqcn[action-core]
-roles/prereqs/kerberos/vars/Debian.yml var-naming[no-role-prefix]
-roles/prereqs/kerberos/vars/RedHat.yml var-naming[no-role-prefix]
-roles/prereqs/kerberos/vars/Suse.yml var-naming[no-role-prefix]
-roles/prereqs/license/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/license/tasks/main.yml fqcn[action-core]
-roles/prereqs/local_accounts_common/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/mysql_connector/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/mysql_connector/tasks/main.yml command-instead-of-shell
-roles/prereqs/mysql_connector/tasks/main.yml fqcn[action-core]
-roles/prereqs/mysql_connector/tasks/main.yml ignore-errors
-roles/prereqs/mysql_connector/tasks/main.yml no-changed-when
-roles/prereqs/mysql_connector/tasks/main.yml risky-file-permissions
-roles/prereqs/oracle_connector/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/oracle_connector/tasks/main.yml fqcn[action-core]
-roles/prereqs/oracle_connector/tasks/main.yml fqcn[action]
-roles/prereqs/oracle_connector/tasks/main.yml key-order[task]
-roles/prereqs/os/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/os/handlers/main.yml fqcn[action-core]
-roles/prereqs/os/handlers/main.yml name[casing]
-roles/prereqs/os/tasks/main-Debian.yml fqcn[action-core]
-roles/prereqs/os/tasks/main-Debian.yml fqcn[action]
-roles/prereqs/os/tasks/main-Debian.yml jinja[spacing]
-roles/prereqs/os/tasks/main-Debian.yml name[missing]
-roles/prereqs/os/tasks/main-Debian.yml package-latest
-roles/prereqs/os/tasks/main-RedHat.yml command-instead-of-shell
-roles/prereqs/os/tasks/main-RedHat.yml fqcn[action-core]
-roles/prereqs/os/tasks/main-RedHat.yml fqcn[action]
-roles/prereqs/os/tasks/main-RedHat.yml ignore-errors
-roles/prereqs/os/tasks/main-RedHat.yml name[casing]
-roles/prereqs/os/tasks/main-RedHat.yml no-changed-when
-roles/prereqs/os/tasks/main.yml fqcn[action-core]
-roles/prereqs/os/tasks/main.yml fqcn[action]
-roles/prereqs/os/tasks/main.yml name[casing]
-roles/prereqs/os/tasks/main.yml name[template]
-roles/prereqs/os/tasks/rngd.yml fqcn[action-core]
-roles/prereqs/os/vars/Debian.yml var-naming[no-role-prefix]
-roles/prereqs/os/vars/RedHat.yml var-naming[no-role-prefix]
-roles/prereqs/os/vars/Suse.yml var-naming[no-role-prefix]
-roles/prereqs/postgresql_connector/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/postgresql_connector/tasks/main.yml command-instead-of-shell
-roles/prereqs/postgresql_connector/tasks/main.yml fqcn[action-core]
-roles/prereqs/postgresql_connector/tasks/main.yml literal-compare
-roles/prereqs/postgresql_connector/tasks/main.yml no-changed-when
-roles/prereqs/pvc_ecs/tasks/main.yml no-changed-when
-roles/prereqs/pvc_ecs/tasks/main.yml package-latest
-roles/prereqs/user_accounts/tasks/main.yml fqcn[action-core]
-roles/prereqs/user_accounts/tasks/main.yml key-order[task]
-roles/prereqs/user_accounts/tasks/main.yml name[missing]
-roles/prereqs/user_accounts_ecs/defaults/main.yml var-naming[no-role-prefix]
-roles/prereqs/user_accounts_ecs/tasks/main.yml fqcn[action-core]
-roles/prereqs/user_accounts_ecs/tasks/main.yml key-order[task]
-roles/prereqs/user_accounts_ecs/tasks/main.yml name[missing]
-roles/security/tls_clean/tasks/main.yml fqcn[action-core]
-roles/security/tls_generate_csr/defaults/main.yml var-naming[no-role-prefix]
-roles/security/tls_generate_csr/molecule/default/converge.yml fqcn[action-core]
-roles/security/tls_generate_csr/molecule/default/prepare.yml fqcn[action-core]
-roles/security/tls_generate_csr/molecule/default/verify.yml fqcn[action-core]
-roles/security/tls_generate_csr/tasks/acls-ecs.yml fqcn[action-core]
-roles/security/tls_generate_csr/tasks/acls-ecs.yml fqcn[action]
-roles/security/tls_generate_csr/tasks/acls-ecs.yml jinja[invalid]
-roles/security/tls_generate_csr/tasks/acls.yml fqcn[action-core]
-roles/security/tls_generate_csr/tasks/acls.yml fqcn[action]
-roles/security/tls_generate_csr/tasks/acls.yml jinja[invalid]
-roles/security/tls_generate_csr/tasks/main.yml fqcn[action-core]
-roles/security/tls_generate_csr/tasks/main.yml name[missing]
-roles/security/tls_generate_csr/tasks/main.yml risky-file-permissions
-roles/security/tls_generate_csr/tasks/main.yml risky-shell-pipe
-roles/security/tls_install_certs/defaults/main.yml var-naming[no-role-prefix]
-roles/security/tls_install_certs/tasks/main.yml command-instead-of-shell
-roles/security/tls_install_certs/tasks/main.yml fqcn[action-core]
-roles/security/tls_install_certs/tasks/main.yml fqcn[action]
-roles/security/tls_install_certs/tasks/main.yml jinja[invalid]
-roles/security/tls_install_certs/tasks/main.yml key-order[task]
-roles/security/tls_install_certs/tasks/main.yml name[missing]
-roles/security/tls_install_certs/tasks/main.yml no-changed-when
-roles/security/tls_nifi/defaults/main.yml var-naming[no-role-prefix]
-roles/security/tls_nifi/tasks/main.yml fqcn[action-core]
-roles/security/tls_nifi/tasks/main.yml risky-file-permissions
-roles/security/tls_signing/defaults/main.yml var-naming[no-role-prefix]
-roles/security/tls_signing/tasks/main.yml fqcn[action-core]
-roles/security/tls_signing/tasks/signing_freeipa.yml fqcn[action-core]
-roles/teardown/tasks/main.yml fqcn[action-core]
-roles/teardown/tasks/main.yml jinja[invalid]
-roles/teardown/tasks/main.yml jinja[spacing]
-roles/teardown/tasks/main.yml name[missing]
-roles/teardown/tasks/main.yml risky-file-permissions
-roles/teardown/tasks/main.yml var-naming[no-reserved]
-roles/teardown/tasks/teardown_cdsw.yml command-instead-of-shell
-roles/teardown/tasks/teardown_cdsw.yml fqcn[action-core]
-roles/teardown/tasks/teardown_cdsw.yml jinja[invalid]
-roles/teardown/tasks/teardown_cdsw.yml no-changed-when
-roles/teardown/tasks/teardown_cloudera_agent.yml fqcn[action-core]
-roles/teardown/tasks/teardown_cloudera_agent.yml ignore-errors
-roles/teardown/tasks/teardown_cloudera_agent.yml no-changed-when
-roles/teardown/tasks/teardown_cloudera_server.yml fqcn[action-core]
-roles/teardown/tasks/teardown_cloudera_server.yml ignore-errors
-roles/teardown/tasks/teardown_cluster.yml fqcn[action-core]
-roles/teardown/tasks/teardown_cluster.yml jinja[spacing]
-roles/teardown/tasks/teardown_cluster.yml key-order[task]
-roles/teardown/tasks/teardown_cluster.yml name[missing]
-roles/teardown/tasks/teardown_cms.yml fqcn[action-core]
-roles/teardown/tasks/teardown_cms.yml jinja[spacing]
-roles/teardown/tasks/teardown_cms_role_directories.yml fqcn[action-core]
-roles/teardown/tasks/teardown_cms_role_directory.yml fqcn[action-core]
-roles/teardown/tasks/teardown_database.yml fqcn[action-core]
-roles/teardown/tasks/teardown_database.yml fqcn[action]
-roles/teardown/tasks/teardown_database.yml ignore-errors
-roles/teardown/tasks/teardown_database.yml name[missing]
-roles/teardown/tasks/teardown_database.yml no-changed-when
-roles/teardown/tasks/teardown_database.yml yaml[line-length]
-roles/teardown/tasks/teardown_ecs.yml command-instead-of-shell
-roles/teardown/tasks/teardown_ecs.yml fqcn[action-core]
-roles/teardown/tasks/teardown_ecs.yml ignore-errors
-roles/teardown/tasks/teardown_ecs.yml no-changed-when
-roles/teardown/tasks/teardown_ecs.yml yaml[comments]
-roles/teardown/tasks/teardown_kms.yml fqcn[action-core]
-roles/teardown/tasks/teardown_role_directories.yml fqcn[action-core]
-roles/teardown/tasks/teardown_role_directory.yml fqcn[action-core]
-roles/teardown/tasks/teardown_service_directories.yml fqcn[action-core]
-roles/teardown/tasks/teardown_service_directories.yml jinja[spacing]
-roles/teardown/vars/main.yml var-naming[no-role-prefix]
-roles/verify/definition/tasks/main.yml fqcn[action-core]
-roles/verify/definition/tasks/main.yml ignore-errors
-roles/verify/definition/tasks/main.yml jinja[invalid]
-roles/verify/definition/tasks/main.yml key-order[task]
-roles/verify/definition/tasks/main.yml literal-compare
-roles/verify/definition/tasks/main.yml name[missing]
-roles/verify/inventory/tasks/main.yml fqcn[action-core]
-roles/verify/inventory/tasks/main.yml jinja[spacing]
-roles/verify/inventory/tasks/main.yml key-order[task]
-roles/verify/inventory/tasks/main.yml name[missing]
-roles/verify/parcels_and_roles/tasks/check_cluster.yml fqcn[action-core]
-roles/verify/parcels_and_roles/tasks/check_cluster.yml jinja[invalid]
-roles/verify/parcels_and_roles/tasks/check_cluster.yml key-order[task]
-roles/verify/parcels_and_roles/tasks/check_cluster.yml name[missing]
-roles/verify/parcels_and_roles/tasks/check_cluster_config_roles.yml fqcn[action-core]
-roles/verify/parcels_and_roles/tasks/check_cluster_config_roles.yml name[missing]
-roles/verify/parcels_and_roles/tasks/check_template.yml fqcn[action-core]
-roles/verify/parcels_and_roles/tasks/check_template.yml name[missing]
-roles/verify/parcels_and_roles/tasks/check_template_roles.yml fqcn[action-core]
-roles/verify/parcels_and_roles/tasks/check_template_roles.yml jinja[spacing]
-roles/verify/parcels_and_roles/tasks/check_template_roles.yml name[missing]
-roles/verify/parcels_and_roles/tasks/main.yml fqcn[action-core]
+roles/cloudera_manager/admin_password/check/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/admin_password/check/tasks/main.yml name[missing] skip
+roles/cloudera_manager/agent/meta/main.yml role-name[path] skip
+roles/cloudera_manager/agent/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/agent/tasks/main.yml package-latest skip
+roles/cloudera_manager/agent_config/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/api_client/handlers/main.yml name[casing] skip
+roles/cloudera_manager/api_client/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/api_client/tasks/main.yml name[missing] skip
+roles/cloudera_manager/api_hosts/meta/main.yml role-name[path] skip
+roles/cloudera_manager/api_hosts/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/autotls/defaults/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/autotls/defaults/main.yml var-naming[pattern] skip
+roles/cloudera_manager/autotls/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/autotls/tasks/main.yml ignore-errors skip
+roles/cloudera_manager/autotls/tasks/main.yml jinja[spacing] skip
+roles/cloudera_manager/autotls/tasks/main.yml name[missing] skip
+roles/cloudera_manager/autotls/tasks/patch_old_cm.yml command-instead-of-shell skip
+roles/cloudera_manager/autotls/tasks/patch_old_cm.yml fqcn[action-core] skip
+roles/cloudera_manager/autotls/tasks/patch_old_cm.yml jinja[spacing] skip
+roles/cloudera_manager/autotls/tasks/patch_old_cm.yml no-changed-when skip
+roles/cloudera_manager/common/handlers/main.yml fqcn[action-core] skip
+roles/cloudera_manager/common/handlers/main.yml name[casing] skip
+roles/cloudera_manager/config/defaults/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/config/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/config/tasks/main.yml jinja[spacing] skip
+roles/cloudera_manager/csds/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/database/defaults/main.yml yaml[line-length] skip
+roles/cloudera_manager/database/handlers/main.yml fqcn[action-core] skip
+roles/cloudera_manager/database/handlers/main.yml name[casing] skip
+roles/cloudera_manager/database/meta/main.yml role-name[path] skip
+roles/cloudera_manager/database/tasks/external.yml fqcn[action-core] skip
+roles/cloudera_manager/database/tasks/external.yml fqcn[action] skip
+roles/cloudera_manager/database/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/external_auth/defaults/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/external_auth/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/external_auth/tasks/main.yml key-order[task] skip
+roles/cloudera_manager/external_auth/tasks/main.yml name[missing] skip
+roles/cloudera_manager/external_auth/vars/freeipa.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/external_auth/vars/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/hosts_config/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/kerberos/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/license/tasks/enterprise.yml command-instead-of-module skip
+roles/cloudera_manager/license/tasks/enterprise.yml jinja[spacing] skip
+roles/cloudera_manager/license/tasks/enterprise.yml no-changed-when skip
+roles/cloudera_manager/license/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/license/tasks/trial.yml ignore-errors skip
+roles/cloudera_manager/preload_parcels/defaults/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/preload_parcels/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/preload_parcels/tasks/main.yml risky-file-permissions skip
+roles/cloudera_manager/repo/defaults/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/repo/tasks/main-Debian.yml fqcn[action-core] skip
+roles/cloudera_manager/repo/tasks/main-Debian.yml jinja[spacing] skip
+roles/cloudera_manager/repo/tasks/main-Debian.yml yaml[line-length] skip
+roles/cloudera_manager/repo/tasks/main-RedHat.yml jinja[spacing] skip
+roles/cloudera_manager/repo/tasks/main-RedHat.yml name[casing] skip
+roles/cloudera_manager/repo/tasks/main-RedHat.yml no-changed-when skip
+roles/cloudera_manager/repo/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/repo/tasks/main.yml jinja[spacing] skip
+roles/cloudera_manager/repo/tasks/main.yml yaml[line-length] skip
+roles/cloudera_manager/repo/vars/Debian.yml jinja[spacing] skip
+roles/cloudera_manager/repo/vars/Debian.yml yaml[line-length] skip
+roles/cloudera_manager/repo/vars/RedHat.yml jinja[spacing] skip
+roles/cloudera_manager/repo/vars/RedHat.yml yaml[line-length] skip
+roles/cloudera_manager/server/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/server/tasks/main.yml package-latest skip
+roles/cloudera_manager/server_tls/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/server_tls/tasks/main.yml name[missing] skip
+roles/cloudera_manager/server_tls/tasks/main.yml yaml[line-length] skip
+roles/cloudera_manager/services_info/defaults/main.yml var-naming[no-role-prefix] skip
+roles/cloudera_manager/services_info/tasks/main.yml fqcn[action-core] skip
+roles/cloudera_manager/services_info/tasks/main.yml jinja[invalid] skip
+roles/cloudera_manager/services_info/tasks/main.yml name[missing] skip
+roles/cloudera_manager/services_info/tasks/main.yml var-naming[no-reserved] skip
+roles/cloudera_manager/services_info/tasks/main.yml yaml[line-length] skip
+roles/cloudera_manager/wait_for_heartbeat/tasks/main.yml fqcn[action-core] skip
+roles/config/cluster/base/tasks/main.yml fqcn[action-core] skip
+roles/config/cluster/base/tasks/main.yml name[missing] skip
+roles/config/cluster/base/vars/main.yml jinja[spacing] skip
+roles/config/cluster/base/vars/main.yml var-naming[no-role-prefix] skip
+roles/config/cluster/base/vars/main.yml yaml[line-length] skip
+roles/config/cluster/common/defaults/main.yml var-naming[no-role-prefix] skip
+roles/config/cluster/ecs/tasks/main.yml fqcn[action-core] skip
+roles/config/cluster/ecs/tasks/main.yml name[missing] skip
+roles/config/cluster/ecs/vars/main.yml var-naming[no-role-prefix] skip
+roles/config/cluster/kts/tasks/main.yml fqcn[action-core] skip
+roles/config/cluster/kts/vars/main.yml var-naming[no-role-prefix] skip
+roles/config/services/hue_ticket_lifetime/tasks/main.yml fqcn[action-core] skip
+roles/config/services/hue_ticket_lifetime/tasks/main.yml ignore-errors skip
+roles/config/services/hue_ticket_lifetime/tasks/main.yml no-changed-when skip
+roles/config/services/hue_ticket_lifetime/tasks/main.yml yaml[line-length] skip
+roles/config/services/kms/tasks/main.yml fqcn[action-core] skip
+roles/config/services/kms/vars/main.yml var-naming[no-role-prefix] skip
+roles/config/services/kms_tls/tasks/main.yml fqcn[action-core] skip
+roles/config/services/kms_tls/tasks/main.yml ignore-errors skip
+roles/config/services/kms_tls/tasks/main.yml jinja[invalid] skip
+roles/config/services/kms_tls/tasks/main.yml jinja[spacing] skip
+roles/config/services/kms_tls/tasks/main.yml yaml[line-length] skip
+roles/config/services/mgmt/tasks/main.yml fqcn[action-core] skip
+roles/config/services/mgmt/tasks/main.yml name[missing] skip
+roles/config/services/mgmt/vars/main.yml jinja[spacing] skip
+roles/config/services/mgmt/vars/main.yml var-naming[no-role-prefix] skip
+roles/config/services/oozie_ui/tasks/main.yml command-instead-of-module skip
+roles/config/services/oozie_ui/tasks/main.yml command-instead-of-shell skip
+roles/config/services/oozie_ui/tasks/main.yml fqcn[action-core] skip
+roles/config/services/oozie_ui/tasks/main.yml ignore-errors skip
+roles/config/services/oozie_ui/tasks/main.yml no-changed-when skip
+roles/config/services/oozie_ui/tasks/main.yml package-latest skip
+roles/config/services/oozie_ui/tasks/main.yml risky-file-permissions skip
+roles/config/services/ranger_pvc_default_policies/tasks/main.yml fqcn[action-core] skip
+roles/config/services/ranger_pvc_default_policies/tasks/main.yml jinja[spacing] skip
+roles/config/services/ranger_pvc_default_policies/tasks/main.yml schema[moves] skip
+roles/config/services/solr_knox/tasks/add_solr_knox_host.yml fqcn[action-core] skip
+roles/config/services/solr_knox/tasks/add_solr_knox_host.yml jinja[spacing] skip
+roles/config/services/solr_knox/tasks/add_solr_knox_host.yml name[missing] skip
+roles/config/services/solr_knox/tasks/add_solr_knox_host.yml yaml[line-length] skip
+roles/config/services/solr_knox/tasks/main.yml fqcn[action-core] skip
+roles/config/services/solr_knox/tasks/main.yml name[casing] skip
+roles/config/services/solr_ranger_plugin/tasks/main.yml fqcn[action-core] skip
+roles/config/services/solr_ranger_plugin/tasks/main.yml jinja[spacing] skip
+roles/config/services/solr_ranger_plugin/tasks/main.yml no-handler skip
+roles/deployment/cluster/tasks/create_base.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/create_base.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/create_base.yml role-name[path] skip
+roles/deployment/cluster/tasks/create_base.yml yaml[comments] skip
+roles/deployment/cluster/tasks/create_ecs.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/create_ecs.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/create_ecs.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/create_ecs.yml name[missing] skip
+roles/deployment/cluster/tasks/create_ecs.yml yaml[line-length] skip
+roles/deployment/cluster/tasks/create_kts.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/create_kts.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/create_kts.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/create_kts.yml key-order[task] skip
+roles/deployment/cluster/tasks/create_kts.yml name[missing] skip
+roles/deployment/cluster/tasks/create_kts.yml risky-file-permissions skip
+roles/deployment/cluster/tasks/create_kts.yml yaml[comments] skip
+roles/deployment/cluster/tasks/fs2cs.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/fs2cs.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/fs2cs.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/fs2cs.yml name[missing] skip
+roles/deployment/cluster/tasks/fs2cs.yml yaml[line-length] skip
+roles/deployment/cluster/tasks/main.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/main.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/main.yml name[missing] skip
+roles/deployment/cluster/tasks/nav2atlas.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/nav2atlas.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/nav2atlas.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/nav2atlas.yml name[missing] skip
+roles/deployment/cluster/tasks/nav2atlas.yml yaml[line-length] skip
+roles/deployment/cluster/tasks/update_base.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/update_base.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/update_base.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/update_base.yml name[missing] skip
+roles/deployment/cluster/tasks/update_base.yml role-name[path] skip
+roles/deployment/cluster/tasks/update_base.yml var-naming[no-role-prefix] skip
+roles/deployment/cluster/tasks/update_base.yml yaml[line-length] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml fqcn[action-core] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml jinja[invalid] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml jinja[spacing] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml key-order[task] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml name[missing] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml role-name[path] skip
+roles/deployment/cluster/tasks/upgrade_kts.yml yaml[line-length] skip
+roles/deployment/credential/tasks/main.yml fqcn[action-core] skip
+roles/deployment/credential/tasks/main.yml jinja[spacing] skip
+roles/deployment/credential/tasks/main.yml no-changed-when skip
+roles/deployment/credential/tasks/main.yml risky-shell-pipe skip
+roles/deployment/databases/tasks/main.yml fqcn[action-core] skip
+roles/deployment/databases/tasks/mariadb.yml fqcn[action] skip
+roles/deployment/databases/tasks/mysql.yml fqcn[action] skip
+roles/deployment/databases/tasks/postgresql.yml fqcn[action] skip
+roles/deployment/definition/defaults/main.yml var-naming[no-role-prefix] skip
+roles/deployment/definition/defaults/main.yml yaml[comments] skip
+roles/deployment/definition/tasks/main.yml jinja[invalid] skip
+roles/deployment/groupby/tasks/main.yml fqcn[action-core] skip
+roles/deployment/groupby/tasks/main.yml jinja[invalid] skip
+roles/deployment/groupby/tasks/main.yml key-order[task] skip
+roles/deployment/groupby/tasks/main.yml name[missing] skip
+roles/deployment/groupby/tasks/main.yml var-naming[no-reserved] skip
+roles/deployment/repometa/defaults/main.yml var-naming[no-role-prefix] skip
+roles/deployment/repometa/tasks/main.yml fqcn[action-core] skip
+roles/deployment/repometa/tasks/parcels.yml fqcn[action-core] skip
+roles/deployment/repometa/tasks/parcels.yml jinja[spacing] skip
+roles/deployment/repometa/tasks/parcels.yml name[missing] skip
+roles/deployment/services/kms/tasks/create_kms.yml fqcn[action-core] skip
+roles/deployment/services/kms/tasks/create_kms.yml jinja[invalid] skip
+roles/deployment/services/kms/tasks/create_kms.yml name[missing] skip
+roles/deployment/services/kms/tasks/create_kms.yml var-naming[no-reserved] skip
+roles/deployment/services/kms/tasks/main.yml fqcn[action-core] skip
+roles/deployment/services/kms/tasks/main.yml no-changed-when skip
+roles/deployment/services/kms_ha/defaults/main.yml var-naming[no-role-prefix] skip
+roles/deployment/services/kms_ha/tasks/main.yml fqcn[action-core] skip
+roles/deployment/services/kts_common/defaults/main.yml var-naming[no-role-prefix] skip
+roles/deployment/services/kts_high_availability/tasks/main.yml command-instead-of-shell skip
+roles/deployment/services/kts_high_availability/tasks/main.yml fqcn[action-core] skip
+roles/deployment/services/kts_high_availability/tasks/main.yml jinja[invalid] skip
+roles/deployment/services/kts_high_availability/tasks/main.yml no-changed-when skip
+roles/deployment/services/kts_high_availability/tasks/main.yml risky-shell-pipe skip
+roles/deployment/services/mgmt/tasks/main.yml fqcn[action-core] skip
+roles/deployment/services/wxm/defaults/main.yml var-naming[no-role-prefix] skip
+roles/deployment/services/wxm/tasks/configure_telemetry.yml fqcn[action-core] skip
+roles/deployment/services/wxm/tasks/configure_telemetry.yml ignore-errors skip
+roles/deployment/services/wxm/tasks/configure_telemetry.yml jinja[invalid] skip
+roles/deployment/services/wxm/tasks/configure_telemetry.yml name[missing] skip
+roles/deployment/services/wxm/tasks/configure_telemetry.yml var-naming[no-reserved] skip
+roles/deployment/services/wxm/tasks/main.yml fqcn[action-core] skip
+roles/deployment/services/wxm/tasks/main.yml name[missing] skip
+roles/deployment/services/wxm/tasks/truststore_to_base.yml fqcn[action-core] skip
+roles/deployment/services/wxm/tasks/truststore_to_base.yml ignore-errors skip
+roles/deployment/services/wxm/tasks/truststore_to_base.yml no-changed-when skip
+roles/deployment/services/wxm/tasks/truststore_to_base.yml yaml[line-length] skip
+roles/infrastructure/ca_common/defaults/main.yml var-naming[no-role-prefix] skip
+roles/infrastructure/ca_server/molecule/default/converge.yml fqcn[action-core] skip
+roles/infrastructure/ca_server/molecule/default/verify.yml command-instead-of-shell skip
+roles/infrastructure/ca_server/molecule/default/verify.yml fqcn[action-core] skip
+roles/infrastructure/ca_server/molecule/default/verify.yml no-changed-when skip
+roles/infrastructure/ca_server/tasks/create_ca.yml fqcn[action-core] skip
+roles/infrastructure/ca_server/tasks/create_ca.yml fqcn[action] skip
+roles/infrastructure/ca_server/tasks/create_ca.yml name[missing] skip
+roles/infrastructure/ca_server/tasks/main.yml fqcn[action-core] skip
+roles/infrastructure/ca_server/tasks/main.yml name[missing] skip
+roles/infrastructure/ca_server/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/infrastructure/ca_server/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/infrastructure/custom_repo/defaults/main.yml var-naming[no-role-prefix] skip
+roles/infrastructure/custom_repo/tasks/install_parcels.yml fqcn[action-core] skip
+roles/infrastructure/custom_repo/tasks/install_parcels.yml jinja[spacing] skip
+roles/infrastructure/custom_repo/tasks/install_parcels_from_tars_on_controller.yml fqcn[action-core] skip
+roles/infrastructure/custom_repo/tasks/install_parcels_from_tars_on_controller.yml jinja[spacing] skip
+roles/infrastructure/custom_repo/tasks/main.yml fqcn[action-core] skip
+roles/infrastructure/custom_repo/tasks/rehost_files_from_download.yml fqcn[action-core] skip
+roles/infrastructure/custom_repo/tasks/rehost_files_from_download.yml risky-file-permissions skip
+roles/infrastructure/custom_repo/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/infrastructure/custom_repo/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/infrastructure/haproxy/tasks/main.yml fqcn[action-core] skip
+roles/infrastructure/haproxy/tasks/main.yml package-latest skip
+roles/infrastructure/krb5_client/defaults/main.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_client/handlers/main.yml fqcn[action-core] skip
+roles/infrastructure/krb5_client/handlers/main.yml name[casing] skip
+roles/infrastructure/krb5_client/tasks/freeipa.yml fqcn[action-core] skip
+roles/infrastructure/krb5_client/tasks/freeipa.yml literal-compare skip
+roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml fqcn[action-core] skip
+roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml ignore-errors skip
+roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml name[missing] skip
+roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml no-changed-when skip
+roles/infrastructure/krb5_client/tasks/freeipa_autodns.yml risky-file-permissions skip
+roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml fqcn[action-core] skip
+roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml ignore-errors skip
+roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml name[casing] skip
+roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml no-handler skip
+roles/infrastructure/krb5_client/tasks/freeipa_dbus_patch.yml risky-file-permissions skip
+roles/infrastructure/krb5_client/tasks/mit.yml fqcn[action-core] skip
+roles/infrastructure/krb5_client/tasks/pvc_configs.yml fqcn[action-core] skip
+roles/infrastructure/krb5_client/tasks/pvc_configs.yml ignore-errors skip
+roles/infrastructure/krb5_client/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_client/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_client/vars/Suse.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_common/defaults/main.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_conf/tasks/mit.yml fqcn[action-core] skip
+roles/infrastructure/krb5_conf/tasks/mit.yml risky-file-permissions skip
+roles/infrastructure/krb5_server/defaults/main.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml fqcn[action-core] skip
+roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml ignore-errors skip
+roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml name[casing] skip
+roles/infrastructure/krb5_server/tasks/fix_freeipa_collection.yml package-latest skip
+roles/infrastructure/krb5_server/tasks/freeipa.yml fqcn[action-core] skip
+roles/infrastructure/krb5_server/tasks/freeipa.yml fqcn[action] skip
+roles/infrastructure/krb5_server/tasks/freeipa.yml ignore-errors skip
+roles/infrastructure/krb5_server/tasks/freeipa.yml name[missing] skip
+roles/infrastructure/krb5_server/tasks/mit.yml fqcn[action-core] skip
+roles/infrastructure/krb5_server/tasks/mit.yml no-changed-when skip
+roles/infrastructure/krb5_server/tasks/mit.yml risky-file-permissions skip
+roles/infrastructure/krb5_server/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/vars/RedHat-7.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/vars/RedHat-8.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/vars/Suse.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/vars/Ubuntu.yml var-naming[no-role-prefix] skip
+roles/infrastructure/krb5_server/vars/default.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/handlers/main.yml name[casing] skip
+roles/infrastructure/rdbms/handlers/main.yml no-changed-when skip
+roles/infrastructure/rdbms/tasks/main.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/mariadb-Debian.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/mariadb-RedHat.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/mysql-RedHat.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/mysql-RedHat.yml jinja[spacing] skip
+roles/infrastructure/rdbms/tasks/postgresql-Debian.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/postgresql-Debian.yml package-latest skip
+roles/infrastructure/rdbms/tasks/postgresql-RedHat.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/postgresql-RedHat.yml name[casing] skip
+roles/infrastructure/rdbms/tasks/template_fix.yml fqcn[action-core] skip
+roles/infrastructure/rdbms/tasks/template_fix.yml no-changed-when skip
+roles/infrastructure/rdbms/vars/mariadb-Debian.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/vars/mariadb.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/vars/mysql-RedHat.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/vars/mysql.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/vars/postgresql-Debian.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/vars/postgresql-RedHat.yml jinja[spacing] skip
+roles/infrastructure/rdbms/vars/postgresql-RedHat.yml var-naming[no-role-prefix] skip
+roles/infrastructure/rdbms/vars/postgresql.yml var-naming[no-role-prefix] skip
+roles/operations/delete_cluster/meta/main.yml role-name[path] skip
+roles/operations/delete_cluster/tasks/main.yml fqcn[action-core] skip
+roles/operations/delete_cluster/tasks/main.yml jinja[invalid] skip
+roles/operations/delete_cluster/tasks/main.yml jinja[spacing] skip
+roles/operations/delete_cluster/tasks/main.yml key-order[task] skip
+roles/operations/delete_cluster/tasks/main.yml name[missing] skip
+roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml fqcn[action-core] skip
+roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml jinja[invalid] skip
+roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml jinja[spacing] skip
+roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml name[missing] skip
+roles/operations/refresh_ranger_kms_repo/tasks/cluster_find_ranger.yml var-naming[no-reserved] skip
+roles/operations/refresh_ranger_kms_repo/tasks/main.yml fqcn[action-core] skip
+roles/operations/refresh_ranger_kms_repo/tasks/setup_cluster.yml fqcn[action-core] skip
+roles/operations/refresh_ranger_kms_repo/tasks/setup_cluster.yml jinja[invalid] skip
+roles/operations/refresh_ranger_kms_repo/tasks/setup_cluster.yml name[missing] skip
+roles/operations/restart_cluster_services/tasks/main.yml fqcn[action-core] skip
+roles/operations/restart_cluster_services/tasks/service_restart.yml fqcn[action-core] skip
+roles/operations/restart_cluster_services/tasks/service_restart.yml jinja[invalid] skip
+roles/operations/restart_cluster_services/tasks/service_restart.yml var-naming[no-reserved] skip
+roles/operations/restart_stale/tasks/main.yml fqcn[action-core] skip
+roles/operations/restart_stale/tasks/restart.yml fqcn[action-core] skip
+roles/operations/restart_stale/tasks/restart.yml jinja[invalid] skip
+roles/operations/restart_stale/tasks/restart.yml name[missing] skip
+roles/operations/stop_cluster/meta/main.yml role-name[path] skip
+roles/prereqs/jdk/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/jdk/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/jdk/tasks/main.yml fqcn[action] skip
+roles/prereqs/jdk/tasks/main.yml jinja[spacing] skip
+roles/prereqs/jdk/tasks/main.yml name[missing] skip
+roles/prereqs/jdk/tasks/main.yml no-changed-when skip
+roles/prereqs/jdk/tasks/main.yml risky-shell-pipe skip
+roles/prereqs/jdk/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/prereqs/jdk/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/prereqs/jdk/vars/Suse.yml var-naming[no-role-prefix] skip
+roles/prereqs/kerberos/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/kerberos/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/prereqs/kerberos/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/prereqs/kerberos/vars/Suse.yml var-naming[no-role-prefix] skip
+roles/prereqs/license/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/license/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/local_accounts_common/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/mysql_connector/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/mysql_connector/tasks/main.yml command-instead-of-shell skip
+roles/prereqs/mysql_connector/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/mysql_connector/tasks/main.yml ignore-errors skip
+roles/prereqs/mysql_connector/tasks/main.yml no-changed-when skip
+roles/prereqs/mysql_connector/tasks/main.yml risky-file-permissions skip
+roles/prereqs/oracle_connector/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/oracle_connector/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/oracle_connector/tasks/main.yml fqcn[action] skip
+roles/prereqs/oracle_connector/tasks/main.yml key-order[task] skip
+roles/prereqs/os/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/os/handlers/main.yml fqcn[action-core] skip
+roles/prereqs/os/handlers/main.yml name[casing] skip
+roles/prereqs/os/tasks/main-Debian.yml fqcn[action-core] skip
+roles/prereqs/os/tasks/main-Debian.yml fqcn[action] skip
+roles/prereqs/os/tasks/main-Debian.yml jinja[spacing] skip
+roles/prereqs/os/tasks/main-Debian.yml name[missing] skip
+roles/prereqs/os/tasks/main-Debian.yml package-latest skip
+roles/prereqs/os/tasks/main-RedHat.yml command-instead-of-shell skip
+roles/prereqs/os/tasks/main-RedHat.yml fqcn[action-core] skip
+roles/prereqs/os/tasks/main-RedHat.yml fqcn[action] skip
+roles/prereqs/os/tasks/main-RedHat.yml ignore-errors skip
+roles/prereqs/os/tasks/main-RedHat.yml name[casing] skip
+roles/prereqs/os/tasks/main-RedHat.yml no-changed-when skip
+roles/prereqs/os/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/os/tasks/main.yml fqcn[action] skip
+roles/prereqs/os/tasks/main.yml name[casing] skip
+roles/prereqs/os/tasks/main.yml name[template] skip
+roles/prereqs/os/tasks/rngd.yml fqcn[action-core] skip
+roles/prereqs/os/vars/Debian.yml var-naming[no-role-prefix] skip
+roles/prereqs/os/vars/RedHat.yml var-naming[no-role-prefix] skip
+roles/prereqs/os/vars/Suse.yml var-naming[no-role-prefix] skip
+roles/prereqs/postgresql_connector/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/postgresql_connector/tasks/main.yml command-instead-of-shell skip
+roles/prereqs/postgresql_connector/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/postgresql_connector/tasks/main.yml literal-compare skip
+roles/prereqs/postgresql_connector/tasks/main.yml no-changed-when skip
+roles/prereqs/pvc_ecs/tasks/main.yml no-changed-when skip
+roles/prereqs/pvc_ecs/tasks/main.yml package-latest skip
+roles/prereqs/user_accounts/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/user_accounts/tasks/main.yml key-order[task] skip
+roles/prereqs/user_accounts/tasks/main.yml name[missing] skip
+roles/prereqs/user_accounts_ecs/defaults/main.yml var-naming[no-role-prefix] skip
+roles/prereqs/user_accounts_ecs/tasks/main.yml fqcn[action-core] skip
+roles/prereqs/user_accounts_ecs/tasks/main.yml key-order[task] skip
+roles/prereqs/user_accounts_ecs/tasks/main.yml name[missing] skip
+roles/security/tls_clean/tasks/main.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/defaults/main.yml var-naming[no-role-prefix] skip
+roles/security/tls_generate_csr/molecule/default/converge.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/molecule/default/prepare.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/molecule/default/verify.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/tasks/acls-ecs.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/tasks/acls-ecs.yml fqcn[action] skip
+roles/security/tls_generate_csr/tasks/acls-ecs.yml jinja[invalid] skip
+roles/security/tls_generate_csr/tasks/acls.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/tasks/acls.yml fqcn[action] skip
+roles/security/tls_generate_csr/tasks/acls.yml jinja[invalid] skip
+roles/security/tls_generate_csr/tasks/main.yml fqcn[action-core] skip
+roles/security/tls_generate_csr/tasks/main.yml name[missing] skip
+roles/security/tls_generate_csr/tasks/main.yml risky-file-permissions skip
+roles/security/tls_generate_csr/tasks/main.yml risky-shell-pipe skip
+roles/security/tls_install_certs/defaults/main.yml var-naming[no-role-prefix] skip
+roles/security/tls_install_certs/tasks/main.yml command-instead-of-shell skip
+roles/security/tls_install_certs/tasks/main.yml fqcn[action-core] skip
+roles/security/tls_install_certs/tasks/main.yml fqcn[action] skip
+roles/security/tls_install_certs/tasks/main.yml jinja[invalid] skip
+roles/security/tls_install_certs/tasks/main.yml key-order[task] skip
+roles/security/tls_install_certs/tasks/main.yml name[missing] skip
+roles/security/tls_install_certs/tasks/main.yml no-changed-when skip
+roles/security/tls_nifi/defaults/main.yml var-naming[no-role-prefix] skip
+roles/security/tls_nifi/tasks/main.yml fqcn[action-core] skip
+roles/security/tls_nifi/tasks/main.yml risky-file-permissions skip
+roles/security/tls_signing/defaults/main.yml var-naming[no-role-prefix] skip
+roles/security/tls_signing/tasks/main.yml fqcn[action-core] skip
+roles/security/tls_signing/tasks/signing_freeipa.yml fqcn[action-core] skip
+roles/teardown/tasks/main.yml fqcn[action-core] skip
+roles/teardown/tasks/main.yml jinja[invalid] skip
+roles/teardown/tasks/main.yml jinja[spacing] skip
+roles/teardown/tasks/main.yml name[missing] skip
+roles/teardown/tasks/main.yml risky-file-permissions skip
+roles/teardown/tasks/main.yml var-naming[no-reserved] skip
+roles/teardown/tasks/teardown_cdsw.yml command-instead-of-shell skip
+roles/teardown/tasks/teardown_cdsw.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_cdsw.yml jinja[invalid] skip
+roles/teardown/tasks/teardown_cdsw.yml no-changed-when skip
+roles/teardown/tasks/teardown_cloudera_agent.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_cloudera_agent.yml ignore-errors skip
+roles/teardown/tasks/teardown_cloudera_agent.yml no-changed-when skip
+roles/teardown/tasks/teardown_cloudera_server.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_cloudera_server.yml ignore-errors skip
+roles/teardown/tasks/teardown_cluster.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_cluster.yml jinja[spacing] skip
+roles/teardown/tasks/teardown_cluster.yml key-order[task] skip
+roles/teardown/tasks/teardown_cluster.yml name[missing] skip
+roles/teardown/tasks/teardown_cms.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_cms.yml jinja[spacing] skip
+roles/teardown/tasks/teardown_cms_role_directories.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_cms_role_directory.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_database.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_database.yml fqcn[action] skip
+roles/teardown/tasks/teardown_database.yml ignore-errors skip
+roles/teardown/tasks/teardown_database.yml name[missing] skip
+roles/teardown/tasks/teardown_database.yml no-changed-when skip
+roles/teardown/tasks/teardown_database.yml yaml[line-length] skip
+roles/teardown/tasks/teardown_ecs.yml command-instead-of-shell skip
+roles/teardown/tasks/teardown_ecs.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_ecs.yml ignore-errors skip
+roles/teardown/tasks/teardown_ecs.yml no-changed-when skip
+roles/teardown/tasks/teardown_ecs.yml yaml[comments] skip
+roles/teardown/tasks/teardown_kms.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_role_directories.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_role_directory.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_service_directories.yml fqcn[action-core] skip
+roles/teardown/tasks/teardown_service_directories.yml jinja[spacing] skip
+roles/teardown/vars/main.yml var-naming[no-role-prefix] skip
+roles/verify/definition/tasks/main.yml fqcn[action-core] skip
+roles/verify/definition/tasks/main.yml ignore-errors skip
+roles/verify/definition/tasks/main.yml jinja[invalid] skip
+roles/verify/definition/tasks/main.yml key-order[task] skip
+roles/verify/definition/tasks/main.yml literal-compare skip
+roles/verify/definition/tasks/main.yml name[missing] skip
+roles/verify/inventory/tasks/main.yml fqcn[action-core] skip
+roles/verify/inventory/tasks/main.yml jinja[spacing] skip
+roles/verify/inventory/tasks/main.yml key-order[task] skip
+roles/verify/inventory/tasks/main.yml name[missing] skip
+roles/verify/parcels_and_roles/tasks/check_cluster.yml fqcn[action-core] skip
+roles/verify/parcels_and_roles/tasks/check_cluster.yml jinja[invalid] skip
+roles/verify/parcels_and_roles/tasks/check_cluster.yml key-order[task] skip
+roles/verify/parcels_and_roles/tasks/check_cluster.yml name[missing] skip
+roles/verify/parcels_and_roles/tasks/check_cluster_config_roles.yml fqcn[action-core] skip
+roles/verify/parcels_and_roles/tasks/check_cluster_config_roles.yml name[missing] skip
+roles/verify/parcels_and_roles/tasks/check_template.yml fqcn[action-core] skip
+roles/verify/parcels_and_roles/tasks/check_template.yml name[missing] skip
+roles/verify/parcels_and_roles/tasks/check_template_roles.yml fqcn[action-core] skip
+roles/verify/parcels_and_roles/tasks/check_template_roles.yml jinja[spacing] skip
+roles/verify/parcels_and_roles/tasks/check_template_roles.yml name[missing] skip
+roles/verify/parcels_and_roles/tasks/main.yml fqcn[action-core] skip
