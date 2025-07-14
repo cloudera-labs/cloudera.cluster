@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: ansible-lint
+name: Ansible Lint
 on:
   pull_request:
     branches: ["main", "devel", "release/v*"]
@@ -27,6 +27,6 @@ jobs:
       - name: Run ansible-lint
         uses: ansible/ansible-lint@main
         with:
-          # args: ""
+          args: "--no-offline"
           setup_python: true
-          requirements_file: "requirements.yml"
+          # requirements_file: "requirements.yml"
