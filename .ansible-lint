@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-profile: production
+# profile: safety
 quiet: true
 strict: true
 verbosity: 1
-offline: true
+offline: false
