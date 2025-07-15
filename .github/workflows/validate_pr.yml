@@ -24,42 +24,45 @@ on:
 
 jobs:
   validate:
-    name: Install and validate collection
+    name: Validate collection
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Python and caching
-        uses: actions/setup-python@v4
+      - name: Set up Python and caching
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install Hatch
-        run: |
-          python -m pip install hatch
+      # - name: Install Hatch
+      #   run: |
+      #     python -m pip install hatch
 
       - name: Set up Ansible and Ansible collections and roles
         run: |
           sudo update-alternatives --install /usr/bin/python python $(which python3) 1
           pip install --upgrade pip
-          pip install ansible-core~=2.18.0 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
+          pip install ansible-core<2.17 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
+
+      - name: Install Ansible collections and roles
+        run: |
           mkdir -p /usr/share/ansible/collections /usr/share/ansible/roles
           ansible-galaxy collection install -r builder/requirements.yml -p /usr/share/ansible/collections
           ansible-galaxy role install -r builder/requirements.yml -p /usr/share/ansible/roles
-
-      - name: Report Ansible version, collections, and roles
-        run: |
-          ansible --version
-          ansible-galaxy collection list
-          ansible-galaxy role list
 
       - name: Set up Ansible collection dependencies
         run: |
           ansible-builder introspect --write-pip final_python.txt --write-bindep final_bindep.txt /usr/share/ansible/collections
           [[ -f final_python.txt ]] && pip install -r final_python.txt || echo "No Python dependencies found."
           [[ -f final_bindep.txt ]] && bindep --file final_bindep.txt || echo "No system dependencies found."
+
+      - name: Report Ansible version, collections, and roles
+        run: |
+          ansible --version
+          ansible-galaxy collection list
+          ansible-galaxy role list
 
       - name: Report installed Python dependencies
         run: pip freeze
@@ -68,11 +71,11 @@ jobs:
         run: |
           # pushd /usr/share/ansible/collections/ansible_collections/cloudera/cluster
           # hatch run lint
-          ansible-lint --no-offline
-          #ansible-test sanity --test pep8
-          #ansible-test sanity --test validate-modules
-          #ansible-test units --requirements --color yes --redact
-          popd
+          # ansible-lint --no-offline. # --no-offline is ignored!
+          # ansible-test sanity --test pep8
+          # ansible-test sanity --test validate-modules
+          # ansible-test units --requirements --color yes --redact
+          # popd
 
       # See https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
       - name: Save PR number
@@ -89,8 +92,8 @@ jobs:
           path: pr/
 
   import-galaxy:
+    name: Validate Galaxy import
     needs: validate
     permissions:
       contents: read
-    name: Import collection with Galaxy importer
     uses: ansible-community/github-action-test-galaxy-import/.github/workflows/test-galaxy-import.yml@main
