@@ -1,5 +1,5 @@
 ---
-# Copyright 2024 Cloudera, Inc.
+# Copyright 2025 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Execute Precommit Linting and Checks
+name: Lint Collection
 
 on:
   pull_request:
@@ -21,8 +21,32 @@ on:
     branches: [main, devel]
 jobs:
   pre-commit:
+    name: Lint collection
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - uses: pre-commit/action@v3.0.1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python and caching
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Set up Ansible and Ansible collections and roles
+        run: |
+          sudo update-alternatives --install /usr/bin/python python $(which python3) 1
+          pip install --upgrade pip
+          pip install "ansible-core<2.17" ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
+
+      - name: Install Ansible collections and roles
+        run: |
+          mkdir -p /usr/share/ansible/collections /usr/share/ansible/roles
+          ansible-galaxy collection install -r builder/requirements.yml -p /usr/share/ansible/collections
+          ansible-galaxy role install -r builder/requirements.yml -p /usr/share/ansible/roles
+
+      - name: Execute pre-commit
+        uses: pre-commit/action@v3.0.1
+        env:
+          ANSIBLE_COLLECTION_PATHS: /usr/share/ansible/collections
+          ANSIBLE_ROLE_PATHS: /usr/share/ansible/roles

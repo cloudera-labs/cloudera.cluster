@@ -44,7 +44,7 @@ jobs:
         run: |
           sudo update-alternatives --install /usr/bin/python python $(which python3) 1
           pip install --upgrade pip
-          pip install ansible-core<2.17 ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
+          pip install "ansible-core<2.17" ansible-builder bindep pycodestyle voluptuous pylint pyyaml ansible-lint
 
       - name: Install Ansible collections and roles
         run: |
