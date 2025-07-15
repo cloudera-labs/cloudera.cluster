@@ -1,0 +1,13 @@
+{# _templates/layout.html #}
+{% extends "!layout.html" %} {# Extends the theme's default layout.html #}
+
+{% block extrahead %}
+  {{ super() }} {# This calls the original extrahead block content from the theme's layout.html #}
+
+  {# Your Umami script #}
+  {% if umami_script_src and umami_website_id %}
+    <script defer src="{{ umami_script_src }}" data-website-id="{{ umami_website_id }}"></script>
+  {% endif %}
+{% endblock %}
+
+{# All other sections of the upstream layout.html are kept as is. #}
