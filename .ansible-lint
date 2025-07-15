@@ -14,6 +14,6 @@
 
 # profile: safety
 quiet: true
-strict: true
-verbosity: 1
-offline: false
+strict: false
+verbosity: 0
+offline: true
