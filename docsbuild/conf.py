@@ -65,3 +65,15 @@ html_theme_options = {
 html_content = {
     "display_github": "True",
 }
+
+# Add templates directory to the templates_path (for extensions and custom templates)
+templates_path = [
+    "templates",
+]
+
+# -- Adding Umami details to header ----------------------------------------
+
+html_context = {
+    "umami_script_src": "https://metrics.cloudera-labs.com/script.js",
+    "umami_website_id": "ec9cdd83-3798-4fd0-8c07-acb4efd971de",
+}
