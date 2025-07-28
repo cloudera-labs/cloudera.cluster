@@ -76,6 +76,12 @@ action_groups:
           - cm
     - parcel_info
     - parcel
+  control_plane:
+    - metadata:
+        extend_group:
+          - cm
+    - control_plane_info
+    - control_plane
   deployment:
     - metadata:
         extend_group:
@@ -86,6 +92,7 @@ action_groups:
           - host
           - host_template
           - parcel
+          - control_plane
 
 plugin_routing:
   filter:
