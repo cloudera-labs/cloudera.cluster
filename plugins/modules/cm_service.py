@@ -121,6 +121,16 @@ options:
       - present
       - restarted
     required: no
+  view:
+    description:
+      - View type of the returned service details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: summary
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -597,6 +607,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
         self.roles = self.get_param("roles")
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
+        self.view = self.get_param("view")
 
         # Initialize the return value
         self.changed = False
@@ -623,7 +634,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
         # Discover the CM service and retrieve its configured dependents
         try:
-            current = read_cm_service(self.api_client)
+            current = read_cm_service(api_client=self.api_client, view=self.view)
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
@@ -647,7 +658,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
                 self.changed = True
                 new_service = ApiService(type="MGMT")
                 current = service_api.setup_cms(body=new_service)
-                current.config = service_api.read_service_config()
+                current.config = service_api.read_service_config(view=self.view)
                 current.role_config_groups = []
                 current.roles = []
 
@@ -999,7 +1010,7 @@ class ClouderaManagerService(ClouderaManagerMutableModule):
 
             # If there are changes, get a fresh read
             if self.changed:
-                refresh = read_cm_service(self.api_client)
+                refresh = read_cm_service(api_client=self.api_client, view=self.view)
                 self.output = parse_service_result(refresh)
             # Otherwise, return the existing
             else:
@@ -1065,6 +1076,10 @@ def main():
                 type="str",
                 default="present",
                 choices=["started", "stopped", "absent", "present", "restarted"],
+            ),
+            view=dict(
+                default="summary",
+                choices=["summary", "full"],
             ),
         ),
         supports_check_mode=True,

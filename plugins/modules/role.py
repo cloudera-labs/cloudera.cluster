@@ -119,6 +119,19 @@ options:
       - restarted
       - started
       - stopped
+  view:
+    description:
+      - The view to materialize.
+      - C(healthcheck) is the equivalent to I(full_with_health_check_explanation).
+      - C(redacted) is the equivalent to I(export_redacted).
+    type: str
+    default: summary
+    choices:
+        - summary
+        - full
+        - healthcheck
+        - export
+        - redacted
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -407,6 +420,7 @@ class Role(ClouderaManagerMutableModule):
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
         self.skip_redacted = self.get_param("skip_redacted")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.changed = False
@@ -444,10 +458,15 @@ class Role(ClouderaManagerMutableModule):
             else:
                 raise ex
 
+        if self.view == "healthcheck":
+            self.view = "full_with_health_check_explanation"
+        elif self.view == "redacted":
+            self.view = "export_redacted"
+
         role_api = RolesResourceApi(self.api_client)
         current = None
 
-        # If given the role identifier, get it or fail (is a read-only variable)
+        # If given the role identifier, get it or return nothing (is a read-only variable)
         if self.name:
             try:
                 current = read_role(
@@ -455,6 +474,7 @@ class Role(ClouderaManagerMutableModule):
                     cluster_name=self.cluster,
                     service_name=self.service,
                     role_name=self.name,
+                    view=self.view,
                 )
             except ApiException as ex:
                 if ex.status != 404:
@@ -472,6 +492,7 @@ class Role(ClouderaManagerMutableModule):
                         type=self.type,
                         hostname=self.cluster_hostname,
                         host_id=self.cluster_host_id,
+                        view=self.view,
                     ).items,
                 ),
                 None,
@@ -672,6 +693,7 @@ class Role(ClouderaManagerMutableModule):
                         cluster_name=self.cluster,
                         service_name=self.service,
                         role_name=current.name,
+                        view=self.view,
                     ),
                 )
             else:
@@ -717,6 +739,10 @@ def main():
             state=dict(
                 default="present",
                 choices=["present", "absent", "restarted", "started", "stopped"],
+            ),
+            view=dict(
+                default="summary",
+                choices=["summary", "full", "healthcheck", "export", "redacted"],
             ),
         ),
         mutually_exclusive=[

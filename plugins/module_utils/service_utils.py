@@ -138,6 +138,7 @@ def read_service(
     api_client: ApiClient,
     cluster_name: str,
     service_name: str,
+    view: str = "summary",
 ) -> ApiService:
     """Read a cluster service and its role config group and role dependents.
 
@@ -145,6 +146,7 @@ def read_service(
         api_client (ApiClient): _description_
         cluster_name (str): _description_
         service_name (str): _description_
+        view (str, optional): View to return. Defaults to 'summary'.
 
     Returns:
         ApiService: _description_
@@ -155,6 +157,7 @@ def read_service(
     service = service_api.read_service(
         cluster_name=cluster_name,
         service_name=service_name,
+        view=view,
     )
 
     if service is not None:
@@ -162,6 +165,7 @@ def read_service(
         service.config = service_api.read_service_config(
             cluster_name=cluster_name,
             service_name=service_name,
+            view=view,
         )
 
         # Gather each role config group configuration
@@ -175,17 +179,23 @@ def read_service(
             api_client=api_client,
             cluster_name=cluster_name,
             service_name=service_name,
+            view=view,
         ).items
 
     return service
 
 
-def read_services(api_client: ApiClient, cluster_name: str) -> list[ApiService]:
+def read_services(
+    api_client: ApiClient,
+    cluster_name: str,
+    view: str = "summary",
+) -> list[ApiService]:
     """Read the cluster services and gather each services' role config group and role dependents.
 
     Args:
         api_client (ApiClient): _description_
         cluster_name (str): _description_
+        view (str, optional): View to return. Defaults to 'summary'.
 
     Returns:
         ApiService: _description_
@@ -197,6 +207,7 @@ def read_services(api_client: ApiClient, cluster_name: str) -> list[ApiService]:
 
     discovered_services = service_api.read_services(
         cluster_name=cluster_name,
+        view=view,
     ).items
 
     for service in discovered_services:
@@ -204,6 +215,7 @@ def read_services(api_client: ApiClient, cluster_name: str) -> list[ApiService]:
         service.config = service_api.read_service_config(
             cluster_name=cluster_name,
             service_name=service.name,
+            view=view,
         )
 
         # Gather each role config group configuration
@@ -217,6 +229,7 @@ def read_services(api_client: ApiClient, cluster_name: str) -> list[ApiService]:
             api_client=api_client,
             cluster_name=cluster_name,
             service_name=service.name,
+            view=view,
         ).items
 
         # Add it to the output
@@ -371,11 +384,15 @@ def toggle_service_state(
     return changed
 
 
-def read_cm_service(api_client: ApiClient) -> ApiService:
+def read_cm_service(
+    api_client: ApiClient,
+    view: str = "summary",
+) -> ApiService:
     """Read the Cloudera Manager service and its role config group and role dependents.
 
     Args:
         api_client (ApiClient): _description_
+        view: (str, optional): View to return. Defaults to 'summary'.
 
     Returns:
         ApiService: _description_
@@ -384,11 +401,11 @@ def read_cm_service(api_client: ApiClient) -> ApiService:
     rcg_api = MgmtRoleConfigGroupsResourceApi(api_client)
     role_api = MgmtRolesResourceApi(api_client)
 
-    service = service_api.read_service()
+    service = service_api.read_service(view=view)
 
     if service is not None:
         # Gather the service-wide configuration
-        service.config = service_api.read_service_config()
+        service.config = service_api.read_service_config(view=view)
 
         # Gather each role config group configuration
         service.role_config_groups = [
@@ -398,7 +415,7 @@ def read_cm_service(api_client: ApiClient) -> ApiService:
         # Gather each role configuration
         service.roles = role_api.read_roles().items
         for role in service.roles:
-            role.config = role_api.read_role_config(role_name=role.name)
+            role.config = role_api.read_role_config(role_name=role.name, view=view)
 
     return service
 
@@ -411,6 +428,7 @@ def reconcile_service_config(
     check_mode: bool,
     skip_redacted: bool,
     message: str,
+    view: str = "summary",
 ) -> tuple[dict, dict]:
     service_api = ServicesResourceApi(api_client)
 
@@ -437,6 +455,7 @@ def reconcile_service_config(
         existing_config = service_api.read_service_config(
             cluster_name=service.cluster_ref.cluster_name,
             service_name=service.name,
+            view=view,
         )
 
         (updated_config, before, after) = _handle_config(existing_config)
@@ -455,6 +474,7 @@ def reconcile_service_config(
             config_check = service_api.read_service_config(
                 cluster_name=service.cluster_ref.cluster_name,
                 service_name=service.name,
+                view=view,
             )
 
             (_, checked_before, checked_after) = _handle_config(config_check)
@@ -497,7 +517,11 @@ class ServiceConfigUpdates(object):
         return bool(self.config.items)
 
 
-def get_service_hosts(api_client: ApiClient, service: ApiService) -> list[ApiHost]:
+def get_service_hosts(
+    api_client: ApiClient,
+    service: ApiService,
+    view: str = "full",
+) -> list[ApiHost]:
     host_api = HostsResourceApi(api_client)
     seen_hosts = dict()
 
@@ -510,7 +534,10 @@ def get_service_hosts(api_client: ApiClient, service: ApiService) -> list[ApiHos
         .items
     ):
         if r.host_ref.hostname not in seen_hosts:
-            seen_hosts[r.host_ref.hostname] = host_api.read_host(r.host_ref.host_id)
+            seen_hosts[r.host_ref.hostname] = host_api.read_host(
+                host_id=r.host_ref.host_id,
+                view=view,
+            )
 
     return seen_hosts.values()
 
@@ -676,6 +703,7 @@ def reconcile_service_roles(
     message: str,
     # maintenance: bool,
     # state: str,
+    view: str = "full",
 ) -> tuple[dict, dict]:
 
     diff_before, diff_after = list[dict](), list[dict]()
@@ -696,6 +724,7 @@ def reconcile_service_roles(
             cluster_name=service.cluster_ref.cluster_name,
             service_name=service.name,
             role_type=incoming_role["type"],
+            view=view,
         ).items
 
         # Get the base role config group for the type

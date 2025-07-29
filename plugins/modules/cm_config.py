@@ -26,14 +26,25 @@ version_added: "4.4.0"
 requirements:
   - cm_client
 options:
-  parameters:
+  config:
     description:
       - The Cloudera Manager configuration to set.
       - To unset a parameter, use C(None) as the value.
     type: dict
     required: yes
     aliases:
+      - parameters
       - params
+  view:
+    description:
+      - View type of the returned Cloudera Manager details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -160,8 +171,9 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
         super(ClouderaManagerConfig, self).__init__(module)
 
         # Set the parameters
-        self.params = self.get_param("parameters")
+        self.config = self.get_param("config")
         self.purge = self.get_param("purge")
+        self.view = self.get_param("view")
 
         # Initialize the return value
         self.changed = False
@@ -173,11 +185,10 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
-        refresh = True
-        existing = self.get_cm_config()
+        existing = self.get_cm_config(scope=self.view)
 
         current = {r.name: r.value for r in existing}
-        incoming = {k.upper(): v for k, v in self.params.items()}
+        incoming = {k.upper(): v for k, v in self.config.items()}
 
         change_set = resolve_parameter_changeset(current, incoming, self.purge)
 
@@ -197,8 +208,6 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
                         for k, v in change_set.items()
                     ],
                 )
-                # Return 'summary'
-                refresh = False
                 self.config = [
                     p.to_dict()
                     for p in cm_client.ClouderaManagerResourceApi(self.api_client)
@@ -206,16 +215,17 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
                     .items
                 ]
 
-        if refresh:
-            # Return 'summary'
-            self.config = [p.to_dict() for p in self.get_cm_config()]
+            self.config = [p.to_dict() for p in self.get_cm_config(scope=self.view)]
+        else:
+            self.config = [p.to_dict() for p in existing]
 
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            parameters=dict(type=dict, required=True, aliases=["params"]),
+            config=dict(type=dict, required=True, aliases=["parameters", "params"]),
             purge=dict(type="bool", default=False),
+            view=dict(choices=["summary", "full", "export"], default="summary"),
         ),
         supports_check_mode=True,
     )

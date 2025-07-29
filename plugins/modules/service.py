@@ -176,6 +176,19 @@ options:
       - restarted
       - started
       - stopped
+  view:
+    description:
+      - The view to materialize.
+      - C(healthcheck) is the equivalent to I(full_with_health_check_explanation).
+      - C(redacted) is the equivalent to I(export_redacted).
+    type: str
+    default: summary
+    choices:
+        - summary
+        - full
+        - healthcheck
+        - export
+        - redacted
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -701,6 +714,7 @@ class ClusterService(ClouderaManagerMutableModule):
         self.roles = self.get_param("roles")
         self.role_config_groups = self.get_param("role_config_groups")
         self.state = self.get_param("state")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.changed = False
@@ -720,6 +734,11 @@ class ClusterService(ClouderaManagerMutableModule):
             else:
                 raise ex
 
+        if self.view == "healthcheck":
+            self.view = "full_with_health_check_explanation"
+        elif self.view == "redacted":
+            self.view = "export_redacted"
+
         service_api = ServicesResourceApi(self.api_client)
         current = None
 
@@ -729,6 +748,7 @@ class ClusterService(ClouderaManagerMutableModule):
                 api_client=self.api_client,
                 cluster_name=self.cluster,
                 service_name=self.name,
+                view=self.view,
             )
         except ApiException as ex:
             if ex.status != 404:
@@ -932,6 +952,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         check_mode=self.module.check_mode,
                         skip_redacted=self.skip_redacted,
                         message=self.message,
+                        view=self.view,
                     )
 
                     if before_config or after_config:
@@ -1021,6 +1042,7 @@ class ClusterService(ClouderaManagerMutableModule):
                         message=self.message,
                         # state=self.state,
                         # maintenance=self.maintenance,
+                        view=self.view,
                     )
 
                     if before_role or after_role:
@@ -1120,6 +1142,10 @@ def main():
             state=dict(
                 default="present",
                 choices=["present", "absent", "started", "stopped", "restarted"],
+            ),
+            view=dict(
+                default="summary",
+                choices=["summary", "full", "healthcheck", "export", "redacted"],
             ),
         ),
         supports_check_mode=True,

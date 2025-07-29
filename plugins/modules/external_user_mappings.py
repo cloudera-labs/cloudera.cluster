@@ -68,6 +68,16 @@ options:
       - If I(purge=False), the provided authorization roles will be added to the existing ones, and any duplicates will be ignored.
     type: bool
     default: False
+  view:
+    description:
+      - View type of the returned external user mapping details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -192,6 +202,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
         self.type = self.get_param("type")
         self.purge = self.get_param("purge")
         self.auth_roles = self.get_param("auth_roles")
+        self.view = self.get_param("view")
 
         # Initialize the return value
         self.external_user_mappings_output = []
@@ -207,7 +218,9 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
         existing = []
 
         if self.name:
-            all_external_user_mappings = api_instance.read_external_user_mappings()
+            all_external_user_mappings = api_instance.read_external_user_mappings(
+                view=self.view,
+            )
             for mapping in all_external_user_mappings.items:
                 if self.name == mapping.name:
                     existing = api_instance.read_external_user_mapping(
@@ -324,6 +337,7 @@ def main():
                 default="present",
                 choices=["present", "absent"],
             ),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         supports_check_mode=True,
         required_one_of=[

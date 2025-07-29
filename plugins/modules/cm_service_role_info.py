@@ -30,6 +30,16 @@ options:
     type: str
     aliases:
       - role_type
+  view:
+    description:
+      - View type of the returned role details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -228,6 +238,7 @@ class ClouderaServiceRoleInfo(ClouderaManagerModule):
 
         # Set the parameters
         self.type = self.get_param("type")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.output = list()
@@ -251,7 +262,11 @@ class ClouderaServiceRoleInfo(ClouderaManagerModule):
             result = None
 
             try:
-                result = read_cm_role(api_client=self.api_client, role_type=self.type)
+                result = read_cm_role(
+                    api_client=self.api_client,
+                    role_type=self.type,
+                    view=self.view,
+                )
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
@@ -261,7 +276,7 @@ class ClouderaServiceRoleInfo(ClouderaManagerModule):
         else:
             self.output = [
                 parse_role_result(r)
-                for r in read_cm_roles(api_client=self.api_client).items
+                for r in read_cm_roles(api_client=self.api_client, view=self.view).items
             ]
 
 
@@ -269,6 +284,7 @@ def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             type=dict(aliases=["role_type"]),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         supports_check_mode=False,
     )

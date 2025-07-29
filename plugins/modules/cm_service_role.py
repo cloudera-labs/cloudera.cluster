@@ -78,6 +78,16 @@ options:
       - restarted
       - started
       - stopped
+  view:
+    description:
+      - View type of the returned role details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -351,6 +361,7 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
         self.type = self.get_param("type")
         self.state = self.get_param("state")
         self.purge = self.get_param("purge")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.changed = False
@@ -380,7 +391,11 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
 
         # Discover the role by its type
         try:
-            current = read_cm_role(api_client=self.api_client, role_type=self.type)
+            current = read_cm_role(
+                api_client=self.api_client,
+                role_type=self.type,
+                view=self.view,
+            )
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
@@ -481,8 +496,11 @@ class ClouderaManagerServiceRole(ClouderaManagerMutableModule):
 
             # If there are changes, get a fresh read
             if self.changed:
-                refresh = role_api.read_role(current.name)
-                refresh.config = role_api.read_role_config(current.name)
+                refresh = role_api.read_role(role_name=current.name)
+                refresh.config = role_api.read_role_config(
+                    role_name=current.name,
+                    view=self.view,
+                )
                 self.output = parse_role_result(refresh)
             # Otherwise return the existing
             else:
@@ -609,6 +627,7 @@ def main():
                 default="present",
                 choices=["present", "absent", "restarted", "started", "stopped"],
             ),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         mutually_exclusive=[
             ["cluster_hostname", "cluster_host_id"],

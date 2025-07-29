@@ -112,6 +112,7 @@ def read_role(
     cluster_name: str,
     service_name: str,
     role_name: str,
+    view: str = "full",
 ) -> ApiRole:
     """Read a role for a cluster service and populates the role configuration.
 
@@ -120,6 +121,7 @@ def read_role(
         cluster_name (str): Cluster name (identifier).
         service_name (str): Service name (identifier).
         role_name (str): Role name (identifier).
+        view (str, optional): View to retrieve. Defaults to 'full'.
 
     Raises:
         ApiException:
@@ -132,12 +134,14 @@ def read_role(
         cluster_name=cluster_name,
         service_name=service_name,
         role_name=role_name,
+        view=view,
     )
     if role is not None:
         role.config = role_api.read_role_config(
             cluster_name=cluster_name,
             service_name=service_name,
             role_name=role.name,
+            view=view,
         )
     return role
 
@@ -149,7 +153,7 @@ def read_roles(
     type: str = None,
     hostname: str = None,
     host_id: str = None,
-    view: str = None,
+    view: str = "full",
 ) -> ApiRoleList:
     """Read roles for a cluster service. Optionally, filter by type, hostname, host ID.
 
@@ -160,7 +164,7 @@ def read_roles(
         type (str, optional): Role type. Defaults to None.
         hostname (str, optional): Cluster hostname. Defaults to None.
         host_id (str, optional): Cluster host ID. Defaults to None.
-        view (str, optional): View to retrieve. Defaults to None.
+        view (str, optional): View to retrieve. Defaults to 'full'.
 
     Raises:
         ApiException:
@@ -173,10 +177,8 @@ def read_roles(
     payload = dict(
         cluster_name=cluster_name,
         service_name=service_name,
+        view=view,
     )
-
-    if view is not None:
-        payload.update(view=view)
 
     filter = ";".join(
         [
@@ -210,11 +212,12 @@ def read_roles_by_type(
     cluster_name: str,
     service_name: str,
     role_type: str,
+    view: str = "full",
 ) -> ApiRoleList:
     role_api = RolesResourceApi(api_client)
     roles = [
         r
-        for r in role_api.read_roles(cluster_name, service_name).items
+        for r in role_api.read_roles(cluster_name, service_name, view=view).items
         if r.type == role_type
     ]
     for r in roles:
@@ -222,26 +225,27 @@ def read_roles_by_type(
             cluster_name=cluster_name,
             service_name=service_name,
             role_name=r.name,
+            view=view,
         )
     return ApiRoleList(items=roles)
 
 
-def read_cm_role(api_client: ApiClient, role_type: str) -> ApiRole:
+def read_cm_role(api_client: ApiClient, role_type: str, view: str = "full") -> ApiRole:
     role_api = MgmtRolesResourceApi(api_client)
     role = next(
         iter([r for r in role_api.read_roles().items if r.type == role_type]),
         None,
     )
     if role is not None:
-        role.config = role_api.read_role_config(role.name)
+        role.config = role_api.read_role_config(role_name=role.name, view=view)
     return role
 
 
-def read_cm_roles(api_client: ApiClient) -> ApiRoleList:
+def read_cm_roles(api_client: ApiClient, view: str = "full") -> ApiRoleList:
     role_api = MgmtRolesResourceApi(api_client)
     roles = role_api.read_roles().items
     for r in roles:
-        r.config = role_api.read_role_config(role_name=r.name)
+        r.config = role_api.read_role_config(role_name=r.name, view=view)
     return ApiRoleList(items=roles)
 
 

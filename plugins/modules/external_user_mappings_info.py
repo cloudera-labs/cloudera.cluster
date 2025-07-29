@@ -30,12 +30,22 @@ options:
     description:
       - The name of the external mapping.
     type: str
-    required: no
+    required: false
   uuid:
     description:
       - The uuid of the external mapping.
     type: str
-    required: no
+    required: false
+  view:
+    description:
+      - View type of the returned external user mapping details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -110,6 +120,7 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
         # Set the parameters
         self.name = self.get_param("name")
         self.uuid = self.get_param("uuid")
+        self.view = self.get_param("view")
 
         # Initialize the return value
         self.external_user_mappings_info_output = []
@@ -123,7 +134,9 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
         api_instance = ExternalUserMappingsResourceApi(self.api_client)
         try:
             if self.name:
-                external_user_mappings = api_instance.read_external_user_mappings()
+                external_user_mappings = api_instance.read_external_user_mappings(
+                    view=self.view,
+                )
                 for mapping in external_user_mappings.items:
                     if self.name == mapping.name:
                         self.external_user_mappings_info_output = [
@@ -137,7 +150,9 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
                 ]
             else:
                 self.external_user_mappings_info_output = (
-                    api_instance.read_external_user_mappings().to_dict()["items"]
+                    api_instance.read_external_user_mappings(view=self.view).to_dict()[
+                        "items"
+                    ]
                 )
         except ApiException as ex:
             if ex.status != 400:
@@ -147,8 +162,9 @@ class ClouderaExternalUserMappingsInfo(ClouderaManagerModule):
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=False, type="str"),
-            uuid=dict(required=False, type="str"),
+            name=dict(),
+            uuid=dict(),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         supports_check_mode=True,
         mutually_exclusive=[

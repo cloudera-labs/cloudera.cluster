@@ -26,13 +26,14 @@ version_added: "4.4.0"
 requirements:
   - cm-client
 options:
-  parameters:
+  config:
     description:
       - The service-wide configuration to set.
       - To unset a parameter, use C(None) as the value.
     type: dict
     required: yes
     aliases:
+      - parameters
       - params
   view:
     description:
@@ -198,7 +199,7 @@ class ClouderaManagerServiceConfig(ClouderaManagerMutableModule):
         super(ClouderaManagerServiceConfig, self).__init__(module)
 
         # Set the parameters
-        self.params = self.get_param("parameters")
+        self.config = self.get_param("config")
         self.purge = self.get_param("purge")
         self.view = self.get_param("view")
 
@@ -223,7 +224,7 @@ class ClouderaManagerServiceConfig(ClouderaManagerMutableModule):
             else:
                 raise ex
 
-        updates = ServiceConfigUpdates(existing, self.params, self.purge)
+        updates = ServiceConfigUpdates(existing, self.config, self.purge)
 
         if updates.changed:
             self.changed = True
@@ -253,7 +254,7 @@ class ClouderaManagerServiceConfig(ClouderaManagerMutableModule):
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            parameters=dict(type="dict", required=True, aliases=["params"]),
+            config=dict(type="dict", required=True, aliases=["parameters", "params"]),
             purge=dict(type="bool", default=False),
             view=dict(
                 default="summary",
