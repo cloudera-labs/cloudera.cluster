@@ -158,7 +158,11 @@ config:
       returned: when supported
 """
 
-import cm_client
+from cm_client import (
+    ApiConfig,
+    ApiConfigList,
+    ClouderaManagerResourceApi,
+)
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
@@ -172,19 +176,21 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
 
         # Set the parameters
         self.config = self.get_param("config")
-        self.purge = self.get_param("purge")
-        self.view = self.get_param("view")
+        self.purge = bool(self.get_param("purge"))
+        self.view = str(self.get_param("view"))
 
         # Initialize the return value
         self.changed = False
         self.diff = {}
-        self.config = []
+        self.output = []
 
         # Execute the logic
         self.process()
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
+        cm_api = ClouderaManagerResourceApi(api_client=self.api_client)
+
         existing = self.get_cm_config(scope=self.view)
 
         current = {r.name: r.value for r in existing}
@@ -202,18 +208,13 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
                 )
 
             if not self.module.check_mode:
-                body = cm_client.ApiConfigList(
+                body = ApiConfigList(
                     items=[
-                        cm_client.ApiConfig(name=k, value=v)
+                        ApiConfig(name=k, value=v)
                         for k, v in change_set.items()
                     ],
                 )
-                self.config = [
-                    p.to_dict()
-                    for p in cm_client.ClouderaManagerResourceApi(self.api_client)
-                    .update_config(message=self.message, body=body)
-                    .items
-                ]
+                cm_api.update_config(message=self.message, body=body)
 
             self.config = [p.to_dict() for p in self.get_cm_config(scope=self.view)]
         else:
@@ -225,7 +226,7 @@ def main():
         argument_spec=dict(
             config=dict(type=dict, required=True, aliases=["parameters", "params"]),
             purge=dict(type="bool", default=False),
-            view=dict(choices=["summary", "full", "export"], default="summary"),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         supports_check_mode=True,
     )
