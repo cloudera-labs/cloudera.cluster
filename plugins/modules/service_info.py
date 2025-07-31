@@ -39,6 +39,19 @@ options:
     aliases:
       - service_name
       - service
+  view:
+    description:
+      - The view to materialize.
+      - C(healthcheck) is the equivalent to I(full_with_health_check_explanation).
+      - C(redacted) is the equivalent to I(export_redacted).
+    type: str
+    default: summary
+    choices:
+        - summary
+        - full
+        - healthcheck
+        - export
+        - redacted
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -394,6 +407,11 @@ class ClusterServiceInfo(ClouderaManagerModule):
             else:
                 raise ex
 
+        if self.view == "healthcheck":
+            self.view = "full_with_health_check_explanation"
+        elif self.view == "redacted":
+            self.view = "export_redacted"
+
         if self.name:
             try:
                 self.output.append(
@@ -402,6 +420,7 @@ class ClusterServiceInfo(ClouderaManagerModule):
                             api_client=self.api_client,
                             cluster_name=self.cluster,
                             service_name=self.name,
+                            view=self.view,
                         ),
                     ),
                 )
@@ -414,6 +433,7 @@ class ClusterServiceInfo(ClouderaManagerModule):
                 for s in read_services(
                     api_client=self.api_client,
                     cluster_name=self.cluster,
+                    view=self.view,
                 )
             ]
 
@@ -423,6 +443,10 @@ def main():
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
             name=dict(aliases=["service_name", "service"]),
+            view=dict(
+                default="summary",
+                choices=["summary", "full", "healthcheck", "export", "redacted"],
+            ),
         ),
         supports_check_mode=True,
     )

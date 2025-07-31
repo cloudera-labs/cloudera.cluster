@@ -366,6 +366,16 @@ options:
     default: no
     aliases:
       - auto_assign_roles
+  view:
+    description:
+      - View type of the returned cluster details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: summary
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -838,6 +848,7 @@ class ClouderaCluster(ClouderaManagerModule):
         self.control_plane = self.get_param("control_plane")
         self.auto_tls = self.get_param("auto_tls")
         self.force = self.get_param("force")
+        self.view = self.get_param("view")
 
         self.changed = False
         self.output = {}
@@ -1716,6 +1727,7 @@ def main():
             force=dict(type="bool", aliases=["forced_init"]),
             # Optional auto-assign roles on cluster (honors existing assignments)
             auto_assign=dict(type="bool", default=False, aliases=["auto_assign_roles"]),
+            view=dict(choices=["summary", "full", "export"], default="summary"),
         ),
         supports_check_mode=True,
         mutually_exclusive=[

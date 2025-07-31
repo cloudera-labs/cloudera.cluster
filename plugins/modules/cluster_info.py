@@ -29,7 +29,7 @@ options:
       - Name of Cloudera Manager cluster.
       - This parameter specifies the name of the cluster from which data will be gathered.
     type: str
-    required: False
+    required: false
 requirements:
   - cm_client
 """

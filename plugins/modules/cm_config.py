@@ -26,14 +26,25 @@ version_added: "4.4.0"
 requirements:
   - cm_client
 options:
-  parameters:
+  config:
     description:
       - The Cloudera Manager configuration to set.
       - To unset a parameter, use C(None) as the value.
     type: dict
     required: yes
     aliases:
+      - parameters
       - params
+  view:
+    description:
+      - View type of the returned Cloudera Manager details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
@@ -147,7 +158,11 @@ config:
       returned: when supported
 """
 
-import cm_client
+from cm_client import (
+    ApiConfig,
+    ApiConfigList,
+    ClouderaManagerResourceApi,
+)
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerMutableModule,
@@ -160,24 +175,26 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
         super(ClouderaManagerConfig, self).__init__(module)
 
         # Set the parameters
-        self.params = self.get_param("parameters")
-        self.purge = self.get_param("purge")
+        self.config = self.get_param("config")
+        self.purge = bool(self.get_param("purge"))
+        self.view = str(self.get_param("view"))
 
         # Initialize the return value
         self.changed = False
         self.diff = {}
-        self.config = []
+        self.output = []
 
         # Execute the logic
         self.process()
 
     @ClouderaManagerMutableModule.handle_process
     def process(self):
-        refresh = True
-        existing = self.get_cm_config()
+        cm_api = ClouderaManagerResourceApi(api_client=self.api_client)
+
+        existing = self.get_cm_config(scope=self.view)
 
         current = {r.name: r.value for r in existing}
-        incoming = {k.upper(): v for k, v in self.params.items()}
+        incoming = {k.upper(): v for k, v in self.config.items()}
 
         change_set = resolve_parameter_changeset(current, incoming, self.purge)
 
@@ -191,31 +208,25 @@ class ClouderaManagerConfig(ClouderaManagerMutableModule):
                 )
 
             if not self.module.check_mode:
-                body = cm_client.ApiConfigList(
+                body = ApiConfigList(
                     items=[
-                        cm_client.ApiConfig(name=k, value=v)
+                        ApiConfig(name=k, value=v)
                         for k, v in change_set.items()
                     ],
                 )
-                # Return 'summary'
-                refresh = False
-                self.config = [
-                    p.to_dict()
-                    for p in cm_client.ClouderaManagerResourceApi(self.api_client)
-                    .update_config(message=self.message, body=body)
-                    .items
-                ]
+                cm_api.update_config(message=self.message, body=body)
 
-        if refresh:
-            # Return 'summary'
-            self.config = [p.to_dict() for p in self.get_cm_config()]
+            self.config = [p.to_dict() for p in self.get_cm_config(scope=self.view)]
+        else:
+            self.config = [p.to_dict() for p in existing]
 
 
 def main():
     module = ClouderaManagerMutableModule.ansible_module(
         argument_spec=dict(
-            parameters=dict(type=dict, required=True, aliases=["params"]),
+            config=dict(type=dict, required=True, aliases=["parameters", "params"]),
             purge=dict(type="bool", default=False),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         supports_check_mode=True,
     )

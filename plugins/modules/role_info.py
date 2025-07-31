@@ -323,6 +323,7 @@ class RoleInfo(ClouderaManagerModule):
                             cluster_name=self.cluster,
                             service_name=self.service,
                             role_name=self.role,
+                            view=self.view,
                         ),
                     ),
                 )

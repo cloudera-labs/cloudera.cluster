@@ -623,7 +623,7 @@ class ClouderaManagerModule(object):
             data = data[field]
         return data if isinstance(data, list) else [data]
 
-    def get_cm_config(self, scope: str = "summary") -> ApiConfigList:
+    def get_cm_config(self, scope: str = "full") -> list[ApiConfig]:
         return ClouderaManagerResourceApi(self.api_client).get_config(view=scope).items
 
     def wait_command(self, command: ApiCommand, polling: int = 10, delay: int = 5):

@@ -132,7 +132,7 @@ def get_host(
     api_client: ApiClient,
     hostname: str = None,
     host_id: str = None,
-    view: str = "summary",
+    view: str = "full",
 ) -> ApiHost:
     """Retrieve a Host by either hostname or host ID.
 
@@ -172,6 +172,7 @@ def get_host_ref(
     api_client: ApiClient,
     hostname: str = None,
     host_id: str = None,
+    view: str = "full",
 ) -> ApiHostRef:
     """Retrieve a Host Reference by either hostname or host ID.
 
@@ -186,7 +187,7 @@ def get_host_ref(
     Returns:
         ApiHostRef: Host reference object. If not found, returns None.
     """
-    host = get_host(api_client, hostname, host_id)
+    host = get_host(api_client, hostname, host_id, view)
 
     if host is not None:
         return ApiHostRef(host.host_id, host.hostname)
@@ -249,6 +250,7 @@ def reconcile_host_role_configs(
     check_mode: bool,
     skip_redacted: bool,
     message: str = None,
+    view: str = "full",
 ) -> tuple[list[dict], list[dict]]:
 
     diff_before, diff_after = list[dict](), list[dict]()
@@ -265,6 +267,7 @@ def reconcile_host_role_configs(
                     service_name=incoming_role_config["service"],
                     type=incoming_role_config["type"],
                     host_id=host.host_id,
+                    view=view,
                 ).items,
             ),
             None,

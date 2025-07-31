@@ -31,43 +31,20 @@ from ansible_collections.cloudera.cluster.tests.unit import (
 LOG = logging.getLogger(__name__)
 
 
-@pytest.fixture()
-def conn():
-    conn = dict(username=os.getenv("CM_USERNAME"), password=os.getenv("CM_PASSWORD"))
-
-    if os.getenv("CM_HOST", None):
-        conn.update(host=os.getenv("CM_HOST"))
-
-    if os.getenv("CM_PORT", None):
-        conn.update(port=os.getenv("CM_PORT"))
-
-    if os.getenv("CM_ENDPOINT", None):
-        conn.update(url=os.getenv("CM_ENDPOINT"))
-
-    if os.getenv("CM_PROXY", None):
-        conn.update(proxy=os.getenv("CM_PROXY"))
-
-    return {
-        **conn,
-        "verify_tls": "no",
-        "debug": "no",
-    }
-
-
 def test_missing_parameters(conn, module_args):
     module_args(conn)
 
-    with pytest.raises(AnsibleFailJson, match="parameters"):
+    with pytest.raises(AnsibleFailJson, match="config"):
         cm_config.main()
 
 
+
+
 def test_set_config(conn, module_args):
-    conn.update(
-        parameters=dict(custom_header_color="PURPLE"),
-        # _ansible_check_mode=True,
-        # _ansible_diff=True,
-    )
-    module_args(conn)
+    module_args({
+        **conn,
+        "parameters": dict(custom_header_color="PURPLE"),
+    })
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config.main()
@@ -83,7 +60,10 @@ def test_set_config(conn, module_args):
 
 
 def test_unset_config(conn, module_args):
-    module_args({**conn, "parameters": dict(custom_header_color=None)})
+    module_args({
+        **conn, 
+        "parameters": dict(custom_header_color=None)
+    })
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config.main()
@@ -99,13 +79,11 @@ def test_unset_config(conn, module_args):
 
 
 def test_set_config_with_purge(conn, module_args):
-    conn.update(
-        params=dict(custom_header_color="PURPLE"),
-        purge=True,
-        # _ansible_check_mode=True,
-        # _ansible_diff=True,
-    )
-    module_args(conn)
+    module_args({
+        **conn,
+        "params": dict(custom_header_color="PURPLE"),
+        "purge": True,
+    })
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config.main()
@@ -121,13 +99,11 @@ def test_set_config_with_purge(conn, module_args):
 
 
 def test_purge_all_config(conn, module_args):
-    conn.update(
-        params=dict(),
-        purge=True,
-        # _ansible_check_mode=True,
-        # _ansible_diff=True,
-    )
-    module_args(conn)
+    module_args({
+        **conn,
+        "params": dict(),
+        "purge": True,
+    })
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_config.main()

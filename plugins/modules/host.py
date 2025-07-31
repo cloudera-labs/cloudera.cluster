@@ -161,6 +161,16 @@ options:
       - started
       - stopped
       - restarted
+  view:
+    description:
+      - View type of the returned host details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
   timeout:
     description:
       - Timeout, in seconds, before failing when joining a cluster.
@@ -415,6 +425,7 @@ class Host(ClouderaManagerMutableModule):
         self.state = self.get_param("state")
         self.timeout = self.get_param("timeout")
         self.delay = self.get_param("delay")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.output = {}
@@ -439,7 +450,7 @@ class Host(ClouderaManagerMutableModule):
                 api_client=self.api_client,
                 hostname=self.name,
                 host_id=self.host_id,
-                view="full",
+                view=self.view,
             )
         except ApiException as ex:
             if ex.status != 404:
@@ -767,6 +778,7 @@ class Host(ClouderaManagerMutableModule):
                         check_mode=self.module.check_mode,
                         skip_redacted=self.skip_redacted,
                         message=self.message,
+                        view=self.view,
                     )
                 except HostException as he:
                     self.module.fail_json(msg=to_native(he))
@@ -872,6 +884,7 @@ def main():
                     "restarted",
                 ],
             ),
+            view=dict(choices=["summary", "full", "export"], default="full"),
             timeout=dict(type="int", default=300, aliases=["polling_timeout"]),
             delay=dict(type="int", default=15, aliases=["polling_interval"]),
         ),

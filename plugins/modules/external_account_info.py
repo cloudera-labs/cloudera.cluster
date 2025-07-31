@@ -40,6 +40,16 @@ options:
       - ALTUS_ACCESS_KEY_AUTH
       - ADLS_AD_SVC_PRINC_AUTH
       - BASIC_AUTH
+  view:
+    description:
+      - View type of the returned external account details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -120,6 +130,14 @@ from cm_client import (
     ExternalAccountsResourceApi,
 )
 
+ACCOUNT_TYPES = [
+    "AWS_ACCESS_KEY_AUTH",
+    "AWS_IAM_ROLES_AUTH",
+    "ALTUS_ACCESS_KEY_AUTH",
+    "ADLS_AD_SVC_PRINC_AUTH",
+    "BASIC_AUTH",
+]
+
 
 class ClouderaExternalAccountInfo(ClouderaManagerModule):
     def __init__(self, module):
@@ -128,6 +146,7 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
         # Set the parameters
         self.name = self.get_param("name")
         self.type = self.get_param("type")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.external_accounts = []
@@ -139,38 +158,29 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
     @ClouderaManagerModule.handle_process
     def process(self):
         api_instance = ExternalAccountsResourceApi(self.api_client)
-        account_types = [
-            "AWS_ACCESS_KEY_AUTH",
-            "AWS_IAM_ROLES_AUTH",
-            "ALTUS_ACCESS_KEY_AUTH",
-            "ADLS_AD_SVC_PRINC_AUTH",
-            "BASIC_AUTH",
-        ]
+
         try:
             if self.name:
                 self.external_accounts = [
-                    api_instance.read_account(self.name).to_dict(),
+                    api_instance.read_account(name=self.name, view=self.view).to_dict(),
                 ]
-
             elif self.type:
-                self.external_accounts = (
-                    api_instance.read_accounts(self.type).to_dict().get("items", [])
-                )
-
+                self.external_accounts = [
+                    a.to_dict()
+                    for a in api_instance.read_accounts(
+                        type_name=self.type,
+                        view=self.view,
+                    ).items
+                ]
             else:
-
-                self.external_accounts = api_instance.read_accounts(
-                    type_name="AWS_ACCESS_KEY_AUTH",
-                ).to_dict()["items"]
-                all_accounts = []
-                for account_type in account_types:
-                    accounts = (
-                        api_instance.read_accounts(type_name=account_type)
-                        .to_dict()
-                        .get("items", [])
-                    )
-                    all_accounts.extend(accounts)
-                self.external_accounts = all_accounts
+                self.external_accounts = [
+                    a.to_dict()
+                    for t in ACCOUNT_TYPES
+                    for a in api_instance.read_accounts(
+                        type_name=t,
+                        view=self.view,
+                    ).items
+                ]
 
         except ApiException as e:
             if e.status == 404:
@@ -181,20 +191,11 @@ class ClouderaExternalAccountInfo(ClouderaManagerModule):
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
-            name=dict(required=False, type="str"),
-            type=dict(
-                type="str",
-                required=False,
-                choices=[
-                    "AWS_ACCESS_KEY_AUTH",
-                    "AWS_IAM_ROLES_AUTH",
-                    "ALTUS_ACCESS_KEY_AUTH",
-                    "ADLS_AD_SVC_PRINC_AUTH",
-                    "BASIC_AUTH",
-                ],
-            ),
+            name=dict(),
+            type=dict(choices=ACCOUNT_TYPES),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     result = ClouderaExternalAccountInfo(module)

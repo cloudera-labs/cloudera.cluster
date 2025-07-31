@@ -17,7 +17,7 @@
 
 DOCUMENTATION = r"""
 module: external_account
-short_description: Create, update, or delete an external module account
+short_description: Create, update, or delete an external account
 description:
   - Manage external accounts, including creation, updates, and deletion.
   - Supports a variety of account types such as AWS, Azure, Altus, and Basic Authentication.
@@ -29,25 +29,15 @@ version_added: "5.0.0"
 options:
   name:
     description:
-      - The initial name of the account.
+      - The name of the account.
     type: str
-    required: no
-  category:
-    description:
-      - The category of the account.
-    type: str
-    required: no
-    choices:
-      - AWS
-      - ALTUS
-      - AZURE
-      - BASICAUTH
+    required: true
   state:
     description:
       - If O(state=present), the account will be created or updated.
       - If O(state=absent), the account will be deleted.
     type: str
-    required: no
+    required: false
     default: present
     choices:
       - present
@@ -56,19 +46,19 @@ options:
     description:
       - The type of the external account.
     type: str
-    required: no
+    required: false
     choices:
       - AWS_ACCESS_KEY_AUTH
       - AWS_IAM_ROLES_AUTH
       - ALTUS_ACCESS_KEY_AUTH
       - ADLS_AD_SVC_PRINC_AUTH
       - BASIC_AUTH
-  params:
+  config:
     description:
       - A dictionary of parameters for the external account configuration.
       - The required parameters depend on the type of the account.
     type: dict
-    required: no
+    required: false
     suboptions:
       aws_access_key:
         description:
@@ -106,6 +96,19 @@ options:
         description:
           - The password for BASIC_AUTH.
         type: str
+    aliases:
+      - parameters
+      - params
+  view:
+    description:
+      - View type of the returned external account details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -121,7 +124,7 @@ requirements:
 """
 
 EXAMPLES = r"""
-- name: Create AWS Access key credentials
+- name: Create an AWS external account
   cloudera.cluster.external_account:
     host: example.cloudera.com
     port: "7180"
@@ -129,27 +132,25 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     name: access_key_1
     state: present
-    type: AWS
-    category: AWS_ACCESS_KEY_AUTH
+    type: AWS_ACCESS_KEY_AUTH
     params:
       aws_access_key: access_key1
       aws_secret_key: secret_key1
 
-- name: Create basic authentication credentials
+- name: Create basic authentication external account
   cloudera.cluster.external_account:
     host: example.cloudera.com
     port: "7180"
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    name: Jane
+    name: JaneDoe
     state: present
-    type: BASIC_AUTH
-    category: BASICAUTH
+    type: BASICAUTH
     params:
       username: jane_user
       password: pass123!
 
-- name: Update AWS Access key credentials
+- name: Update an AWS external account
   cloudera.cluster.external_account:
     host: example.cloudera.com
     port: "7180"
@@ -157,19 +158,18 @@ EXAMPLES = r"""
     password: "S&peR4Ec*re"
     name: access_key_1
     state: present
-    type: AWS
-    category: AWS_ACCESS_KEY_AUTH
+    type: AWS_ACCESS_KEY_AUTH
     params:
       aws_access_key: access_key2
       aws_secret_key: secret_key2
 
-- name: Remove basic authentication credentials
+- name: Remove an external account
   cloudera.cluster.external_account:
     host: example.cloudera.com
     port: "7180"
     username: "jane_smith"
     password: "S&peR4Ec*re"
-    name: Jane
+    name: JaneDoe
     state: absent
 """
 
@@ -177,11 +177,10 @@ RETURN = r"""
 external_account:
     description: Details of the external account created, updated, or retrieved.
     type: dict
-    elements: complex
     returned: always
     contains:
         name:
-            description: Represents the initial name of the account.
+            description: The name of the account.
             type: str
             returned: always
         display_name:
@@ -220,6 +219,14 @@ from cm_client import (
     ApiConfigList,
 )
 
+ACCOUNT_TYPES = [
+    "AWS_ACCESS_KEY_AUTH",
+    "AWS_IAM_ROLES_AUTH",
+    "ALTUS_ACCESS_KEY_AUTH",
+    "ADLS_AD_SVC_PRINC_AUTH",
+    "BASIC_AUTH",
+]
+
 
 class ClouderaExternalAccount(ClouderaManagerModule):
     def __init__(self, module):
@@ -227,13 +234,13 @@ class ClouderaExternalAccount(ClouderaManagerModule):
 
         # Set the parameters
         self.name = self.get_param("name")
-        self.category = self.get_param("category")
         self.type = self.get_param("type")
-        self.params = self.get_param("params")
+        self.config = self.get_param("config")
         self.state = self.get_param("state")
+        self.view = self.get_param("view")
 
         # Initialize the return values
-        self.external_account = []
+        self.external_account = {}
         self.changed = False
 
         if self.module._diff:
@@ -250,21 +257,23 @@ class ClouderaExternalAccount(ClouderaManagerModule):
     def process(self):
         api_instance = ExternalAccountsResourceApi(self.api_client)
         existing = []
-        self.params = {
-            key: value for key, value in self.params.items() if value is not None
+
+        self.config = {
+            key: value for key, value in self.config.items() if value is not None
         }
+
         try:
-            existing = api_instance.read_account(self.name).to_dict()
+            existing = api_instance.read_account(
+                name=self.name,
+                view=self.view,
+            ).to_dict()
         except ApiException as ex:
-            if ex.status == 400:
-                pass
-            else:
+            if ex.status != 400:
                 raise ex
 
         if self.state == "present":
             try:
                 if existing:
-
                     if self.module._diff:
                         self.before.update(existing)
                         self.after.update(
@@ -272,7 +281,7 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                             display_name=self.name,
                             type_name=self.type,
                             account_configs={
-                                key: value for key, value in self.params.items()
+                                key: value for key, value in self.config.items()
                             },
                         )
                         if self.before != self.after:
@@ -288,7 +297,7 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                                 account_configs=ApiConfigList(
                                     items=[
                                         ApiConfig(name=key, value=value)
-                                        for key, value in self.params.items()
+                                        for key, value in self.config.items()
                                     ],
                                 ),
                             ),
@@ -302,7 +311,7 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                             "display_name": self.name,
                             "type_name": self.type,
                             "account_configs": {
-                                key: value for key, value in self.params.items()
+                                key: value for key, value in self.config.items()
                             },
                         }
                     if not self.module.check_mode:
@@ -314,7 +323,7 @@ class ClouderaExternalAccount(ClouderaManagerModule):
                                 account_configs=ApiConfigList(
                                     items=[
                                         ApiConfig(name=key, value=value)
-                                        for key, value in self.params.items()
+                                        for key, value in self.config.items()
                                     ],
                                 ),
                             ),
@@ -339,11 +348,6 @@ def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             name=dict(required=True, type="str"),
-            category=dict(
-                type="str",
-                required=False,
-                choices=["AWS", "ALTUS", "AZURE", "BASICAUTH"],
-            ),
             state=dict(
                 type="str",
                 default="present",
@@ -352,15 +356,9 @@ def main():
             type=dict(
                 type="str",
                 required=False,
-                choices=[
-                    "AWS_ACCESS_KEY_AUTH",
-                    "AWS_IAM_ROLES_AUTH",
-                    "ALTUS_ACCESS_KEY_AUTH",
-                    "ADLS_AD_SVC_PRINC_AUTH",
-                    "BASIC_AUTH",
-                ],
+                choices=ACCOUNT_TYPES,
             ),
-            params=dict(
+            config=dict(
                 type="dict",
                 default={},
                 options=dict(
@@ -378,27 +376,39 @@ def main():
                     username=dict(type="str"),
                     password=dict(type="str"),
                 ),
+                # TODO Update to use custom validation for nested dependencies
+                required_if=[
+                    [
+                        "type",
+                        "AWS_ACCESS_KEY_AUTH",
+                        ["aws_access_key", "aws_secret_key"],
+                        False,
+                    ],
+                    [
+                        "type",
+                        "ADLS_AD_SVC_PRINC_AUTH",
+                        ["adls_client_id", "adls_client_id", "adls_tenant_id"],
+                        False,
+                    ],
+                    [
+                        "type",
+                        "ALTUS_ACCESS_KEY_AUTH",
+                        ["access_key_id", "private_key"],
+                        False,
+                    ],
+                    ["type", "BASIC_AUTH", ["username", "password"], False],
+                ],
+                aliases=["parameters", "params"],
             ),
-            required_if={
-                "AWS_ACCESS_KEY_AUTH": [
-                    "params.aws_access_key",
-                    "params.aws_secret_key",
-                ],
-                "ADLS_AD_SVC_PRINC_AUTH": [
-                    "params.adls_client_id",
-                    "params.adls_client_id",
-                    "params.adls_tenant_id",
-                ],
-                "ALTUS_ACCESS_KEY_AUTH": [
-                    "params.access_key_id",
-                    "params.private_key",
-                ],
-                "BASIC_AUTH": [
-                    "params.username",
-                    "params.password",
-                ],
-            },
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
+        required_if=[
+            ["state", "present", ["type"], False],
+            # ["type", "AWS_ACCESS_KEY_AUTH", ["config.aws_access_key", "config.aws_secret_key"], False],
+            # ["type", "ADLS_AD_SVC_PRINC_AUTH", ["config.adls_client_id", "config.adls_client_id", "config.adls_tenant_id"], False],
+            # ["type", "ALTUS_ACCESS_KEY_AUTH", ["config.access_key_id", "config.private_key"], False],
+            # ["type", "BASIC_AUTH", ["config.username", "config.password"], False],
+        ],
         supports_check_mode=True,
     )
 

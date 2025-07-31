@@ -44,6 +44,16 @@ options:
       - The unique identifier of the host.
     type: str
     required: no
+  view:
+    description:
+      - View type of the returned host details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: full
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -238,6 +248,7 @@ class HostInfo(ClouderaManagerModule):
         self.cluster = self.get_param("cluster")
         self.name = self.get_param("name")
         self.host_id = self.get_param("host_id")
+        self.view = self.get_param("view")
 
         # Initialize the return values
         self.output = []
@@ -255,13 +266,17 @@ class HostInfo(ClouderaManagerModule):
 
         if self.host_id:
             try:
-                hosts.append(host_api.read_host(host_id=self.host_id))
+                hosts.append(host_api.read_host(host_id=self.host_id, view=self.view))
             except ApiException as ex:
                 if ex.status != 404:
                     raise ex
         elif self.name:
             host = next(
-                (h for h in host_api.read_hosts().items if h.hostname == self.name),
+                (
+                    h
+                    for h in host_api.read_hosts(view=self.view).items
+                    if h.hostname == self.name
+                ),
                 None,
             )
             if host is not None:
@@ -279,10 +294,10 @@ class HostInfo(ClouderaManagerModule):
                 cluster_name=self.cluster,
             ).items
         else:
-            hosts = host_api.read_hosts().items
+            hosts = host_api.read_hosts(view=self.view).items
 
         for host in hosts:
-            host.config = host_api.read_host_config(host.host_id)
+            host.config = host_api.read_host_config(host.host_id, view=self.view)
             self.output.append(parse_host_result(host))
 
 
@@ -292,6 +307,7 @@ def main():
             cluster=dict(aliases=["cluster_name"]),
             name=dict(aliases=["cluster_hostname"]),
             host_id=dict(),
+            view=dict(choices=["summary", "full", "export"], default="full"),
         ),
         supports_check_mode=True,
     )

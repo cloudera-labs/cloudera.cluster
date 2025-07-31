@@ -24,6 +24,17 @@ author:
   - Ronald Suplina (@rsuplina)
   - Webster Mudge (@wmudge)
 version_added: "4.4.0"
+options:
+  view:
+    description:
+      - View type of the returned service details.
+    type: str
+    required: false
+    choices:
+      - summary
+      - full
+      - export
+    default: summary
 extends_documentation_fragment:
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
@@ -352,6 +363,9 @@ class ClouderaServiceInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClouderaServiceInfo, self).__init__(module)
 
+        # Set the parameters
+        self.view = self.get_param("view")
+
         # Initialize the return values
         self.output = dict()
 
@@ -362,7 +376,7 @@ class ClouderaServiceInfo(ClouderaManagerModule):
     def process(self):
         result = None
         try:
-            result = read_cm_service(self.api_client)
+            result = read_cm_service(api_client=self.api_client, view=self.view)
         except ApiException as ex:
             if ex.status != 404:
                 raise ex
@@ -372,7 +386,15 @@ class ClouderaServiceInfo(ClouderaManagerModule):
 
 
 def main():
-    module = ClouderaManagerModule.ansible_module(supports_check_mode=True)
+    module = ClouderaManagerModule.ansible_module(
+        argument_spec=dict(
+            view=dict(
+                default="summary",
+                choices=["summary", "full"],
+            ),
+        ),
+        supports_check_mode=True,
+    )
 
     result = ClouderaServiceInfo(module)
 
