@@ -210,7 +210,7 @@ def test_new_config(conn, module_args, cms_cleared, request):
         },
     )
 
-    expected = dict(mgmt_emit_sensitive_data_in_stderr="True")
+    expected = dict(mgmt_emit_sensitive_data_in_stderr="true")
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_service.main()
@@ -291,7 +291,7 @@ def test_existing_set_parameters(conn, module_args, cms_config, request):
     )
 
     expected = dict(
-        mgmt_emit_sensitive_data_in_stderr="True",
+        mgmt_emit_sensitive_data_in_stderr="true",
         log_event_retry_frequency="10",
     )
 
@@ -352,7 +352,7 @@ def test_existing_set_parameters_with_purge(conn, module_args, cms_config, reque
         },
     )
 
-    expected = dict(mgmt_emit_sensitive_data_in_stderr="True")
+    expected = dict(mgmt_emit_sensitive_data_in_stderr="true")
 
     with pytest.raises(AnsibleExitJson) as e:
         cm_service.main()
