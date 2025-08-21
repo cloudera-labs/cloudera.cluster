@@ -31,7 +31,7 @@ sections:
     - Bugfixes
   - - known_issues
     - Known Issues
-title: Cloudera.Cluster
+title: cloudera.cluster
 trivial_section_name: trivial
 use_fqcn: true
 vcs: auto
