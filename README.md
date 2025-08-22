@@ -242,7 +242,7 @@ In order to use these capabilities you will need some permutation of the followi
 
 ## License and Copyright
 
-Copyright 2023, Cloudera, Inc.
+Copyright 2025, Cloudera, Inc.
 
 ```
 Licensed under the Apache License, Version 2.0 (the "License");
