@@ -62,7 +62,7 @@ changelog = [
   # Read the version in galaxy.yml via hatch itself (normalizes release candidates, etc.)
   # Use 'hatch version' to manage the version, i.e. 'hatch version major,rc'
   "antsibull-changelog release --version $(hatch version)",
-  "antsichaut --since_version=latest",
+  "antsichaut --repository cloudera-labs/cloudera.cluster --since_version=latest",
   "antsibull-changelog generate",
 ]
 
