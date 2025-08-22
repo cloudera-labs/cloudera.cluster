@@ -24,11 +24,16 @@ description:
 author:
   - "Jim Enright (@jimright)"
 extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
 attributes:
   check_mode:
     support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: all
 requirements:
   - cm-client
 seealso:

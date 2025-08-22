@@ -15,30 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import yaml
-from typing import Optional
-from cm_client import (
-    ClustersResourceApi,
-    ControlPlanesResourceApi,
-    ApiInstallControlPlaneArgs,
-    ApiInstallEmbeddedControlPlaneArgs,
-    CommandsResourceApi,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
-    ClouderaManagerModule,
-)
-
-from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
-    parse_cluster_result,
-    parse_control_plane_result,
-)
-from ansible.module_utils.common.validation import check_missing_parameters
-from ansible.module_utils.common.text.converters import to_native
-
-from cm_client.rest import ApiException
-
 DOCUMENTATION = r"""
 module: control_plane
 short_description: Manage Cloudera control planes
@@ -50,6 +26,7 @@ author:
   - "Jim Enright (@jimright)"
 version_added: 5.0.0
 extends_documentation_fragment:
+  - ansible.builtin.action_common_attributes
   - cloudera.cluster.cm_options
   - cloudera.cluster.cm_endpoint
 attributes:
@@ -57,6 +34,8 @@ attributes:
     support: full
   diff_mode:
     support: full
+  platform:
+    platforms: all
 requirements:
   - cm-client
 options:
@@ -244,6 +223,30 @@ control_plane:
       elements: dict
       returned: when available
 """
+
+import yaml
+
+from typing import Optional
+
+from cm_client import (
+    ClustersResourceApi,
+    ControlPlanesResourceApi,
+    ApiInstallEmbeddedControlPlaneArgs,
+    CommandsResourceApi,
+)
+from cm_client.rest import ApiException
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
+    ClouderaManagerModule,
+)
+
+from ansible_collections.cloudera.cluster.plugins.module_utils.cluster_utils import (
+    parse_cluster_result,
+    parse_control_plane_result,
+)
+from ansible.module_utils.common.validation import check_missing_parameters
+from ansible.module_utils.common.text.converters import to_native
+
 
 # Constant for the tag used to identify the control plane in Experience Cluster
 CONTROL_PLANE_IDENTIFIER_TAG = "_cldr_cm_ek8s_control_plane"
