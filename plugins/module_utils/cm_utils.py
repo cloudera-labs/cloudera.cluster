@@ -33,6 +33,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.common.text.converters import to_native, to_text
 from time import sleep
+
 from cm_client import (
     ApiBulkCommandList,
     ApiClient,
@@ -42,11 +43,10 @@ from cm_client import (
     ApiConfigList,
     ApiEntityTag,
     Configuration,
+    ClouderaManagerResourceApi,
+    CommandsResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
-from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
-from cm_client.apis.commands_resource_api import CommandsResourceApi
-
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
