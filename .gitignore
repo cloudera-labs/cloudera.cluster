@@ -15,6 +15,9 @@
 # Keep the Galaxy builds
 !cloudera-cluster-*.tar.gz
 
+# Ignore the cm-client build
+cm-client
+
 # Ignore the test output
 tests/output
 
