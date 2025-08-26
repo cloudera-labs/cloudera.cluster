@@ -219,6 +219,16 @@ plugins:
       name: cm_version_info
       namespace: ''
       version_added: 4.0.0
+    control_plane:
+      description: Manage Cloudera control planes
+      name: control_plane
+      namespace: ''
+      version_added: 5.0.0
+    control_plane_info:
+      description: Retrieve information about control planes
+      name: control_plane_info
+      namespace: ''
+      version_added: null
     data_context:
       description: Create, update, or delete a data context
       name: data_context
@@ -227,6 +237,11 @@ plugins:
     data_context_info:
       description: Retrieve details of data contexts
       name: data_context_info
+      namespace: ''
+      version_added: 5.0.0
+    deprecation:
+      description: Display a deprecation warning
+      name: deprecation
       namespace: ''
       version_added: 5.0.0
     external_account:
@@ -289,6 +304,27 @@ plugins:
       name: parcel_info
       namespace: ''
       version_added: 4.4.0
+    role:
+      description: Manage a service role in cluster
+      name: role
+      namespace: ''
+      version_added: 4.4.0
+    role_config_group:
+      description: Manage a cluster service role config group.
+      name: role_config_group
+      namespace: ''
+      version_added: 4.4.0
+    role_config_group_info:
+      description: Retrieve information about a cluster service role config group
+        or groups
+      name: role_config_group_info
+      namespace: ''
+      version_added: 4.4.0
+    role_info:
+      description: Retrieve information about the service roles of cluster
+      name: role_info
+      namespace: ''
+      version_added: 4.4.0
     service:
       description: Manage a service in cluster
       name: service
@@ -309,19 +345,9 @@ plugins:
       name: service_info
       namespace: ''
       version_added: 4.4.0
-    service_role:
-      description: Manage a service role in cluster
-      name: service_role
-      namespace: ''
-      version_added: 4.4.0
     service_role_config:
       description: Manage a service role configuration in cluster
       name: service_role_config
-      namespace: ''
-      version_added: 4.4.0
-    service_role_config_group:
-      description: Manage a cluster service role config group.
-      name: service_role_config_group
       namespace: ''
       version_added: 4.4.0
     service_role_config_group_config:
@@ -334,21 +360,10 @@ plugins:
       name: service_role_config_group_config_info
       namespace: ''
       version_added: 4.4.0
-    service_role_config_group_info:
-      description: Retrieve information about a cluster service role config group
-        or groups
-      name: service_role_config_group_info
-      namespace: ''
-      version_added: 4.4.0
     service_role_config_info:
       description: Retrieve information about the configuration for a cluster service
         role
       name: service_role_config_info
-      namespace: ''
-      version_added: 4.4.0
-    service_role_info:
-      description: Retrieve information about the service roles of cluster
-      name: service_role_info
       namespace: ''
       version_added: 4.4.0
     service_type_info:
@@ -371,4 +386,4 @@ plugins:
   strategy: {}
   test: {}
   vars: {}
-version: 4.4.0
+version: 5.0.0
