@@ -32,6 +32,10 @@ extends_documentation_fragment:
 attributes:
   check_mode:
     support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: all
 notes:
   - This is a convenience module to retrieve Kerberos settings from the Cloudera Manager configuration.
   - Using the C(cm_config_info) module will return similar settings.
