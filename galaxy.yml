@@ -16,7 +16,7 @@
 
 namespace: cloudera
 name: cluster
-version: 5.0.0-rc.2
+version: 5.0.0
 readme: README.md
 authors:
   - Webster Mudge @wmudge
