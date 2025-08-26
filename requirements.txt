@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# For community.general.json_query filter
-jmespath
-
 # For cm_service lookup
 cm-client
 
