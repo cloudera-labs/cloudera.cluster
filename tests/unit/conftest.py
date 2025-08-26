@@ -227,7 +227,7 @@ def cm_api_client(conn) -> ApiClient:
         # Set host
         config.host = f"{url}/api/{version}"
 
-    client = ApiClient()
+    client = ApiClient(configuration=config)
     client.user_agent = "pytest"
     return client
 

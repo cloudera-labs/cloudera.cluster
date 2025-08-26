@@ -68,7 +68,7 @@ class ClouderaManagerLookupBase(LookupBase):
         else:
             config.host = self._discover_endpoint(config)
 
-        self.api_client = ApiClient()
+        self.api_client = ApiClient(configuration=config)
 
     def _setup_logger(self, log_level, log_format):
         """Configures the logging of the HTTP activity"""
