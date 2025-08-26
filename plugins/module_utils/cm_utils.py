@@ -33,6 +33,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.common.text.converters import to_native, to_text
 from time import sleep
+
 from cm_client import (
     ApiBulkCommandList,
     ApiClient,
@@ -42,11 +43,10 @@ from cm_client import (
     ApiConfigList,
     ApiEntityTag,
     Configuration,
+    ClouderaManagerResourceApi,
+    CommandsResourceApi,
 )
 from cm_client.rest import ApiException, RESTClientObject
-from cm_client.apis.cloudera_manager_resource_api import ClouderaManagerResourceApi
-from cm_client.apis.commands_resource_api import CommandsResourceApi
-
 
 __credits__ = ["frisch@cloudera.com"]
 __maintainer__ = ["wmudge@cloudera.com"]
@@ -485,6 +485,8 @@ class ClouderaManagerModule(object):
 
         self.logger.debug("CM API agent: %s", self.agent_header)
 
+        self.client_config = config
+
         if self.verify_tls is False:
             disable_warnings(InsecureRequestWarning)
 
@@ -499,17 +501,15 @@ class ClouderaManagerModule(object):
 
     def initialize_client(self):
         """Creates the CM API client"""
-        config = Configuration()
-
         # If provided a CM endpoint URL, use it directly
         if self.url:
-            config.host = str(self.url).rstrip(" /")
+            self.client_config.host = str(self.url).rstrip(" /")
         # Otherwise, run discovery on missing parts
         else:
-            config.host = self.discover_endpoint(config)
+            self.client_config.host = self.discover_endpoint(self.client_config)
 
         # Create and set the API Client
-        self.api_client = ApiClient()
+        self.api_client = ApiClient(configuration=self.client_config)
 
         # Update the User Agent
         self.api_client.user_agent = self.agent_header
@@ -528,7 +528,7 @@ class ClouderaManagerModule(object):
         """Discovers the scheme and version of a potential Cloudara Manager host."""
         # Get the authentication headers and REST client
         headers = self.get_auth_headers(config)
-        rest = RESTClientObject()
+        rest = RESTClientObject(config)
 
         # Resolve redirects to establish HTTP scheme and port
         pre_rendered = Url(

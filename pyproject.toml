@@ -32,7 +32,7 @@ dependencies = [
   "molecule-plugins[ec2]",
   "ansible-core<2.17",     # For RHEL 8 support
   "jmespath",
-  "cm-client",
+  # "cm-client",           # Use hatch run install-cm-client
   "python-gnupg",
   "ansible-lint",
   "antsibull-docs >= 2.0.0, < 3.0.0",
@@ -42,6 +42,13 @@ dependencies = [
 lint = [
   "pre-commit run -a",
   "antsibull-docs lint-collection-docs --plugin-docs --validate-collection-refs=all --skip-rstcheck .",
+]
+install-cm-client = [
+  "mkdir -p cm-client",
+  "curl -L https://archive.cloudera.com/cm7/7.13.1/generic/jar/cm_api/cloudera-manager-api-swagger-7.13.1.tar -o cm-client/cloudera-manager-api.tar",
+  "tar xf cm-client/cloudera-manager-api.tar -C cm-client",
+  "pip install cm-client/swagger/python",
+  "rm -r cm-client",
 ]
 
 [tool.hatch.envs.docs]
