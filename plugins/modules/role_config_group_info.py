@@ -62,6 +62,10 @@ extends_documentation_fragment:
 attributes:
   check_mode:
     support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: all
 requirements:
   - cm-client
 seealso:
