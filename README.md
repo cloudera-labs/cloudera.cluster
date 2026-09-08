@@ -1,6 +1,7 @@
 # cloudera.cluster - Cloudera on premise and Cloudera Manager
 
 [![API documentation](https://github.com/cloudera-labs/cloudera.cluster/actions/workflows/publish_docs.yml/badge.svg?branch=main&event=push)](https://github.com/cloudera-labs/cloudera.cluster/actions/workflows/publish_docs.yml)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcloudera-labs%2Fcloudera.cluster.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcloudera-labs%2Fcloudera.cluster?ref=badge_shield)
 
 `cloudera.cluster` is an Ansible collection that lets you manage your **[Cloudera Platform](https://www.cloudera.com/products/cloudera-data-platform.html) on premise (Private Cloud)** resources and interact with Cloudera Manager for both on premise installations and cloud Data Hub deployments. With this collection, you can:
 
@@ -171,3 +172,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcloudera-labs%2Fcloudera.cluster.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcloudera-labs%2Fcloudera.cluster?ref=badge_large)
