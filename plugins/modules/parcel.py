@@ -38,16 +38,46 @@ options:
   name:
     description:
       - The name of the product, e.g. CDH, Impala
+      - Required, together with O(parcel_version), unless O(parcels) is set.
     type: str
-    required: yes
     aliases:
       - parcel
       - product
   parcel_version:
     description:
       - The semantic version of the product, e.g. 1.1.0, 2.3.0.
+      - Required, together with O(name), unless O(parcels) is set.
     type: str
-    required: yes
+  parcels:
+    description:
+      - A list of parcels to move to the same O(state), processed in parallel.
+      - Use this instead of looping over the module to download, distribute, and activate several parcels at the same time.
+      - Mutually exclusive with O(name) and O(parcel_version).
+      - The parcels are returned in RV(parcels), in the order given.
+      - If any parcel fails, the module waits for the remaining parcels to finish and then fails, reporting each failure in RV(failures).
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+          - The name of the product, e.g. CDH, Impala
+        type: str
+        required: yes
+        aliases:
+          - parcel
+          - product
+      parcel_version:
+        description:
+          - The semantic version of the product, e.g. 1.1.0, 2.3.0.
+        type: str
+        required: yes
+  max_workers:
+    description:
+      - The maximum number of parcels to process at the same time when O(parcels) is set.
+      - Parcels beyond this limit wait for a free slot.
+      - Must be at least 1.
+    type: int
+    default: 4
   state:
     description:
       - State of the parcel.
@@ -64,6 +94,7 @@ options:
   timeout:
     description:
       - Timeout, in seconds, before failing when changing state, e.g. V(DISTRIBUTED).
+      - Applies to each parcel individually. Parcels processed in parallel share network bandwidth, so large parcels may need a higher value.
     type: int
     default: 1200
     aliases:
@@ -99,6 +130,29 @@ EXAMPLES = r"""
     parcel_version: "1.5.1-b626-ecs-1.5.1-b626.p0.42068229"
     state: "activated"
 
+- name: Download, distribute and activate several parcels on a cluster in parallel
+  cloudera.cluster.parcel:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster_name: "Example_Cluster"
+    parcels:
+      - product: "CDH"
+        parcel_version: "7.3.2-1.cdh7.3.2.p20000.83281140"
+      - product: "FLINK"
+        parcel_version: "1.20.5-csa1.18.0.0-82229597"
+    max_workers: 4
+    state: "activated"
+
+- name: Activate parcels defined as a product-to-version dictionary in parallel
+  cloudera.cluster.parcel:
+    host: example.cloudera.com
+    username: "jane_smith"
+    password: "S&peR4Ec*re"
+    cluster_name: "Example_Cluster"
+    parcels: "{{ cloudera_parcels | dict2items(key_name='name', value_name='parcel_version') }}"
+    state: "activated"
+
 - name: Downloand and distribute a parcel on a cluster
   cloudera.cluster.parcel:
     host: example.cloudera.com
@@ -131,9 +185,18 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
+parcels:
+    description:
+        - Details about each parcel, in the order given in O(parcels).
+        - Each item has the same fields as RV(parcel).
+    type: list
+    elements: dict
+    returned: when O(parcels) is set
 parcel:
-    description: Details about the parcel
+    description:
+        - Details about the parcel given with O(name) and O(parcel_version).
     type: dict
+    returned: when O(parcels) is not set
     contains:
         product:
             description: The name of the product.
@@ -165,7 +228,38 @@ parcel:
             description: Description of the parcel.
             type: str
             returned: when supported
+failures:
+    description:
+        - The parcels that did not reach the requested state, with the reason for each.
+        - The module fails when this list is not empty.
+    type: list
+    elements: dict
+    returned: on failure, when O(parcels) is set
+    version_added: "5.1.0"
+    contains:
+        product:
+            description: The name of the product.
+            type: str
+            returned: always
+        version:
+            description: The version of the product.
+            type: str
+            returned: always
+        msg:
+            description: Why the parcel failed.
+            type: str
+            returned: always
+        status_code:
+            description: The HTTP status code of the Cloudera Manager error.
+            type: int
+            returned: when the failure was an API error
 """
+
+import json
+
+from concurrent.futures import ThreadPoolExecutor
+
+from ansible.module_utils.common.text.converters import to_text
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
     ClouderaManagerModule,
@@ -173,6 +267,7 @@ from ansible_collections.cloudera.cluster.plugins.module_utils.cm_utils import (
 
 from ansible_collections.cloudera.cluster.plugins.module_utils.parcel_utils import (
     Parcel,
+    ParcelException,
     parse_parcel_result,
 )
 
@@ -196,6 +291,8 @@ class ClouderaParcel(ClouderaManagerModule):
         self.cluster = self.get_param("cluster")
         self.parcel_name = self.get_param("name")
         self.parcel_version = self.get_param("parcel_version")
+        self.parcels = self.get_param("parcels")
+        self.max_workers = max(1, self.get_param("max_workers"))
         self.state = self.get_param("state")
         self.delay = self.get_param("delay")
         self.timeout = self.get_param("timeout")
@@ -203,7 +300,7 @@ class ClouderaParcel(ClouderaManagerModule):
         # Set outputs
         self.changed = False
         self.diff = {}
-        self.output = {}
+        self.output = {} if self.parcels is None else []
 
         # Execute
         self.process()
@@ -219,22 +316,6 @@ class ClouderaParcel(ClouderaManagerModule):
             if ex.status == 404:
                 self.module.fail_json(msg=f" Cluster '{self.cluster}' not found")
 
-        try:
-            parcel = Parcel(
-                parcel_api=parcel_api,
-                product=self.parcel_name,
-                version=self.parcel_version,
-                cluster=self.cluster,
-                log=self.module.log,
-                delay=self.delay,
-                timeout=self.timeout,
-            )
-        except ApiException as ex:
-            if ex.status == 404:
-                self.module.fail_json(
-                    msg=f"Parcel {self.parcel_name} (version: {self.parcel_version}) not found on cluster '{self.cluster}'",
-                )
-
         # Normalize self.state
         if self.state == "present":
             self.state = "ACTIVATED"
@@ -243,31 +324,152 @@ class ClouderaParcel(ClouderaManagerModule):
         else:
             self.state = str(self.state).upper()
 
-        if self.state != parcel.stage:
-            self.changed = True
+        if self.parcels is None:
+            targets = [dict(name=self.parcel_name, parcel_version=self.parcel_version)]
+        else:
+            targets = self.parcels
 
-            if self.module._diff:
-                self.diff = dict(before=parcel.stage, after=self.state)
+        keys = [(t["name"], t["parcel_version"]) for t in targets]
+        duplicates = sorted({f"{n} ({v})" for n, v in keys if keys.count((n, v)) > 1})
+        if duplicates:
+            self.module.fail_json(
+                msg=f"Parcels must be unique; duplicated: {', '.join(duplicates)}",
+            )
 
-            if not self.module.check_mode:
-                cmd = getattr(parcel, self.FUNCTION_MAP[self.state])
-                cmd()
+        # Resolve every parcel up front, so a typo fails the run before any download starts.
+        parcels, missing = [], []
+        for target in targets:
+            try:
+                parcels.append(
+                    self._load(parcel_api, target["name"], target["parcel_version"]),
+                )
+            except ParcelException as ex:
+                missing.append(str(ex))
+        if missing:
+            self.module.fail_json(msg="; ".join(missing))
 
-        self.output = parse_parcel_result(
+        self.changed = any(p.stage != self.state for p in parcels)
+
+        if self.parcels is None:
+            self._process_single(parcel_api, parcels[0])
+        else:
+            self._process_parallel(parcel_api, parcels)
+
+    def _load(self, parcel_api, name, version):
+        try:
+            return Parcel(
+                parcel_api=parcel_api,
+                product=name,
+                version=version,
+                cluster=self.cluster,
+                log=self.module.log,
+                delay=self.delay,
+                timeout=self.timeout,
+            )
+        except ApiException as ex:
+            if ex.status == 404:
+                raise ParcelException(
+                    f"Parcel {name} (version: {version}) not found on cluster '{self.cluster}'",
+                )
+            raise
+
+    def _apply(self, parcel_api, parcel):
+        """Move one parcel to the requested state and return its final details."""
+        pending = not self.module.check_mode and parcel.stage != self.state
+
+        if pending:
+            getattr(parcel, self.FUNCTION_MAP[self.state])()
+
+        result = parse_parcel_result(
             parcel_api.read_parcel(
                 cluster_name=self.cluster,
-                product=self.parcel_name,
-                version=self.parcel_version,
+                product=parcel.product,
+                version=parcel.version,
             ),
         )
+
+        if pending and result["stage"] != self.state:
+            raise ParcelException(
+                f"Parcel {parcel.product} (version: {parcel.version}) did not reach {self.state} "
+                f"on cluster '{self.cluster}'; current stage is {result['stage']} (timeout: {self.timeout} secs)",
+            )
+
+        return result
+
+    def _process_single(self, parcel_api, parcel):
+        if self.changed and self.module._diff:
+            self.diff = dict(before=parcel.stage, after=self.state)
+
+        try:
+            self.output = self._apply(parcel_api, parcel)
+        except ParcelException as ex:
+            self.module.fail_json(msg=str(ex))
+
+    def _process_parallel(self, parcel_api, parcels):
+        # Leaving the block waits for every parcel to finish, so one failure
+        # never abandons commands that Cloudera Manager is still running.
+        with ThreadPoolExecutor(
+            max_workers=min(self.max_workers, max(1, len(parcels))),
+            thread_name_prefix="parcel",
+        ) as pool:
+            futures = [pool.submit(self._apply, parcel_api, p) for p in parcels]
+
+        if self.module._diff:
+            changed = [p for p in parcels if p.stage != self.state]
+            self.diff = dict(
+                before={f"{p.product}-{p.version}": p.stage for p in changed},
+                after={f"{p.product}-{p.version}": self.state for p in changed},
+            )
+
+        failures = []
+        for parcel, future in zip(parcels, futures):
+            try:
+                self.output.append(future.result())
+            except Exception as ex:
+                failures.append(self._describe_failure(parcel, ex))
+
+        if failures:
+            self.module.fail_json(
+                msg=f"Failed to move {len(failures)} of {len(parcels)} parcel(s) to {self.state}",
+                changed=self.changed,
+                failures=failures,
+                parcels=self.output,
+            )
+
+    @staticmethod
+    def _describe_failure(parcel, ex):
+        failure = dict(product=parcel.product, version=parcel.version)
+
+        if isinstance(ex, ApiException):
+            failure.update(status_code=ex.status)
+            msg = None
+            if ex.body:
+                try:
+                    msg = json.loads(ex.body)["message"]
+                except Exception:
+                    pass
+            failure.update(msg=msg or "API error: " + to_text(ex.reason))
+        else:
+            failure.update(msg=to_text(ex))
+
+        return failure
 
 
 def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             cluster=dict(required=True, aliases=["cluster_name"]),
-            name=dict(required=True, aliases=["parcel", "product"]),
-            parcel_version=dict(required=True),
+            name=dict(aliases=["parcel", "product"]),
+            parcel_version=dict(),
+            parcels=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    name=dict(required=True, aliases=["parcel", "product"]),
+                    parcel_version=dict(required=True),
+                ),
+            ),
+            max_workers=dict(type="int", default=4),
             delay=dict(
                 required=False,
                 type="int",
@@ -291,17 +493,23 @@ def main():
                 ],
             ),
         ),
+        mutually_exclusive=[["parcels", "name"], ["parcels", "parcel_version"]],
+        required_together=[["name", "parcel_version"]],
+        required_one_of=[["parcels", "name"]],
         supports_check_mode=True,
     )
 
     result = ClouderaParcel(module)
 
-    changed = result.changed
+    output = dict(changed=result.changed)
 
-    output = dict(
-        changed=changed,
-        parcel=result.output,
-    )
+    if result.parcels is None:
+        output.update(parcel=result.output)
+    else:
+        output.update(parcels=result.output)
+
+    if module._diff:
+        output.update(diff=result.diff)
 
     if result.debug:
         log = result.log_capture.getvalue()
