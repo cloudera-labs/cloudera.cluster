@@ -194,6 +194,11 @@ def get_host_ref(
         return None
 
 
+def _get_cluster_role_refs(host: ApiHost) -> list:
+    # Cloudera Management Service roles have no cluster reference and cannot be read through the cluster role API
+    return [r for r in (host.role_refs or []) if r.cluster_name is not None]
+
+
 def get_host_roles(
     api_client: ApiClient,
     host: ApiHost,
@@ -205,7 +210,7 @@ def get_host_roles(
             service_name=role_ref.service_name,
             role_name=role_ref.role_name,
         )
-        for role_ref in host.role_refs
+        for role_ref in _get_cluster_role_refs(host)
     ]
 
 
@@ -404,7 +409,7 @@ def _read_host_rcgs(
     cluster_rcgs: dict[str, ApiRoleConfigGroup],
 ) -> dict[str, ApiRoleConfigGroup]:
     current_rcgs = dict[str, ApiRoleConfigGroup]()
-    for role_ref in host.role_refs:
+    for role_ref in _get_cluster_role_refs(host):
         role = read_role(
             api_client=api_client,
             cluster_name=role_ref.cluster_name,
