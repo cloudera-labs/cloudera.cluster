@@ -37,6 +37,7 @@ from cm_client import (
     ClustersResourceApi,
     HostsResourceApi,
     HostTemplatesResourceApi,
+    MgmtRolesResourceApi,
     RolesResourceApi,
     RoleConfigGroupsResourceApi,
     RoleCommandsResourceApi,
@@ -199,11 +200,28 @@ def _get_cluster_role_refs(host: ApiHost) -> list:
     return [r for r in (host.role_refs or []) if r.cluster_name is not None]
 
 
+def _get_cms_role_refs(host: ApiHost) -> list:
+    return [r for r in (host.role_refs or []) if r.cluster_name is None]
+
+
 def get_host_roles(
     api_client: ApiClient,
     host: ApiHost,
+    include_cms: bool = False,
 ) -> list[ApiRole]:
-    return [
+    """Retrieve the roles assigned to a host.
+
+    Args:
+        api_client (ApiClient): Cloudera Manager API client.
+        host (ApiHost): The host.
+        include_cms (bool, optional): Also include Cloudera Management Service
+            roles. Defaults to False (cluster roles only).
+
+    Returns:
+        list[ApiRole]: The cluster roles on the host, followed by the Cloudera
+            Management Service roles when include_cms is True.
+    """
+    roles = [
         read_role(
             api_client=api_client,
             cluster_name=role_ref.cluster_name,
@@ -212,6 +230,15 @@ def get_host_roles(
         )
         for role_ref in _get_cluster_role_refs(host)
     ]
+
+    if include_cms:
+        mgmt_role_api = MgmtRolesResourceApi(api_client)
+        for role_ref in _get_cms_role_refs(host):
+            role = mgmt_role_api.read_role(role_name=role_ref.role_name)
+            role.config = mgmt_role_api.read_role_config(role_name=role.name)
+            roles.append(role)
+
+    return roles
 
 
 def create_host_model(
