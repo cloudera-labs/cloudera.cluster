@@ -28,8 +28,21 @@ options:
     description:
       - Name of Cloudera Manager cluster.
       - This parameter specifies the name of the cluster from which data will be gathered.
+      - Mutually exclusive with O(cluster_type).
     type: str
     required: False
+    aliases:
+      - cluster_name
+      - cluster
+  cluster_type:
+    description:
+      - Filter clusters by type when listing clusters.
+      - Valid values are V(any), V(base), V(compute), and V(experience).
+      - When omitted or null, the API default is used, which is V(base).
+      - Mutually exclusive with O(name), including when explicitly set to null.
+    type: str
+    aliases:
+      - type
 requirements:
   - cm_client
 """
@@ -49,6 +62,7 @@ EXAMPLES = r"""
     username: "jane_smith"
     password: "S&peR4Ec*re"
     port: "7180"
+    type: any
 """
 
 RETURN = r"""
@@ -113,6 +127,7 @@ class ClusterInfo(ClouderaManagerModule):
     def __init__(self, module):
         super(ClusterInfo, self).__init__(module)
         self.name = self.get_param("name")
+        self.cluster_type = self.get_param("cluster_type")
         self.output = []
         self.process()
 
@@ -127,10 +142,13 @@ class ClusterInfo(ClouderaManagerModule):
                     ),
                 ]
             else:
-                self.output = [
-                    parse_cluster_result(c)
-                    for c in cluster_api_instance.read_clusters().items
-                ]
+                if self.cluster_type is None:
+                    clusters = cluster_api_instance.read_clusters()
+                else:
+                    clusters = cluster_api_instance.read_clusters(
+                        cluster_type=self.cluster_type,
+                    )
+                self.output = [parse_cluster_result(c) for c in clusters.items]
 
         except ApiException as e:
             if e.status == 404:
@@ -148,9 +166,27 @@ def main():
     module = ClouderaManagerModule.ansible_module(
         argument_spec=dict(
             name=dict(aliases=["cluster_name", "cluster"]),
+            cluster_type=dict(
+                type="str",
+                aliases=["type"],
+            ),
         ),
+        mutually_exclusive=[["name", "cluster_type"]],
         supports_check_mode=True,
     )
+
+    # Ansible's choices validation rejects explicitly supplied null values.
+    cluster_type = module.params["cluster_type"]
+    if cluster_type is not None and cluster_type not in (
+        "any",
+        "base",
+        "compute",
+        "experience",
+    ):
+        module.fail_json(
+            msg="value of cluster_type must be one of: any, base, compute, experience, got: %s"
+            % cluster_type,
+        )
 
     result = ClusterInfo(module)
 
