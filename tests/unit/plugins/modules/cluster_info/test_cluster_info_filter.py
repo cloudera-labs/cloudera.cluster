@@ -31,7 +31,9 @@ def cluster_api(monkeypatch):
     api.read_cluster.return_value = "cluster"
     monkeypatch.setattr(cluster_info, "ClustersResourceApi", Mock(return_value=api))
     monkeypatch.setattr(
-        cluster_info, "parse_cluster_result", lambda cluster: {"name": cluster}
+        cluster_info,
+        "parse_cluster_result",
+        lambda cluster: {"name": cluster},
     )
     monkeypatch.setattr(
         cluster_info.ClusterInfo,
